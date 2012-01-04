@@ -1,0 +1,117 @@
+Introduction
+============
+
+Cargeur is a simple CSV file loader for Hbase and Cassandra. HBase is fully supported now. Will add
+Cassandra support. A JSON config file defines metadta mapping between csv and NOSQL table, column family etc.
+
+Mapping
+=======
+A csv column can be mapped to one or more NOSQL db column. For mapping to mutiple columns, the installed 
+preLoadHandler is supposed to split a CSV column into mutiple parts. Also multipkle csv columns could be 
+mapped to one NOSQL db column.
+
+Some of the coulns can be designated as part of the row key. All columns designated as part of row key
+are concatanated to create NOSQL db row key.
+
+One or more columns with constant value can be injected by passing a Map<String,String> to the API. These
+data elements are designated as sideData
+
+API
+===
+The load() method in the Loader class is the entry point to the API
+
+Configuration
+=============
+
+Here is a sample configuration for loading product data from csv to a HBase table
+
+{
+	"name" : "product catalog",
+	"database" : "hbase",
+	"table" : "products",
+	"colNameInFirstRow" : true,
+	"rowKey" : ["seller", "category", "sku"],
+	"batchSize" : 10,
+	"preLoadHandler" : "org.chargeur.handler.ProductPreLoadHandler",
+	"columnMappers" : 
+	[
+		{
+			"name" : "sku",
+			"ordinal" : 1,
+			"dataType" : "string",
+			"colFamily" : "main",
+			"col" : "sku",
+			"useAsRowKey" : true,
+			"maxSize" : 20,
+			"sideData" : false
+		},
+		{
+			"name" : "seller",
+			"ordinal" : 0,
+			"dataType" : "string",
+			"colFamily" : "main",
+			"col" : "seller",
+			"useAsRowKey" : true,
+			"maxSize" : 30,
+			"sideData" : true,
+			"defaultValue" : "anySeller"
+		},
+		{
+			"name" : "model",
+			"ordinal" : 3,
+			"dataType" : "string",
+			"colFamily" : "main",
+			"col" : "model",
+			"useAsRowKey"  : false,
+			"sideData" : false
+		},
+		{
+			"name" : "title",
+			"ordinal" : 4,
+			"dataType" : "string",
+			"colFamily" : "main",
+			"col" : "title",
+			"useAsRowKey" : false,
+			"sideData" : false
+		},
+		{
+			"name" : "description",
+			"ordinal" : 5,
+			"dataType" : "string",
+			"colFamily" : "main",
+			"col" : "description",
+			"useAsRowKey" : false,
+			"sideData" : false
+		},
+		{
+			"name" : "category",
+			"ordinal" : 4,
+			"dataType" : "string",
+			"colFamily" : "main",
+			"col" : "category",
+			"useAsRowKey" : true,
+			"maxSize" : 30,
+			"sideData" : false,
+			"defaultValue" : "generic"
+		},
+		{
+			"name" : "price",
+			"ordinal" : 17,
+			"colFamily" : "main",
+			"col" : "price"
+		},
+		{
+			"name" : "details1",
+			"ordinal" : 6,
+			"colFamily" : "other",
+			"col" : "details"
+		},
+		{
+			"name" : "details2",
+			"ordinal" : 7,
+			"colFamily" : "other",
+			"col" : "details"
+		},
+......
+	]
+}
