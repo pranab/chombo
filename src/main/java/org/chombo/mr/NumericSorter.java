@@ -69,7 +69,8 @@ public class NumericSorter  extends Configured implements Tool {
 		private int sortField;
         private String fieldDelimRegex;
         private boolean sortOrderAscending;
-
+        private long sortFieldVal;
+        
         protected void setup(Context context) throws IOException, InterruptedException {
         	sortField = context.getConfiguration().getInt("sort.field", 0);
         	sortOrderAscending = context.getConfiguration().getBoolean("sort.order.ascending", true);
@@ -80,12 +81,14 @@ public class NumericSorter  extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
-            long sortFieldVal = Long.parseLong(items[sortField]);
-            if (sortOrderAscending) {
-            	outKey.set(sortFieldVal);
-            } else {
-            	outKey.set(Long.MAX_VALUE / sortFieldVal );
+            
+            sortFieldVal = Long.parseLong(items[sortField]);
+            if (!sortOrderAscending) {
+            	sortFieldVal = sortFieldVal == 0 ? Long.MAX_VALUE :  (Long.MAX_VALUE  - 1)  / sortFieldVal;
+            	outKey.set( sortFieldVal );
             }
+            
+        	outKey.set(sortFieldVal);
 			context.write(outKey, value);
         }
 	}
