@@ -23,9 +23,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.WritableComparable;
 
 
-public class Tuple  implements Writable  {
+/**
+ * General purpose tuple consisting list of primitive types. Implements WritableComparable
+ * @author pranab
+ *
+ */
+public class Tuple  implements WritableComparable<Tuple>  {
 	public static final byte BOOLEAN = 1;
 	public static final byte INT = 2;
 	public static final byte LONG = 3;
@@ -58,6 +64,8 @@ public class Tuple  implements Writable  {
 			typedField = Double.parseDouble(field);
 		} else if (type ==  STRING) {
 			typedField = field;
+		} else {
+			throw new IllegalArgumentException("Failed adding element to tuple, unknown element type");
 		}
 		
 		if (null != typedField){
@@ -92,6 +100,8 @@ public class Tuple  implements Writable  {
 				fields.add(in.readDouble());
 			} else if (type ==  STRING) {
 				fields.add(in.readUTF());
+			} else {
+				throw new IllegalArgumentException("Failed encoding, unknown element type in stream");
 			}
 		}
 	}
@@ -119,7 +129,9 @@ public class Tuple  implements Writable  {
 			} else if (field instanceof String){
 				out.writeByte(STRING);	
 				out.writeUTF((String)field);
-			} 
+			} else {
+				throw new IllegalArgumentException("Failed encoding, unknown element type in tuple");
+			}
 		}
 	}
 
@@ -134,5 +146,32 @@ public class Tuple  implements Writable  {
 		}
 		return isEqual;
 	}
-	
+
+	@Override
+	public int compareTo(Tuple that) {
+		int compared = 0;
+		if (fields.size() == that.fields.size()) {
+			for(int i = 0; i <  fields.size() && compared == 0; ++i) {
+				Object field = fields.get(i);
+				if (field instanceof Boolean){
+					compared = ((Boolean)field).compareTo((Boolean)that.fields.get(i));	
+				} else if (field instanceof Integer){
+					compared = ((Integer)field).compareTo((Integer)that.fields.get(i));	
+				} else if (field instanceof Long){
+					compared = ((Long)field).compareTo((Long)that.fields.get(i));	
+				} else if (field instanceof Float){
+					compared = ((Float)field).compareTo((Float)that.fields.get(i));	
+				} else if (field instanceof Double){
+					compared = ((Double)field).compareTo((Double)that.fields.get(i));	
+				} else if (field instanceof String){
+					compared = ((String)field).compareTo((String)that.fields.get(i));	
+				}  else {
+					throw new IllegalArgumentException("Failed in compare, unknown element type in tuple");
+				}
+			}
+		} else {
+			throw new IllegalArgumentException("Can not compare tuples of unequal length");
+		}
+		return compared;
+	}
 }
