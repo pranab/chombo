@@ -19,6 +19,7 @@
 package org.chombo.util;
 
 import java.io.FileInputStream;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -38,4 +39,16 @@ public class Utility {
         }
     }
 
+    public static <T> void initializeArray(T[] vec, T val)  {
+    	for(int i = 0; i < vec.length; ++i) {
+    		vec[i] = val;
+    	}
+    }
+    
+    public static <T> void toList(List<T> list, T[] array) {
+    	for (T val : array) {
+    		list.add(val);
+    	}
+    }
+   
 }
