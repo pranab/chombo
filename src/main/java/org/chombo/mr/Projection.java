@@ -47,10 +47,10 @@ public class Projection extends Configured implements Tool {
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration());
-        String operation = job.getConfiguration().get("projection.operation");
+        String operation = job.getConfiguration().get("projection.operation",  "project");
         
         job.setMapperClass(Projection.ProjectionMapper.class);
-        if (operation.endsWith("grouping")) {
+        if (operation.startsWith("grouping")) {
             job.setReducerClass(Projection.ProjectionReducer.class);
 
             job.setMapOutputKeyClass(Text.class);
