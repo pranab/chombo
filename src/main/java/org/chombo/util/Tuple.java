@@ -45,6 +45,10 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		fields = new ArrayList<Object>();
 	}
 	
+	public void initialize() {
+		fields.clear();
+	}
+	
 	public void add(Object field) {
 		fields.add(field);
 	}
