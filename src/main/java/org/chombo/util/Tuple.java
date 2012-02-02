@@ -40,6 +40,7 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	public static final byte STRING = 6;
 	
 	private List<Object> fields;
+	private String delim = ",";
 	
 	public Tuple() {
 		fields = new ArrayList<Object>();
@@ -177,5 +178,21 @@ public class Tuple  implements WritableComparable<Tuple>  {
 			throw new IllegalArgumentException("Can not compare tuples of unequal length");
 		}
 		return compared;
+	}
+	
+	public void setDelim(String delim) {
+		this.delim = delim;
+	}
+
+	public String toString() {
+		StringBuilder stBld = new  StringBuilder();
+		for(int i = 0; i <  fields.size() ; ++i) {
+			if (i == 0){
+				stBld.append(fields.get(i).toString());
+			} else {
+				stBld.append(delim).append(fields.get(i).toString());
+			}
+		}		
+		return stBld.toString();
 	}
 }
