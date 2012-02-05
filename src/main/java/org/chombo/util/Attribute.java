@@ -56,6 +56,10 @@ public class Attribute {
 		return dataType.equals("int");
 	}
 
+	public boolean isDouble() {
+		return dataType.equals("double");
+	}
+
 	public boolean isText() {
 		return dataType.equals("text");
 	}

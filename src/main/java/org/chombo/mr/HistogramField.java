@@ -22,6 +22,7 @@ import org.chombo.util.Attribute;
 public class HistogramField  extends Attribute {
 	private int bucketWidth;
 
+
 	public int getBucketWidth() {
 		return bucketWidth;
 	}

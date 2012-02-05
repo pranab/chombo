@@ -38,24 +38,25 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.chombo.util.Tuple;
 
-public class Histogram extends Configured implements Tool {
+public class MultiVarHistogram extends Configured implements Tool {
 
 	@Override
 	public int run(String[] args) throws Exception {
         Job job = new Job(getConf());
-        String jobName = "Histogram MR";
+        String jobName = "Muti variate histogram MR";
         job.setJobName(jobName);
         
-        job.setJarByClass(Histogram.class);
+        job.setJarByClass(MultiVarHistogram.class);
         
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         
-        job.setMapperClass(Histogram.HistogramMapper.class);
-        job.setReducerClass(Histogram.HistogramReducer.class);
+        job.setMapperClass(MultiVarHistogram.HistogramMapper.class);
+        job.setReducerClass(MultiVarHistogram.HistogramReducer.class);
         
-        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputKeyClass(Tuple.class);
         job.setMapOutputValueClass(IntWritable.class);
 
         job.setOutputKeyClass(NullWritable.class);
@@ -67,19 +68,18 @@ public class Histogram extends Configured implements Tool {
         int status =  job.waitForCompletion(true) ? 0 : 1;
         return status;
 	}
-	
-	public static class HistogramMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-		private Text outKey = new Text();
+
+	public static class HistogramMapper extends Mapper<LongWritable, Text, Tuple , IntWritable> {
+		private Tuple outKey = new Tuple();
 		private IntWritable outVal = new IntWritable(1);
-        private String fieldDelim;
         private String fieldDelimRegex;
         private HistogramSchema schema;
         private IntWritable one = new IntWritable(1);
-        private int bucket;
+        private String keyCompSt;
+        private Integer keyCompInt;
         
         protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration conf = context.getConfiguration();
-        	fieldDelim = conf.get("field.delim", "[]");
         	fieldDelimRegex = conf.get("field.delim.regex", "\\[\\]");
             
         	String filePath = conf.get("histogram.schema.file.path");
@@ -94,23 +94,24 @@ public class Histogram extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
-            
+            outKey.initialize();
             for (HistogramField field : schema.getFields()) {
             	if (field.isCategorical()){
-            		outKey.set("" + field.getOrdinal() +fieldDelim + items[field.getOrdinal()]);
+            		keyCompSt = items[field.getOrdinal()];
+            		outKey.add(keyCompSt);
             	} else if (field.isInteger()) {
-            		bucket = Integer.parseInt(items[field.getOrdinal()]) /  field.getBucketWidth();
-            		outKey.set("" + field.getOrdinal() +fieldDelim + bucket);
+            		keyCompInt = Integer.parseInt(items[field.getOrdinal()]) /  field.getBucketWidth();
+            		outKey.add(keyCompInt);
             	} else if (field.isDouble()) {
-            		bucket = ((int)Double.parseDouble(items[field.getOrdinal()])) /  field.getBucketWidth();
-            		outKey.set("" + field.getOrdinal() +fieldDelim + bucket);
+            		keyCompInt = ((int)Double.parseDouble(items[field.getOrdinal()])) /  field.getBucketWidth();
+            		outKey.add(keyCompInt);
             	}
      			context.write(outKey, outVal);
             }
         }
 	}
 	
-    public static class HistogramReducer extends Reducer<Text, IntWritable, NullWritable, Text> {
+    public static class HistogramReducer extends Reducer<Tuple, IntWritable, NullWritable, Text> {
     	private Text valueOut = new Text();
     	private int sum;
     	private String fieldDelim ;
@@ -134,7 +135,7 @@ public class Histogram extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-        int exitCode = ToolRunner.run(new Histogram(), args);
+        int exitCode = ToolRunner.run(new MultiVarHistogram(), args);
         System.exit(exitCode);
 	}
 }
