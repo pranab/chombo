@@ -31,7 +31,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -74,9 +73,10 @@ public class MultiVarHistogram extends Configured implements Tool {
 		private IntWritable outVal = new IntWritable(1);
         private String fieldDelimRegex;
         private HistogramSchema schema;
-        private IntWritable one = new IntWritable(1);
         private String keyCompSt;
         private Integer keyCompInt;
+        private int count = 0;
+        private int numFields;
         
         protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration conf = context.getConfiguration();
@@ -88,27 +88,37 @@ public class MultiVarHistogram extends Configured implements Tool {
             FSDataInputStream fs = dfs.open(src);
             ObjectMapper mapper = new ObjectMapper();
             schema = mapper.readValue(fs, HistogramSchema.class);
+            
+            numFields = schema.getFields().size();
        }
 
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
+            if ( items.length  != numFields){
+            	context.getCounter("Data", "Invalid").increment(1);
+            	return;
+            }
+            
             outKey.initialize();
             for (HistogramField field : schema.getFields()) {
+            	String	item = items[field.getOrdinal()];
             	if (field.isCategorical()){
-            		keyCompSt = items[field.getOrdinal()];
+            		keyCompSt = item;
             		outKey.add(keyCompSt);
             	} else if (field.isInteger()) {
-            		keyCompInt = Integer.parseInt(items[field.getOrdinal()]) /  field.getBucketWidth();
+            		 keyCompInt = Integer.parseInt(item) /  field.getBucketWidth();
             		outKey.add(keyCompInt);
             	} else if (field.isDouble()) {
-            		keyCompInt = ((int)Double.parseDouble(items[field.getOrdinal()])) /  field.getBucketWidth();
+            		 keyCompInt = ((int)Double.parseDouble(item)) /  field.getBucketWidth();
             		outKey.add(keyCompInt);
             	}
-     			context.write(outKey, outVal);
             }
-        }
+        	context.getCounter("Data", "Processed record").increment(1);
+        	//System.out.println( "Processed " + (++count) + " key size: " + outKey.getSize());
+			context.write(outKey, outVal);
+       }
 	}
 	
     public static class HistogramReducer extends Reducer<Tuple, IntWritable, NullWritable, Text> {
@@ -120,9 +130,10 @@ public class MultiVarHistogram extends Configured implements Tool {
 			Configuration conf = context.getConfiguration();
         	fieldDelim = conf.get("field.delim", "[]");
         }    	
-    	protected void reduce(Text key, Iterable<IntWritable> values, Context context)
+    	protected void reduce(Tuple key, Iterable<IntWritable> values, Context context)
         	throws IOException, InterruptedException {
-    		sum = 0;
+           	//System.out.println( "Reducer key size: " + key.getSize());
+   		    sum = 0;
         	for (IntWritable value : values){
         		sum += value.get();
         	}    		

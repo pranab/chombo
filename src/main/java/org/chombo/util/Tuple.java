@@ -50,6 +50,10 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		fields.clear();
 	}
 	
+	public int getSize() {
+		return fields.size();
+	}
+	
 	public void add(Object field) {
 		fields.add(field);
 	}
@@ -88,6 +92,7 @@ public class Tuple  implements WritableComparable<Tuple>  {
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
+		initialize();
 		int numFields = in.readInt();
 		
 		for(int i = 0;  i < numFields;  ++i) {
@@ -171,11 +176,12 @@ public class Tuple  implements WritableComparable<Tuple>  {
 				} else if (field instanceof String){
 					compared = ((String)field).compareTo((String)that.fields.get(i));	
 				}  else {
-					throw new IllegalArgumentException("Failed in compare, unknown element type in tuple");
+					throw new IllegalArgumentException("Failed in compare, unknown element type in tuple  ");
 				}
 			}
 		} else {
-			throw new IllegalArgumentException("Can not compare tuples of unequal length");
+			throw new IllegalArgumentException("Can not compare tuples of unequal length this:"  + 
+					fields.size() + " that:" +  that.fields.size());
 		}
 		return compared;
 	}
