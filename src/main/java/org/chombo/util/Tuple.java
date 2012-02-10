@@ -58,6 +58,16 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		fields.add(field);
 	}
 
+	public void prepend(Object field) {
+		fields.add(0, field);
+	}
+
+	public void add(byte[] types, String[] fields) {
+		for (int i = 0; i <  fields.length; ++i) {
+			add(types[i],  fields[i]) ;
+		}
+	}
+	
 	public void add(byte type, String field) {
 		Object typedField = null;
 		
