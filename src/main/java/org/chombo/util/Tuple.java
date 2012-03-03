@@ -25,6 +25,8 @@ import java.util.List;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 
+import agiato.cassandra.data.Util;
+
 
 /**
  * General purpose tuple consisting list of primitive types. Implements WritableComparable
@@ -32,12 +34,14 @@ import org.apache.hadoop.io.WritableComparable;
  *
  */
 public class Tuple  implements WritableComparable<Tuple>  {
+	public static final byte BYTE = 0;
 	public static final byte BOOLEAN = 1;
 	public static final byte INT = 2;
 	public static final byte LONG = 3;
 	public static final byte FLOAT = 4;
 	public static final byte DOUBLE = 5;
 	public static final byte STRING = 6;
+	public static final byte BYTE_ARRAY = 7;
 	
 	private List<Object> fields;
 	private String delim = ",";
@@ -71,7 +75,9 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	public void add(byte type, String field) {
 		Object typedField = null;
 		
-		if (type ==  BOOLEAN ) {
+		if (type ==  BYTE ) {
+			typedField = Byte.decode(field);
+		} else if (type ==  BOOLEAN ) {
 			typedField = Boolean.parseBoolean(field);
 		} else if (type ==  INT ) {
 			typedField = Integer.parseInt(field);
@@ -83,7 +89,9 @@ public class Tuple  implements WritableComparable<Tuple>  {
 			typedField = Double.parseDouble(field);
 		} else if (type ==  STRING) {
 			typedField = field;
-		} else {
+		} else if (type ==  BYTE_ARRAY) {
+			typedField = field.getBytes("utf-8");
+		}  else {
 			throw new IllegalArgumentException("Failed adding element to tuple, unknown element type");
 		}
 		
@@ -108,7 +116,9 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		for(int i = 0;  i < numFields;  ++i) {
 			byte type = in.readByte();
 			
-			if (type ==  BOOLEAN ) {
+			if (type ==  BYTE ) {
+				fields.add(in.readByte());
+			} else if (type ==  BOOLEAN ) {
 				fields.add(in.readBoolean());
 			} else if (type ==  INT ) {
 				fields.add(in.readInt());
@@ -120,6 +130,11 @@ public class Tuple  implements WritableComparable<Tuple>  {
 				fields.add(in.readDouble());
 			} else if (type ==  STRING) {
 				fields.add(in.readUTF());
+			} else if (type ==  BYTE_ARRAY) {
+				int  len = in.readShort();
+				byte[] bytes = new byte[len];
+				in.readFully(bytes);
+				fields.add(bytes);
 			} else {
 				throw new IllegalArgumentException("Failed encoding, unknown element type in stream");
 			}
@@ -131,7 +146,10 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		out.writeInt(fields.size());
 		
 		for(Object field : fields) {
-			if (field instanceof Boolean){
+			if (field instanceof Byte){
+				out.writeByte(BYTE);	
+				out.writeByte((Byte)field);
+			} else if (field instanceof Boolean){
 				out.writeByte(BOOLEAN);	
 				out.writeBoolean((Boolean)field);
 			} else if (field instanceof Integer){
@@ -149,6 +167,11 @@ public class Tuple  implements WritableComparable<Tuple>  {
 			} else if (field instanceof String){
 				out.writeByte(STRING);	
 				out.writeUTF((String)field);
+			} else if (field instanceof byte[]){
+				byte[] bytes = (byte[])field;
+				out.writeByte(BYTE_ARRAY);
+				out.writeShort(bytes.length);
+				out.write(bytes);
 			} else {
 				throw new IllegalArgumentException("Failed encoding, unknown element type in tuple");
 			}
@@ -173,7 +196,9 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		if (fields.size() == that.fields.size()) {
 			for(int i = 0; i <  fields.size() && compared == 0; ++i) {
 				Object field = fields.get(i);
-				if (field instanceof Boolean){
+				if (field instanceof Byte){
+					compared = ((Byte)field).compareTo((Byte)that.fields.get(i));	
+				} else if (field instanceof Boolean){
 					compared = ((Boolean)field).compareTo((Boolean)that.fields.get(i));	
 				} else if (field instanceof Integer){
 					compared = ((Integer)field).compareTo((Integer)that.fields.get(i));	
