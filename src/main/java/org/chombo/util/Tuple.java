@@ -19,13 +19,13 @@ package org.chombo.util;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 
-import agiato.cassandra.data.Util;
 
 
 /**
@@ -90,7 +90,11 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		} else if (type ==  STRING) {
 			typedField = field;
 		} else if (type ==  BYTE_ARRAY) {
-			typedField = field.getBytes("utf-8");
+			try {
+				typedField = field.getBytes("utf-8");
+			} catch (UnsupportedEncodingException e) {
+				throw new IllegalArgumentException("Failed adding element to tuple, unknown element type");
+			}
 		}  else {
 			throw new IllegalArgumentException("Failed adding element to tuple, unknown element type");
 		}
