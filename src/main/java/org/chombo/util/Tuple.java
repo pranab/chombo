@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
+import org.sifarish.feature.TextIntInt;
 
 
 
@@ -50,6 +51,10 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		fields = new ArrayList<Object>();
 	}
 	
+	public Tuple(List<Object> fields) {
+		this.fields = fields;
+	}
+
 	public void initialize() {
 		fields.clear();
 	}
@@ -58,8 +63,10 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return fields.size();
 	}
 	
-	public void add(Object field) {
-		fields.add(field);
+	public void add(Object...  fieldList) {
+		for (Object field :  fieldList) {
+			fields.add(field);
+		}
 	}
 
 	public void prepend(Object field) {
@@ -110,6 +117,14 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	
 	public Object get(int index) {
 		return fields.get(index);
+	}
+	
+	public String getString(int index) {
+		return (String)fields.get(index);
+	}
+
+	public int getInt(int index) {
+		return (Integer)fields.get(index);
 	}
 
 	@Override
@@ -225,6 +240,17 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return compared;
 	}
 	
+	public int compareToBase(Tuple other) {
+		Tuple subThis = new Tuple(fields.subList(0,fields.size()-1));
+		Tuple subThat = new Tuple(other.fields.subList(0,other.fields.size()-1));
+		return subThis.compareTo(subThat);
+	}
+	
+	public int hashCodeBase() {
+		Tuple subThis = new Tuple(fields.subList(0,fields.size()-1));
+		return subThis.hashCode();
+	}
+	
 	public void setDelim(String delim) {
 		this.delim = delim;
 	}
@@ -240,4 +266,6 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		}		
 		return stBld.toString();
 	}
+	
+	
 }
