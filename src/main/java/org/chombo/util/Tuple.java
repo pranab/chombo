@@ -25,7 +25,6 @@ import java.util.List;
 
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-import org.sifarish.feature.TextIntInt;
 
 
 

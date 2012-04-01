@@ -19,7 +19,9 @@
 package org.chombo.util;
 
 import java.io.FileInputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
@@ -51,4 +53,13 @@ public class Utility {
     	}
     }
    
+    public static   Map<String,String> deserializeMap(String data, String itemDelim, String keyDelim) {
+    	Map<String,String> map = new HashMap<String,String>();
+    	String[] items = data.split(itemDelim);
+    	for (String item : items) {
+    		String[] fields = item.split(keyDelim) ;
+    		map.put(fields[0], fields[1]);
+    	}
+    	return map;
+    }
 }

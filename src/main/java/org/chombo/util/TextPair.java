@@ -47,11 +47,16 @@ public class TextPair implements WritableComparable<TextPair> {
 		
 	}
 	@Override
-	public int compareTo(TextPair tiPair) {
-		int cmp = first.compareTo(tiPair.getFirst());
+	public int compareTo(TextPair tePair) {
+		int cmp = first.compareTo(tePair.getFirst());
 		if (0 == cmp) {
-			cmp = second.compareTo(tiPair.getSecond());
+			cmp = second.compareTo(tePair.getSecond());
 		}
+		return cmp;
+	}
+
+	public int baseCompareTo(TextPair other) {
+		int cmp = first.compareTo(other.getFirst());
 		return cmp;
 	}
 	

@@ -73,10 +73,19 @@ public class TextInt implements WritableComparable<TextInt>{
 		return cmp;
 	}
 	
+	public int baseCompareTo(TextInt other) {
+		int cmp = first.compareTo(other.getFirst());
+		return cmp;
+	}
+
 	public int hashCode() {
 		return first.hashCode() * 163 + second.hashCode();
 	}
 	
+	public int baseHashCode() {
+		return first.hashCode();
+	}
+
 	public boolean equals(Object obj) {
 		boolean isEqual =  false;
 		if (obj instanceof TextInt) {
