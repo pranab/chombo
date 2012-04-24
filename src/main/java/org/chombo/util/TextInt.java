@@ -83,7 +83,7 @@ public class TextInt implements WritableComparable<TextInt>{
 	}
 	
 	public int baseHashCode() {
-		return first.hashCode();
+		return Math.abs(first.hashCode());
 	}
 
 	public boolean equals(Object obj) {

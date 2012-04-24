@@ -65,7 +65,7 @@ public class TextPair implements WritableComparable<TextPair> {
 	}
 	
 	public int baseHashCode() {
-		return first.hashCode();
+		return Math.abs(first.hashCode());
 	}
 	
 	public boolean equals(Object obj) {
