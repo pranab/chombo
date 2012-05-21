@@ -30,6 +30,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.sifarish.feature.SingleTypeSchema;
 
 public class Utility {
 	private static final String CONF_FILE_PROP_NAME = "conf.path";
@@ -139,5 +141,15 @@ public class Utility {
     		map.put(fields[0], fields[1]);
     	}
     	return map;
+    }
+    
+    public static Object loadSchema(Configuration conf, String schemaPathConfig, Class<Object> clazz) {
+        String filePath = conf.get(schemaPathConfig);
+        FileSystem dfs = FileSystem.get(conf);
+        Path src = new Path(filePath);
+        FSDataInputStream fs = dfs.open(src);
+        ObjectMapper mapper = new ObjectMapper();
+        Object schema = mapper.readValue(fs, clazz);
+        return schema;
     }
 }
