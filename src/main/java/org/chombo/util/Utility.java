@@ -21,6 +21,7 @@ package org.chombo.util;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +31,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.sifarish.feature.SingleTypeSchema;
 
 public class Utility {
 	private static final String CONF_FILE_PROP_NAME = "conf.path";
@@ -143,13 +142,11 @@ public class Utility {
     	return map;
     }
     
-    public static Object loadSchema(Configuration conf, String schemaPathConfig, Class<Object> clazz) {
+    public static InputStream getSchemaFileStream(Configuration conf, String schemaPathConfig) throws IOException {
         String filePath = conf.get(schemaPathConfig);
         FileSystem dfs = FileSystem.get(conf);
         Path src = new Path(filePath);
         FSDataInputStream fs = dfs.open(src);
-        ObjectMapper mapper = new ObjectMapper();
-        Object schema = mapper.readValue(fs, clazz);
-        return schema;
+        return fs;
     }
 }
