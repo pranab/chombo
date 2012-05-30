@@ -142,8 +142,8 @@ public class Utility {
     	return map;
     }
     
-    public static InputStream getSchemaFileStream(Configuration conf, String schemaPathConfig) throws IOException {
-        String filePath = conf.get(schemaPathConfig);
+    public static InputStream getFileStream(Configuration conf, String pathConfig) throws IOException {
+        String filePath = conf.get(pathConfig);
         FileSystem dfs = FileSystem.get(conf);
         Path src = new Path(filePath);
         FSDataInputStream fs = dfs.open(src);

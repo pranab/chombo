@@ -17,14 +17,15 @@
 
 package org.chombo.util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FeatureCount  {
 	private int ordinal;
 	private String type;
-	private List<BinCount> counts;
+	private List<BinCount> counts = new ArrayList<BinCount>();
 	
-	public FeatureCount(String bin, int count, int ordinal, String type) {
+	public FeatureCount( int ordinal, String type) {
 		super();
 		this.ordinal = ordinal;
 		this.type = type;
@@ -54,4 +55,7 @@ public class FeatureCount  {
 		this.counts = counts;
 	}
 
+	public void addBinCount(BinCount binCount) {
+		counts.add(binCount);
+	}
 }
