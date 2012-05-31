@@ -20,6 +20,7 @@ package org.chombo.util;
 public class BinCount {
 	private String bin;
 	private int count;
+	private int normCount;
 	
 	public BinCount(String bin, int count) {
 		super();
@@ -38,6 +39,14 @@ public class BinCount {
 	}
 	public void setCount(int count) {
 		this.count = count;
+	}
+	
+	public void normalize(int total, int scale) {
+		normCount = (count * scale) / total;
+	}
+
+	public int getNormCount() {
+		return normCount;
 	}
 	
 }

@@ -45,7 +45,7 @@ public class FeatureCount  {
 
 	public void setType(String type) {
 		this.type = type;
-	}
+	}	
 
 	public List<BinCount> getCounts() {
 		return counts;
@@ -58,4 +58,10 @@ public class FeatureCount  {
 	public void addBinCount(BinCount binCount) {
 		counts.add(binCount);
 	}
+	
+	public void normalize(int total, int scale) {
+		for (BinCount binCount : counts) {
+			binCount.normalize(total, scale);
+		}
+	}	
 }
