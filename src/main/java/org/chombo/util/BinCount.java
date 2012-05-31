@@ -20,7 +20,7 @@ package org.chombo.util;
 public class BinCount {
 	private String bin;
 	private int count;
-	private int normCount;
+	private double prob;
 	
 	public BinCount(String bin, int count) {
 		super();
@@ -41,12 +41,12 @@ public class BinCount {
 		this.count = count;
 	}
 	
-	public void normalize(int total, int scale) {
-		normCount = (count * scale) / total;
+	public void normalize(int total) {
+		prob = ((double)count ) / total;
 	}
 
-	public int getNormCount() {
-		return normCount;
+	public double getProb() {
+		return prob;
 	}
 	
 }

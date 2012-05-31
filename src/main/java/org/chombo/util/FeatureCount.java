@@ -59,9 +59,9 @@ public class FeatureCount  {
 		counts.add(binCount);
 	}
 	
-	public void normalize(int total, int scale) {
+	public void normalize(int total) {
 		for (BinCount binCount : counts) {
-			binCount.normalize(total, scale);
+			binCount.normalize(total);
 		}
 	}	
 }
