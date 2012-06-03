@@ -24,6 +24,7 @@ public class FeatureCount  {
 	private int ordinal;
 	private String type;
 	private List<BinCount> counts = new ArrayList<BinCount>();
+	private double laplaceProb;
 	
 	public FeatureCount( int ordinal, String type) {
 		super();
@@ -63,5 +64,17 @@ public class FeatureCount  {
 		for (BinCount binCount : counts) {
 			binCount.normalize(total);
 		}
+		laplaceProb = 1.0 / (1 + total);
 	}	
+	
+	public double getProb(String bin) {
+		double prob = laplaceProb;
+		for (BinCount binCount : counts) {
+			if (binCount.getBin().equals(bin)) {
+				prob = binCount.getProb();
+				break;
+			}
+		}		
+		return prob;
+	}
 }
