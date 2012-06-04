@@ -57,7 +57,17 @@ public class FeatureCount  {
 	}
 
 	public void addBinCount(BinCount binCount) {
-		counts.add(binCount);
+		boolean added = false;
+		for (BinCount thisBinCount : counts) {
+			if (thisBinCount.getBin().equals(binCount.getBin())){
+				thisBinCount.addCount(binCount.getCount());
+				added = true;
+			}
+		}
+		
+		if (!added){
+			counts.add(binCount);
+		}
 	}
 	
 	public void normalize(int total) {
