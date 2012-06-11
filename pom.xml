@@ -95,6 +95,14 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
             <artifactId>jackson-mapper-lgpl </artifactId>
             <version>${jackson.version}</version>
         </dependency>
+
+		<dependency>
+	       <artifactId>lucene-core</artifactId>
+	       <groupId>org.apache.lucene</groupId>
+	       <version>3.5.0</version>
+	       <type>jar</type>
+	       <scope>compile</scope>
+	    </dependency>
         
     </dependencies>
 

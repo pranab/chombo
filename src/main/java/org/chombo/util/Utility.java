@@ -22,6 +22,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 public class Utility {
 	private static final String CONF_FILE_PROP_NAME = "conf.path";
@@ -149,4 +154,18 @@ public class Utility {
         FSDataInputStream fs = dfs.open(src);
         return fs;
     }
+    
+    public static List<String> tokenize(String text, Analyzer analyzer) throws IOException {
+        TokenStream stream = analyzer.tokenStream("contents", new StringReader(text));
+        List<String> tokens = new ArrayList<String>();
+
+        CharTermAttribute termAttribute = (CharTermAttribute)stream.getAttribute(CharTermAttribute.class);
+        while (stream.incrementToken()) {
+    		String token = termAttribute.toString();
+    		tokens.add(token);
+    	} 
+    	
+    	return tokens;
+    }
+ 
 }
