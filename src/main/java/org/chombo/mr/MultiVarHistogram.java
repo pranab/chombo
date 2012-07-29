@@ -39,6 +39,10 @@ import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.chombo.util.Tuple;
 
+/**
+ * @author pranab
+ *
+ */
 public class MultiVarHistogram extends Configured implements Tool {
 
 	@Override
@@ -68,6 +72,10 @@ public class MultiVarHistogram extends Configured implements Tool {
         return status;
 	}
 
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static class HistogramMapper extends Mapper<LongWritable, Text, Tuple , IntWritable> {
 		private Tuple outKey = new Tuple();
 		private IntWritable outVal = new IntWritable(1);
@@ -121,6 +129,10 @@ public class MultiVarHistogram extends Configured implements Tool {
        }
 	}
 	
+    /**
+     * @author pranab
+     *
+     */
     public static class HistogramReducer extends Reducer<Tuple, IntWritable, NullWritable, Text> {
     	private Text valueOut = new Text();
     	private int sum;

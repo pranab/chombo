@@ -20,6 +20,10 @@ package org.chombo.util;
 import java.util.List;
 
 
+/**
+ * @author pranab
+ *
+ */
 public class Entity {
 	private String name;
 	private List<Attribute> attributes;

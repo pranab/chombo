@@ -33,6 +33,10 @@ import org.apache.hadoop.io.WritableComparable;
  * @author pranab
  *
  */
+/**
+ * @author pranab
+ *
+ */
 public class Tuple  implements WritableComparable<Tuple>  {
 	public static final byte BYTE = 0;
 	public static final byte BOOLEAN = 1;

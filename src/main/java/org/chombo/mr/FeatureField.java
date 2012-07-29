@@ -17,6 +17,10 @@
 
 package org.chombo.mr;
 
+/**
+ * @author pranab
+ *
+ */
 public class FeatureField extends HistogramField {
 	private boolean  feature;
 

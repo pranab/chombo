@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -37,6 +38,11 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
+/**
+ * Generic Utility
+ * @author pranab
+ *
+ */
 public class Utility {
 	private static final String CONF_FILE_PROP_NAME = "conf.path";
 	private static final String FS_DEF_CONFIG_DIR = "/var/mawazo/";
@@ -45,6 +51,10 @@ public class Utility {
 	private static final int HDFS_PREFIX_LEN = 5;
 	private static final String PROP_FILE_EXT = ".properties";
 	
+    /**
+     * @param conf
+     * @throws Exception
+     */
     public static void setConfiguration(Configuration conf) throws Exception{
         String confFilePath = conf.get("conf.path");
         if (null != confFilePath){
@@ -59,6 +69,11 @@ public class Utility {
         }
     }
 
+    /**
+     * @param conf
+     * @param project
+     * @throws Exception
+     */
     public static void setConfiguration(Configuration conf, String project) throws Exception{
         boolean found = false;
     	String confFilePath = conf.get(CONF_FILE_PROP_NAME);
@@ -88,7 +103,14 @@ public class Utility {
          }
     }
     
-   private static boolean loadConfig(Configuration conf, String confFilePath, boolean handleErr ) throws IOException {
+   /**
+ * @param conf
+ * @param confFilePath
+ * @param handleErr
+ * @return
+ * @throws IOException
+ */
+private static boolean loadConfig(Configuration conf, String confFilePath, boolean handleErr ) throws IOException {
 	   boolean found = false;
 	   try {
 	        FileInputStream fis = new FileInputStream(confFilePath);
@@ -108,7 +130,13 @@ public class Utility {
 	   return found;
    }
    
-   private static boolean loadConfigHdfs(Configuration conf, String confFilePath) throws IOException {
+   /**
+ * @param conf
+ * @param confFilePath
+ * @return
+ * @throws IOException
+ */
+private static boolean loadConfigHdfs(Configuration conf, String confFilePath) throws IOException {
 	   boolean found = false;
 
 	   FileSystem dfs = FileSystem.get(conf);
@@ -125,18 +153,32 @@ public class Utility {
        return found;
    }
 
+    /**
+     * @param vec
+     * @param val
+     */
     public static <T> void initializeArray(T[] vec, T val)  {
     	for(int i = 0; i < vec.length; ++i) {
     		vec[i] = val;
     	}
     }
     
+    /**
+     * @param list
+     * @param array
+     */
     public static <T> void toList(List<T> list, T[] array) {
     	for (T val : array) {
     		list.add(val);
     	}
     }
    
+    /**
+     * @param data
+     * @param itemDelim
+     * @param keyDelim
+     * @return
+     */
     public static   Map<String,String> deserializeMap(String data, String itemDelim, String keyDelim) {
     	Map<String,String> map = new HashMap<String,String>();
     	String[] items = data.split(itemDelim);
@@ -147,6 +189,12 @@ public class Utility {
     	return map;
     }
     
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
     public static InputStream getFileStream(Configuration conf, String pathConfig) throws IOException {
         String filePath = conf.get(pathConfig);
         FileSystem dfs = FileSystem.get(conf);
@@ -155,6 +203,12 @@ public class Utility {
         return fs;
     }
     
+    /**
+     * @param text
+     * @param analyzer
+     * @return
+     * @throws IOException
+     */
     public static List<String> tokenize(String text, Analyzer analyzer) throws IOException {
         TokenStream stream = analyzer.tokenStream("contents", new StringReader(text));
         List<String> tokens = new ArrayList<String>();
@@ -166,6 +220,15 @@ public class Utility {
     	} 
     	
     	return tokens;
+    }
+    
+    /**
+     * @param data
+     * @return
+     */
+    public static String normalize(String data) {
+    	String[] items = data.toLowerCase().split("\\s+");
+    	return items.length > 0 ? StringUtils.join(items, " ") : items[0];
     }
  
 }

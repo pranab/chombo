@@ -19,6 +19,10 @@ package org.chombo.mr;
 
 import org.chombo.util.Attribute;
 
+/**
+ * @author pranab
+ *
+ */
 public class HistogramField  extends Attribute {
 	private int bucketWidth;
 

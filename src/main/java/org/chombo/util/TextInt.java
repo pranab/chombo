@@ -26,6 +26,10 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
 
+/**
+ * @author pranab
+ *
+ */
 public class TextInt implements WritableComparable<TextInt>{
 	private Text first;
 	private IntWritable second;

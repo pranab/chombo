@@ -33,6 +33,10 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Utility;
 
+/**
+ * @author pranab
+ *
+ */
 public class Projection extends Configured implements Tool {
 
 	@Override
@@ -69,6 +73,10 @@ public class Projection extends Configured implements Tool {
         return status;
 	}
 	
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static class ProjectionMapper extends Mapper<LongWritable, Text, Text, Text> {
 		private Text outKey = new Text();
 		private Text outVal = new Text();
@@ -92,6 +100,10 @@ public class Projection extends Configured implements Tool {
         }
 	}
 	
+    /**
+     * @author pranab
+     *
+     */
     public static class ProjectionReducer extends Reducer<Text, Text, NullWritable, Text> {
 		private Text outVal = new Text();
 		private StringBuilder stBld;

@@ -20,6 +20,10 @@ package org.chombo.util;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @author pranab
+ *
+ */
 public class FeatureCount  {
 	private int ordinal;
 	private String type;

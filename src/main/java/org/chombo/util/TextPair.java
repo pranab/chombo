@@ -7,6 +7,10 @@ import java.io.IOException;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
+/**
+ * @author pranab
+ *
+ */
 public class TextPair implements WritableComparable<TextPair> {
 	private Text first;
 	private Text second;

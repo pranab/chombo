@@ -19,6 +19,10 @@ package org.chombo.mr;
 
 import java.util.List;
 
+/**
+ * @author pranab
+ *
+ */
 public class HistogramSchema {
 	private List<HistogramField> fields;
 

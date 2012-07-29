@@ -24,6 +24,10 @@ import java.io.IOException;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.WritableComparable;
 
+/**
+ * @author pranab
+ *
+ */
 public class IntPair implements WritableComparable<IntPair>  {
 	private IntWritable first;
 	private IntWritable second;

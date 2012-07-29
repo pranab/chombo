@@ -39,6 +39,10 @@ import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 
+/**
+ * @author pranab
+ *
+ */
 public class Histogram extends Configured implements Tool {
 
 	@Override

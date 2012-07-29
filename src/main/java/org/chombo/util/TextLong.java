@@ -26,6 +26,10 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
 
+/**
+ * @author pranab
+ *
+ */
 public class TextLong implements WritableComparable<TextLong>{
 	private Text first;
 	private LongWritable second;

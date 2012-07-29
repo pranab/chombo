@@ -17,6 +17,10 @@
 
 package org.chombo.util;
 
+/**
+ * @author pranab
+ *
+ */
 public class Attribute {
 	private String name;
 	private int ordinal = -1;

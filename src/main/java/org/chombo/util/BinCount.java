@@ -17,6 +17,10 @@
 
 package org.chombo.util;
 
+/**
+ * @author pranab
+ *
+ */
 public class BinCount {
 	private String bin;
 	private int count;
