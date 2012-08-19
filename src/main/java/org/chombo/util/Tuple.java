@@ -57,6 +57,12 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	public Tuple(List<Object> fields) {
 		this.fields = fields;
 	}
+	
+	public Tuple createClone() {
+		Tuple clone = new Tuple();
+		clone.fields.addAll(fields);
+		return clone;
+	}
 
 	public void initialize() {
 		fields.clear();
