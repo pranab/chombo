@@ -45,7 +45,7 @@ public class Projection extends Configured implements Tool {
         String jobName = "Projection  and grouping  MR";
         job.setJobName(jobName);
         
-        job.setJarByClass(NumericSorter.class);
+        job.setJarByClass(Projection.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));

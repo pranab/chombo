@@ -231,4 +231,26 @@ private static boolean loadConfigHdfs(Configuration conf, String confFilePath) t
     	return items.length > 0 ? StringUtils.join(items, " ") : items[0];
     }
  
+    /**
+     * @param record
+     * @param remFieldOrdinal
+     * @param delim
+     * @return
+     */
+    public static String removeField(String record, int remFieldOrdinal, String delimRegex, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	String[] items = record.split(delimRegex);
+    	boolean first = true;
+    	for (int i = 0; i < items.length; ++i) {
+    		if (i != remFieldOrdinal) {
+    			if (first) {
+    				stBld.append(items[i]);
+    				first = false;
+    			} else {
+    				stBld.append(delim).append(items[i]);
+    			}
+    		}
+    	}
+    	return stBld.toString();
+    }
 }
