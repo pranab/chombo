@@ -29,7 +29,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -74,17 +73,19 @@ public class Joiner extends Configured implements Tool {
 		public static class JoinerMapper extends Mapper<LongWritable, Text, TextInt, Text> {
 			private TextInt outKey = new TextInt();
 			private Text outVal = new Text();
-			private int keyFieldFirst;
-			private int keyFieldSecond;
+			private int[]  keyFieldFirst;
+			private int[]  keyFieldSecond;
 	        private String fieldDelimRegex;
+	        private String fieldDelimOut;
 	        private boolean isFirstTypeSplit;
 	        
 	        protected void setup(Context context) throws IOException, InterruptedException {
+	        	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
+	        	fieldDelimOut = context.getConfiguration().get("field.delim", ",");
 	        	String firstTypePrefix = context.getConfiguration().get("first.type.prefix", "first");
 	        	isFirstTypeSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(firstTypePrefix);
-	        	keyFieldFirst = context.getConfiguration().getInt("key.field.first", 0);
-	        	keyFieldSecond = context.getConfiguration().getInt("key.field.second", 0);
-	        	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
+	        	keyFieldFirst = Utility.intArrayFromString(context.getConfiguration().get("key.field.first"), fieldDelimRegex ); 
+	        	keyFieldSecond = Utility.intArrayFromString(context.getConfiguration().get("key.field.second"), fieldDelimRegex ); 
 	       }
 
 	        @Override
@@ -92,10 +93,10 @@ public class Joiner extends Configured implements Tool {
 	            throws IOException, InterruptedException {
 	            String[] items  =  value.toString().split(fieldDelimRegex);
 	            if (isFirstTypeSplit) {
-	            	outKey.set(items[keyFieldFirst], 0);
+	            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut) , 0);
 	            	outVal.set("0," + value.toString());
 	            } else {
-	            	outKey.set(items[keyFieldSecond],1);
+	            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut) , 1);
 	            	outVal.set("1," + value.toString());
 	            }
 	            
@@ -103,21 +104,31 @@ public class Joiner extends Configured implements Tool {
 	        }
 		}
 
+	    /**
+	     * @author pranab
+	     *
+	     */
 	    public static class JoinerReducer extends Reducer<TextInt, Text, NullWritable, Text> {
 			private Text outVal = new Text();
 	    	private List<String> fistTypeList = new ArrayList<String>();
-			private int keyFieldFirst;
-			private int keyFieldSecond;
+			private int[]  keyFieldFirst;
+			private int[]  keyFieldSecond;
 	        private String fieldDelimRegex;
 			private String fieldDelimOut;
 			private String secondType;
 			private StringBuilder stBld = new  StringBuilder();
+			private boolean outputKeyAtBeg;
+			private boolean outputFirstType;
+			private boolean outputSecondType;
 	    	
 	        protected void setup(Context context) throws IOException, InterruptedException {
-	        	keyFieldFirst = context.getConfiguration().getInt("key.field.first", 0);
-	        	keyFieldSecond = context.getConfiguration().getInt("key.field.second", 0);
 	        	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
-	        	fieldDelimOut = context.getConfiguration().get("field.delim.regex", ",");
+	        	fieldDelimOut = context.getConfiguration().get("field.delim", ",");
+	        	keyFieldFirst = Utility.intArrayFromString(context.getConfiguration().get("key.field.first"), fieldDelimRegex ); 
+	        	keyFieldSecond = Utility.intArrayFromString(context.getConfiguration().get("key.field.second"), fieldDelimRegex ); 
+	        	outputKeyAtBeg = context.getConfiguration().getBoolean("output.key.at.begin",true);
+	        	outputFirstType = context.getConfiguration().getBoolean("output.first.type",true);
+	        	outputSecondType = context.getConfiguration().getBoolean("output.second.type",true);
 	       }
 
 	        protected void reduce(TextInt key, Iterable<Text> values, Context context)
@@ -130,8 +141,20 @@ public class Joiner extends Configured implements Tool {
 	        			secondType = value.toString().substring(2);
  	        			for (String firstType :  fistTypeList) {
 	        				stBld.delete(0, stBld.length());
-	        				stBld.append(key.getFirst()).append(fieldDelimOut).append(Utility.removeField(firstType, keyFieldFirst,fieldDelimRegex,  fieldDelimOut)).
-	        					append(fieldDelimOut).append(Utility.removeField(secondType, keyFieldSecond, fieldDelimRegex, fieldDelimOut));
+	        				
+	        				if (outputKeyAtBeg) {
+	        					stBld.append(key.getFirst()).append(fieldDelimOut);
+	        				}
+	        				if (outputFirstType) {
+	        					stBld.append(Utility.removeField(firstType, keyFieldFirst, fieldDelimRegex,  fieldDelimOut)).append(fieldDelimOut);
+	        				}
+	        				if (outputSecondType) {
+	        					stBld.append(Utility.removeField(secondType, keyFieldSecond, fieldDelimRegex, fieldDelimOut));
+	        				}
+	        				if (!outputKeyAtBeg) {
+	        					stBld.append(key.getFirst()).append(fieldDelimOut);
+	        				}
+	        				
 	        				outVal.set(stBld.toString());
 	    	 				context.write(NullWritable.get(), outVal);
 	        			}

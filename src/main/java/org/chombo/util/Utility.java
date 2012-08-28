@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -237,18 +238,50 @@ private static boolean loadConfigHdfs(Configuration conf, String confFilePath) t
      * @param delim
      * @return
      */
-    public static String removeField(String record, int remFieldOrdinal, String delimRegex, String delim) {
+    public static String removeField(String record, int[] remFieldOrdinal, String delimRegex, String delim) {
     	StringBuilder stBld = new StringBuilder();
     	String[] items = record.split(delimRegex);
     	boolean first = true;
     	for (int i = 0; i < items.length; ++i) {
-    		if (i != remFieldOrdinal) {
+    		if (!ArrayUtils.contains(remFieldOrdinal, i)) {
     			if (first) {
     				stBld.append(items[i]);
     				first = false;
     			} else {
     				stBld.append(delim).append(items[i]);
     			}
+    		}
+    	}
+    	return stBld.toString();
+    }
+    
+    /**
+     * @param record
+     * @param delimRegex
+     * @return
+     */
+    public static int[] intArrayFromString(String record, String delimRegex ) {
+    	String[] items = record.split(delimRegex);
+    	int[] data = new int[items.length];
+    	for (int i = 0; i < items.length; ++i) {
+    		data[i] = Integer.parseInt(items[i]);
+    	}
+    	return data;
+    }
+    
+    /**
+     * @param items
+     * @param fields
+     * @param delim
+     * @return
+     */
+    public static String extractFields(String[] items , int[] fields, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (int i = 0; i < fields.length; ++i) {
+    		if (i  == 0) {
+    			stBld.append(items[fields[i]]);
+    		} else {
+    			stBld.append(delim).append(items[fields[i]]);
     		}
     	}
     	return stBld.toString();
