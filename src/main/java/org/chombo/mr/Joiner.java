@@ -33,6 +33,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.TextInt;
 import org.chombo.util.Utility;
@@ -164,5 +165,12 @@ public class Joiner extends Configured implements Tool {
 	    	
 	    }
 
+		/**
+		 * @param args
+		 */
+		public static void main(String[] args) throws Exception {
+	        int exitCode = ToolRunner.run(new Joiner(), args);
+	        System.exit(exitCode);
+		}
 
 }

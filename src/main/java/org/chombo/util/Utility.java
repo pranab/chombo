@@ -286,4 +286,21 @@ private static boolean loadConfigHdfs(Configuration conf, String confFilePath) t
     	}
     	return stBld.toString();
     }
+    
+    /**
+     * @param items
+     * @param filteredFields
+     * @return
+     */
+    public static String[] filterOutFields(String[] items , int[] filteredFields) {
+    	String[] extractedFields = new String[items.length - filteredFields.length ]; 
+    	
+    	for (int i = 0, j=0; i < items.length; ++i) {
+    		if (! ArrayUtils.contains(filteredFields, i)) {
+    			extractedFields[j++] = items[i];
+    		}
+    	}
+    	return extractedFields;
+    }
+    
 }
