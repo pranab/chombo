@@ -81,13 +81,15 @@ public class Projection extends Configured implements Tool {
 		private Text outKey = new Text();
 		private Text outVal = new Text();
 		private int  keyField;
-		private int  projectionField;
+		private int[]  projectionFields;
         private String fieldDelimRegex;
+        private String fieldDelimOut;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	keyField = context.getConfiguration().getInt("key.field", 0);
-        	projectionField = context.getConfiguration().getInt("projection.field", 0);
         	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
+        	fieldDelimOut = context.getConfiguration().get("field.delim", ",");
+        	projectionFields = Utility.intArrayFromString(context.getConfiguration().get("projection.field"), fieldDelimRegex );
        }
 
         @Override
@@ -95,7 +97,7 @@ public class Projection extends Configured implements Tool {
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
             outKey.set(items[keyField]);
-            outVal.set(items[projectionField]);
+            outVal.set( Utility.extractFields(items , projectionFields, fieldDelimOut));
 			context.write(outKey, outVal);
         }
 	}
