@@ -108,16 +108,16 @@ public class Projection extends Configured implements Tool {
      */
     public static class ProjectionReducer extends Reducer<Text, Text, NullWritable, Text> {
 		private Text outVal = new Text();
-		private StringBuilder stBld;
+		private StringBuilder stBld =  new StringBuilder();;
 		private String fieldDelim;
 
 		protected void setup(Context context) throws IOException, InterruptedException {
-        	fieldDelim = context.getConfiguration().get("field.delim", "[]");
+        	fieldDelim = context.getConfiguration().get("field.delim.out", "[]");
        }
 		
     	protected void reduce(Text key, Iterable<Text> values, Context context)
         	throws IOException, InterruptedException {
-    		stBld = new StringBuilder();
+    		stBld.delete(0, stBld.length());
     		stBld.append(key);
         	for (Text value : values){
     	   		stBld.append(fieldDelim).append(value);
