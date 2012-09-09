@@ -36,6 +36,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.TextInt;
+import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 public class Joiner extends Configured implements Tool {
@@ -54,10 +55,10 @@ public class Joiner extends Configured implements Tool {
 	        Utility.setConfiguration(job.getConfiguration());
 	        
 	        job.setMapperClass(Joiner.JoinerMapper.class);
-	        job.setReducerClass(Projection.ProjectionReducer.class);
+	        job.setReducerClass(Joiner.JoinerReducer.class);
 
 	        job.setMapOutputKeyClass(TextInt.class);
-	        job.setMapOutputValueClass(Text.class);
+	        job.setMapOutputValueClass(Tuple.class);
 
 	        job.setOutputKeyClass(NullWritable.class);
 	        job.setOutputValueClass(Text.class);
@@ -71,14 +72,15 @@ public class Joiner extends Configured implements Tool {
 	        return status;
 		}
 		
-		public static class JoinerMapper extends Mapper<LongWritable, Text, TextInt, Text> {
+		public static class JoinerMapper extends Mapper<LongWritable, Text, TextInt, Tuple> {
 			private TextInt outKey = new TextInt();
-			private Text outVal = new Text();
+			private Tuple outVal = new Tuple();
 			private int[]  keyFieldFirst;
 			private int[]  keyFieldSecond;
 	        private String fieldDelimRegex;
 	        private String fieldDelimOut;
 	        private boolean isFirstTypeSplit;
+	        private boolean sortKeyFields;
 	        
 	        protected void setup(Context context) throws IOException, InterruptedException {
 	        	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
@@ -87,6 +89,7 @@ public class Joiner extends Configured implements Tool {
 	        	isFirstTypeSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(firstTypePrefix);
 	        	keyFieldFirst = Utility.intArrayFromString(context.getConfiguration().get("key.field.first"), fieldDelimRegex ); 
 	        	keyFieldSecond = Utility.intArrayFromString(context.getConfiguration().get("key.field.second"), fieldDelimRegex ); 
+	        	sortKeyFields = context.getConfiguration().getBoolean("sort.key.fields", false);
 	       }
 
 	        @Override
@@ -94,11 +97,13 @@ public class Joiner extends Configured implements Tool {
 	            throws IOException, InterruptedException {
 	            String[] items  =  value.toString().split(fieldDelimRegex);
 	            if (isFirstTypeSplit) {
-	            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut) , 0);
-	            	outVal.set("0," + value.toString());
+	            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut, sortKeyFields) , 0);
+	            	Utility.createTuple(items, keyFieldFirst, outVal);
+	            	outVal.prepend("0");
 	            } else {
-	            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut) , 1);
-	            	outVal.set("1," + value.toString());
+	            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut, sortKeyFields) , 1);
+	            	Utility.createTuple(items, keyFieldSecond, outVal);
+	            	outVal.prepend("1");
 	            }
 	            
 	    		context.write(outKey, outVal);
@@ -109,14 +114,14 @@ public class Joiner extends Configured implements Tool {
 	     * @author pranab
 	     *
 	     */
-	    public static class JoinerReducer extends Reducer<TextInt, Text, NullWritable, Text> {
+	    public static class JoinerReducer extends Reducer<TextInt, Tuple, NullWritable, Text> {
 			private Text outVal = new Text();
-	    	private List<String> fistTypeList = new ArrayList<String>();
+	    	private List<Tuple> fistTypeList = new ArrayList<Tuple>();
 			private int[]  keyFieldFirst;
 			private int[]  keyFieldSecond;
 	        private String fieldDelimRegex;
 			private String fieldDelimOut;
-			private String secondType;
+			private Tuple secondType;
 			private StringBuilder stBld = new  StringBuilder();
 			private boolean outputKeyAtBeg;
 			private boolean outputFirstType;
@@ -132,28 +137,31 @@ public class Joiner extends Configured implements Tool {
 	        	outputSecondType = context.getConfiguration().getBoolean("output.second.type",true);
 	       }
 
-	        protected void reduce(TextInt key, Iterable<Text> values, Context context)
+	        protected void reduce(TextInt key, Iterable<Tuple> values, Context context)
 	        	throws IOException, InterruptedException {
 	        	fistTypeList.clear();
-	        	for (Text value : values){
-	        		if (value.toString().startsWith("0")) {
-	        			fistTypeList.add(value.toString().substring(2));
+	        	for (Tuple value : values){
+	        		if (value.startsWith("0")) {
+	        			fistTypeList.add(value);
 	        		} else {
-	        			secondType = value.toString().substring(2);
- 	        			for (String firstType :  fistTypeList) {
+	        			secondType = value;
+ 	        			for (Tuple firstType :  fistTypeList) {
 	        				stBld.delete(0, stBld.length());
 	        				
 	        				if (outputKeyAtBeg) {
 	        					stBld.append(key.getFirst()).append(fieldDelimOut);
 	        				}
 	        				if (outputFirstType) {
-	        					stBld.append(Utility.removeField(firstType, keyFieldFirst, fieldDelimRegex,  fieldDelimOut)).append(fieldDelimOut);
+	        					stBld.append(firstType.toString(1)).append(fieldDelimOut);
 	        				}
 	        				if (outputSecondType) {
-	        					stBld.append(Utility.removeField(secondType, keyFieldSecond, fieldDelimRegex, fieldDelimOut));
+	        					stBld.append(secondType.toString(1));
 	        				}
 	        				if (!outputKeyAtBeg) {
-	        					stBld.append(key.getFirst()).append(fieldDelimOut);
+	        					if(outputSecondType) {
+	        						stBld.append(fieldDelimOut);
+	        					}
+	        					stBld.append(key.getFirst());
 	        				}
 	        				
 	        				outVal.set(stBld.toString());

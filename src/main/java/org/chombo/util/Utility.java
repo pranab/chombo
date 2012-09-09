@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -254,6 +255,20 @@ private static boolean loadConfigHdfs(Configuration conf, String confFilePath) t
     	}
     	return stBld.toString();
     }
+
+    /**
+     * @param recordItems
+     * @param remFieldOrdinal
+     * @return
+     */
+    public static void createTuple(String[] recordItems, int[] remFieldOrdinal, Tuple tuple) {
+    	tuple.initialize();
+    	for (int i = 0; i < recordItems.length; ++i) {
+    		if (!ArrayUtils.contains(remFieldOrdinal, i)) {
+    			tuple.add(recordItems[i]);
+    		}
+    	}
+    }    
     
     /**
      * @param record
@@ -275,13 +290,25 @@ private static boolean loadConfigHdfs(Configuration conf, String confFilePath) t
      * @param delim
      * @return
      */
-    public static String extractFields(String[] items , int[] fields, String delim) {
+    public static String extractFields(String[] items , int[] fields, String delim, boolean sortKeyFields) {
     	StringBuilder stBld = new StringBuilder();
+    	List<String> keyFields = new ArrayList();
+    	
     	for (int i = 0; i < fields.length; ++i) {
-    		if (i  == 0) {
-    			stBld.append(items[fields[i]]);
+    		keyFields.add(items[fields[i]]);
+    	}
+
+    	if  (sortKeyFields) {
+    		Collections.sort(keyFields);
+    	}
+    	
+    	boolean first = true;
+    	for (String key : keyFields) {
+    		if (first) {
+    			stBld.append(key);
+    			first = false;
     		} else {
-    			stBld.append(delim).append(items[fields[i]]);
+    			stBld.append(delim).append(key);
     		}
     	}
     	return stBld.toString();

@@ -33,10 +33,6 @@ import org.apache.hadoop.io.WritableComparable;
  * @author pranab
  *
  */
-/**
- * @author pranab
- *
- */
 public class Tuple  implements WritableComparable<Tuple>  {
 	public static final byte BYTE = 0;
 	public static final byte BOOLEAN = 1;
@@ -264,6 +260,10 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return subThis.hashCode();
 	}
 	
+	public boolean startsWith(Object obj) {
+		return obj.equals(fields.get(0));
+	}
+	
 	public void setDelim(String delim) {
 		this.delim = delim;
 	}
@@ -280,5 +280,16 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return stBld.toString();
 	}
 	
+	public String toString(int start) {
+		StringBuilder stBld = new  StringBuilder();
+		for(int i = start; i <  fields.size() ; ++i) {
+			if (i == start){
+				stBld.append(fields.get(i).toString());
+			} else {
+				stBld.append(delim).append(fields.get(i).toString());
+			}
+		}		
+		return stBld.toString();
+	}
 	
 }
