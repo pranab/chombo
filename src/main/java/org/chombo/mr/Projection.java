@@ -97,7 +97,7 @@ public class Projection extends Configured implements Tool {
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
             outKey.set(items[keyField]);
-            outVal.set( Utility.extractFields(items , projectionFields, fieldDelimOut));
+            outVal.set( Utility.extractFields(items , projectionFields, fieldDelimOut, false));
 			context.write(outKey, outVal);
         }
 	}
