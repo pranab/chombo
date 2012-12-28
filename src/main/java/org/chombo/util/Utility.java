@@ -29,6 +29,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +41,13 @@ import org.apache.hadoop.fs.Path;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+
+import com.amazonaws.auth.PropertiesCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.S3Object;
+
 
 /**
  * Generic Utility
@@ -51,7 +60,20 @@ public class Utility {
 	private static final String HDFS_DEF_CONFIG_DIR = "/var/mawazo/";
 	private static final String HDFS_PREFIX = "hdfs:";
 	private static final int HDFS_PREFIX_LEN = 5;
+	private static final String S3_PREFIX = "s3n:";
 	private static final String PROP_FILE_EXT = ".properties";
+	
+	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
+    static AmazonS3 s3 = null;
+	static {
+		try {	
+			s3 = new AmazonS3Client(new PropertiesCredentials(Utility.class.getResourceAsStream("AwsCredentials.properties")));
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	
     /**
      * @param conf
@@ -82,7 +104,10 @@ public class Utility {
     	
     	//user provided config file path
         if (null != confFilePath){
-        	if (confFilePath.startsWith(HDFS_PREFIX)) {
+            if (confFilePath.startsWith(S3_PREFIX)) { 
+            	loadConfigS3(conf, confFilePath);
+		        System.out.println("config found in user specified Amazon S3 file");
+            } else if (confFilePath.startsWith(HDFS_PREFIX)) {
 		        loadConfigHdfs( conf,  confFilePath.substring(HDFS_PREFIX_LEN));
 		        System.out.println("config found in user specified HDFS file");
         	} else {
@@ -106,13 +131,13 @@ public class Utility {
     }
     
    /**
- * @param conf
- * @param confFilePath
- * @param handleErr
- * @return
- * @throws IOException
- */
-private static boolean loadConfig(Configuration conf, String confFilePath, boolean handleErr ) throws IOException {
+    * @param conf
+ 	* @param confFilePath
+ 	* @param handleErr
+ 	* @return
+ 	* @throws IOException
+ 	*/
+    private static boolean loadConfig(Configuration conf, String confFilePath, boolean handleErr ) throws IOException {
 	   boolean found = false;
 	   try {
 	        FileInputStream fis = new FileInputStream(confFilePath);
@@ -133,12 +158,12 @@ private static boolean loadConfig(Configuration conf, String confFilePath, boole
    }
    
    /**
- * @param conf
- * @param confFilePath
- * @return
- * @throws IOException
- */
-private static boolean loadConfigHdfs(Configuration conf, String confFilePath) throws IOException {
+    * @param conf
+ 	* @param confFilePath
+ 	* @return
+ 	* @throws IOException
+ 	*/
+	private static boolean loadConfigHdfs(Configuration conf, String confFilePath) throws IOException {
 	   boolean found = false;
 
 	   FileSystem dfs = FileSystem.get(conf);
@@ -155,6 +180,23 @@ private static boolean loadConfigHdfs(Configuration conf, String confFilePath) t
        return found;
    }
 
+	private static boolean loadConfigS3(Configuration conf, String confFilePath) throws IOException {
+        Matcher matcher = s3pattern.matcher(confFilePath);
+        matcher.matches();
+        String bucket = matcher.group(1);
+        String key = matcher.group(2);
+        S3Object object = s3.getObject(new GetObjectRequest(bucket, key));
+        InputStream is = object.getObjectContent();
+        Properties configProps = new Properties();
+        configProps.load(is);
+
+        for (Object keyObj : configProps.keySet()){
+            String keySt = keyObj.toString();
+            conf.set(keySt, configProps.getProperty(keySt));
+        }
+        return true;
+	}	
+	
     /**
      * @param vec
      * @param val
