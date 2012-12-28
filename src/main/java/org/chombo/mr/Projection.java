@@ -112,7 +112,7 @@ public class Projection extends Configured implements Tool {
 		private String fieldDelim;
 
 		protected void setup(Context context) throws IOException, InterruptedException {
-        	fieldDelim = context.getConfiguration().get("field.delim.out", "[]");
+        	fieldDelim = context.getConfiguration().get("field.delim", "[]");
        }
 		
     	protected void reduce(Text key, Iterable<Text> values, Context context)

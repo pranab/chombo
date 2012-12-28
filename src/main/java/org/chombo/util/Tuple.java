@@ -42,6 +42,7 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	public static final byte DOUBLE = 5;
 	public static final byte STRING = 6;
 	public static final byte BYTE_ARRAY = 7;
+	public static final byte TUPLE = 8;
 	
 	private List<Object> fields;
 	private String delim = ",";
@@ -167,6 +168,10 @@ public class Tuple  implements WritableComparable<Tuple>  {
 				byte[] bytes = new byte[len];
 				in.readFully(bytes);
 				fields.add(bytes);
+			} else if (type ==  TUPLE) {
+				Tuple childTuple = new Tuple(); 
+				childTuple.readFields(in);
+				fields.add(childTuple);
 			} else {
 				throw new IllegalArgumentException("Failed encoding, unknown element type in stream");
 			}
@@ -204,6 +209,9 @@ public class Tuple  implements WritableComparable<Tuple>  {
 				out.writeByte(BYTE_ARRAY);
 				out.writeShort(bytes.length);
 				out.write(bytes);
+			} else if (field instanceof Tuple){
+				out.writeByte(TUPLE);
+				((Tuple)field).write(out);
 			} else {
 				throw new IllegalArgumentException("Failed encoding, unknown element type in tuple");
 			}

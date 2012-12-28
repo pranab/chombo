@@ -39,7 +39,20 @@ public class SecondarySort {
 	     }
    
    }
+ 
+    /**
+     * @author pranab
+     *
+     */
+    public static class TextIntIdPairTuplePartitioner extends Partitioner<TextInt, Tuple> {
+	     @Override
+	     public int getPartition(TextInt key, Tuple value, int numPartitions) {
+	    	 //consider only base part of  key
+		     return key.baseHashCode() % numPartitions;
+	     }
    
+   }
+
     /**
      * @author pranab
      *
