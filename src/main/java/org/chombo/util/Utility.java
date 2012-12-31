@@ -63,6 +63,9 @@ public class Utility {
 	private static final String S3_PREFIX = "s3n:";
 	private static final String PROP_FILE_EXT = ".properties";
 	
+	public static final Integer ZERO = 0;
+	public  static final Integer ONE = 1;
+	
 	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
     static AmazonS3 s3 = null;
 	static {

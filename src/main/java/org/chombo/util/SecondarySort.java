@@ -52,7 +52,34 @@ public class SecondarySort {
 	     }
    
    }
+    
+    
+    /**
+     * @author pranab
+     *
+     */
+    public static class TupleTextPartitioner extends Partitioner<Tuple, Text> {
+	     @Override
+	     public int getPartition(Tuple key, Text value, int numPartitions) {
+	    	 //consider only base part of  key
+		     return key.hashCodeBase() % numPartitions;
+	     }
+   }
+   
 
+    /**
+     * @author pranab
+     *
+     */
+    public static class TuplePairPartitioner extends Partitioner<Tuple, Tuple> {
+	     @Override
+	     public int getPartition(Tuple key, Tuple value, int numPartitions) {
+	    	 //consider only base part of  key
+		     return key.hashCodeBase() % numPartitions;
+	     }
+   }
+   
+    
     /**
      * @author pranab
      *
@@ -73,4 +100,25 @@ public class SecondarySort {
     	}
      }
 
+    
+    /**
+     * @author pranab
+     *
+     */
+    public static class TuplePairGroupComprator extends WritableComparator {
+    	protected TuplePairGroupComprator() {
+    		super(Tuple.class, true);
+    	}
+
+    	@Override
+    	public int compare(WritableComparable w1, WritableComparable w2) {
+    		//consider only the base part of the key
+    		Tuple t1 = (Tuple)w1;
+    		Tuple t2 = (Tuple)w2;
+    		
+    		int comp =t1.compareToBase(t2);
+    		return comp;
+    	}
+     }
+   
 }
