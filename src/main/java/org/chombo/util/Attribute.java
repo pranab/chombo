@@ -17,6 +17,8 @@
 
 package org.chombo.util;
 
+import java.util.List;
+
 /**
  * @author pranab
  *
@@ -26,6 +28,7 @@ public class Attribute {
 	private int ordinal = -1;
 	private boolean id;
 	private String dataType;
+	private List<String> cardinality;
 	
 	public String getName() {
 		return name;
@@ -52,6 +55,12 @@ public class Attribute {
 		this.dataType = dataType;
 	}
 	
+	public List<String> getCardinality() {
+		return cardinality;
+	}
+	public void setCardinality(List<String> cardinality) {
+		this.cardinality = cardinality;
+	}
 	public boolean isCategorical() {
 		return dataType.equals("categorical");
 	}
@@ -66,5 +75,9 @@ public class Attribute {
 
 	public boolean isText() {
 		return dataType.equals("text");
+	}
+	
+	public int cardinalityIndex(String value) {
+		return cardinality.indexOf(value);
 	}
 }

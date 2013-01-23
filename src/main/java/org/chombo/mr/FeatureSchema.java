@@ -33,5 +33,16 @@ public class FeatureSchema {
 	public void setFields(List<FeatureField> fields) {
 		this.fields = fields;
 	}
+	
+	public FeatureField findFieldByOrdinal(int ordinal) {
+		FeatureField selField = null;
+		for (FeatureField field : fields) {
+			if (field.getOrdinal() == ordinal) {
+				selField = field;
+				break;
+			}
+		}
+		return selField;
+	}
 
 }

@@ -68,6 +68,7 @@ public class Utility {
 	
 	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
     static AmazonS3 s3 = null;
+    /*
 	static {
 		try {	
 			s3 = new AmazonS3Client(new PropertiesCredentials(Utility.class.getResourceAsStream("AwsCredentials.properties")));
@@ -76,7 +77,9 @@ public class Utility {
 			e.printStackTrace();
 		}
 	}
-	
+	*/
+    
+    
 	
     /**
      * @param conf
@@ -188,6 +191,10 @@ public class Utility {
         matcher.matches();
         String bucket = matcher.group(1);
         String key = matcher.group(2);
+        if (null == s3) {
+			s3 = new AmazonS3Client(new PropertiesCredentials(Utility.class.getResourceAsStream("AwsCredentials.properties")));
+        }
+        
         S3Object object = s3.getObject(new GetObjectRequest(bucket, key));
         InputStream is = object.getObjectContent();
         Properties configProps = new Properties();
