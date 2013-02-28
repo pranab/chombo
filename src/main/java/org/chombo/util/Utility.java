@@ -403,4 +403,25 @@ public class Utility {
     	return join(list, ",");
     }
     
+    /**
+     * @param arr
+     * @param delim
+     * @return
+     */
+    public static <T> String join(T[] arr, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (T obj : arr) {
+    		stBld.append(obj).append(delim);
+    	}
+    	
+    	return stBld.substring(0, stBld.length() -1);
+    }
+
+    /**
+     * @param arr
+     * @return
+     */
+    public static <T> String join(T[] arr) {
+    	return join(arr, ",");
+    }
 }
