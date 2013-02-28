@@ -375,11 +375,32 @@ public class Utility {
     	String[] extractedFields = new String[items.length - filteredFields.length ]; 
     	
     	for (int i = 0, j=0; i < items.length; ++i) {
-    		if (! ArrayUtils.contains(filteredFields, i)) {
+    		if (!ArrayUtils.contains(filteredFields, i)) {
     			extractedFields[j++] = items[i];
     		}
     	}
     	return extractedFields;
+    }
+  
+    /**
+     * @param list
+     * @return
+     */
+    public static <T> String join(List<T> list, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (T obj : list) {
+    		stBld.append(obj).append(delim);
+    	}
+    	
+    	return stBld.substring(0, stBld.length() -1);
+    }
+  
+    /**
+     * @param list
+     * @return
+     */
+    public static <T> String join(List<T> list) {
+    	return join(list, ",");
     }
     
 }
