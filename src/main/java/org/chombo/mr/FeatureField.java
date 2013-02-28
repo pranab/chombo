@@ -23,6 +23,7 @@ package org.chombo.mr;
  */
 public class FeatureField extends HistogramField {
 	private boolean  feature;
+	private int maxSplit;
 
 	public boolean isFeature() {
 		return feature;
@@ -30,6 +31,14 @@ public class FeatureField extends HistogramField {
 
 	public void setFeature(boolean feature) {
 		this.feature = feature;
+	}
+
+	public int getMaxSplit() {
+		return maxSplit;
+	}
+
+	public void setMaxSplit(int maxSplit) {
+		this.maxSplit = maxSplit;
 	}
 
 }
