@@ -45,4 +45,14 @@ public class FeatureSchema {
 		return selField;
 	}
 
+	public FeatureField findClassAttrField() {
+		FeatureField classAttrField = null;
+		for (FeatureField field : fields) {
+			if (!field.isId() && !field.isFeature()) {
+				classAttrField = field;
+				break;
+			}
+		}	
+		return classAttrField;
+	}
 }
