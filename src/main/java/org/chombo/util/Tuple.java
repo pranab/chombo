@@ -272,6 +272,11 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return subThis.hashCode();
 	}
 	
+	public int hashCodePartial(int subLength) {
+		Tuple subThis = new Tuple(fields.subList(0,subLength));
+		return subThis.hashCode();
+	}
+
 	public boolean startsWith(Object obj) {
 		return obj.equals(fields.get(0));
 	}
