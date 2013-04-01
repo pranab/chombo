@@ -62,33 +62,22 @@ public class TabularData {
 		return table[row][col];
 	}
 
+	public void add(int row, int col, int val) {
+		table[row][col] += val;
+	}
+
+	public void add(String rowLabel, String colLabel, int val) {
+		int[] rowCol = getRowCol(rowLabel, colLabel);
+		table[rowCol[0]][rowCol[1]] += val;
+	}
+	
 	public void increment(int row, int col) {
 		table[row][col] += 1;
 	}
 
 	public void increment(String rowLabel, String colLabel) {
-		int row = -1;
-		int col = -1;
-
-		int i = 0;
-		for (String label : rowLabels) {
-			if (label.equals(rowLabel)) {
-				row = i;
-				break;
-			}
-			++ i;
-		}
-		
-		i = 0;
-		for (String label : colLabels) {
-			if (label.equals(colLabel)) {
-				col = i;
-				break;
-			}
-			++ i;
-		}
-		
-		table[row][col] += 1;
+		int[] rowCol = getRowCol(rowLabel, colLabel);
+		table[rowCol[0]][rowCol[1]] += 1;
 	}
 	
 	public String serialize() {
@@ -127,6 +116,31 @@ public class TabularData {
 		for (int c = 0; c < numCol; ++c) {
 			table[row][c]  = Integer.parseInt(items[k++]);
 		}
+	}
+	
+	private int[] getRowCol(String rowLabel, String colLabel) {
+		int[] rowCol = new int[2];
+		rowCol[0] = rowCol[1] = -1;
+
+		int i = 0;
+		for (String label : rowLabels) {
+			if (label.equals(rowLabel)) {
+				rowCol[0] = i;
+				break;
+			}
+			++ i;
+		}
+		
+		i = 0;
+		for (String label : colLabels) {
+			if (label.equals(colLabel)) {
+				rowCol[1] = i;
+				break;
+			}
+			++ i;
+		}
+
+		return rowCol;
 	}
 
 }
