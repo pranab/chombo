@@ -18,6 +18,11 @@
 
 package org.chombo.util;
 
+/**
+ * Tabular data structure
+ * @author pranab
+ *
+ */
 public class TabularData {
 	protected int[][] table;
 	protected int numRow;
@@ -78,6 +83,22 @@ public class TabularData {
 	public void increment(String rowLabel, String colLabel) {
 		int[] rowCol = getRowCol(rowLabel, colLabel);
 		table[rowCol[0]][rowCol[1]] += 1;
+	}
+	
+	public int getRowSum(int row) {
+		int sum = 0;
+		for (int c = 0; c < numCol; ++c) {
+			sum += table[row][c];
+		}
+		return sum;
+	}
+
+	public int getColumnSum(int col) {
+		int sum = 0;
+		for (int r = 0; r < numRow; ++r) {
+			sum += table[r][col];
+		}
+		return sum;
 	}
 	
 	public String serialize() {
