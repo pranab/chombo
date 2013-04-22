@@ -424,4 +424,35 @@ public class Utility {
     public static <T> String join(T[] arr) {
     	return join(arr, ",");
     }
+    
+	/**
+	 * @param table
+	 * @param data
+	 * @param delim
+	 * @param row
+	 * @param numCol
+	 */
+	public static void deseralizeTableRow(double[][] table, String data, String delim, int row, int numCol) {
+		String[] items = data.split(delim);
+		int k = 0;
+		for (int c = 0; c < numCol; ++c) {
+				table[row][c]  = Double.parseDouble(items[k++]);
+		}
+	}
+	
+	/**
+	 * @param table
+	 * @param data
+	 * @param delim
+	 * @param row
+	 * @param numCol
+	 */
+	public static void deseralizeTableRow(int[][] table, String data, String delim, int row, int numCol) {
+		String[] items = data.split(delim);
+		int k = 0;
+		for (int c = 0; c < numCol; ++c) {
+				table[row][c]  = Integer.parseInt(items[k++]);
+		}
+	}
+
 }
