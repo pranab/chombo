@@ -22,12 +22,14 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -56,6 +58,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
         Utility.setConfiguration(job.getConfiguration(), "chombo");
         job.setMapperClass(NumericalAttrStats.StatsMapper.class);
         job.setReducerClass(NumericalAttrStats.StatsReducer.class);
+        job.setCombinerClass(NumericalAttrStats.StatsCombiner.class);
         
         job.setMapOutputKeyClass(Tuple.class);
         job.setMapOutputValueClass(Tuple.class);
@@ -116,6 +119,32 @@ public class NumericalAttrStats  extends Configured implements Tool {
         }
          
 	}
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class StatsCombiner extends Reducer<Tuple, Tuple, Tuple, Tuple> {
+		private Tuple outVal = new Tuple();
+		private double sum;
+		private double sumSq;
+		private int totalCount;
+		
+        protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
+        		throws IOException, InterruptedException {
+    		sum = 0;
+    		sumSq = 0;
+    		totalCount = 0;
+    		for (Tuple val : values) {
+    			sum  += val.getDouble(0);
+    			sumSq += val.getDouble(1);
+    			totalCount += val.getInt(2);
+    		}
+    		outVal.initialize();
+    		outVal.add(sum, sumSq, totalCount);
+        	context.write(key, outVal);       	
+        }		
+	}	
 	
 	   /**
      * @author pranab
