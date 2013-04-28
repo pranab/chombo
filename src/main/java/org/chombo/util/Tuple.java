@@ -141,6 +141,10 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return (Long)fields.get(index);
 	}
 
+	public double getDouble(int index) {
+		return (Double)fields.get(index);
+	}
+
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		initialize();
