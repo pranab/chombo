@@ -104,7 +104,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
             	outKey.add(attr, "0");
             	val = Double.parseDouble(items[attr]);
             	sqVal = val * val;
-            	outVal.add(val, sqVal, count);
+            	outVal.add(val, val, val, sqVal, count);
             	context.write(outKey, outVal);
 
             	//conditioned on another attribute
@@ -112,7 +112,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
                 	outKey.initialize();
                 	outVal.initialize();
                 	outKey.add(attr, items[conditionedAttr]);
-                	outVal.add(val, sqVal, count);
+                	outVal.add(val, val, val, sqVal, count);
                 	context.write(outKey, outVal);
             	}
         	}
@@ -129,19 +129,37 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		private double sum;
 		private double sumSq;
 		private int totalCount;
+		private double min;
+		private double max;
+		private double curMin;
+		private double curMax;
 		
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
     		sum = 0;
     		sumSq = 0;
     		totalCount = 0;
+    		int i = 0;
     		for (Tuple val : values) {
     			sum  += val.getDouble(0);
-    			sumSq += val.getDouble(1);
-    			totalCount += val.getInt(2);
+    			curMin = val.getDouble(1);
+    			curMax = val.getDouble(2);
+    			sumSq += val.getDouble(3);
+    			totalCount += val.getInt(4);
+    			if (i == 0) {
+    				min = curMin;
+    				max = curMax;
+    			} else {
+    				if (curMin < min) {
+    						min = curMin;
+    				} else if (curMax > max) {
+    					max = curMax;
+    				}
+    			}
+    			++i;
     		}
     		outVal.initialize();
-    		outVal.add(sum, sumSq, totalCount);
+    		outVal.add(sum, min, max, sumSq, totalCount);
         	context.write(key, outVal);       	
         }		
 	}	
@@ -160,6 +178,10 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		private double mean;
 		private double variance;
 		private double stdDev;
+		private double min;
+		private double max;
+		private double curMin;
+		private double curMax;
 
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -173,11 +195,26 @@ public class NumericalAttrStats  extends Configured implements Tool {
     		sum = 0;
     		sumSq = 0;
     		totalCount = 0;
+    		int i = 0;
     		for (Tuple val : values) {
-    			sum  += val.getDouble(0);
-    			sumSq += val.getDouble(1);
-    			totalCount += val.getInt(2);
+       			sum  += val.getDouble(0);
+    			curMin = val.getDouble(1);
+    			curMax = val.getDouble(2);
+    			sumSq += val.getDouble(3);
+    			totalCount += val.getInt(4);
+    			if (i == 0) {
+    				min = curMin;
+    				max = curMax;
+    			} else {
+    				if (curMin < min) {
+    						min = curMin;
+    				} else if (curMax > max) {
+    					max = curMax;
+    				}
+    			}
+    			++i;
     		}
+
     		mean = sum / totalCount;
     		variance = sumSq / totalCount - mean * mean;
     		stdDev = Math.sqrt(variance);
@@ -185,6 +222,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
     		stBld.append(key.getInt(0)).append(fieldDelim).append(key.getString(1)).append(fieldDelim);
     		stBld.append(sum).append(fieldDelim).append(sumSq).append(fieldDelim).append(totalCount).append(fieldDelim) ;
     		stBld.append(mean).append(fieldDelim).append(variance).append(fieldDelim).append(stdDev).append(fieldDelim)  ;
+    		stBld.append(min).append(fieldDelim).append(max) ;
         	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}
