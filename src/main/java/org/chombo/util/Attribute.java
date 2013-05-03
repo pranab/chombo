@@ -24,13 +24,16 @@ import java.util.List;
  *
  */
 public class Attribute {
-	private String name;
-	private int ordinal = -1;
-	private boolean id;
-	private String dataType;
-	private List<String> cardinality;
-	private int min;
-	private int max;
+	protected String name;
+	protected int ordinal = -1;
+	protected boolean id;
+	protected String dataType;
+	protected List<String> cardinality;
+	protected int min;
+	protected int max;
+	protected double mean;
+	protected double variance;
+	protected double stdDev;
 	
 	public String getName() {
 		return name;
@@ -74,6 +77,24 @@ public class Attribute {
 	}
 	public void setCardinality(List<String> cardinality) {
 		this.cardinality = cardinality;
+	}
+	public double getMean() {
+		return mean;
+	}
+	public void setMean(double mean) {
+		this.mean = mean;
+	}
+	public double getVariance() {
+		return variance;
+	}
+	public void setVariance(double variance) {
+		this.variance = variance;
+	}
+	public double getStdDev() {
+		return stdDev;
+	}
+	public void setStdDev(double stdDev) {
+		this.stdDev = stdDev;
 	}
 	public boolean isCategorical() {
 		return dataType.equals("categorical");

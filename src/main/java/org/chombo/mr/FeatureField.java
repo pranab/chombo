@@ -22,8 +22,8 @@ package org.chombo.mr;
  *
  */
 public class FeatureField extends HistogramField {
-	private boolean  feature;
-	private int maxSplit;
+	protected boolean  feature;
+	protected int maxSplit;
 
 	public boolean isFeature() {
 		return feature;
