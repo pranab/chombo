@@ -20,12 +20,16 @@ package org.chombo.mr;
 import org.chombo.util.Attribute;
 
 /**
+ * Derived class for attributes that require histogram
  * @author pranab
  *
  */
 public class HistogramField  extends Attribute {
 	protected int bucketWidth;
-
+	protected boolean bucketWidthDefined;
+	protected int numBuckets;
+	protected boolean numBucketsDefined;
+	private double[] bucketBoundaries;
 
 	public int getBucketWidth() {
 		return bucketWidth;
@@ -33,5 +37,76 @@ public class HistogramField  extends Attribute {
 
 	public void setBucketWidth(int bucketWidth) {
 		this.bucketWidth = bucketWidth;
+		bucketWidthDefined = true;
+	}
+
+	public int getNumBuckets() {
+		return numBuckets;
+	}
+
+	public void setNumBuckets(int numBuckets) {
+		this.numBuckets = numBuckets;
+		numBucketsDefined = true;
+	}
+	
+	/**
+	 * @param value
+	 * @return
+	 */
+	public int getBucket(String value) {
+		int bucket = 0;
+		double dValue = Double.parseDouble(value);
+		if (bucketWidthDefined) {
+			if (numBucketsDefined) {
+				//symmetric wrt to mean
+				if (null == bucketBoundaries) {
+					if (!meanDefined || !stdDevDefined) {
+						throw new IllegalArgumentException("when bucket count and width are set, mean and std dev are required");
+					}
+					double width = bucketWidth *  stdDev / 100.0;
+					double offset = mean - 0.5 * numBuckets * width;
+					intializeBuckets(offset, width);
+				}
+				bucket =  bucketIndex(dValue);
+			} else {
+				//simple index
+				bucket = (int)(dValue / bucketWidth);
+			}
+		} else {
+			if (numBucketsDefined) {
+				//divide range by bucket count
+				if (null == bucketBoundaries) {
+					if (!minDefined || !maxDefined) {
+						throw new IllegalArgumentException("when only bucket count is set, min and max are required");
+					}
+					double offset = min;
+					double width =  (max - min) / numBuckets;
+					intializeBuckets(offset, width);
+				}
+				bucket =  bucketIndex(dValue);
+			} else { 
+				//assume integer with small range
+				if (isInteger()) {
+					bucket = Integer.parseInt(value);
+				} else {
+					throw new IllegalArgumentException("Either bucket count or bucket width should be defined for double attribute");
+				}
+			}
+		}
+		return bucket;
+	}
+	
+	private void intializeBuckets(double offset, double width) {
+		bucketBoundaries = new double[numBuckets + 1];
+		for (int i = 0; i < numBuckets + 1; ++i, offset += width){
+			bucketBoundaries[i] = offset;
+		}
+	}
+	
+	private int bucketIndex(double value) {
+		int bucket = 0;
+		for (int i = 1; i <  bucketBoundaries.length && value > bucketBoundaries[i]; ++i, ++bucket) {
+		}
+		return bucket;
 	}
 }

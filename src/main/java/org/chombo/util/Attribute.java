@@ -20,6 +20,8 @@ package org.chombo.util;
 import java.util.List;
 
 /**
+ * Base class for attribute. Used in schema definition. Initialized based on schema definition
+ * JSON file
  * @author pranab
  *
  */
@@ -29,11 +31,15 @@ public class Attribute {
 	protected boolean id;
 	protected String dataType;
 	protected List<String> cardinality;
-	protected int min;
-	protected int max;
+	protected double  min;
+	protected boolean minDefined;
+	protected double  max;
+	protected boolean maxDefined;
 	protected double mean;
+	protected boolean meanDefined;
 	protected double variance;
 	protected double stdDev;
+	protected boolean stdDevDefined;
 	
 	public String getName() {
 		return name;
@@ -60,17 +66,19 @@ public class Attribute {
 		this.dataType = dataType;
 	}
 	
-	public int getMin() {
+	public double getMin() {
 		return min;
 	}
-	public void setMin(int min) {
+	public void setMin(double min) {
 		this.min = min;
+		minDefined = true;
 	}
-	public int getMax() {
+	public double getMax() {
 		return max;
 	}
-	public void setMax(int max) {
+	public void setMax(double max) {
 		this.max = max;
+		maxDefined = true;
 	}
 	public List<String> getCardinality() {
 		return cardinality;
@@ -83,6 +91,7 @@ public class Attribute {
 	}
 	public void setMean(double mean) {
 		this.mean = mean;
+		meanDefined = true;
 	}
 	public double getVariance() {
 		return variance;
@@ -95,6 +104,7 @@ public class Attribute {
 	}
 	public void setStdDev(double stdDev) {
 		this.stdDev = stdDev;
+		stdDevDefined = true;
 	}
 	public boolean isCategorical() {
 		return dataType.equals("categorical");
