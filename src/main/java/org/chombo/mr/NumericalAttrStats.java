@@ -169,29 +169,41 @@ public class NumericalAttrStats  extends Configured implements Tool {
      *
      */
     public static class StatsReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
-		private Text outVal = new Text();
-		private StringBuilder stBld =  new StringBuilder();;
-		private String fieldDelim;
-		private double sum;
-		private double sumSq;
-		private int totalCount;
-		private double mean;
-		private double variance;
-		private double stdDev;
-		private double min;
-		private double max;
+    	protected Text outVal = new Text();
+		protected StringBuilder stBld =  new StringBuilder();;
+		protected String fieldDelim;
+		protected double sum;
+		protected double sumSq;
+		protected int totalCount;
+		protected double mean;
+		protected double variance;
+		protected double stdDev;
+		protected double min;
+		protected double max;
 		private double curMin;
 		private double curMax;
 
+		/* (non-Javadoc)
+		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
+		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
        }
 		
+    	/* (non-Javadoc)
+    	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+    	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
-    		stBld.delete(0, stBld.length());
-    		
+    		processReduce(values);
+    		emitOutput( key,  context);
+    	}
+    	
+    	/**
+    	 * @param values
+    	 */
+    	protected void processReduce(Iterable<Tuple> values) {
     		sum = 0;
     		sumSq = 0;
     		totalCount = 0;
@@ -218,7 +230,17 @@ public class NumericalAttrStats  extends Configured implements Tool {
     		mean = sum / totalCount;
     		variance = sumSq / totalCount - mean * mean;
     		stdDev = Math.sqrt(variance);
- 
+    	}
+    	
+    	
+    	/**
+    	 * @param key
+    	 * @param context
+    	 * @throws IOException
+    	 * @throws InterruptedException
+    	 */
+    	protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
+    		stBld.delete(0, stBld.length());
     		stBld.append(key.getInt(0)).append(fieldDelim).append(key.getString(1)).append(fieldDelim);
     		stBld.append(sum).append(fieldDelim).append(sumSq).append(fieldDelim).append(totalCount).append(fieldDelim) ;
     		stBld.append(mean).append(fieldDelim).append(variance).append(fieldDelim).append(stdDev).append(fieldDelim)  ;
