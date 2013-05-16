@@ -144,6 +144,21 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	public double getDouble(int index) {
 		return (Double)fields.get(index);
 	}
+	
+	public boolean isInt(int index) {
+		Object obj = fields.get(index);
+		return obj instanceof Integer;
+	}
+
+	public boolean isString(int index) {
+		Object obj = fields.get(index);
+		return obj instanceof String;
+	}
+
+	public boolean isDouble(int index) {
+		Object obj = fields.get(index);
+		return obj instanceof Double;
+	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {

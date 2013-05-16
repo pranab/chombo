@@ -434,9 +434,12 @@ public class Utility {
 	 */
 	public static void deseralizeTableRow(double[][] table, String data, String delim, int row, int numCol) {
 		String[] items = data.split(delim);
-		int k = 0;
+		if (items.length != numCol) {
+			throw new IllegalArgumentException(
+					"Row serialization failed, number of tokens in string does not match with number of columns");
+		}
 		for (int c = 0; c < numCol; ++c) {
-				table[row][c]  = Double.parseDouble(items[k++]);
+				table[row][c]  = Double.parseDouble(items[c]);
 		}
 	}
 	
