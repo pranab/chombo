@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.io.WritableComparator;
@@ -66,6 +67,17 @@ public class SecondarySort {
 	     }
    }
    
+    /**
+     * @author pranab
+     *
+     */
+    public static class TupleIntPartitioner extends Partitioner<Tuple, IntWritable> {
+	     @Override
+	     public int getPartition(Tuple key, IntWritable value, int numPartitions) {
+	    	 //consider only base part of  key
+		     return key.hashCodeBase() % numPartitions;
+	     }
+   }
 
     /**
      * @author pranab
