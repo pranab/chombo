@@ -65,9 +65,6 @@ public class RunningAggregator  extends Configured implements Tool {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
-        job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
-        job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
-
         job.setNumReduceTasks(job.getConfiguration().getInt("num.reducer", 1));
 
         int status =  job.waitForCompletion(true) ? 0 : 1;
