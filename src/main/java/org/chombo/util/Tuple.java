@@ -133,18 +133,34 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return (String)fields.get(index);
 	}
 
+	public String getLastAsString() {
+		return (String)fields.get(fields.size()-1);
+	}
+
 	public int getInt(int index) {
 		return (Integer)fields.get(index);
+	}
+
+	public int getLastAsInt() {
+		return (Integer)fields.get(fields.size()-1);
 	}
 
 	public long getLong(int index) {
 		return (Long)fields.get(index);
 	}
 
+	public long getLastAsLong() {
+		return (Long)fields.get(fields.size()-1);
+	}
+
 	public double getDouble(int index) {
 		return (Double)fields.get(index);
 	}
 	
+	public double getLastAsDouble() {
+		return (Double)fields.get(fields.size()-1);
+	}
+
 	public boolean isInt(int index) {
 		Object obj = fields.get(index);
 		return obj instanceof Integer;
