@@ -18,10 +18,12 @@
 
 package org.chombo.util;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -255,6 +257,27 @@ public class Utility {
         Path src = new Path(filePath);
         FSDataInputStream fs = dfs.open(src);
         return fs;
+    }
+    
+    /**
+     * @param conf
+     * @param filePathParam
+     * @param fieldDelimRegex
+     * @return
+     * @throws IOException
+     */
+    public static List<String[]> parseFileLines(Configuration conf, String filePathParam, String fieldDelimRegex) throws IOException {
+    	List<String[]> lines = new ArrayList<String[]>();
+    	InputStream fs = getFileStream(conf, filePathParam);
+    	BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+    	String line = null; 
+    	String[] items = null;
+    	
+    	while((line = reader.readLine()) != null) {
+    		items = line.split(fieldDelimRegex);
+    		lines.add(items);
+    	}
+    	return lines;
     }
     
     /**
