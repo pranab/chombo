@@ -87,8 +87,17 @@ public class RunningAggregator  extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	quantityAttr = config.getInt("quantity.attr",-1);
-        	String aggrFilePrefix = context.getConfiguration().get("aggregate.file.prefix", "aggr");
-        	isAggrFileSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(aggrFilePrefix);
+        	String aggrFilePrefix = context.getConfiguration().get("aggregate.file.prefix", "");
+        	if (!aggrFilePrefix.isEmpty()) {
+        		isAggrFileSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(aggrFilePrefix);
+        	} else {
+            	String incrFilePrefix = context.getConfiguration().get("incremental.file.prefix", "");
+            	if (!incrFilePrefix.isEmpty()) {
+            		isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
+            	} else {
+            		throw new IOException("Aggregate or incremental file prefix needs to be specified");
+            	}
+        	}
        }
  
         @Override
@@ -97,15 +106,21 @@ public class RunningAggregator  extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
         	outKey.initialize();
         	outVal.initialize();
+        	int initValue = 0;
             for (int i = 0; i < quantityAttr;  ++i) {
             	outKey.append(items[i]);
             }
-            outVal.append(Integer.parseInt(items[quantityAttr]));
             
         	if (isAggrFileSplit) {
-        		outVal.append(Integer.parseInt(items[quantityAttr + 1]));
+        		if (items.length >= quantityAttr) {
+        			//existing aggregation
+                    outVal.add(Integer.parseInt(items[quantityAttr]) ,   Integer.parseInt(items[quantityAttr + 1]) );
+        		} else {
+        			//first aggrgation
+        			outVal.add(initValue, initValue);
+        		}
         	} else {
-        		outVal.append(1);
+                outVal.add(Integer.parseInt(items[quantityAttr]), (int)1);
         	}
         	context.write(outKey, outVal);
         }
@@ -140,16 +155,10 @@ public class RunningAggregator  extends Configured implements Tool {
     		sum = 0;
     		count = 0;
     		for (Tuple val : values) {
-    			if (first) {
-    				sum = val.getInt(0);
-    				count = val.getInt(1);
-    				first = false;
-    			} else {
     				sum  += val.getInt(0);
     				count += val.getInt(1);
-    			}
     		}   	
-    		avg = sum / count;
+    		avg = count > 0 ? sum / count  :  0;
     		
     		stBld.delete(0, stBld.length());
     		stBld.append(key.toString()).append(fieldDelim);
