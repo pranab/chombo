@@ -151,7 +151,6 @@ public class RunningAggregator  extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
-    		boolean first = true;
     		sum = 0;
     		count = 0;
     		for (Tuple val : values) {
