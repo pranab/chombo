@@ -253,9 +253,12 @@ public class Utility {
      */
     public static InputStream getFileStream(Configuration conf, String pathConfig) throws IOException {
         String filePath = conf.get(pathConfig);
-        FileSystem dfs = FileSystem.get(conf);
-        Path src = new Path(filePath);
-        FSDataInputStream fs = dfs.open(src);
+        FSDataInputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.open(src);
+        }
         return fs;
     }
     
@@ -269,13 +272,15 @@ public class Utility {
     public static List<String[]> parseFileLines(Configuration conf, String filePathParam, String fieldDelimRegex) throws IOException {
     	List<String[]> lines = new ArrayList<String[]>();
     	InputStream fs = getFileStream(conf, filePathParam);
-    	BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
-    	String line = null; 
-    	String[] items = null;
+    	if (null != fs) {
+    		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+    		String line = null; 
+    		String[] items = null;
     	
-    	while((line = reader.readLine()) != null) {
-    		items = line.split(fieldDelimRegex);
-    		lines.add(items);
+    		while((line = reader.readLine()) != null) {
+    			items = line.split(fieldDelimRegex);
+    			lines.add(items);
+    		}
     	}
     	return lines;
     }
