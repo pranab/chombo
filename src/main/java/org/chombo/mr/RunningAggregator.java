@@ -116,11 +116,11 @@ public class RunningAggregator  extends Configured implements Tool {
         			//existing aggregation
                     outVal.add(Integer.parseInt(items[quantityAttr]) ,   Integer.parseInt(items[quantityAttr + 1]) );
         		} else {
-        			//first aggrgation
+        			//first aggregation
         			outVal.add(initValue, initValue);
         		}
         	} else {
-                outVal.add(Integer.parseInt(items[quantityAttr]), (int)1);
+                outVal.add((int)1, Integer.parseInt( items[quantityAttr]));
         	}
         	context.write(outKey, outVal);
         }
@@ -154,14 +154,14 @@ public class RunningAggregator  extends Configured implements Tool {
     		sum = 0;
     		count = 0;
     		for (Tuple val : values) {
-    				sum  += val.getInt(0);
-    				count += val.getInt(1);
+				count += val.getInt(0);
+    			sum  += val.getInt(1);
     		}   	
     		avg = count > 0 ? sum / count  :  0;
     		
     		stBld.delete(0, stBld.length());
     		stBld.append(key.toString()).append(fieldDelim);
-    		stBld.append(sum).append(fieldDelim).append(count).append(fieldDelim).append(avg);
+    		stBld.append(count).append(fieldDelim).append(sum).append(fieldDelim).append(avg);
         	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}

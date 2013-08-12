@@ -34,15 +34,27 @@ public class TabularData {
 	public TabularData() {
 	}
 	
+	/**
+	 * @param numRow
+	 * @param numCol
+	 */
 	public TabularData(int numRow, int numCol) {
 		initialize( numRow,  numCol);
 	}
 	
+	/**
+	 * @param rowLabels
+	 * @param colLabels
+	 */
 	public TabularData(String[] rowLabels, String[] colLabels) {
 		initialize( rowLabels.length,  colLabels.length);
 		setLabels(rowLabels, colLabels); 
 	}
 
+	/**
+	 * @param numRow
+	 * @param numCol
+	 */
 	public void  initialize(int numRow, int numCol) {
 		table = new int[numRow][numCol];
 		for (int r = 0; r < numRow; ++r) {
@@ -54,37 +66,85 @@ public class TabularData {
 		this.numCol = numCol;
 	}
 	
+	/**
+	 * @param rowLabels
+	 * @param colLabels
+	 */
 	public void setLabels(String[] rowLabels, String[] colLabels) {
 		this.rowLabels = rowLabels;
 		this.colLabels = colLabels;
 	}
 
+	/**
+	 * @param row
+	 * @param col
+	 * @param val
+	 */
 	public void set(int row, int col, int val) {
 		table[row][col] = val;
 	}
 	
+	/**
+	 * @param row
+	 * @param col
+	 * @return
+	 */
 	public int get(int row, int col) {
 		return table[row][col];
 	}
 
+	/**
+	 * @param row
+	 * @return
+	 */
+	public int[] getRow(int row) {
+		return table[row];
+	}
+	
+	/**
+	 * @param row
+	 * @param col
+	 * @param val
+	 */
 	public void add(int row, int col, int val) {
 		table[row][col] += val;
 	}
 
+	/**
+	 * add value to cell
+	 * @param rowLabel
+	 * @param colLabel
+	 * @param val
+	 */
 	public void add(String rowLabel, String colLabel, int val) {
 		int[] rowCol = getRowCol(rowLabel, colLabel);
 		table[rowCol[0]][rowCol[1]] += val;
 	}
 	
+	/**
+	 * increments cell
+	 * @param row
+	 * @param col
+	 */
 	public void increment(int row, int col) {
 		table[row][col] += 1;
 	}
 
+	/**
+	 * increments cell
+	 * @param rowLabel
+	 * @param colLabel
+	 */
 	public void increment(String rowLabel, String colLabel) {
 		int[] rowCol = getRowCol(rowLabel, colLabel);
 		table[rowCol[0]][rowCol[1]] += 1;
 	}
 	
+	/**
+	 * sum of row
+	 * @param row
+	 * @return
+	 */
 	public int getRowSum(int row) {
 		int sum = 0;
 		for (int c = 0; c < numCol; ++c) {
@@ -93,6 +153,11 @@ public class TabularData {
 		return sum;
 	}
 
+	/**
+	 * sum of column
+	 * @param col
+	 * @return
+	 */
 	public int getColumnSum(int col) {
 		int sum = 0;
 		for (int r = 0; r < numRow; ++r) {
@@ -101,6 +166,10 @@ public class TabularData {
 		return sum;
 	}
 	
+	/**
+	 * serializes table
+	 * @return
+	 */
 	public String serialize() {
 		StringBuilder stBld = new StringBuilder();
 		for (int r = 0; r < numRow; ++r) {
@@ -112,6 +181,11 @@ public class TabularData {
 		return stBld.substring(0, stBld.length()-1);
 	}
 
+	/**
+	 * serialize row
+	 * @param row
+	 * @return
+	 */
 	public String serializeRow(int row) {
 		StringBuilder stBld = new StringBuilder();
 		for (int c = 0; c < numCol; ++c) {
@@ -121,6 +195,10 @@ public class TabularData {
 		return stBld.substring(0, stBld.length()-1);
 	}
 
+	/**
+	 * deserialize table
+	 * @param data
+	 */
 	public void deseralize(String data) {
 		String[] items = data.split(DELIMETER);
 		int k = 0;
@@ -131,6 +209,11 @@ public class TabularData {
 		}
 	}
 	
+	/**
+	 * deserialize row
+	 * @param data
+	 * @param row
+	 */
 	public void deseralizeRow(String data, int row) {
 		String[] items = data.split(DELIMETER);
 		int k = 0;
@@ -139,6 +222,12 @@ public class TabularData {
 		}
 	}
 	
+	/**
+	 * Row and column index
+	 * @param rowLabel
+	 * @param colLabel
+	 * @return
+	 */
 	private int[] getRowCol(String rowLabel, String colLabel) {
 		int[] rowCol = new int[2];
 		rowCol[0] = rowCol[1] = -1;
