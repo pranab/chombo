@@ -286,6 +286,25 @@ public class Utility {
     }
     
     /**
+     * @param conf
+     * @param filePathParam
+     * @return
+     * @throws IOException
+     */
+    public static List<String> getFileLines(Configuration conf, String filePathParam) throws IOException {
+    	List<String> lines = new ArrayList<String>();
+    	InputStream fs = getFileStream(conf, filePathParam);
+    	if (null != fs) {
+    		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+    		String line = null; 
+    		while((line = reader.readLine()) != null) {
+    			lines.add(line);
+    		}
+    	}
+    	return lines;
+    }
+
+    /**
      * @param text
      * @param analyzer
      * @return
