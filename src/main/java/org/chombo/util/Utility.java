@@ -384,6 +384,20 @@ public class Utility {
     }
     
     /**
+     * @param record
+     * @param delimRegex
+     * @return
+     */
+    public static double[] doubleArrayFromString(String record, String delimRegex ) {
+    	String[] items = record.split(delimRegex);
+    	double[] data = new double[items.length];
+    	for (int i = 0; i < items.length; ++i) {
+    		data[i] = Double.parseDouble(items[i]);
+    	}
+    	return data;
+    }
+
+    /**
      * @param items
      * @param fields
      * @param delim
