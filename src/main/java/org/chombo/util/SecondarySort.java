@@ -133,4 +133,16 @@ public class SecondarySort {
     	}
      }
    
+    /**
+     * @author pranab
+     *
+     */
+    public static class RawIntKeyTextPartitioner extends Partitioner<IntWritable, Text> {
+	     @Override
+	     public int getPartition(IntWritable key, Text value, int numPartitions) {
+	    	 //key value is the partition
+		     return key.get();
+	     }
+    }
+    
 }

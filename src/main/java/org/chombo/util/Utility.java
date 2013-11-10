@@ -518,5 +518,16 @@ public class Utility {
 				table[row][c]  = Integer.parseInt(items[k++]);
 		}
 	}
+	
+	/**
+	 * Returns sibling path
+	 * @param path
+	 * @param sibling
+	 * @return
+	 */
+	public static String getSiblingPath(String path, String sibling) {
+		int pos = path.lastIndexOf('/');
+		return path.substring(0, pos + 1) + sibling;
+	}
 
 }
