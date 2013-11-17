@@ -529,5 +529,13 @@ public class Utility {
 		int pos = path.lastIndexOf('/');
 		return path.substring(0, pos + 1) + sibling;
 	}
+	
+	/**
+	 * @param data
+	 * @return
+	 */
+	public static boolean isBlank(String data) {
+		return data == null || data.isEmpty();
+	}
 
 }
