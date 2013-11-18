@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
@@ -120,6 +121,27 @@ public class FeatureSchema {
 			}
 		}	
 		return classAttrField;
+	}
+	
+	/**
+	 * returns ordinals of feature fields
+	 * @return
+	 */
+	public int[] getFeatureFieldOrdinals() {
+		int[] ordinals = null;
+		List<Integer> ordinalList = new ArrayList<Integer>();
+		for (FeatureField field : fields) {
+			if (field.isFeature()) {
+				ordinalList.add(field.getOrdinal());
+			}
+		}	
+		Collections.sort(ordinalList);
+		
+		ordinals = new int[ordinalList.size()];
+		for (int i = 0; i < ordinalList.size(); ++i) {
+			ordinals[i] = ordinalList.get(i);
+		}
+		return ordinals;
 	}
 	
 	/**

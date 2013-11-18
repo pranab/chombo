@@ -442,7 +442,38 @@ public class Utility {
     	}
     	return extractedFields;
     }
+    
+    /**
+     * @param from
+     * @param toBeRemoved
+     * @return
+     */
+    public static  int[] removeItems(int[] from, int[] toBeRemoved) {
+    	int[] subtracted = null;
+    	List<Integer> subtractedList = new ArrayList<Integer>();
+    	
+    	for (int i = 0; i < from.length; ++i) {
+    		int item = from[i];
+    		if (!ArrayUtils.contains(toBeRemoved, item)) {
+    			subtractedList.add(item);
+    		}
+    	}
+    	subtracted = fromListToIntArray(subtractedList);
+    	return subtracted;
+    }
   
+    /**
+     * @param valueList
+     * @return
+     */
+    public static int[] fromListToIntArray(List<Integer> valueList) {
+		int[] values = new int[valueList.size()];
+		for (int i = 0; i < valueList.size(); ++i) {
+			values[i] = valueList.get(i);
+		}
+		return values;
+    }
+    
     /**
      * @param list
      * @return
