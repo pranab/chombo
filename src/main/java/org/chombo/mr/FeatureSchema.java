@@ -144,6 +144,21 @@ public class FeatureSchema {
 		return ordinals;
 	}
 	
+
+	/**
+	 * Get all feature fields
+	 * @return
+	 */
+	public List<FeatureField> getFeatureAttrFields() {
+		List<FeatureField> featureFields = new ArrayList<FeatureField>();
+		for (FeatureField field : fields) {
+			if (field.isFeature()) {
+				featureFields.add(field);
+			}
+		}	
+		return featureFields;
+	}
+	
 	/**
 	 * @param attrOrd
 	 * @return

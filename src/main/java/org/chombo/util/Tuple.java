@@ -47,48 +47,86 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	private List<Object> fields;
 	private String delim = ",";
 	
+	/**
+	 * 
+	 */
 	public Tuple() {
 		fields = new ArrayList<Object>();
 	}
 	
+	/**
+	 * @param fields
+	 */
 	public Tuple(List<Object> fields) {
 		this.fields = fields;
 	}
 	
+	/**
+	 * creates clone
+	 * @return
+	 */
 	public Tuple createClone() {
 		Tuple clone = new Tuple();
 		clone.fields.addAll(fields);
 		return clone;
 	}
 
+	/**
+	 * clears internal list
+	 */
 	public void initialize() {
 		fields.clear();
 	}
 	
+	/**
+	 * gets size
+	 * @return
+	 */
 	public int getSize() {
 		return fields.size();
 	}
 	
+	/**
+	 * add one or more elements
+	 * @param fieldList
+	 */
 	public void add(Object...  fieldList) {
 		for (Object field :  fieldList) {
 			fields.add(field);
 		}
 	}
 
+	/**
+	 * prepends element
+	 * @param field
+	 */
 	public void prepend(Object field) {
 		fields.add(0, field);
 	}
 
+	/**
+	 * appends element
+	 * @param field
+	 */
 	public void append(Object field) {
 		fields.add( field);
 	}
 
+	/**
+	 * @param types
+	 * @param fields
+	 */
 	public void add(byte[] types, String[] fields) {
 		for (int i = 0; i <  fields.length; ++i) {
 			add(types[i],  fields[i]) ;
 		}
 	}
 	
+	/**
+	 * adds string serilized elements
+	 * @param type
+	 * @param field
+	 */
 	public void add(byte type, String field) {
 		Object typedField = null;
 		
@@ -121,61 +159,125 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		}
 	}
 
+	/**
+	 * sets specific element
+	 * @param index
+	 * @param field
+	 */
 	public void set(int index, Object field) {
 		fields.add(index, field);
 	}
 	
+	/**
+	 * gets specific element
+	 * @param index
+	 * @return
+	 */
 	public Object get(int index) {
 		return fields.get(index);
 	}
 	
+	/**
+	 * gets string from specific index
+	 * @param index
+	 * @return
+	 */
 	public String getString(int index) {
 		return (String)fields.get(index);
 	}
 
+	/**
+	 * gets last element as string
+	 * @return
+	 */
 	public String getLastAsString() {
 		return (String)fields.get(fields.size()-1);
 	}
 
+	/**
+	 * gets int from specific index
+	 * @param index
+	 * @return
+	 */
 	public int getInt(int index) {
 		return (Integer)fields.get(index);
 	}
 
+	/**
+	 * gets last element as int
+	 * @return
+	 */
 	public int getLastAsInt() {
 		return (Integer)fields.get(fields.size()-1);
 	}
 
+	/**
+	 * gets long from specific index
+	 * @param index
+	 * @return
+	 */
 	public long getLong(int index) {
 		return (Long)fields.get(index);
 	}
 
+	/**
+	 * gets last element as long
+	 * @return
+	 */
 	public long getLastAsLong() {
 		return (Long)fields.get(fields.size()-1);
 	}
 
+	/**
+	 * gets double from specific index
+	 * @param index
+	 * @return
+	 */
 	public double getDouble(int index) {
 		return (Double)fields.get(index);
 	}
 	
+	/**
+	 * gets last element as double
+	 * @return
+	 */
 	public double getLastAsDouble() {
 		return (Double)fields.get(fields.size()-1);
 	}
 
+	/**
+	 * return true if the element is int
+	 * @param index
+	 * @return
+	 */
 	public boolean isInt(int index) {
 		Object obj = fields.get(index);
 		return obj instanceof Integer;
 	}
 
+	/**
+	 * return true if the element is string
+	 * @param index
+	 * @return
+	 */
 	public boolean isString(int index) {
 		Object obj = fields.get(index);
 		return obj instanceof String;
 	}
 
+	/**
+	 * return true if the element is boolean
+	 * @param index
+	 * @return
+	 */
 	public boolean isDouble(int index) {
 		Object obj = fields.get(index);
 		return obj instanceof Double;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.apache.hadoop.io.Writable#readFields(java.io.DataInput)
+	 */
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		initialize();
@@ -213,6 +315,9 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.apache.hadoop.io.Writable#write(java.io.DataOutput)
+	 */
 	@Override
 	public void write(DataOutput out) throws IOException {
 		out.writeInt(fields.size());
@@ -253,10 +358,16 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
 	public int hashCode() {
 		return fields.hashCode();
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	public boolean equals(Object obj ) {
 		boolean isEqual = false;
 		if (null != obj && obj instanceof Tuple){
@@ -296,30 +407,56 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return compared;
 	}
 	
+	/**
+	 * comparison based on all but the last element
+	 * @param other
+	 * @return
+	 */
 	public int compareToBase(Tuple other) {
 		Tuple subThis = new Tuple(fields.subList(0,fields.size()-1));
 		Tuple subThat = new Tuple(other.fields.subList(0,other.fields.size()-1));
 		return subThis.compareTo(subThat);
 	}
 	
+	/**
+	 * hash code based on all but the last element
+	 * @return
+	 */
 	public int hashCodeBase() {
 		Tuple subThis = new Tuple(fields.subList(0,fields.size()-1));
 		return subThis.hashCode();
 	}
 	
+	/**
+	 * hash based on partial list
+	 * @param subLength
+	 * @return
+	 */
 	public int hashCodePartial(int subLength) {
 		Tuple subThis = new Tuple(fields.subList(0,subLength));
 		return subThis.hashCode();
 	}
 
+	/**
+	 * returns true if starts with given object
+	 * @param obj
+	 * @return
+	 */
 	public boolean startsWith(Object obj) {
 		return obj.equals(fields.get(0));
 	}
 	
+	/**
+	 * sets delimeter
+	 * @param delim
+	 */
 	public void setDelim(String delim) {
 		this.delim = delim;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	public String toString() {
 		StringBuilder stBld = new  StringBuilder();
 		for(int i = 0; i <  fields.size() ; ++i) {
@@ -332,6 +469,11 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return stBld.toString();
 	}
 	
+	/**
+	 * to string starting at given index
+	 * @param start
+	 * @return
+	 */
 	public String toString(int start) {
 		StringBuilder stBld = new  StringBuilder();
 		for(int i = start; i <  fields.size() ; ++i) {
@@ -342,6 +484,24 @@ public class Tuple  implements WritableComparable<Tuple>  {
 			}
 		}		
 		return stBld.toString();
+	}
+	
+	/**
+	 * creates tuple based on partial list of source tuple
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public Tuple subTuple(int start, int end) {
+		if (end < start) {
+			throw new IllegalArgumentException("end index is smaller that start index");
+		}
+		
+		Tuple subTuple = new Tuple();
+		for (int i = start; i < end; ++i) {
+			subTuple.add(get(i));
+		}
+		return subTuple;
 	}
 	
 }
