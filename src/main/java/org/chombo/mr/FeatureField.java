@@ -18,10 +18,11 @@
 package org.chombo.mr;
 
 /**
+ * Field for feature attribute and class attribute
  * @author pranab
  *
  */
-public class FeatureField extends HistogramField {
+public class FeatureField extends HistogramField implements  Comparable<FeatureField>{
 	protected boolean  feature;
 	protected int maxSplit;
 
@@ -39,6 +40,12 @@ public class FeatureField extends HistogramField {
 
 	public void setMaxSplit(int maxSplit) {
 		this.maxSplit = maxSplit;
+	}
+
+	@Override
+	public int compareTo(FeatureField that) {
+		int ret = this.ordinal < that.ordinal ? -1 : (this.ordinal == that.ordinal? 0 : 1);
+		return ret;
 	}
 
 }

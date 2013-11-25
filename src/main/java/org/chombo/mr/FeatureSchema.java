@@ -156,6 +156,9 @@ public class FeatureSchema {
 				featureFields.add(field);
 			}
 		}	
+		
+		//sort by ordinal
+		Collections.sort(featureFields);
 		return featureFields;
 	}
 	
