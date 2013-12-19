@@ -28,7 +28,6 @@ import java.util.Map;
 public class HistogramStat {
 	private int binWidth;
 	private Map<Integer, Bin> binMap = new HashMap<Integer, Bin>();
-	private Bin[] bins;
 	private int count;
 	
 	
@@ -59,6 +58,7 @@ public class HistogramStat {
 			binMap.put(index, bin);
 		}
 		bin.addCount(count);
+		this.count += count;
 	}
 
 	/**
@@ -70,7 +70,6 @@ public class HistogramStat {
 		
 		int mean = getMean();
 		int meanIndex = mean / binWidth;
-		Arrays.sort(bins);
 		int confCount = 0;
 		int confidenceLimit = (count * confidenceLimitPercent) / 100;
 		int binCount = 0;
@@ -82,7 +81,7 @@ public class HistogramStat {
 		
 		//starting for mean index extend to both sides to include other bins
 		int offset = 1;
-		for(; binCount < bins.length ; ++offset) {
+		for(; binCount < binMap.size() ; ++offset) {
 			bin = binMap.get(meanIndex + offset);
 			if (null != bin) {
 				confCount += bin.getCount();
@@ -98,8 +97,9 @@ public class HistogramStat {
 			}
 		}
 		
-		confidenceBounds[0] = (int)((((double)(meanIndex - offset)) + 0.5) * binWidth);
-		confidenceBounds[1] = (int)((((double)(meanIndex + offset)) + 0.5) * binWidth);
+		double avBinWidth = binWidth > 1 ? 0.5 : 0.0;
+		confidenceBounds[0] = (int)((((double)(meanIndex - offset)) + avBinWidth) * binWidth);
+		confidenceBounds[1] = (int)((((double)(meanIndex + offset)) + avBinWidth) * binWidth);
 		return confidenceBounds;
 	}
 
@@ -107,22 +107,37 @@ public class HistogramStat {
 	 * @return
 	 */
 	public int getMean() {
-		//sorted bins
-		bins = new Bin[binMap.size()];
-		int i = 0;
-		for (Integer index : binMap.keySet()) {
-			bins[i++] = binMap.get(index);
-		}
-		
+		//bin wise mean
 		double sum = 0;
 		count = 0;
-		for (i = 0; i < bins.length; ++i) {
-			sum += ((double)bins[i].getIndex() + 0.5) * binWidth * bins[i].getCount();
-			count += bins[i].getCount();
+		double avBinWidth = binWidth > 1 ? 0.5 : 0.0;
+		for (Integer index : binMap.keySet()) {
+			Bin bin = binMap.get(index);
+			sum += ((double)bin.getIndex() + avBinWidth) * binWidth * bin.getCount();
 		}
-		
 		int mean = (int)(sum / count);
 		return mean;
+	}
+	
+	/**
+	 * @return
+	 */
+	public int getCount() {
+		return count;
+	}
+	
+	/**
+	 * @return
+	 */
+	public HistogramStat.Bin[] getSortedBins() {
+		Bin[] bins = new Bin[binMap.size()];
+		int i = 0;
+		for (Integer index : binMap.keySet()) {
+			Bin bin = binMap.get(index);
+			bins[i++] = bin;
+		}		
+		Arrays.sort(bins);
+		return bins;
 	}
 	
 	/**
