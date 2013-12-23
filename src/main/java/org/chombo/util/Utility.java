@@ -69,9 +69,9 @@ public class Utility {
 	public  static final Integer ONE = 1;
 	
 	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
-    static AmazonS3 s3 = null;
     /*
-	static {
+    static AmazonS3 s3 = null;
+ 	static {
 		try {	
 			s3 = new AmazonS3Client(new PropertiesCredentials(Utility.class.getResourceAsStream("AwsCredentials.properties")));
 		}
@@ -193,9 +193,7 @@ public class Utility {
         matcher.matches();
         String bucket = matcher.group(1);
         String key = matcher.group(2);
-        if (null == s3) {
-			s3 = new AmazonS3Client(new PropertiesCredentials(Utility.class.getResourceAsStream("AwsCredentials.properties")));
-        }
+		AmazonS3 s3 = new AmazonS3Client(new PropertiesCredentials(Utility.class.getResourceAsStream("AwsCredentials.properties")));
         
         S3Object object = s3.getObject(new GetObjectRequest(bucket, key));
         InputStream is = object.getObjectContent();
@@ -567,6 +565,123 @@ public class Utility {
 	 */
 	public static boolean isBlank(String data) {
 		return data == null || data.isEmpty();
+	}
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
+	public static String getString(Map conf, String key) {
+		String val = null;
+		Object obj = conf.get(key);
+		if (null != obj) {
+			if (obj instanceof String){
+				val = (String)obj;
+			} else {
+				throw new IllegalArgumentException("String value not found  in configuration  for " + key);
+			}
+		} else {
+			throw new IllegalArgumentException("Nothing found in configuration  for " + key);
+		}
+		return val;
+	}
+
+	/**
+	 * @param conf
+	 * @param key
+	 * @param def
+	 * @return
+	 */
+	public static String getString(Map conf,String key, String def) {
+		String val = null;
+		try {
+			val = getString( conf, key);
+		} catch (IllegalArgumentException ex) {
+			val = def;
+		}
+		return val;
+	}
+
+	
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
+	public static int getInt(Map conf,String key) {
+		int val = 0;
+		Object obj = conf.get(key);
+		if (null != obj) {
+			if (obj instanceof Integer) {
+				val = (Integer)obj;
+			} else {
+				throw new IllegalArgumentException("String value not found  in configuration  for " + key);
+			}
+		} else {
+			throw new IllegalArgumentException("Nothing found in configuration for " + key);
+		}
+		return val;
+	}
+	
+	/**
+	 * @param conf
+	 * @param key
+	 * @param def
+	 * @return
+	 */
+	public static int getInt(Map conf,String key, int def) {
+		int val = 0;
+		try {
+			val = getInt(conf,  key);
+		} catch (IllegalArgumentException ex) {
+			val = def;
+		}
+		return val;
+	}
+	
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
+	public static boolean getBoolean(Map conf,String key) {
+		boolean val = false;
+		Object obj = conf.get(key);
+		if (null != obj) {
+			if (obj instanceof Boolean) {
+				val = (Boolean)obj;
+			} else {
+				throw new IllegalArgumentException("Boolean value not found  in configuration  for " + key);
+			}
+		} else {
+			throw new IllegalArgumentException("Nothing found in configuration for " + key);
+		}
+		return val;
+	}
+	
+	/**
+	 * @param conf
+	 * @param key
+	 * @param def
+	 * @return
+	 */
+	public static boolean getBoolean(Map conf,String key, boolean def) {
+		boolean val = false;
+		try {
+			val = getBoolean(conf,  key);
+		} catch (IllegalArgumentException ex) {
+			val = def;
+		}
+		return val;
+	}
+
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
+	public static boolean exists(Map conf,String key) {
+		return conf.get(key) != null;
 	}
 
 }
