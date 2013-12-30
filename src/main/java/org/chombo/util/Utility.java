@@ -614,6 +614,8 @@ public class Utility {
 		if (null != obj) {
 			if (obj instanceof Integer) {
 				val = (Integer)obj;
+			} else if (obj instanceof String) {
+				val = Integer.parseInt((String)obj);
 			} else {
 				throw new IllegalArgumentException("String value not found  in configuration  for " + key);
 			}
@@ -633,7 +635,7 @@ public class Utility {
 		int val = 0;
 		try {
 			val = getInt(conf,  key);
-		} catch (IllegalArgumentException ex) {
+		} catch (Exception ex) {
 			val = def;
 		}
 		return val;
@@ -650,6 +652,8 @@ public class Utility {
 		if (null != obj) {
 			if (obj instanceof Boolean) {
 				val = (Boolean)obj;
+			} else if (obj instanceof String) {
+				val = Boolean.parseBoolean((String)obj);
 			} else {
 				throw new IllegalArgumentException("Boolean value not found  in configuration  for " + key);
 			}
@@ -669,7 +673,7 @@ public class Utility {
 		boolean val = false;
 		try {
 			val = getBoolean(conf,  key);
-		} catch (IllegalArgumentException ex) {
+		} catch (Exception ex) {
 			val = def;
 		}
 		return val;
@@ -682,6 +686,18 @@ public class Utility {
 	 */
 	public static boolean exists(Map conf,String key) {
 		return conf.get(key) != null;
+	}
+	
+	/**
+	 * @param conf
+	 * @return
+	 */
+	public static Map<String, Object> toTypedMap(Map conf) {
+		Map<String, Object> typedConf = new HashMap<String, Object>();
+		for (Object key : conf.keySet()) {
+			typedConf.put((String)key, conf.get(key));
+		}
+		return typedConf;
 	}
 
 }
