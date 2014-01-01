@@ -22,7 +22,7 @@ import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.log4j.Logger;
-import org.chombo.util.Utility;
+import org.chombo.util.ConfigUtility;
 
 import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -67,18 +67,20 @@ public abstract class GenericSpout extends GenericComponent  implements IRichSpo
 	public void open(Map stormConf, TopologyContext context, SpoutOutputCollector collector)  {
 		this.stormConf = stormConf;
 		this.collector = collector;
-		debugOn = Utility.getBoolean(stormConf, "debug.on", false);
+		debugOn = ConfigUtility.getBoolean(stormConf, "debug.on", false);
 		
-		if (Utility.exists(stormConf, "replay.failed.message")) {
-			shouldReplayFailedMessage = Utility.getBoolean(stormConf, "replay.failed.message");
-			maxReplayLimit = Utility.getInt(stormConf, "max.replay.limit", MAX_REPLAY_LIMIT);
-			messageReplayQueue =  new LinkedBlockingQueue<MessageHolder>();
-			if (debugOn)
-				LOG.info("replayFailedMessage:" + shouldReplayFailedMessage + " maxReplayLimit:" + maxReplayLimit);
+		if (ConfigUtility.exists(stormConf, "replay.failed.message")) {
+			shouldReplayFailedMessage = ConfigUtility.getBoolean(stormConf, "replay.failed.message", false);
+			if (shouldReplayFailedMessage) {
+				maxReplayLimit = ConfigUtility.getInt(stormConf, "max.replay.limit", MAX_REPLAY_LIMIT);
+				messageReplayQueue =  new LinkedBlockingQueue<MessageHolder>();
+				if (debugOn)
+					LOG.info("replayFailedMessage:" + shouldReplayFailedMessage + " maxReplayLimit:" + maxReplayLimit);
+			}
 		}
 		
 		//collect all streams
-		collectStreams();
+		//collectStreams();
 
 		intialize(stormConf, context);
 	}
@@ -119,7 +121,7 @@ public abstract class GenericSpout extends GenericComponent  implements IRichSpo
 		
 		//emit only if we have a message
 		if (null != output) {
-			if (null != streams) {
+			if (null != streamFields) {
 				//specific stream
 				String stream = output.getStream();
 				collector.emit(stream, output.getMessage(), output.getMessageID());

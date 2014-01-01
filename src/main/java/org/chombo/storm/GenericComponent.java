@@ -89,10 +89,12 @@ public class GenericComponent {
 	 */
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		Fields fieldsObj = null;
-		if (null == streams) {
+		if (null == streamFields) {
 			//default field declaration
-			fieldsObj = new Fields(Arrays.asList(fieldNames));
-			declarer.declare(fieldsObj);
+			if (null != fieldNames) {
+				fieldsObj = new Fields(Arrays.asList(fieldNames));
+				declarer.declare(fieldsObj);
+			}
 		} else {
 			//stream specific field declaration
 			for (String stream : streamFields.keySet()) {

@@ -20,7 +20,7 @@ package org.chombo.storm;
 import java.util.List;
 import java.util.Map;
 
-import org.chombo.util.Utility;
+import org.chombo.util.ConfigUtility;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -53,7 +53,7 @@ public abstract class GenericBolt  extends GenericComponent implements IRichBolt
 	@Override
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
-		debugOn = Utility.getBoolean(stormConf, "debug.on", false);
+		debugOn = ConfigUtility.getBoolean(stormConf, "debug.on", false);
 		this.stormConf = stormConf;
 		this.collector = collector;
 		collectStreams();
