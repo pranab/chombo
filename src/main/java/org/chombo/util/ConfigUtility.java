@@ -108,6 +108,44 @@ public  class ConfigUtility {
 	 * @param key
 	 * @return
 	 */
+	public static double getDouble(Map conf,String key) {
+		double  val = 0;
+		Object obj = conf.get(key);
+		if (null != obj) {
+			if (obj instanceof Double) {
+				val = (Double)obj;
+			} else if (obj instanceof String) {
+				val = Double.parseDouble((String)obj);
+			} else {
+				throw new IllegalArgumentException("String value not found  in configuration  for " + key);
+			}
+		} else {
+			throw new IllegalArgumentException("Nothing found in configuration for " + key);
+		}
+		return val;
+	}
+
+	/**
+	 * @param conf
+	 * @param key
+	 * @param def
+	 * @return
+	 */
+	public static double getDouble(Map conf,String key, double  def) {
+		double val = 0;
+		try {
+			val = getDouble(conf,  key);
+		} catch (Exception ex) {
+			val = def;
+		}
+		return val;
+	}
+	
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
 	public static boolean getBoolean(Map conf,String key) {
 		boolean val = false;
 		Object obj = conf.get(key);
