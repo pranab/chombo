@@ -71,6 +71,7 @@ public abstract class GenericBolt  extends GenericComponent implements IRichBolt
 	 */
 	@Override
 	public void execute(Tuple input) {
+		++messageCounter;
 		if (process(input)) {
 			List<MessageHolder> output = getOutput();
 			if (null != output){

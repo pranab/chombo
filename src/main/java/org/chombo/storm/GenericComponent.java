@@ -35,7 +35,9 @@ public class GenericComponent {
 	protected 	String[] streams;
 	protected Map stormConf;
 	protected  boolean debugOn;
-
+	protected long messageCounter;
+	protected int messageCountInterval;
+	
 	/**
 	 * 
 	 */

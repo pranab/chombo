@@ -89,6 +89,7 @@ public abstract class GenericSpout extends GenericComponent  implements IRichSpo
 	 * @see backtype.storm.spout.ISpout#nextTuple()
 	 */
 	public void nextTuple() {
+		++messageCounter;
 		MessageHolder output = null;
 		//try replay queue first
 		if (shouldReplayFailedMessage) {
@@ -115,7 +116,9 @@ public abstract class GenericSpout extends GenericComponent  implements IRichSpo
 				}
 				
 				//initialize replay count
-				output.getMessage().add(0);
+				if (shouldReplayFailedMessage) {
+					output.getMessage().add(0);
+				}
 			}
 		}
 		
