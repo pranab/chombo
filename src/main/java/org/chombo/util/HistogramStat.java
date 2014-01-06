@@ -29,7 +29,7 @@ public class HistogramStat {
 	private int binWidth;
 	private Map<Integer, Bin> binMap = new HashMap<Integer, Bin>();
 	private int count;
-	
+	private double sum = 0.0;
 	
 	/**
 	 * @param binWidth
@@ -59,6 +59,7 @@ public class HistogramStat {
 		}
 		bin.addCount(count);
 		this.count += count;
+		sum += value * count;
 	}
 
 	/**
@@ -107,14 +108,6 @@ public class HistogramStat {
 	 * @return
 	 */
 	public int getMean() {
-		//bin wise mean
-		double sum = 0;
-		count = 0;
-		double avBinWidth = binWidth > 1 ? 0.5 : 0.0;
-		for (Integer index : binMap.keySet()) {
-			Bin bin = binMap.get(index);
-			sum += ((double)bin.getIndex() + avBinWidth) * binWidth * bin.getCount();
-		}
 		int mean = (int)(sum / count);
 		return mean;
 	}
