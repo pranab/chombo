@@ -68,6 +68,8 @@ public class Utility {
 	public static final Integer ZERO = 0;
 	public  static final Integer ONE = 1;
 	
+	public static final String DEF_FIELD_DELIM = ",";
+	
 	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
     /*
     static AmazonS3 s3 = null;
@@ -380,6 +382,14 @@ public class Utility {
     	}
     	return data;
     }
+
+    /**
+     * @param record
+     * @return
+     */
+    public static int[] intArrayFromString(String record) {
+    	return intArrayFromString(record, DEF_FIELD_DELIM);
+    }
     
     /**
      * @param record
@@ -394,7 +404,15 @@ public class Utility {
     	}
     	return data;
     }
-
+    
+    /**
+     * @param record
+     * @return
+     */
+    public static double[] doubleArrayFromString(String record) {
+    	return doubleArrayFromString(record, DEF_FIELD_DELIM);
+    }
+    
     /**
      * @param items
      * @param fields
