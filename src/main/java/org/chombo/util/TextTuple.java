@@ -55,15 +55,19 @@ public class TextTuple extends Text {
 		}
 		this.set(stBld.substring(0,stBld.length() - 1));
 	}
+	
+	/**
+	 * 
+	 */
+	public void prepareForRead() {
+		items = this.toString().split(DELIM);
+	}
 
 	/**
 	 * @param index
 	 * @return
 	 */
 	public String getString(int index) {
-		if (null == items) {
-			items = this.toString().split(DELIM);
-		}
 		return items[index];
 	}
 
@@ -72,9 +76,6 @@ public class TextTuple extends Text {
 	 * @return
 	 */
 	public int getInt(int index) {
-		if (null == items) {
-			items = this.toString().split(DELIM);
-		}
 		return Integer.parseInt(items[index]);
 	}
 	/**
@@ -82,10 +83,11 @@ public class TextTuple extends Text {
 	 * @return
 	 */
 	public double getDouble(int index) {
-		if (null == items) {
-			items = this.toString().split(DELIM);
-		}
 		return Double.parseDouble(items[index]);
 	}
 
+	public void initialize() {
+		this.clear();
+		items = null;
+	}
 }
