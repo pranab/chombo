@@ -27,23 +27,46 @@ import org.apache.hadoop.io.Text;
 public class TextTuple extends Text {
 	 private static final String DELIM = ",";
 	 private String[] items;
+	 private String fieldDelim = DELIM;
 	 
+	/**
+	 * constructor
+	 */
 	public TextTuple() {
 		super();
 	}
 
+	/**
+	 * constructor
+	 * @param utf8
+	 */
 	public TextTuple(byte[] utf8) {
 		super(utf8);
 	}
 
+	/**
+	 * constructor
+	 * @param string
+	 */
 	public TextTuple(String string) {
 		super(string);
 	}
 
+	/**
+	 * constructor
+	 * @param utf8
+	 */
 	public TextTuple(Text utf8) {
 		super(utf8);
 	}
 	
+	/**
+	 * @param fieldDelim
+	 */
+	public void setFieldDelim(String fieldDelim) {
+		this.fieldDelim = fieldDelim;
+	}
+
 	/**
 	 * add one or more elements
 	 * @param fieldList
@@ -51,16 +74,16 @@ public class TextTuple extends Text {
 	public void add(Object...  fieldList) {
 		StringBuilder stBld = new  StringBuilder();
 		for (Object field :  fieldList) {
-			stBld.append(field).append(DELIM);
+			stBld.append(field).append(fieldDelim);
 		}
 		this.set(stBld.substring(0,stBld.length() - 1));
 	}
 	
 	/**
-	 * 
+	 * splits into tokens
 	 */
 	public void prepareForRead() {
-		items = this.toString().split(DELIM);
+		items = this.toString().split(fieldDelim);
 	}
 
 	/**
@@ -78,6 +101,15 @@ public class TextTuple extends Text {
 	public int getInt(int index) {
 		return Integer.parseInt(items[index]);
 	}
+	
+	/**
+	 * @param index
+	 * @return
+	 */
+	public long getLong(int index) {
+		return Long.parseLong(items[index]);
+	}
+
 	/**
 	 * @param index
 	 * @return
