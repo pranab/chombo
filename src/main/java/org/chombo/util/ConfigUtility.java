@@ -128,6 +128,22 @@ public  class ConfigUtility {
 	/**
 	 * @param conf
 	 * @param key
+	 * @param def
+	 * @return
+	 */
+	public static long getLong(Map conf,String key, long def) {
+		long val = 0;
+		try {
+			val = getLong(conf,  key);
+		} catch (Exception ex) {
+			val = def;
+		}
+		return val;
+	}
+
+	/**
+	 * @param conf
+	 * @param key
 	 * @return
 	 */
 	public static double getDouble(Map conf,String key) {
