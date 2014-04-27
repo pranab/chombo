@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -66,6 +67,7 @@ public class BigTupleList {
 		if (mode == Mode.Read) {
 			readCount = 0;
 		} else {
+			tuples = new ArrayList<Tuple>();
 			writeCount = 0;
 			size = 0;
 		}
