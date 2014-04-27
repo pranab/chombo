@@ -71,6 +71,12 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return clone;
 	}
 
+	public Tuple createClone(Tuple clone) {
+		clone.initialize();
+		clone.fields.addAll(fields);
+		return clone;
+	}
+	
 	/**
 	 * clears internal list
 	 */
