@@ -20,6 +20,7 @@ package org.chombo.mr;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -87,6 +88,9 @@ public class WeightedAverage extends Configured implements Tool {
         private int weightedValue;
         private int sum;
         private int totalWt = 0;
+        private int[] invertedFields;
+        private int fieldValue;
+        private int  scale;
         private static final int ID_FLD_ORDINAL = 0;
         
         /* (non-Javadoc)
@@ -96,11 +100,21 @@ public class WeightedAverage extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	sortOrderAscending = config.getBoolean("sort.order.ascending", true);
         	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	scale = config.getInt("field.scale", 100);
+        	
+        	//field weigths
         	String fieldWeightsStr = config.get("field.weights");
         	filedWeights = Utility.getIntPairList(fieldWeightsStr, ",", ":");
             for (Pair<Integer, Integer> pair : filedWeights) {
             	totalWt  += pair.getRight();
             }
+            
+            //inverted fields
+        	String invertedFieldsStr = config.get("inverted.fields");
+        	if (!Utility.isBlank(invertedFieldsStr)) {
+            	invertedFields = Utility.intArrayFromString(invertedFieldsStr);
+        	}
+            
        }
  
         /* (non-Javadoc)
@@ -112,14 +126,18 @@ public class WeightedAverage extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
             sum = 0;
             for (Pair<Integer, Integer> pair : filedWeights) {
-            	sum += Integer.parseInt(items[pair.getLeft()]) *   pair.getRight();
+            	fieldValue = Integer.parseInt(items[pair.getLeft()]);
+            	if (null != invertedFields && ArrayUtils.contains(invertedFields, pair.getLeft())) {
+            		fieldValue = scale - fieldValue;
+            	}
+            	sum += fieldValue *   pair.getRight();
             }
             weightedValue = sum / totalWt;
             
             if (sortOrderAscending) {
             	outKey.set(weightedValue);
             } else {
-            	outKey.set(Integer.MAX_VALUE - weightedValue);
+            	outKey.set(scale  - weightedValue);
             }
             outVal.initialize();
             outVal.add(items[ID_FLD_ORDINAL], weightedValue);
