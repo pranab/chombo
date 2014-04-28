@@ -584,5 +584,22 @@ public class Utility {
 	public static boolean isBlank(String data) {
 		return data == null || data.isEmpty();
 	}
+	
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, Integer>> getIntPairList(String record, String fieldDelim, String subFieldDelim) {
+		List<Pair<Integer, Integer>> intPairs = new ArrayList<Pair<Integer, Integer>>();
+		String[] items = record.split(fieldDelim);
+		for (String item : items) {
+			String[] subItems = item.split(subFieldDelim);
+			Pair<Integer, Integer> pair = new Pair<Integer, Integer>(Integer.parseInt(subItems[0]),  Integer.parseInt(subItems[1]));
+			intPairs.add(pair);
+		}
+		return intPairs;
+	}
 
 }

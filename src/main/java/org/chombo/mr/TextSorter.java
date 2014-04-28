@@ -34,6 +34,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Utility;
 
 /**
+ * Sorts a set of records based on some text field
  * @author pranab
  *
  */
