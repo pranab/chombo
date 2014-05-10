@@ -145,6 +145,10 @@ public class Normalizer extends Configured implements Tool {
         private Map<Integer, Stats> fieldStats = new HashMap<Integer, Stats>();
         private int fieldOrd;
         private Stats stats;
+        private int scale;
+        private boolean truncated;
+        private int normalizedValue;
+		private StringBuilder stBld = new StringBuilder();
 		
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -172,11 +176,50 @@ public class Normalizer extends Configured implements Tool {
 	        		stats.fromTuple(value);
 	        		fieldStats.get(fieldOrd).aggregate(stats);
 	        	}
+	        	for (int ord : fieldStats.keySet()) {
+	        		fieldStats.get(ord).process();
+	        	}
     		} else {
+        		stBld.delete(0, stBld.length());
 	        	for (Tuple value : values){
-	        		outVal.set(value.toString());
-	 				context.write(NullWritable.get(), outVal);
+	        		int i = 0;
+	        		truncated = false;
+	        		stBld.append(key.getString(1));
+	        		for (Pair<Integer, Integer> fieldScale : filedScales) {
+	        			stats= fieldStats.get(fieldScale.getLeft());
+	        			scale = fieldScale.getRight();
+	        			normalize(value.getInt(i), stats, scale);
+	        			if (truncated) {
+	        				break;
+	        			} else {
+	        				stBld.append(fieldDelim).append(normalizedValue);
+	        			}
+	        			++i;
+	        		}
+	        		if (!truncated) {
+	        			outVal.set(stBld.toString());
+	        			context.write(NullWritable.get(), outVal);
+	        		}
 	        	}    	
+    		}
+    	}
+    	
+    	/**
+    	 * @param value
+    	 * @param stat
+    	 * @param scale
+    	 * @return
+    	 */
+    	private void normalize(int value, Stats stat, int scale) {
+    		normalizedValue = 0;
+    		if (normalizingStrategy.equals("minmax")) {
+    			normalizedValue = ((value - stat.min) * scale) / stat.range;
+    		} else {
+    			double temp = (value - stats.mean) / stat.stdDev;
+    			if (outlierTruncationLevel > 0 && temp > outlierTruncationLevel) {
+    				truncated = true;
+    			}
+    			normalizedValue = (int)(temp * scale);
     		}
     	}
     }
@@ -191,6 +234,9 @@ public class Normalizer extends Configured implements Tool {
     	private int max = Integer.MIN_VALUE;
     	private long sum = 0;
     	private long sqSum = 0;
+    	private int mean;
+    	private int range;
+    	private double stdDev;
     	
     	private void add(int val) {
     		++count;
@@ -226,6 +272,13 @@ public class Normalizer extends Configured implements Tool {
     		}
     		sum += that.sum;
     		sqSum += that.sqSum;
+    	}
+    	
+    	private void process() {
+    		mean = (int)(sum / count);
+    		range = max - min;
+    		double temp = (double)sqSum / count - (double)mean * mean;
+    		stdDev = Math.sqrt(temp);
     	}
     }
 
