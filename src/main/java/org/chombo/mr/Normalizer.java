@@ -85,6 +85,7 @@ public class Normalizer extends Configured implements Tool {
         private Map<Integer, Stats> fieldStats = new HashMap<Integer, Stats>();
         private int fieldOrd;
         private int fieldVal;
+        private Stats stats;
         
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -121,15 +122,21 @@ public class Normalizer extends Configured implements Tool {
             outKey.add(1, items[ID_ORD]);
             
             outVal.initialize();
-        	for (Pair<Integer, Integer> fieldScale : filedScales) {
-        		fieldOrd = fieldScale.getLeft();
-        		fieldVal = Integer.parseInt(items[fieldOrd]);
-        		fieldStats.get(fieldOrd).add(fieldVal);
-        		outVal.add(fieldVal);
-        	}
+            for (int i = 1; i < items.length; ++i) {
+            	fieldOrd = i;
+            	stats = fieldStats.get(fieldOrd);
+            	if (null != stats) {
+            		//numeric
+            		fieldVal = Integer.parseInt(items[fieldOrd]);
+            		stats.add(fieldVal);
+            		outVal.add(fieldVal);
+            	} else {
+            		//other
+            		outVal.add(items[fieldOrd]);
+            	}
+            }
 			context.write(outKey, outVal);
         }
-        
 	}
 	
     /**
@@ -146,7 +153,7 @@ public class Normalizer extends Configured implements Tool {
         private int fieldOrd;
         private Stats stats;
         private int scale;
-        private boolean truncated;
+        private boolean excluded;
         private int normalizedValue;
 		private StringBuilder stBld = new StringBuilder();
 		
@@ -160,7 +167,9 @@ public class Normalizer extends Configured implements Tool {
         	normalizingStrategy = config.get("normalizing.strategy", "minmax");
         	outlierTruncationLevel = config.getFloat("outlier.truncation.level", (float)-1.0);
         	for (Pair<Integer, Integer> fieldScale : filedScales) {
-        		fieldStats.put(fieldScale.getLeft(), new Stats());
+        		stats = new Stats();
+        		stats.scale = fieldScale.getRight();
+        		fieldStats.put(fieldScale.getLeft(), stats);
         	}
         }
         
@@ -182,21 +191,25 @@ public class Normalizer extends Configured implements Tool {
     		} else {
         		stBld.delete(0, stBld.length());
 	        	for (Tuple value : values){
-	        		int i = 0;
-	        		truncated = false;
-	        		stBld.append(key.getString(1));
-	        		for (Pair<Integer, Integer> fieldScale : filedScales) {
-	        			stats= fieldStats.get(fieldScale.getLeft());
-	        			scale = fieldScale.getRight();
-	        			normalize(value.getInt(i), stats, scale);
-	        			if (truncated) {
-	        				break;
+	        		for (int i = 0; i < value.getSize(); ++i) {
+	        			excluded = false;
+	        			stBld.append(key.getString(1));
+	        			stats= fieldStats.get(i);
+	        			if (null != stats) {
+	        				//numeric
+	        				normalize(value.getInt(i), stats);
+	        				if (excluded) {
+	        					break;
+	        				} else {
+	        					//other
+	        					stBld.append(fieldDelim).append(normalizedValue);
+	        				}
 	        			} else {
-	        				stBld.append(fieldDelim).append(normalizedValue);
+        					stBld.append(fieldDelim).append(value.get(i));
 	        			}
-	        			++i;
 	        		}
-	        		if (!truncated) {
+	        		
+	        		if (!excluded) {
 	        			outVal.set(stBld.toString());
 	        			context.write(NullWritable.get(), outVal);
 	        		}
@@ -210,16 +223,21 @@ public class Normalizer extends Configured implements Tool {
     	 * @param scale
     	 * @return
     	 */
-    	private void normalize(int value, Stats stat, int scale) {
+    	private void normalize(int value, Stats stats) {
     		normalizedValue = 0;
     		if (normalizingStrategy.equals("minmax")) {
-    			normalizedValue = ((value - stat.min) * scale) / stat.range;
+    			normalizedValue = ((value - stats.min) * scale) / stats.range;
     		} else {
-    			double temp = (value - stats.mean) / stat.stdDev;
-    			if (outlierTruncationLevel > 0 && temp > outlierTruncationLevel) {
-    				truncated = true;
+    			double temp = (value - stats.mean) / stats.stdDev;
+    			if (outlierTruncationLevel > 0) {
+    				if (Math.abs(temp) > outlierTruncationLevel) {
+    					excluded = true;
+    				} else {
+    					//keep bounded between -.5 * scale and .5 * scale
+    					temp /= outlierTruncationLevel;
+    				}
     			}
-    			normalizedValue = (int)(temp * scale);
+    			normalizedValue = (int)(temp * stats.scale / 2);
     		}
     	}
     }
@@ -237,6 +255,7 @@ public class Normalizer extends Configured implements Tool {
     	private int mean;
     	private int range;
     	private double stdDev;
+    	private int scale;
     	
     	private void add(int val) {
     		++count;
