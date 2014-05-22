@@ -602,21 +602,4 @@ public class Utility {
 		return intPairs;
 	}
 	
-	/**
-	 * Samples gaussian distribution
-	 * @param mean
-	 * @param stdDev
-	 * @return
-	 */
-	public static double sampleGaussian(double mean, double stdDev) {
-		double value = 0;
-		for (int i = 0; i < 12; ++i) {
-			value += Math.random();
-		}
-		value -= 6.0;
-		value = mean + value * stdDev; 
-		return value;
-	}
-	
-
 }
