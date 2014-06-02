@@ -29,37 +29,65 @@ public class FeatureCount  {
 	private String type;
 	private List<BinCount> counts = new ArrayList<BinCount>();
 	private double laplaceProb;
+	private long mean;
+	private long stdDev;
+	boolean parametric = false;
 	
+	/**
+	 * @param ordinal
+	 * @param type
+	 */
 	public FeatureCount( int ordinal, String type) {
 		super();
 		this.ordinal = ordinal;
 		this.type = type;
 	}
 
+	/**
+	 * @return
+	 */
 	public int getOrdinal() {
 		return ordinal;
 	}
 
+	/**
+	 * @param ordinal
+	 */
 	public void setOrdinal(int ordinal) {
 		this.ordinal = ordinal;
 	}
 
+	/**
+	 * @return
+	 */
 	public String getType() {
 		return type;
 	}
 
+	/**
+	 * @param type
+	 */
 	public void setType(String type) {
 		this.type = type;
 	}	
 
+	/**
+	 * @return
+	 */
 	public List<BinCount> getCounts() {
 		return counts;
 	}
 
+	/**
+	 * @param counts
+	 */
 	public void setCounts(List<BinCount> counts) {
 		this.counts = counts;
 	}
 
+	/**
+	 * @param binCount
+	 */
 	public void addBinCount(BinCount binCount) {
 		boolean added = false;
 		for (BinCount thisBinCount : counts) {
@@ -74,13 +102,31 @@ public class FeatureCount  {
 		}
 	}
 	
+	/**
+	 * @param mean
+	 * @param stdDev
+	 */
+	public void setDistrParameters(long mean, long stdDev) {
+		this.mean = mean;
+		this.stdDev = stdDev;
+	}
+	
+	/**
+	 * @param total
+	 */
 	public void normalize(int total) {
-		for (BinCount binCount : counts) {
-			binCount.normalize(total);
+		if (!parametric) {
+			for (BinCount binCount : counts) {
+				binCount.normalize(total);
+			}
+			laplaceProb = 1.0 / (1 + total);
 		}
-		laplaceProb = 1.0 / (1 + total);
 	}	
 	
+	/**
+	 * @param bin
+	 * @return
+	 */
 	public double getProb(String bin) {
 		double prob = laplaceProb;
 		for (BinCount binCount : counts) {

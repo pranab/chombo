@@ -40,6 +40,10 @@ public class HistogramField  extends Attribute {
 		bucketWidthDefined = true;
 	}
 
+	public boolean isBucketWidthDefined() {
+		return bucketWidthDefined;
+	}
+	
 	public int getNumBuckets() {
 		return numBuckets;
 	}
