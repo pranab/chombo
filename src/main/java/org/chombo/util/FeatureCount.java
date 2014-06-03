@@ -134,7 +134,17 @@ public class FeatureCount  {
 				prob = binCount.getProb();
 				break;
 			}
-		}		
+		}	
+		return prob;
+	}
+
+	/**
+	 * @param val
+	 * @return
+	 */
+	public double getProb(int val) {
+		double prob = 1.0 / (Math.sqrt(2.0 * Math.PI) * stdDev);
+		prob *= Math.exp(-((val - mean) * (val - mean)) / (2.0 * stdDev * stdDev));
 		return prob;
 	}
 }
