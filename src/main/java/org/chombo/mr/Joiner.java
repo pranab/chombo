@@ -39,6 +39,11 @@ import org.chombo.util.TextInt;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
+/**
+ * Joins two sets of records. Join can be done with one or more keys
+ * @author pranab
+ *
+ */
 public class Joiner extends Configured implements Tool {
 
 		@Override
