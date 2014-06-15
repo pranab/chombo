@@ -121,11 +121,24 @@ public class Transformer extends Configured implements Tool {
             	//either transform or pass through
             	transformer = transformers.get(i);
         		itemValue = null !=transformer ?  transformer.tranform(items[i]) : items[i];
-        		stBld.append(itemValue).append(fieldDelimOut);
+        		if (null != itemValue) {
+        			stBld.append(itemValue).append(fieldDelimOut);
+        		}
             }
             outVal.set(stBld.substring(0, stBld.length() -1));
 			context.write(NullWritable.get(), outVal);
         }
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class NullTransformer implements AttributeTransformer {
+		@Override
+		public String tranform(String value) {
+			return null;
+		}
 	}
 	
 	/**

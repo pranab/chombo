@@ -369,6 +369,14 @@ public class Utility {
     	}
     }    
     
+    public static void createTuple(String  record, Tuple tuple) {
+    	tuple.initialize();
+    	String[] items = record.split(",");
+    	for (String item : items) {
+    		tuple.add(item);
+    	}
+    }    
+    
     /**
      * @param record
      * @param delimRegex
