@@ -83,7 +83,8 @@ public class Transformer extends Configured implements Tool {
         job.setMapperClass(mapClass);
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
-        
+        job.setNumReduceTasks(0);
+      
         int status =  job.waitForCompletion(true) ? 0 : 1;
         return status;
 	}

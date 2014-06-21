@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -56,7 +56,7 @@ public class Joiner extends Configured implements Tool {
 	        
 	        job.setJarByClass(Joiner.class);
 
-	        FileInputFormat.addInputPath(job, new Path(args[0]));
+	        FileInputFormat.addInputPaths(job, args[0]);
 	        FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
 	        Utility.setConfiguration(job.getConfiguration());
@@ -71,7 +71,7 @@ public class Joiner extends Configured implements Tool {
 	        job.setOutputValueClass(Text.class);
 
 	        job.setGroupingComparatorClass(SecondarySort.TextIntIdPairGroupComprator.class);
-	        job.setPartitionerClass(SecondarySort.TextIntIdPairPartitioner.class);
+	        job.setPartitionerClass(SecondarySort.TextIntIdPairTuplePartitioner.class);
 
 	        job.setNumReduceTasks(job.getConfiguration().getInt("num.reducer", 1));
 	        
@@ -79,6 +79,10 @@ public class Joiner extends Configured implements Tool {
 	        return status;
 		}
 		
+		/**
+		 * @author pranab
+		 *
+		 */
 		public static class JoinerMapper extends Mapper<LongWritable, Text, TextInt, Tuple> {
 			private TextInt outKey = new TextInt();
 			private Tuple outVal = new Tuple();
@@ -89,13 +93,19 @@ public class Joiner extends Configured implements Tool {
 	        private boolean isFirstTypeSplit;
 	        private boolean sortKeyFields;
 	        
+	        /* (non-Javadoc)
+	         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+	         */
 	        protected void setup(Context context) throws IOException, InterruptedException {
-	        	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
+	        	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", ",");
 	        	fieldDelimOut = context.getConfiguration().get("field.delim", ",");
 	        	String firstTypePrefix = context.getConfiguration().get("first.type.prefix", "first");
 	        	isFirstTypeSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(firstTypePrefix);
 	        	keyFieldFirst = Utility.intArrayFromString(context.getConfiguration().get("key.field.first"), fieldDelimRegex ); 
 	        	keyFieldSecond = Utility.intArrayFromString(context.getConfiguration().get("key.field.second"), fieldDelimRegex ); 
+	        	if (keyFieldFirst.length != keyFieldSecond.length) {
+	        		throw new IllegalStateException("composite key sizes are not equal");
+	        	}
 	        	sortKeyFields = context.getConfiguration().getBoolean("sort.key.fields", false);
 	       }
 
@@ -108,10 +118,12 @@ public class Joiner extends Configured implements Tool {
 	            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut, sortKeyFields) , 0);
 	            	Utility.createTuple(items, keyFieldFirst, outVal);
 	            	outVal.prepend("0");
+   	    			context.getCounter("Join stats", "left set count").increment(1);
 	            } else {
 	            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut, sortKeyFields) , 1);
 	            	Utility.createTuple(items, keyFieldSecond, outVal);
 	            	outVal.prepend("1");
+   	    			context.getCounter("Join stats", "right set count").increment(1);
 	            }
 	            
 	    		context.write(outKey, outVal);
@@ -143,7 +155,7 @@ public class Joiner extends Configured implements Tool {
 	         */
 	        protected void setup(Context context) throws IOException, InterruptedException {
 	        	Configuration config = context.getConfiguration();
-	        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
+	        	fieldDelimRegex = config.get("field.delim.regex", ",");
 	        	fieldDelimOut = config.get("field.delim", ",");
 	        	keyFieldFirst = Utility.intArrayFromString(context.getConfiguration().get("key.field.first"), fieldDelimRegex ); 
 	        	keyFieldSecond = Utility.intArrayFromString(context.getConfiguration().get("key.field.second"), fieldDelimRegex ); 
@@ -155,12 +167,14 @@ public class Joiner extends Configured implements Tool {
 	        	if(!StringUtils.isBlank(firstTypeDefaultValueSt)) {
 	        		firstTypeDefaultValue = new  Tuple();
 	        		Utility.createTuple(firstTypeDefaultValueSt, firstTypeDefaultValue);
+	        		firstTypeDefaultValue.prepend("0");
 	        	}
 	        	
 	        	String secondTypeDefaultValueSt = config.get("second.set.default.value");
 	        	if(!StringUtils.isBlank(secondTypeDefaultValueSt)) {
 	        		secondTypeDefaultValue = new  Tuple();
 	        		Utility.createTuple(secondTypeDefaultValueSt, secondTypeDefaultValue);
+	        		secondTypeDefaultValue.prepend("1");
 	        	}
 	       }
 
@@ -182,20 +196,22 @@ public class Joiner extends Configured implements Tool {
 	    	 				context.write(NullWritable.get(), outVal);
 	        			}
  	        			
- 	        			//if first set empty use default 
+ 	        			//if first set empty use default, basically right outer join 
  	        			if (fistTypeList.isEmpty() && null != firstTypeDefaultValue) {
 	        				setOutValue(key,  firstTypeDefaultValue);
 	    	 				context.write(NullWritable.get(), outVal);
+		   	    			context.getCounter("Join stats", "Right outer  join").increment(1);
  	        			}
 	        		}
 	        	}
 	        	
-	        	//if second set is empty, use default value if provided
+	        	//if second set is empty, use default value if provided, basically left outer join
 	        	if (secondSetCount == 0 && null != secondTypeDefaultValue)  {
 	        		secondType = secondTypeDefaultValue;
 	        			for (Tuple firstType :  fistTypeList) {
  	        				setOutValue(key,  firstType);
 	    	 				context.write(NullWritable.get(), outVal);
+		   	    			context.getCounter("Join stats", "Left outer  join").increment(1);
 	        			}
 	        	}
 	    	}

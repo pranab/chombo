@@ -355,9 +355,9 @@ public class Utility {
     	return stBld.toString();
     }
 
-    /**
-     * @param recordItems
-     * @param remFieldOrdinal
+    /** creates tuple
+     * @param recordItems record  fields
+     * @param remFieldOrdinal record fields to be excluded
      * @return
      */
     public static void createTuple(String[] recordItems, int[] remFieldOrdinal, Tuple tuple) {
@@ -369,6 +369,10 @@ public class Utility {
     	}
     }    
     
+    /** creates tuple
+     * @param record coma separated  fields
+     * @param tuple
+     */
     public static void createTuple(String  record, Tuple tuple) {
     	tuple.initialize();
     	String[] items = record.split(",");

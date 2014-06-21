@@ -38,7 +38,6 @@ public class SecondarySort {
 	    	 //consider only base part of  key
 		     return key.baseHashCode() % numPartitions;
 	     }
-   
    }
  
     /**
