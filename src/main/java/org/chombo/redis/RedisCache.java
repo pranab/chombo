@@ -17,7 +17,8 @@
 
 package org.chombo.redis;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import redis.clients.jedis.Jedis;
@@ -63,17 +64,37 @@ public class RedisCache {
 	 * @param keyPrefix
 	 * @return
 	 */
-	public Map<String, String>  getAll(String keyPrefix) {
-		Map<String, String> filtValues = new HashMap<String, String>();
+	public List<String>  getAll(String keyPrefix) {
+		List<String> filtValues = new ArrayList<String>();
 		Map<String, String> values =  jedis.hgetAll(cacheName);
-		for (String key :  values.keySet()) {
-			if (key.startsWith(keyPrefix)) {
-				filtValues.put(key, values.get(key));
+		if (null != values) {
+			for (String key :  values.keySet()) {
+				if (key.startsWith(keyPrefix)) {
+					filtValues.add( values.get(key).trim());
+				}
 			}
 		}
-		
 		return filtValues;
 	}
 
+	/**
+	 * @param keyPrefix
+	 * @return
+	 */
+	public List<Integer>  getIntAll(String keyPrefix) {
+		List<Integer> filtValues = new ArrayList<Integer>();
+		Map<String, String> values =  jedis.hgetAll(cacheName);
+		if (null != values) {
+			for (String key :  values.keySet()) {
+				if (key.startsWith(keyPrefix)) {
+					filtValues.add(Integer.parseInt( values.get(key).trim()));
+				}
+			}
+		}
+		return filtValues;
+	}
+
+	public void close() {
+	}
 }
  

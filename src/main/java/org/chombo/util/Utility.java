@@ -614,4 +614,20 @@ public class Utility {
 		return intPairs;
 	}
 	
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, String>> getIntStringList(String record, String fieldDelim, String subFieldDelim) {
+		List<Pair<Integer, String>> intStringPairs = new ArrayList<Pair<Integer, String>>();
+		String[] items = record.split(fieldDelim);
+		for (String item : items) {
+			String[] subItems = item.split(subFieldDelim);
+			Pair<Integer, String> pair = new Pair<Integer, String>(Integer.parseInt(subItems[0]),  subItems[1]);
+			intStringPairs.add(pair);
+		}
+		return intStringPairs;
+	}
 }
