@@ -94,6 +94,22 @@ public class RedisCache {
 		return filtValues;
 	}
 
+	/**
+	 * Return max value among a set
+	 * @param keyPrefix
+	 * @return
+	 */
+	public int getIntMax(String keyPrefix) {
+		List<Integer> values =  getIntAll(keyPrefix);
+		int maxVal = Integer.MIN_VALUE;
+		for (int val : values) {
+			if (val > maxVal) {
+				maxVal = val;
+			}
+		}
+		return maxVal;
+	}
+	
 	public void close() {
 	}
 }

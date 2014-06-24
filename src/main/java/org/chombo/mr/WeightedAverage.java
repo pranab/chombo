@@ -168,11 +168,7 @@ public class WeightedAverage extends Configured implements Tool {
     			String cacheName = "si-" + defaultOrgId;
     	   		redisCache = new   RedisCache( redisHost, redisPort, cacheName);
     	   		for (Pair<Integer, String> pair : filedMaxValueKeys) {
-    	   			List<Integer> values = redisCache.getIntAll(pair.getRight());
-    	   			int maxValue = 0;
-    	   			for (Integer val : values) {
-    	   				maxValue += val;
-    	   			}
+    	   			int maxValue = redisCache.getIntMax(pair.getRight());
     	   			fieldMaxValues.put(pair.getLeft(), maxValue);
     	   			LOG.debug("field:" + pair.getLeft() + " max value:" + maxValue);
     	   		}
