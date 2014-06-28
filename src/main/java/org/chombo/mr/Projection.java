@@ -18,6 +18,8 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -37,6 +39,8 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
+ * Simple query with projection. Can do group by and order by.  If grouped by can do count or 
+ * unique count
  * @author pranab
  *
  */
@@ -128,6 +132,9 @@ public class Projection extends Configured implements Tool {
         private int orderByField;
         private boolean groupBy;
         
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	String operation = config.get("projection.operation",  "project");
@@ -140,6 +147,9 @@ public class Projection extends Configured implements Tool {
         	orderByField = config.getInt("orderBy.field", -1);
        }
 
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#map(KEYIN, VALUEIN, org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
@@ -163,21 +173,48 @@ public class Projection extends Configured implements Tool {
 		private Text outVal = new Text();
 		private StringBuilder stBld =  new StringBuilder();;
 		private String fieldDelim;
-		private int orderByField;
-
+		private boolean countField;
+		private Set<String> uniqueValues = new  HashSet<String>();
+		private boolean uniqueCount;
+		private int count = 0;
+		
+		/* (non-Javadoc)
+		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
+		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", "[]");
-        	orderByField = config.getInt("orderBy.field", -1);
+        	countField = config.getBoolean("count.field", false);
+        	uniqueCount = config.getBoolean("unique.count", false);
        }
 		
+    	/* (non-Javadoc)
+    	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+    	 */
     	protected void reduce(Tuple key, Iterable<Text> values, Context context)
         	throws IOException, InterruptedException {
     		stBld.delete(0, stBld.length());
     		stBld.append(key.getString(0));
-        	for (Text value : values){
-    	   		stBld.append(fieldDelim).append(value);
-        	}    		
+    		if (countField) {
+    			if (uniqueCount) {
+	    			uniqueValues.clear();
+		        	for (Text value : values){
+		        		uniqueValues.add(value.toString());
+		        	}
+	    	   		stBld.append(fieldDelim).append(uniqueValues.size());
+    			} else {
+    				count = 0;
+		        	for (Text value : values){
+		        		++count;
+		        	}
+	    	   		stBld.append(fieldDelim).append(count);
+    			}
+    		} else {
+    			//actual values
+	        	for (Text value : values){
+	    	   		stBld.append(fieldDelim).append(value);
+	        	}    		
+    		}
         	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}
