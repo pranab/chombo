@@ -20,6 +20,10 @@ package org.chombo.redis;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 
 import redis.clients.jedis.Jedis;
 
@@ -32,6 +36,24 @@ public class RedisCache {
 	private Jedis jedis;
 	private static final String NIL = "nil";
 	
+	/**
+	 * Creates redis cache object for particular app
+	 * @param config
+	 * @param appPrefix
+	 * @return
+	 */
+	public static RedisCache createRedisCache(Configuration config, String appPrefix) {
+		RedisCache redisCache = null;
+		String redisHost = config.get("redis.server.host", "localhost");
+		int redisPort = config.getInt("redis.server.port",  6379);
+		String defaultOrgId = config.get("default.org.id");
+		if (!StringUtils.isBlank(defaultOrgId)) {
+			String cacheName = appPrefix + "-" + defaultOrgId;
+	   		redisCache = new   RedisCache( redisHost, redisPort, cacheName);
+	   	}
+		return redisCache;
+	}
+	
 	public RedisCache(String redisHost, int redisPort, String cacheName) {
 		this.cacheName = cacheName;
 		jedis = new Jedis(redisHost, redisPort);
@@ -43,6 +65,20 @@ public class RedisCache {
 	 */
 	public void put(String key, String value) {
 		jedis.hset(cacheName, key,  value);
+	}
+
+	/**
+	 * @param keyPrefix
+	 * @param value
+	 * @param genKeyWithPrefix
+	 */
+	public void put(String keyPrefix, String value, boolean genKeyWithPrefix) {
+		if (genKeyWithPrefix) {
+			String key = keyPrefix + "-" + UUID.randomUUID().toString();
+			jedis.hset(cacheName, key,  value);
+		} else {
+			jedis.hset(cacheName, keyPrefix,  value);
+		}
 	}
 
 	/**

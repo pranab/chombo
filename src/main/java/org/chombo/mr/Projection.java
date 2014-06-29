@@ -18,9 +18,12 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -34,13 +37,14 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.redis.RedisCache;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
  * Simple query with projection. Can do group by and order by.  If grouped by can do count or 
- * unique count
+ * unique count. sum and avearge
  * @author pranab
  *
  */
@@ -173,10 +177,15 @@ public class Projection extends Configured implements Tool {
 		private Text outVal = new Text();
 		private StringBuilder stBld =  new StringBuilder();;
 		private String fieldDelim;
-		private boolean countField;
-		private Set<String> uniqueValues = new  HashSet<String>();
-		private boolean uniqueCount;
-		private int count = 0;
+		private RedisCache redisCache;
+		private String aggregateValueKeyPrefix;
+		private String[] aggrFunctions;
+		private int[] aggrFunctionValues;
+		private int[] aggrFunctionValuesMax;
+		private List<String> strValues = new ArrayList<String>();
+		private List<Integer> intValues = new ArrayList<Integer>();
+		private Set<String> strValuesSet = new HashSet<String>();
+		private int sum;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -184,9 +193,28 @@ public class Projection extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", "[]");
-        	countField = config.getBoolean("count.field", false);
-        	uniqueCount = config.getBoolean("unique.count", false);
+        	if (!StringUtils.isBlank(config.get("agrregate.fumctions"))) {
+        		aggrFunctions = config.get("agrregate.fumctions").split(fieldDelim);
+        		aggrFunctionValues = new int[aggrFunctions.length];
+        		aggrFunctionValuesMax = new int[aggrFunctions.length];
+        		for (int i = 0; i < aggrFunctionValuesMax.length;  ++i) {
+        			aggrFunctionValuesMax[i] = Integer.MIN_VALUE;
+        		}
+				aggregateValueKeyPrefix = config.get("aggregate.value.key.prefix");
+	        	redisCache = RedisCache.createRedisCache(config, "ch");
+        	}
        }
+
+		/* (non-Javadoc)
+		 * @see org.apache.hadoop.mapreduce.Reducer#cleanup(org.apache.hadoop.mapreduce.Reducer.Context)
+		 */
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			if (null != aggrFunctions) {
+				for (int i = 0; i < aggrFunctions.length; ++i) {
+					redisCache.put(aggregateValueKeyPrefix + "." +aggrFunctions[i] ,  "" + aggrFunctionValuesMax[i], true);
+				}
+			}
+		}
 		
     	/* (non-Javadoc)
     	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
@@ -195,30 +223,73 @@ public class Projection extends Configured implements Tool {
         	throws IOException, InterruptedException {
     		stBld.delete(0, stBld.length());
     		stBld.append(key.getString(0));
-    		if (countField) {
-    			if (uniqueCount) {
-	    			uniqueValues.clear();
-		        	for (Text value : values){
-		        		uniqueValues.add(value.toString());
-		        	}
-	    	   		stBld.append(fieldDelim).append(uniqueValues.size());
-    			} else {
-    				count = 0;
-		        	for (Text value : values){
-		        		++count;
-		        	}
-	    	   		stBld.append(fieldDelim).append(count);
-    			}
-    		} else {
+    		
+    		if (null != aggrFunctions) {
+    			//aggregate functions
+    			strValues.clear();
+    			intValues.clear();
+    			strValuesSet.clear();
+    			sum = 0;
+	        	for (Text value : values){
+	        		strValues.add(value.toString());
+	        	}    			
+	        	
+	        	//all aggregate functions
+	        	for (int i = 0; i <  aggrFunctions.length; ++i) {
+	        		if (aggrFunctions[i].equals("count")) {
+	        			aggrFunctionValues[i] = strValues.size(); 
+	        		} else if (aggrFunctions[i].equals("uniqueCount")) {
+	        			for (String stVal : strValues) {
+	        				strValuesSet.add(stVal);
+	        			}
+	        			aggrFunctionValues[i] = strValuesSet.size(); 
+	        		} else if (aggrFunctions[i].equals("sum")) {
+	        			doSum();
+	        			aggrFunctionValues[i] = sum; 
+	        		} else if (aggrFunctions[i].equals("average")) {
+	        			if (sum == 0) {
+		        			doSum();
+	        			}
+	        			aggrFunctionValues[i] = sum / intValues.size() ; 
+	        		}
+	        	}
+	        	for (int i = 0; i < aggrFunctionValues.length; ++i) {
+	        		if (aggrFunctionValues[i] > aggrFunctionValuesMax[i]) {
+	        			aggrFunctionValuesMax[i] =  aggrFunctionValues[i]; 
+	        		}
+	    	   		stBld.append(fieldDelim).append(aggrFunctionValues[i]);
+	        	}
+    		}  else {
     			//actual values
 	        	for (Text value : values){
 	    	   		stBld.append(fieldDelim).append(value);
 	        	}    		
     		}
+    		
         	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}
     	
+    	/**
+    	 * 
+    	 */
+    	private void doSum() {
+			if (intValues.isEmpty()) {
+				initializeIntValues();
+			}
+			for (int intVal : intValues) {
+				sum += intVal;
+			}
+    	}
+
+    	/**
+    	 * 
+    	 */
+    	private void initializeIntValues() {
+			for (String stVal : strValues) {
+				intValues.add(Integer.parseInt(stVal));
+			}
+    	}
     }
  
 	/**
