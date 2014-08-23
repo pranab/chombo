@@ -109,6 +109,7 @@ public class FeatureCount  {
 	public void setDistrParameters(long mean, long stdDev) {
 		this.mean = mean;
 		this.stdDev = stdDev;
+		parametric = true;
 	}
 	
 	/**

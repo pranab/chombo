@@ -56,7 +56,6 @@ public abstract class GenericBolt  extends GenericComponent implements IRichBolt
 		debugOn = ConfigUtility.getBoolean(stormConf, "debug.on", false);
 		this.stormConf = stormConf;
 		this.collector = collector;
-		collectStreams();
 		intialize(stormConf, context);
 	}
 
