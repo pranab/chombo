@@ -20,6 +20,7 @@ package org.chombo.storm;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.log4j.Logger;
 
@@ -41,12 +42,14 @@ public class GenericComponent {
 	protected  boolean debugOn;
 	protected long messageCounter;
 	protected int messageCountInterval;
+	protected String ID;
 	private static final Logger LOG = Logger.getLogger(GenericComponent.class);
 	
 	/**
 	 * 
 	 */
 	public GenericComponent() {
+		ID = UUID.randomUUID().toString().replaceAll("-", "");
 	}
 	
 	/**
@@ -54,6 +57,10 @@ public class GenericComponent {
 	 */
 	public GenericComponent(String...  fieldNames) {
 		this.fieldNames = fieldNames;
+	}
+
+	public String getID() {
+		return ID;
 	}
 
 	/**
