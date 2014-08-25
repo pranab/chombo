@@ -17,17 +17,23 @@
 
 package org.chombo.storm;
 
+import java.io.Serializable;
+
 import backtype.storm.tuple.Values;
 
 /**
  * @author pranab
  * Holds message and related message meta data
  */
-public class MessageHolder {
+public class MessageHolder implements Serializable {
 	private Values message;
 	private Object messageID;
 	private String stream;
 	private int replayCount;
+	private static final long serialVersionUID = 8238179629177882915L;
+
+	public MessageHolder() {
+	}
 
 	public MessageHolder(Values message, Object messageID) {
 		this.message = message;

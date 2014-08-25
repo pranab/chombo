@@ -17,6 +17,7 @@
 
 package org.chombo.storm;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,8 @@ import backtype.storm.tuple.Tuple;
  *
  */
 public abstract class GenericBolt  extends GenericComponent implements IRichBolt {
+	protected List<MessageHolder> outputMessages = new ArrayList<MessageHolder>();
+
 	private static final long serialVersionUID = 5353297284043930135L;
 	protected OutputCollector collector;
 	
