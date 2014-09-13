@@ -64,7 +64,6 @@ public  class ConfigUtility {
 		return val;
 	}
 
-	
 	/**
 	 * @param conf
 	 * @param key
@@ -85,6 +84,30 @@ public  class ConfigUtility {
 			throw new IllegalArgumentException("Nothing found in configuration for " + key);
 		}
 		return val;
+	}
+	
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
+	public static int[] getIntArray(Map conf,String key) {
+		int[] values = null;
+		Object obj = conf.get(key);
+		if (null != obj) {
+			if (obj instanceof String) {
+				String[] items  = ((String)obj).split(",");
+				values = new int[items.length];
+				for (int i = 0; i < items.length; ++i) {
+					values[i] = Integer.parseInt(items[i]);
+				}
+			} else {
+				throw new IllegalArgumentException("String value not found  in configuration  for " + key);
+			}
+		} else {
+			throw new IllegalArgumentException("Nothing found in configuration for " + key);
+		}
+		return values;
 	}
 
 	/**
