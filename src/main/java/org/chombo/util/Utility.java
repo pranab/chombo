@@ -228,6 +228,20 @@ public class Utility {
     		list.add(val);
     	}
     }
+    
+    /**
+     * @param map
+     * @param itemDelim
+     * @param keyDelim
+     * @return
+     */
+    public static <K,V> String serializeMap(Map<K, V> map, String itemDelim, String keyDelim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (K key : map.keySet()) {
+    		stBld.append(key).append(keyDelim).append(map.get(key)).append(itemDelim);
+    	}
+    	return stBld.substring(0, stBld.length() -1);    
+    }
    
     /**
      * @param data
