@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -643,5 +644,9 @@ public class Utility {
 			intStringPairs.add(pair);
 		}
 		return intStringPairs;
+	}
+	
+	public static String generateId() {
+		return UUID.randomUUID().toString().replaceAll("-", "");
 	}
 }
