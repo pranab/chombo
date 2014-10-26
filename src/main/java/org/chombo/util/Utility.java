@@ -554,6 +554,22 @@ public class Utility {
 
     /**
      * @param arr
+     * @param begIndex
+     * @param endIndex
+     * @param delim
+     * @return
+     */
+    public static <T> String join(T[] arr, int begIndex, int endIndex, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (int i = begIndex; i < endIndex; ++i) {
+    		stBld.append(arr[i]).append(delim);
+    	}
+    	
+    	return stBld.substring(0, stBld.length() -1);
+    }
+
+    /**
+     * @param arr
      * @return
      */
     public static <T> String join(T[] arr) {
