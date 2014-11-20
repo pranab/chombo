@@ -37,12 +37,12 @@ public abstract class PubSub {
 	 * @param maxSubscriber
 	 * @return
 	 */
-	public static PubSub createPubSub(Map conf, String queueName, int maxSubscriber) {
+	public static PubSub createPubSub(Map conf, String storeName, int maxSubscriber) {
 		PubSub pubSub = null;
 		String provider = ConfigUtility.getString(conf, "messaging.provider");
 		
 		if (provider.equals("redis")) {
-			pubSub = new RedisPubSub(conf, queueName, maxSubscriber);
+			pubSub = new RedisPubSub(conf, storeName, maxSubscriber);
 		} else {
 			throw new IllegalArgumentException("invalid messaging provider: " + provider);
 		}
@@ -62,7 +62,7 @@ public abstract class PubSub {
 	protected abstract String pull();
 	
 	/**
-	 * Subscribe a message
+	 * Subscribe a message. Actual message is appeded with a list of subsciber ID
 	 * @param clientId
 	 * @return
 	 */
@@ -89,6 +89,7 @@ public abstract class PubSub {
 					publish(newMsg);
 				}
 			} else {
+				//republish for other pending subscribers
 				if (curSubsCount <  maxSubscriber) {
 					publish(fullMsg);
 				}
