@@ -135,6 +135,7 @@ public class Projection extends Configured implements Tool {
         private String fieldDelimOut;
         private int orderByField;
         private boolean groupBy;
+        private boolean isOrderByFieldNumeric;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -149,6 +150,7 @@ public class Projection extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim.out", ",");
         	projectionFields = Utility.intArrayFromString(config.get("projection.field"),fieldDelimRegex );
         	orderByField = config.getInt("orderBy.field", -1);
+        	isOrderByFieldNumeric = config.getBoolean("orderBy.filed.numeric", false);
        }
 
         /* (non-Javadoc)
@@ -160,7 +162,11 @@ public class Projection extends Configured implements Tool {
             String[] items  =  value.toString().split(fieldDelimRegex);
         	outKey.initialize();
             if (orderByField >= 0) {
-            	outKey.add(items[keyField], items[orderByField]);
+            	if (isOrderByFieldNumeric) {
+               		outKey.add(items[keyField],Integer.parseInt( items[orderByField]));
+            	} else {
+            		outKey.add(items[keyField], items[orderByField]);
+            	}
             } else {
             	outKey.add(items[keyField]);
             }
@@ -186,6 +192,10 @@ public class Projection extends Configured implements Tool {
 		private List<Integer> intValues = new ArrayList<Integer>();
 		private Set<String> strValuesSet = new HashSet<String>();
 		private int sum;
+		private  boolean sortOrderAscending;
+		private List<String> sortedValues = new ArrayList<String>();
+		private int limitTo;
+		private boolean formatCompact;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -203,6 +213,9 @@ public class Projection extends Configured implements Tool {
 				aggregateValueKeyPrefix = config.get("aggregate.value.key.prefix");
 	        	redisCache = RedisCache.createRedisCache(config, "ch");
         	}
+        	sortOrderAscending = config.getBoolean("sort.order.ascending", true);
+        	limitTo = config.getInt("limit.to", -1);
+        	formatCompact = config.getBoolean("format.compact", true);
        }
 
 		/* (non-Javadoc)
@@ -221,12 +234,12 @@ public class Projection extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Text> values, Context context)
         	throws IOException, InterruptedException {
-    		stBld.delete(0, stBld.length());
-    		stBld.append(key.getString(0));
-    		
     		if (null != aggrFunctions) {
     			//aggregate functions
-    			strValues.clear();
+        		stBld.delete(0, stBld.length());
+        		stBld.append(key.getString(0));
+
+        		strValues.clear();
     			intValues.clear();
     			strValuesSet.clear();
     			sum = 0;
@@ -259,17 +272,106 @@ public class Projection extends Configured implements Tool {
 	        		}
 	    	   		stBld.append(fieldDelim).append(aggrFunctionValues[i]);
 	        	}
+	        	outVal.set(stBld.toString());
+				context.write(NullWritable.get(), outVal);
     		}  else {
-    			//actual values
-	        	for (Text value : values){
-	    	   		stBld.append(fieldDelim).append(value);
-	        	}    		
+       			//actual values
+    			 if (formatCompact) {
+    				emitCompactFormat( key,  values, context);
+    			} else {
+    				emitLongFormat( key,  values, context);
+    			}
     		}
-    		
-        	outVal.set(stBld.toString());
+    	}
+
+    	/**
+    	 * emits actual values in compact format
+    	 * @param key
+    	 * @param values
+    	 * @param context
+    	 * @throws InterruptedException 
+    	 * @throws IOException 
+    	 */
+    	private void emitCompactFormat(Tuple key, Iterable<Text> values, Context context) 
+    		throws IOException, InterruptedException {
+			//actual values
+    		stBld.delete(0, stBld.length());
+    		stBld.append(key.getString(0));
+			if (sortOrderAscending) {
+				int i = 0;
+	        	for (Text value : values){
+	        		if (i == limitTo) {
+	        			break;
+	        		}
+	    	   		stBld.append(fieldDelim).append(value);
+	    	   		++i;
+	        	}    		
+			} else {
+				sortedValues.clear();
+	        	for (Text value : values){
+	        		sortedValues.add(value.toString());
+	        	}    	
+	        	
+	        	//reverse order
+				int i = 0;
+	        	for (int j = sortedValues.size() -1; j >= 0; --j) {
+	        		if (i == limitTo) {
+	        			break;
+	        		}
+	    	   		stBld.append(fieldDelim).append(sortedValues.get(j));
+	    	   		++i;
+	        	}
+			}
+	       	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}
     	
+    	/**
+    	 * emits actual values in long format
+    	 * @param key
+    	 * @param values
+    	 * @param context
+    	 * @throws InterruptedException 
+    	 * @throws IOException 
+    	 */
+    	private void emitLongFormat(Tuple key, Iterable<Text> values, Context context) 
+    		throws IOException, InterruptedException {
+			//actual values
+			if (sortOrderAscending) {
+				int i = 0;
+	        	for (Text value : values){
+	        		if (i == limitTo) {
+	        			break;
+	        		}
+	        		stBld.delete(0, stBld.length());
+	        		stBld.append(key.getString(0));
+	    	   		stBld.append(fieldDelim).append(value);
+	    	       	outVal.set(stBld.toString());
+	    			context.write(NullWritable.get(), outVal);
+	    	   		++i;
+	        	}    		
+			} else {
+				sortedValues.clear();
+	        	for (Text value : values){
+	        		sortedValues.add(value.toString());
+	        	}    	
+	        	
+	        	//reverse order
+				int i = 0;
+	        	for (int j = sortedValues.size() -1; j >= 0; --j) {
+	        		if (i == limitTo) {
+	        			break;
+	        		}
+	        		stBld.delete(0, stBld.length());
+	        		stBld.append(key.getString(0));
+	    	   		stBld.append(fieldDelim).append(sortedValues.get(j));
+	    	       	outVal.set(stBld.toString());
+	    			context.write(NullWritable.get(), outVal);
+	    	   		++i;
+	        	}
+			}
+    	}
+
     	/**
     	 * 
     	 */
