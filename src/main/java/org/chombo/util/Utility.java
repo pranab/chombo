@@ -590,6 +590,17 @@ public class Utility {
     public static <T> String join(T[] arr) {
     	return join(arr, ",");
     }
+
+    /**
+     * @param arr
+     * @param begIndex
+     * @param endIndex
+     * @return
+     */
+    public static <T> String join(T[] arr, int begIndex, int endIndex) {
+    	return join(arr,  begIndex, endIndex, ",");
+    }
+    
     
 	/**
 	 * @param table
