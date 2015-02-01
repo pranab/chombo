@@ -44,4 +44,8 @@ public abstract class Cache {
 		
 		return cache;
 	}
+	
+	public static Cache createCache(Map conf) {
+		return createCache(conf, null);
+	}	
 }
