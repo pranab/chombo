@@ -73,7 +73,9 @@ public class Joiner extends Configured implements Tool {
 	        job.setGroupingComparatorClass(SecondarySort.TextIntIdPairGroupComprator.class);
 	        job.setPartitionerClass(SecondarySort.TextIntIdPairTuplePartitioner.class);
 
-	        job.setNumReduceTasks(job.getConfiguration().getInt("num.reducer", 1));
+	        int numReducer = job.getConfiguration().getInt("joi.num.reducer", -1);
+	        numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
+	        job.setNumReduceTasks(numReducer);
 	        
 	        int status =  job.waitForCompletion(true) ? 0 : 1;
 	        return status;

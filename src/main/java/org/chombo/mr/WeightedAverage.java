@@ -83,7 +83,9 @@ public class WeightedAverage extends Configured implements Tool {
 	        job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
         }
 
-        job.setNumReduceTasks(job.getConfiguration().getInt("num.reducer", 1));
+        int numReducer = job.getConfiguration().getInt("wea.num.reducer", -1);
+        numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
+        job.setNumReduceTasks(numReducer);
         
         int status =  job.waitForCompletion(true) ? 0 : 1;
         return status;

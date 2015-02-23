@@ -51,7 +51,9 @@ public class NumericSorter  extends Configured implements Tool {
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
         
         job.setMapperClass(NumericSorter.NumericSorterMapper.class);
-        job.setReducerClass(NumericSorter.NumericSorterReducer.class);
+        int numReducer = job.getConfiguration().getInt("nus.num.reducer", -1);
+        numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
+        job.setNumReduceTasks(numReducer);
         
         job.setMapOutputKeyClass(LongWritable.class);
         job.setMapOutputValueClass(Text.class);
