@@ -18,6 +18,8 @@
 
 package org.chombo.util;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 public class DoubleTable {
 	protected double[][] table;
 	protected int numRow;
@@ -85,6 +87,17 @@ public class DoubleTable {
 	 * @return
 	 */
 	public double get(int row, int col) {
+		return table[row][col];
+	}
+
+	/**
+	 * @param row
+	 * @param col
+	 * @return
+	 */
+	public double get(String rowLabel, String colLabel) {
+		int row = ArrayUtils.indexOf(rowLabels, rowLabel);
+		int col = ArrayUtils.indexOf(colLabels, colLabel);
 		return table[row][col];
 	}
 
