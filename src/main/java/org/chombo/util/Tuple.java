@@ -514,4 +514,21 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return subTuple;
 	}
 	
+	/**
+	 * creates tuple based on partial list of source tuple
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public String[]  subTupleAsArray(int start, int end) {
+		if (end < start) {
+			throw new IllegalArgumentException("end index is smaller that start index");
+		}
+		
+		String[] subTuple = new String[end - start];
+		for (int i = start; i < end; ++i) {
+			subTuple[i - start] = get(i).toString();
+		}
+		return subTuple;
+	}
 }
