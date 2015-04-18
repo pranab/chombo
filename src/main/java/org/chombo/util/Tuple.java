@@ -531,4 +531,8 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		}
 		return subTuple;
 	}
+	
+	public String[] getTupleAsArray() {
+		return subTupleAsArray(0, fields.size());
+	}
 }
