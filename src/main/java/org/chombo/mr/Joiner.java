@@ -120,12 +120,12 @@ public class Joiner extends Configured implements Tool {
 	            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut, sortKeyFields) , 0);
 	            	Utility.createTuple(items, keyFieldFirst, outVal);
 	            	outVal.prepend("0");
-   	    			context.getCounter("Join stats", "left set count").increment(1);
+   	    			//context.getCounter("Join stats", "left set count").increment(1);
 	            } else {
 	            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut, sortKeyFields) , 1);
 	            	Utility.createTuple(items, keyFieldSecond, outVal);
 	            	outVal.prepend("1");
-   	    			context.getCounter("Join stats", "right set count").increment(1);
+   	    			//context.getCounter("Join stats", "right set count").increment(1);
 	            }
 	            
 	    		context.write(outKey, outVal);
@@ -202,7 +202,7 @@ public class Joiner extends Configured implements Tool {
  	        			if (fistTypeList.isEmpty() && null != firstTypeDefaultValue) {
 	        				setOutValue(key,  firstTypeDefaultValue);
 	    	 				context.write(NullWritable.get(), outVal);
-		   	    			context.getCounter("Join stats", "Right outer  join").increment(1);
+		   	    			//context.getCounter("Join stats", "Right outer  join").increment(1);
  	        			}
 	        		}
 	        	}
@@ -213,7 +213,7 @@ public class Joiner extends Configured implements Tool {
 	        			for (Tuple firstType :  fistTypeList) {
  	        				setOutValue(key,  firstType);
 	    	 				context.write(NullWritable.get(), outVal);
-		   	    			context.getCounter("Join stats", "Left outer  join").increment(1);
+		   	    			//context.getCounter("Join stats", "Left outer  join").increment(1);
 	        			}
 	        	}
 	    	}

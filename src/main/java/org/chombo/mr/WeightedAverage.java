@@ -194,7 +194,7 @@ public class WeightedAverage extends Configured implements Tool {
             	
             	//if suppressing field and value is 0 then skip  the record
             	if (null != suppressingFields && ArrayUtils.contains(suppressingFields, fieldOrd) && fieldValue == 0 ) {
-        			context.getCounter("Record stat", "Suppressed").increment(1);
+        			//context.getCounter("Record stat", "Suppressed").increment(1);
         			return;
             	}
             	

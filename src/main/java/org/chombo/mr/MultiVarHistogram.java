@@ -107,7 +107,7 @@ public class MultiVarHistogram extends Configured implements Tool {
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
             if ( items.length  != numFields){
-            	context.getCounter("Data", "Invalid").increment(1);
+            	//context.getCounter("Data", "Invalid").increment(1);
             	return;
             }
             
@@ -125,7 +125,7 @@ public class MultiVarHistogram extends Configured implements Tool {
             		outKey.add(keyCompInt);
             	}
             }
-        	context.getCounter("Data", "Processed record").increment(1);
+        	//context.getCounter("Data", "Processed record").increment(1);
         	//System.out.println( "Processed " + (++count) + " key size: " + outKey.getSize());
 			context.write(outKey, outVal);
        }
