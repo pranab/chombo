@@ -47,7 +47,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
     @Override
     public int run(String[] args) throws Exception   {
         Job job = new Job(getConf());
-        String jobName = "record set modifier  MR";
+        String jobName = "record set mutator  MR";
         job.setJobName(jobName);
         
         job.setJarByClass(RecordSetBulkMutator.class);
@@ -91,7 +91,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
     	private String deleteOpCode;
     	private int temporalOrderingFieldFieldOrdinal;
     	private String opCode;
-    	private boolean isTemoralOrderingFieldNumeric;
+    	private boolean isTemporalOrderingFieldNumeric;
     	private long splitSequence;
     	private  String record;
     	
@@ -103,9 +103,8 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
         	fieldDelimRegex = config.get("field.delim.regex", ",");
     		opCodeFieldOrdinal = config.getInt("op.code.field.ordinal", -1);
     		String spliFileName = ((FileSplit)context.getInputSplit()).getPath().getName();
-  			if ( opCodeFieldOrdinal >= 0 ) {
-  				 deleteOpCode = config.get("deleted.op.code", "D");
-    		} else {
+    		deleteOpCode = config.get("deleted.op.code", "D");
+  			if ( opCodeFieldOrdinal <  0 ) {
             	String deletedRecFilePrefix = config.get("deleted.record.file.prefix");
             	if (null == deletedRecFilePrefix) {
         			throw new IllegalArgumentException(
@@ -117,7 +116,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
     		}
 
   			temporalOrderingFieldFieldOrdinal = config.getInt("temporal.ordering.field.ordinal", -1);
-        	isTemoralOrderingFieldNumeric = config.getBoolean("temoral.ordering.field.numeric", true);
+        	isTemporalOrderingFieldNumeric = config.getBoolean("temporal.ordering.field.numeric", true);
         	
         	if (temporalOrderingFieldFieldOrdinal == -1) {
         		//get temporal sequence from file name
@@ -140,7 +139,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
   			keyOut.add(items[idFieldOrdinal]);
   			if (temporalOrderingFieldFieldOrdinal >= 0) {
   				//temporal ordering field in record
-  				if (isTemoralOrderingFieldNumeric) {
+  				if (isTemporalOrderingFieldNumeric) {
   					keyOut.append(Long.parseLong(items[temporalOrderingFieldFieldOrdinal]));
   				} else {
   					keyOut.append(items[temporalOrderingFieldFieldOrdinal]);
@@ -181,6 +180,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
     	private Text valOut = new Text();
     	private String record;
     	private String opCode;
+    	private int count;
  
     	/* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -196,6 +196,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         throws IOException, InterruptedException {
         	opCode = null;
+        	count = 0;
         	for(Tuple value : values) {
         		record = value.getString(0);
         		if (value.getSize() ==2) {
@@ -203,13 +204,20 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
         		} else {
         			opCode = null;
         		}
+        		++count;
         	}
         	if (null == opCode) {
         		//emit the last record only if it's not a delete
         		valOut.set(record);
         		context.write(NullWritable.get(), valOut);
+        		if (count == 1) {
+        			context.getCounter("Mutation type", "Insert").increment(1);
+        		} else {
+        			context.getCounter("Mutation type", "Update").increment(1);
+        		}
+        	} else {
+    			context.getCounter("Mutation type", "Delete").increment(1);
         	}
-    
         }
     }
 
