@@ -12,15 +12,15 @@ Set of helper classes for Hadoop and Storm
 
 ## Build
 For Hadoop 1
-mvn clean install
+* mvn clean install
 
 For Hadoop 2 (non yarn)
-git checkout nuovo
-mvn clean install
+* git checkout nuovo
+* mvn clean install
 
 For Hadoop 2 (yarn)
-git checkout nuovo
-mvn clean install -P yarn
+* git checkout nuovo
+* mvn clean install -P yarn
 
 ## Help
 Please feel free to email me at pkghosh99@gmail.com
