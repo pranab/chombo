@@ -86,7 +86,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
     	private Tuple keyOut = new Tuple();
     	private Tuple valOut = new Tuple();
     	private boolean isDeletedDataFileSplit;
-    	private int idFieldOrdinal;
+    	private int[] idFieldOrdinals;
     	private int opCodeFieldOrdinal;
     	private String deleteOpCode;
     	private int temporalOrderingFieldFieldOrdinal;
@@ -123,7 +123,8 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
         		String[] items = spliFileName.split("_");
         		splitSequence = Long.parseLong(items[items.length-1]);
         	}
-        	idFieldOrdinal = config.getInt("id.field.ordinal", -1);
+        	
+        	idFieldOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"));
         }
 
         /* (non-Javadoc)
@@ -136,7 +137,9 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
            	keyOut.initialize();
   			valOut.initialize();
   			
-  			keyOut.add(items[idFieldOrdinal]);
+  			for (int ord : idFieldOrdinals ) {
+  				keyOut.append(items[ord]);
+  			}
   			if (temporalOrderingFieldFieldOrdinal >= 0) {
   				//temporal ordering field in record
   				if (isTemporalOrderingFieldNumeric) {
