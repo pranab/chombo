@@ -84,22 +84,31 @@ public class RunningAggregator  extends Configured implements Tool {
         private String[] items;
         private int quantityAttr;
         private boolean isAggrFileSplit;
+        private int[] idFieldOrdinals;
+        private boolean doStdDev;
+        private long newValue;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	quantityAttr = config.getInt("quantity.attr",-1);
-        	String aggrFilePrefix = context.getConfiguration().get("aggregate.file.prefix", "");
+        	String aggrFilePrefix = config.get("aggregate.file.prefix", "");
         	if (!aggrFilePrefix.isEmpty()) {
         		isAggrFileSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(aggrFilePrefix);
         	} else {
-            	String incrFilePrefix = context.getConfiguration().get("incremental.file.prefix", "");
+            	String incrFilePrefix = config.get("incremental.file.prefix", "");
             	if (!incrFilePrefix.isEmpty()) {
             		isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
             	} else {
             		throw new IOException("Aggregate or incremental file prefix needs to be specified");
             	}
         	}
+        	
+        	if (null != config.get("id.field.ordinals")) {
+        		idFieldOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"));
+        	}
+        	
+        	doStdDev = config.getBoolean("std.dev", false);
        }
  
         @Override
@@ -109,20 +118,38 @@ public class RunningAggregator  extends Configured implements Tool {
         	outKey.initialize();
         	outVal.initialize();
         	int initValue = 0;
-            for (int i = 0; i < quantityAttr;  ++i) {
-            	outKey.append(items[i]);
-            }
-            
+        	if (null != idFieldOrdinals) {
+      			for (int ord : idFieldOrdinals ) {
+      				outKey.append(items[ord]);
+      			}
+        	} else {
+        		//all fields before quantity are ID fields
+	            for (int i = 0; i < quantityAttr;  ++i) {
+	            	outKey.append(items[i]);
+	            }
+        	}
         	if (isAggrFileSplit) {
         		if (items.length >= quantityAttr) {
-        			//existing aggregation
-                    outVal.add(Integer.parseInt(items[quantityAttr]) ,   Integer.parseInt(items[quantityAttr + 1]) );
+        			//existing aggregation - count, sum
+                    outVal.add(Long.parseLong(items[quantityAttr]) ,   Long.parseLong(items[quantityAttr + 1]) );
+                    if (doStdDev) {
+                    	//sum square
+                    	outVal.add(Long.parseLong(items[quantityAttr + 2]));
+                    }
         		} else {
         			//first aggregation
         			outVal.add(initValue, initValue);
+                    if (doStdDev) {
+                    	outVal.add(initValue);
+                    }
         		}
         	} else {
-                outVal.add((int)1, Integer.parseInt( items[quantityAttr]));
+        		//incremental
+        		newValue = Long.parseLong( items[quantityAttr]);
+                outVal.add((long)1, newValue);
+                if (doStdDev) {
+                	outVal.add(newValue * newValue);
+                }
         	}
         	context.write(outKey, outVal);
         }
@@ -136,9 +163,12 @@ public class RunningAggregator  extends Configured implements Tool {
  		private Text outVal = new Text();
  		private StringBuilder stBld =  new StringBuilder();;
  		private  String fieldDelim;
-		private int sum;
-		private int count;
-		private int avg;
+		private long sum;
+		private long count;
+		private long sumSq;
+		private long avg;
+        private boolean doStdDev;
+        private double stdDev;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -146,6 +176,7 @@ public class RunningAggregator  extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
+        	doStdDev = config.getBoolean("std.dev", false);
        }
 		
     	/* (non-Javadoc)
@@ -154,16 +185,43 @@ public class RunningAggregator  extends Configured implements Tool {
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
     		sum = 0;
+    		sumSq = 0;
     		count = 0;
     		for (Tuple val : values) {
-				count += val.getInt(0);
-    			sum  += val.getInt(1);
+				count += val.getLong(0);
+    			sum  += val.getLong(1);
+    			if (doStdDev) {
+        			sumSq  += val.getLong(2);
+    			}
     		}   	
-    		avg = count > 0 ? sum / count  :  0;
+    		
+    		if (count > 0) {
+	    		avg =  sum / count;
+	    		if (doStdDev) {
+	    			if (1 == count) {
+	    				stdDev = 0;
+	    			} else {
+	    				double ave = (double)sum / count;
+	    				stdDev = (double)sumSq / count -  ave * ave;
+	    				stdDev = Math.sqrt(stdDev);
+	    			}
+	    		}
+    		} else {
+    			avg = 0;
+    			stdDev = 0;
+    		}
     		
     		stBld.delete(0, stBld.length());
     		stBld.append(key.toString()).append(fieldDelim);
-    		stBld.append(count).append(fieldDelim).append(sum).append(fieldDelim).append(avg);
+    		stBld.append(count).append(fieldDelim).append(sum).append(fieldDelim);
+    		if (doStdDev) {
+    			stBld.append(sumSq);
+    		}
+    		stBld.append(avg);
+    		if (doStdDev) {
+    			stBld.append(stdDev);
+    		}
+    		
         	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}
