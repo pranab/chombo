@@ -243,8 +243,8 @@ public class RunningAggregator  extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-     int exitCode = ToolRunner.run(new RunningAggregator(), args);
-     System.exit(exitCode);
+		int exitCode = ToolRunner.run(new RunningAggregator(), args);
+		System.exit(exitCode);
 	}
 
  

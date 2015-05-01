@@ -38,6 +38,13 @@ public class LongRunningStats {
 		this.sumSq = sumSq;
 	}
 	
+	public LongRunningStats(int field, long avg, double stdDev) {
+		super();
+		this.field = field;
+		this.avg = avg;
+		this.stdDev = stdDev;
+	}
+
 	public void accumulate(long count, long sum, long sumSq) {
 		this.count += count;
 		this.sum += sum;
