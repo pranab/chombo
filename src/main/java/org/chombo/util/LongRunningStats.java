@@ -79,4 +79,7 @@ public class LongRunningStats {
 		return stdDev;
 	}
 	
+	public void incrementCount() {
+		++count;
+	}
 }

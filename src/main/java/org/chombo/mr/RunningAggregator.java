@@ -135,7 +135,7 @@ public class RunningAggregator  extends Configured implements Tool {
     			statOrd = idFieldOrdinals.length;
     			for ( int ord : quantityAttrOrdinals) {
         			//existing aggregation - quantity attrubute ordinal, count, sum, sum of squares
-                    outVal.add(Integer.parseInt(items[statOrd]), Long.parseLong(items[statOrd+1]) ,  
+                    outVal.add(0, Integer.parseInt(items[statOrd]), Long.parseLong(items[statOrd+1]) ,  
                     		Long.parseLong(items[statOrd + 2]),  Long.parseLong(items[statOrd + 3]));
                     statOrd += PER_FIELD_STAT_VAR_COUNT;
     			}
@@ -143,7 +143,7 @@ public class RunningAggregator  extends Configured implements Tool {
         		//incremental - first run will have only incremental file
     			for ( int ord : quantityAttrOrdinals) {
 	        		newValue = Long.parseLong( items[ord]);
-	                outVal.add(ord, (long)1, newValue, newValue * newValue);
+	                outVal.add(1,ord, (long)1, newValue, newValue * newValue);
     			}
         	}
         	context.write(outKey, outVal);
@@ -165,6 +165,9 @@ public class RunningAggregator  extends Configured implements Tool {
         private int[] quantityAttrOrdinals;
         private int index;
         private Map<Integer, LongRunningStats> runningStats = new HashMap<Integer, LongRunningStats>();
+        private boolean  handleMissingIncremental;
+        private int recType;
+        private int recCount;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -173,6 +176,7 @@ public class RunningAggregator  extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
         	quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
+        	handleMissingIncremental = config.getBoolean("handle.missing.incremental",  false);
        }
 		
     	/* (non-Javadoc)
@@ -183,13 +187,21 @@ public class RunningAggregator  extends Configured implements Tool {
     		sum = 0;
     		sumSq = 0;
     		count = 0;
+    		runningStats.clear();
+    		recCount = 0;
     		for (Tuple val : values) {
     			index = 0;
+    			recType = val.getInt(index++);
+    			
+    			//all quant fields
     			for ( int quantOrd : quantityAttrOrdinals) {
-    				ord = val.getInt(index);
-    				count = val.getLong(++index);
-    				sum  = val.getLong(++index);
-    				sumSq  = val.getLong(++index);
+    				ord = val.getInt(index++);
+    				if (quantOrd != ord) {
+    					throw new IllegalStateException("field ordinal does not match");
+    				}
+    				count = val.getLong(index++);
+    				sum  = val.getLong(index++);
+    				sumSq  = val.getLong(index++);
     				
     				LongRunningStats stat = runningStats.get(ord);
     				if (null == stat) {
@@ -198,7 +210,16 @@ public class RunningAggregator  extends Configured implements Tool {
     					stat.accumulate(count, sum, sumSq);
     				}
     			}
+    			++recCount;
     		}   	
+    		
+    		//if only aggregate record, increment count by 1
+    		if (handleMissingIncremental && recCount == 1 && recType == 0) {
+    			for ( int quantOrd : quantityAttrOrdinals) {
+    				LongRunningStats stat = runningStats.get(quantOrd);
+    				stat.incrementCount();
+    			}
+    		}
     		
     		stBld.delete(0, stBld.length());
     		stBld.append(key.toString()).append(fieldDelim);
@@ -206,9 +227,6 @@ public class RunningAggregator  extends Configured implements Tool {
     		//all quant field
 			for ( int quantOrd : quantityAttrOrdinals) {
 				LongRunningStats stat = runningStats.get(quantOrd);
-				if (stat.getField() != quantOrd) {
-					throw new IllegalStateException("field ordinal does not match");
-				}
 				stat.process();
 				stBld.append(stat.getField()).append(fieldDelim).append(stat.getCount()).append(fieldDelim).
 				  	append(stat.getSum()).append(fieldDelim).append(stat.getSumSq()).append(fieldDelim).
