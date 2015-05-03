@@ -35,9 +35,12 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.chombo.util.LongRunningStats;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
+
 
 /**
  * Calculates running average and other stats of some quantity
@@ -90,9 +93,14 @@ public class RunningAggregator  extends Configured implements Tool {
         private long newValue;
         private int statOrd;
         private static final int PER_FIELD_STAT_VAR_COUNT = 6;
-        
+        private static final Logger LOG = Logger.getLogger(RunningAggregator.AggrMapper.class);
+
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
+            if (config.getBoolean("debug.on", false)) {
+             	LOG.setLevel(Level.DEBUG);
+            }
+
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
         	
@@ -110,6 +118,7 @@ public class RunningAggregator  extends Configured implements Tool {
         	
         	if (null != config.get("id.field.ordinals")) {
         		idFieldOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"));
+        		LOG.debug("id ordinals:" + idFieldOrdinals);
         	}
        }
  
@@ -119,7 +128,6 @@ public class RunningAggregator  extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
         	outKey.initialize();
         	outVal.initialize();
-        	int initValue = 0;
         	if (null != idFieldOrdinals) {
       			for (int ord : idFieldOrdinals ) {
       				outKey.append(items[ord]);
@@ -184,9 +192,6 @@ public class RunningAggregator  extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
-    		sum = 0;
-    		sumSq = 0;
-    		count = 0;
     		runningStats.clear();
     		recCount = 0;
     		for (Tuple val : values) {
