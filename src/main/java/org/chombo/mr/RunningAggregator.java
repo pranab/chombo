@@ -102,7 +102,11 @@ public class RunningAggregator  extends Configured implements Tool {
             }
 
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
+        	if (null != config.get("quantity.attr.ordinals")) {
+        		quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
+        	} else {
+        		throw new IllegalStateException("quantity field ordinals must be provided");
+        	}
         	
         	String aggrFilePrefix = config.get("aggregate.file.prefix", "");
         	if (!aggrFilePrefix.isEmpty()) {
@@ -116,9 +120,11 @@ public class RunningAggregator  extends Configured implements Tool {
             	}
         	}
         	
+        	LOG.debug(config.get("id.field.ordinals"));
         	if (null != config.get("id.field.ordinals")) {
         		idFieldOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"));
-        		LOG.debug("id ordinals:" + idFieldOrdinals);
+        	} else {
+        		throw new IllegalStateException("ID field ordinals must be provided");
         	}
        }
  
@@ -128,18 +134,11 @@ public class RunningAggregator  extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
         	outKey.initialize();
         	outVal.initialize();
-        	if (null != idFieldOrdinals) {
-      			for (int ord : idFieldOrdinals ) {
-      				outKey.append(items[ord]);
-      			}
-        	} else {
-        		//all fields before quantity are ID fields
-	            for (int i = 0; i < quantityAttrOrdinals[0];  ++i) {
-	            	outKey.append(items[i]);
-	            }
-        	}
         	
         	if (isAggrFileSplit) {
+        		for (int i = 0; i < idFieldOrdinals.length; ++i) {
+      				outKey.append(items[i]);
+        		}
     			statOrd = idFieldOrdinals.length;
     			for ( int ord : quantityAttrOrdinals) {
         			//existing aggregation - quantity attrubute ordinal, count, sum, sum of squares
@@ -148,7 +147,13 @@ public class RunningAggregator  extends Configured implements Tool {
                     statOrd += PER_FIELD_STAT_VAR_COUNT;
     			}
         	} else {
-        		//incremental - first run will have only incremental file
+            	if (null != idFieldOrdinals) {
+          			for (int ord : idFieldOrdinals ) {
+          				outKey.append(items[ord]);
+          			}
+            	}
+            	
+            	//incremental - first run will have only incremental file
     			for ( int ord : quantityAttrOrdinals) {
 	        		newValue = Long.parseLong( items[ord]);
 	                outVal.add(1,ord, (long)1, newValue, newValue * newValue);
@@ -176,12 +181,16 @@ public class RunningAggregator  extends Configured implements Tool {
         private boolean  handleMissingIncremental;
         private int recType;
         private int recCount;
+        private static final Logger LOG = Logger.getLogger(RunningAggregator.AggrReducer.class);
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
+            if (config.getBoolean("debug.on", false)) {
+             	LOG.setLevel(Level.DEBUG);
+            }
         	fieldDelim = config.get("field.delim.out", ",");
         	quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
         	handleMissingIncremental = config.getBoolean("handle.missing.incremental",  false);
@@ -212,6 +221,7 @@ public class RunningAggregator  extends Configured implements Tool {
     				if (null == stat) {
     					runningStats.put(ord, new LongRunningStats(ord, count, sum, sumSq));
     				} else {
+    					//LOG.debug("aggregating key: " + key.toString() + " count : " + count + " sum: " + sum + " sumSq: " + sumSq);
     					stat.accumulate(count, sum, sumSq);
     				}
     			}
