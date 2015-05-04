@@ -14,8 +14,13 @@ HDFS_META_BASE_DIR=/user/pranab/meta
 
 case "$1" in
 
+"genOrder")
+	 ./store_order.py $2 $3 $4 > $5
+	 ls -l $5
+;;
+
 "loadIncr")
-	hadoop fs -rmr $HDFS_BASE_DIR/ruag/input/$2
+	hadoop fs -rm $HDFS_BASE_DIR/ruag/input/$2
 	hadoop fs -put $2 $HDFS_BASE_DIR/ruag/input
 	hadoop fs -ls $HDFS_BASE_DIR/ruag/input
 ;;

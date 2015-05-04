@@ -102,30 +102,19 @@ public class RunningAggregator  extends Configured implements Tool {
             }
 
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	if (null != config.get("quantity.attr.ordinals")) {
-        		quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
-        	} else {
-        		throw new IllegalStateException("quantity field ordinals must be provided");
-        	}
+        	String value = Utility.assertConfigParam( config, "quantity.attr.ordinals", "quantity field ordinals must be provided");
+        	quantityAttrOrdinals = Utility.intArrayFromString(value);
         	
         	String aggrFilePrefix = config.get("aggregate.file.prefix", "");
         	if (!aggrFilePrefix.isEmpty()) {
         		isAggrFileSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(aggrFilePrefix);
         	} else {
-            	String incrFilePrefix = config.get("incremental.file.prefix", "");
-            	if (!incrFilePrefix.isEmpty()) {
-            		isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
-            	} else {
-            		throw new IOException("Aggregate or incremental file prefix needs to be specified");
-            	}
+            	String incrFilePrefix =Utility.assertConfigParam( config, "incremental.file.prefix", "Incremental file prefix needs to be specified");
+            	isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
         	}
         	
-        	LOG.debug(config.get("id.field.ordinals"));
-        	if (null != config.get("id.field.ordinals")) {
-        		idFieldOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"));
-        	} else {
-        		throw new IllegalStateException("ID field ordinals must be provided");
-        	}
+        	value = Utility.assertConfigParam( config, "id.field.ordinals", "ID field ordinals must be provided");
+        	idFieldOrdinals = Utility.intArrayFromString(value);
        }
  
         @Override
@@ -147,11 +136,9 @@ public class RunningAggregator  extends Configured implements Tool {
                     statOrd += PER_FIELD_STAT_VAR_COUNT;
     			}
         	} else {
-            	if (null != idFieldOrdinals) {
-          			for (int ord : idFieldOrdinals ) {
-          				outKey.append(items[ord]);
-          			}
-            	}
+          		for (int ord : idFieldOrdinals ) {
+          			outKey.append(items[ord]);
+          		}
             	
             	//incremental - first run will have only incremental file
     			for ( int ord : quantityAttrOrdinals) {

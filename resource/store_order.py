@@ -24,9 +24,9 @@ def load(existFile, idArray):
 	file.close()
 
 	
-def createStoreOrders(allStores, allProducts):	
+def createStoreOrders(allStores, allProducts, avNumProduct):	
 	for store in allStores:
-		numProd = 70 + randint(-20, 20)
+		numProd = avNumProduct + randint(-20, 20)
 		prodSelected = set()
 		orderID = genID(12)
 		for i in range(0,numProd):
@@ -34,7 +34,8 @@ def createStoreOrders(allStores, allProducts):
 			while prod in prodSelected:
 				prod =  selectRandomFromList(allProducts)
 			prodSelected.add(prod)
-			quantity = (abs(hash(store + prod)) % 5 + 2) * 10  + randint(-5, 5)
+			variance = randint(2,10)
+			quantity = (abs(hash(store + prod)) % 5 + 3) * 10  + randint(-variance, variance)
 			if (randint(0,10) < 3):
 				shipping = "express"
 			else:
@@ -43,7 +44,8 @@ def createStoreOrders(allStores, allProducts):
 			
 existProdFile = sys.argv[1]
 existStoreFile = sys.argv[2]	
+avNumProduct = int(sys.argv[3])
 	
 load(existProdFile, allProducts)
 load(existStoreFile, allStores)
-createStoreOrders(allStores, allProducts)
+createStoreOrders(allStores, allProducts, avNumProduct)

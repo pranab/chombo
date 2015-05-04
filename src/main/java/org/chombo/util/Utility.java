@@ -745,7 +745,23 @@ public class Utility {
 		return intStringPairs;
 	}
 	
+	/**
+	 * @return
+	 */
 	public static String generateId() {
 		return UUID.randomUUID().toString().replaceAll("-", "");
+	}
+	
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 */
+	public static String  assertConfigParam(Configuration config, String param, String msg) {
+		String value = config.get(param);
+		if (value == null) {
+			throw new IllegalStateException(msg);
+		}
+		return value;
 	}
 }

@@ -98,18 +98,14 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
+        	String value = Utility.assertConfigParam( config, "quantity.attr.ordinals", "quantity field ordinals must be provided");
+        	quantityAttrOrdinals = Utility.intArrayFromString(value);
+    		
+        	String incrFilePrefix = Utility.assertConfigParam( config, "incremental.file.prefix", "Incremental file prefix needs to be specified");
+        	isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
         	
-        	String incrFilePrefix = config.get("incremental.file.prefix", "");
-        	if (!incrFilePrefix.isEmpty()) {
-        		isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
-        	} else {
-        		throw new IOException("incremental file prefix needs to be specified");
-        	}
-        	
-        	if (null != config.get("id.field.ordinals")) {
-        		idFieldOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"));
-        	}
+        	value = Utility.assertConfigParam( config, "id.field.ordinals", "ID field ordinals must be provided");
+        	idFieldOrdinals = Utility.intArrayFromString(value);
        }
  
         @Override
@@ -118,32 +114,30 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
         	outKey.initialize();
         	outVal.initialize();
-        	if (null != idFieldOrdinals) {
-      			for (int ord : idFieldOrdinals ) {
-      				outKey.append(items[ord]);
-      			}
-        	} else {
-        		//all fields before quantity are ID fields
-	            for (int i = 0; i < quantityAttrOrdinals[0];  ++i) {
-	            	outKey.append(items[i]);
-	            }
-        	}
         	
         	if (isAggrFileSplit) {
+        		for (int i = 0; i < idFieldOrdinals.length; ++i) {
+      				outKey.append(items[i]);
+        		}
         		outKey.append(0);
         		
-        		//stat fields start after last quant field
-    			statOrd = quantityAttrOrdinals[quantityAttrOrdinals.length-1] + 1;
+        		//stat fields start after id fields
+    			statOrd = idFieldOrdinals.length;
     			
     			for ( int ord : quantityAttrOrdinals) {
-        			//existing aggregation - quantity attrubute ordinal, avg, std dev
-                    outVal.add(0, Integer.parseInt(items[statOrd]), Long.parseLong(items[statOrd+4]) ,  
+        			//existing aggregation - quantity attrubute ordinal, count, avg, std dev
+                    outVal.add(0, Integer.parseInt(items[statOrd]), Long.parseLong(items[statOrd+1]), Long.parseLong(items[statOrd+4]) ,  
                     		Double.parseDouble(items[statOrd + 5]));
                     statOrd += PER_FIELD_STAT_VAR_COUNT;
     			}
         	} else {
         		//incremental - whole record
+      			for (int ord : idFieldOrdinals ) {
+      				outKey.append(items[ord]);
+      			}
         		outKey.append(1);
+        		
+        		outVal.add(1);
         		for (String item : items) {
         			outVal.add(item);
         		}
@@ -171,6 +165,7 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 	    private long min;
 	    private long max;
 	    private long delta;
+	    private long count;
 	    private boolean valid;
 	    private long fieldValue;
 	    private String outputType;
@@ -178,6 +173,7 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 	    private String stVal;
 	    private List<Integer> invalidFields = new ArrayList<Integer>();
 	    private LongRunningStats stat;
+	    private int minCountForStat;
 	       		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -188,6 +184,7 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 			quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
 			stdDevMult = config.getFloat("std.dev.mult", (float)3.0);
 			outputType = config.get("output.type", "invalid");
+			minCountForStat = config.getInt("min.count.for.stat", 2);
 		}
 		
  	/* (non-Javadoc)
@@ -207,9 +204,12 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 					//aggregate with stats
 					for ( int quantOrd : quantityAttrOrdinals) {
 						ord = val.getInt(index++);
+						count = val.getLong(index++);
 						avg = val.getLong(index++);
 						stdDev  = val.getDouble(index++);
-	    				runningStats.put(ord, new LongRunningStats(ord, avg, stdDev));
+						if (count >= minCountForStat) {
+							runningStats.put(ord, new LongRunningStats(ord, avg, stdDev));
+						}
 					} 
 				} else {
 					//record
@@ -221,11 +221,15 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 				valid = true;
 				for ( int quantOrd : quantityAttrOrdinals) {
     				stat = runningStats.get(quantOrd);
-    				delta = Math.round(stat.getStdDev() * stdDevMult);
-    				min = stat.getAvg() -  delta;
-    				max = stat.getAvg() +  delta;
-    				fieldValue = Long.parseLong(record[quantOrd]);
-    				valid = fieldValue >= min && fieldValue <= max;
+    				if (null == stat) {
+    					valid = true;
+    				} else {
+	    				delta = Math.round(stat.getStdDev() * stdDevMult);
+	    				min = stat.getAvg() -  delta;
+	    				max = stat.getAvg() +  delta;
+	    				fieldValue = Long.parseLong(record[quantOrd]);
+	    				valid = fieldValue >= min && fieldValue <= max;
+    				}
     				if (!valid) {
     					invalidFields.add(quantOrd);
     				}
