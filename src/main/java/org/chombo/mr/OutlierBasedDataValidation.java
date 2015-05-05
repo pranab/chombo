@@ -37,6 +37,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.chombo.util.LongRunningStats;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
@@ -174,12 +176,16 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 	    private List<Integer> invalidFields = new ArrayList<Integer>();
 	    private LongRunningStats stat;
 	    private int minCountForStat;
-	       		
+	    private static final Logger LOG = Logger.getLogger(OutlierBasedDataValidation.DataValidatorReducer.class);	       
+	    
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
+            if (config.getBoolean("debug.on", false)) {
+             	LOG.setLevel(Level.DEBUG);
+            }
 			fieldDelim = config.get("field.delim.out", ",");
 			quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
 			stdDevMult = config.getFloat("std.dev.mult", (float)3.0);
@@ -232,12 +238,14 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
     				}
     				if (!valid) {
     					invalidFields.add(quantOrd);
+    					context.getCounter("Data quality", "invalid attribute").increment(1);
+	    				LOG.debug( "invalid:  " + record[0] + "," + record[2] + " fieldValue: " + fieldValue + " min: " + min + " max: " + max );
     				}
 				}
 
 				valid = invalidFields.isEmpty();
 				if (!valid) {
-					context.getCounter("Data quality", "invalid").increment(1);
+					context.getCounter("Data quality", "invalid record").increment(1);
 				}
 				toOutput = outputType.equals("valid") && valid || outputType.equals("invalid") && !valid ||
 						outputType.equals("all");
