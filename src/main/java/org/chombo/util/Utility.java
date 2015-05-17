@@ -764,4 +764,13 @@ public class Utility {
 		}
 		return value;
 	}
+	
+	/**
+	 * @param list
+	 * @return
+	 */
+	public static <T> T selectRandom(List<T> list) {
+   		int index = (int)(Math.random() * list.size());
+		return list.get(index);
+	}
 }
