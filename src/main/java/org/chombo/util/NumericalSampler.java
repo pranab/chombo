@@ -32,6 +32,11 @@ public class NumericalSampler {
 	private List<Pair<Integer, Double>> ranges = new ArrayList<Pair<Integer, Double>>();
 	private double maxRange;
 	private int binWidth;
+
+	public void initialize() {
+		distrbutions.clear();
+		ranges.clear();
+	}
 	
 	public NumericalSampler(int binWidth) {
 		super();

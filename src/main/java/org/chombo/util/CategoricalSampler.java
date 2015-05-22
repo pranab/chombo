@@ -31,7 +31,12 @@ public class CategoricalSampler {
 	private Map<String, Double> distrbutions = new HashMap<String, Double>();
 	private List<Pair<String, Double>> ranges = new ArrayList<Pair<String, Double>>();
 	private double maxRange;
-	
+
+	public void initialize() {
+		distrbutions.clear();
+		ranges.clear();
+	}
+
 	/**
 	 * @param key
 	 * @param value
@@ -41,6 +46,23 @@ public class CategoricalSampler {
 		ranges.clear();
 	}
 	
+	/**
+	 * @param key
+	 * @return
+	 */
+	public double get(String key) {
+		return distrbutions.get(key);
+	}
+	
+	/**
+	 * @param key
+	 * @param value
+	 */
+	public void set(String key, Double value) {
+		distrbutions.put(key, value);
+		ranges.clear();
+	}
+
 	/**
 	 * @return
 	 */
