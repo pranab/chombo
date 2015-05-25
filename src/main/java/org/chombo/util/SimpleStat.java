@@ -21,9 +21,9 @@ package org.chombo.util;
  * @author pranab
  *
  */
-public class SimpleStat {
+public class SimpleStat implements AverageValue {
 	private double sum;
-	private int count;
+	private long count;
 	
 	public void add(double value) {
 		sum +=  value;
@@ -31,6 +31,11 @@ public class SimpleStat {
 	}
 	
 	public double getMean() {
+		return sum / count;
+	}
+
+	@Override
+	public double getAvgValue() {
 		return sum / count;
 	}
 }

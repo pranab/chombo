@@ -46,9 +46,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
                 <artifactId>maven-jar-plugin</artifactId>
 				<version>2.2</version>
                 <configuration>
-                    <archive>
-                    </archive>
-                </configuration>
+          			<archive>
+            			<manifest>
+              				<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              				<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            			</manifest>
+          			</archive>                
+          	</configuration>
             </plugin>
         </plugins>
     </build>
