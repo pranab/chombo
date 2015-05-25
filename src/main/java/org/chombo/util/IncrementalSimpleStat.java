@@ -34,4 +34,10 @@ public class IncrementalSimpleStat implements AverageValue {
 	public double getAvgValue() {
 		return avgValue;
 	}
+	
+	@Override
+	public void setAvgValue(double avgValue) {
+		this.avgValue = avgValue;
+	}
+	
 }

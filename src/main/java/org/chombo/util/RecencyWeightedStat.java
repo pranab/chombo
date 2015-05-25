@@ -42,4 +42,9 @@ public class RecencyWeightedStat implements AverageValue {
 		return avgValue;
 	}
 
+	@Override
+	public void setAvgValue(double avgValue) {
+		this.avgValue = avgValue;
+	}
+
 }

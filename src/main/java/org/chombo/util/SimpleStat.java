@@ -38,4 +38,10 @@ public class SimpleStat implements AverageValue {
 	public double getAvgValue() {
 		return sum / count;
 	}
+
+	@Override
+	public void setAvgValue(double avgValue) {
+		sum = avgValue;
+		count = 1;
+	}
 }
