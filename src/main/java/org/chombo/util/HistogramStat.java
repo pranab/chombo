@@ -22,14 +22,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Histogram that c hnges as data gets added
+ * 
  * @author pranab
  *
  */
 public class HistogramStat {
-	private int binWidth;
-	private Map<Integer, Bin> binMap = new HashMap<Integer, Bin>();
-	private int count;
-	private double sum = 0.0;
+	protected int binWidth;
+	protected Map<Integer, Bin> binMap = new HashMap<Integer, Bin>();
+	protected int count;
+	protected double sum = 0.0;
+	protected int  sampleCount;
 	
 	/**
 	 * @param binWidth
@@ -60,6 +63,7 @@ public class HistogramStat {
 		bin.addCount(count);
 		this.count += count;
 		sum += value * count;
+		++sampleCount;
 	}
 
 	/**
@@ -137,7 +141,7 @@ public class HistogramStat {
 	 * @author pranab
 	 *
 	 */
-	private static class Bin implements  Comparable<Bin> {
+	public static class Bin implements  Comparable<Bin> {
 		private int index;
 		private int count;
 
