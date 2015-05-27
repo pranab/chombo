@@ -1,0 +1,45 @@
+This tutorial is data quality check with outlier. Statistics are caculated for a field.
+Outliers are defined in terms z score or . The use case is for supply chain. A wholeseller
+receives orders from different retailer stores. 
+
+The statistics are calculated for for  order quantity for each (store, product) pair. 
+Statistics are calculated by repeatedly excuting RunningAggregator map reduce with 
+fresh batch of store order data. By statistics, we mean average and std deviation.
+
+
+1. Create store order
+=====================
+./vaou.sh genOrder  <product_data_file> <store_data_file> <average_num_products>  <order_data_file>
+
+where 
+product_data_file contains the product data, the first field being the product ID
+store_data_file contains the store data, the first field being the store ID
+average_num_products is the average number of products ordered by a store
+order_data_file is the outfile with order data
+
+For product_data_file and store_data_file it's only the first field that matters.
+
+2. Export order data to HDFS
+============================
+./vaou.sh loadIncr   <order_data_file>
+
+3. Generate running statistics
+==============================
+./vaou.sh runningAggr
+
+4. Replace old Stas with new
+============================
+./vaou.sh replaceAggr
+
+5. Final stats
+==============
+Steps 1,2,3 and 4 should be repeated as many times as necessary to  to generate
+reliable stats for order quantity.
+
+6. Check quality with outliers
+==============================
+./vaou.sh  valOutlier
+
+Configuration
+=============
+Sample configuration is in vaou.properties file

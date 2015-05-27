@@ -162,6 +162,8 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 		private int index;
 		private int recType;
 		private String[] record;
+		private float maxZscore;
+		private float chebyshevStdDevMult;
 		private float stdDevMult;
 	    private Map<Integer, LongRunningStats> runningStats = new HashMap<Integer, LongRunningStats>();
 	    private long min;
@@ -188,7 +190,16 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
             }
 			fieldDelim = config.get("field.delim.out", ",");
 			quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
-			stdDevMult = config.getFloat("std.dev.mult", (float)3.0);
+			maxZscore = config.getFloat("max.zscore", (float)-1.0);
+			if (maxZscore  <  0) {
+				double chebyshevIneqalityProb  =  config.getFloat("min.chebyshev.ineqality.prob", (float)-1.0);
+				if (chebyshevIneqalityProb < 0) {
+					throw new IllegalArgumentException("Either z score or chebyshev inequality probability must be provided");
+				}
+				chebyshevStdDevMult = (float)(Math.sqrt(1.0 / chebyshevIneqalityProb));
+			}
+			stdDevMult = maxZscore > 0 ? maxZscore  : chebyshevStdDevMult;
+
 			outputType = config.get("output.type", "invalid");
 			minCountForStat = config.getInt("min.count.for.stat", 2);
 		}
