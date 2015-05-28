@@ -19,8 +19,10 @@ package org.chombo.mr;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -194,10 +196,13 @@ public class Projection extends Configured implements Tool {
 		private List<Integer> intValues = new ArrayList<Integer>();
 		private Set<String> strValuesSet = new HashSet<String>();
 		private int sum;
+		private int sqSum;
 		private  boolean sortOrderAscending;
 		private List<String> sortedValues = new ArrayList<String>();
 		private int limitTo;
 		private boolean formatCompact;
+		private int averageFunctionIndex;
+		private double  stdDev;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -245,6 +250,8 @@ public class Projection extends Configured implements Tool {
     			intValues.clear();
     			strValuesSet.clear();
     			sum = 0;
+    			sqSum = 0;
+    			averageFunctionIndex = -1;
 	        	for (Text value : values){
 	        		strValues.add(value.toString());
 	        	}    			
@@ -252,20 +259,34 @@ public class Projection extends Configured implements Tool {
 	        	//all aggregate functions
 	        	for (int i = 0; i <  aggrFunctions.length; ++i) {
 	        		if (aggrFunctions[i].equals("count")) {
+	        			//count
 	        			aggrFunctionValues[i] = strValues.size(); 
 	        		} else if (aggrFunctions[i].equals("uniqueCount")) {
+	        			//unique count
 	        			for (String stVal : strValues) {
 	        				strValuesSet.add(stVal);
 	        			}
 	        			aggrFunctionValues[i] = strValuesSet.size(); 
 	        		} else if (aggrFunctions[i].equals("sum")) {
+	        			//sum
 	        			doSum();
 	        			aggrFunctionValues[i] = sum; 
 	        		} else if (aggrFunctions[i].equals("average")) {
+	        			//average
 	        			if (sum == 0) {
 		        			doSum();
 	        			}
 	        			aggrFunctionValues[i] = sum / intValues.size() ; 
+	        		} else if (aggrFunctions[i].equals("stdDev")) {
+	        			//standard deviation
+	        			if (averageFunctionIndex < 0) {
+	        				throw new IllegalStateException("average aggregate function must be included for std deviation");
+	        			}
+		        		doSqSum();
+	        			stdDev = (double)sqSum / intValues.size() -  (double)aggrFunctionValues[averageFunctionIndex] * 
+	        					aggrFunctionValues[averageFunctionIndex];
+	        			stdDev = Math.sqrt(stdDev);
+	        			aggrFunctionValues[i] = (int)stdDev ; 
 	        		}
 	        	}
 	        	for (int i = 0; i < aggrFunctionValues.length; ++i) {
@@ -383,6 +404,18 @@ public class Projection extends Configured implements Tool {
 			}
 			for (int intVal : intValues) {
 				sum += intVal;
+			}
+    	}
+
+    	/**
+    	 * 
+    	 */
+    	private void doSqSum() {
+			if (intValues.isEmpty()) {
+				initializeIntValues();
+			}
+			for (int intVal : intValues) {
+				sqSum += intVal * intVal;
 			}
     	}
 

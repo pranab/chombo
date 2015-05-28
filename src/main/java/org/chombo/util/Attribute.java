@@ -29,6 +29,7 @@ public class Attribute {
 	protected String name;
 	protected int ordinal = -1;
 	protected boolean id;
+	protected boolean classAttribute;
 	protected String dataType;
 	protected List<String> cardinality;
 	protected double  min;
@@ -40,6 +41,17 @@ public class Attribute {
 	protected double variance;
 	protected double stdDev;
 	protected boolean stdDevDefined;
+	protected double skew;
+	protected boolean skewDefined;
+	protected String datePattern;
+	protected boolean nullable;
+	protected String stringPattern;
+	public static final String DATA_TYPE_STRING = "string";
+	public static final String DATA_TYPE_CATEGORICAL = "categorical";
+	public static final String DATA_TYPE_INT = "int";
+	public static final String DATA_TYPE_DOUBLE = "double";
+	public static final String DATA_TYPE_TEXT = "text";
+	public static final String DATA_TYPE_DATE = "date";
 	
 	public String getName() {
 		return name;
@@ -58,6 +70,12 @@ public class Attribute {
 	}
 	public void setId(boolean id) {
 		this.id = id;
+	}
+	public boolean isClassAttribute() {
+		return classAttribute;
+	}
+	public void setClassAttribute(boolean classAttribute) {
+		this.classAttribute = classAttribute;
 	}
 	public String getDataType() {
 		return dataType;
@@ -106,22 +124,62 @@ public class Attribute {
 		this.stdDev = stdDev;
 		stdDevDefined = true;
 	}
+	public double getSkew() {
+		return skew;
+	}
+	public void setSkew(double skew) {
+		this.skew = skew;
+		skewDefined = true;
+	}
+	public String getDatePattern() {
+		return datePattern;
+	}
+	public void setDatePattern(String datePattern) {
+		this.datePattern = datePattern;
+	}
+	public boolean isNullable() {
+		return nullable;
+	}
+	public void setNullable(boolean nullable) {
+		this.nullable = nullable;
+	}
+	public String getStringPattern() {
+		return stringPattern;
+	}
+	public void setStringPattern(String stringPattern) {
+		this.stringPattern = stringPattern;
+	}
 	public boolean isCategorical() {
-		return dataType.equals("categorical");
+		return dataType.equals(DATA_TYPE_CATEGORICAL);
 	}
 
 	public boolean isInteger() {
-		return dataType.equals("int");
+		return dataType.equals(DATA_TYPE_INT );
 	}
 
 	public boolean isDouble() {
-		return dataType.equals("double");
+		return dataType.equals(DATA_TYPE_DOUBLE);
 	}
 
 	public boolean isText() {
-		return dataType.equals("text");
+		return dataType.equals(DATA_TYPE_TEXT );
 	}
 	
+	public boolean isMinDefined() {
+		return minDefined;
+	}
+	public boolean isMaxDefined() {
+		return maxDefined;
+	}
+	public boolean isMeanDefined() {
+		return meanDefined;
+	}
+	public boolean isStdDevDefined() {
+		return stdDevDefined;
+	}
+	public boolean isSkewDefined() {
+		return skewDefined;
+	}
 	public int cardinalityIndex(String value) {
 		return cardinality.indexOf(value);
 	}

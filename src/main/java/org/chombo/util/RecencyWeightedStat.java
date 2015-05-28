@@ -21,27 +21,30 @@ package org.chombo.util;
  * @author pranab
  *
  */
-public class SimpleStat implements AverageValue {
-	private double sum;
+public class RecencyWeightedStat implements AverageValue {
+	private double avgValue;
 	private long count;
+	private double stepSize;
 	
-	public void add(double value) {
-		sum +=  value;
-		++count;
+	public RecencyWeightedStat(double stepSize) {
+		super();
+		this.stepSize = stepSize;
 	}
-	
-	public double getMean() {
-		return sum / count;
+
+	@Override
+	public void add(double value) {
+		++count;
+		avgValue += stepSize * (value - avgValue);
 	}
 
 	@Override
 	public double getAvgValue() {
-		return sum / count;
+		return avgValue;
 	}
 
 	@Override
 	public void setAvgValue(double avgValue) {
-		sum = avgValue;
-		count = 1;
+		this.avgValue = avgValue;
 	}
+
 }

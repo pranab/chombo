@@ -30,9 +30,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
                 <artifactId>maven-jar-plugin</artifactId>
 				<version>2.2</version>
                 <configuration>
-                    <archive>
-                    </archive>
-                </configuration>
+          			<archive>
+            			<manifest>
+              				<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              				<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+            			</manifest>
+          			</archive>                
+          	</configuration>
             </plugin>
         </plugins>
     </build>
@@ -125,6 +129,12 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     	<version>2.2.1</version>
     	<type>jar</type>
     	<scope>compile</scope>
+	</dependency>
+	
+	<dependency>
+		<groupId>org.codehaus.groovy</groupId>
+		<artifactId>groovy-all</artifactId>
+		<version>2.4.3</version>
 	</dependency>
        
     </dependencies>

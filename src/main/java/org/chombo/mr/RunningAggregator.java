@@ -18,6 +18,8 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,9 +35,12 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.chombo.util.SecondarySort;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.chombo.util.LongRunningStats;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
+
 
 /**
  * Calculates running average and other stats of some quantity
@@ -82,24 +87,34 @@ public class RunningAggregator  extends Configured implements Tool {
 		private Tuple outVal = new Tuple();
         private String fieldDelimRegex;
         private String[] items;
-        private int quantityAttr;
+        private int[] quantityAttrOrdinals;
         private boolean isAggrFileSplit;
-        
+        private int[] idFieldOrdinals;
+        private long newValue;
+        private int statOrd;
+        private static final int PER_FIELD_STAT_VAR_COUNT = 6;
+        private static final Logger LOG = Logger.getLogger(RunningAggregator.AggrMapper.class);
+
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
+            if (config.getBoolean("debug.on", false)) {
+             	LOG.setLevel(Level.DEBUG);
+            }
+
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	quantityAttr = config.getInt("quantity.attr",-1);
-        	String aggrFilePrefix = context.getConfiguration().get("aggregate.file.prefix", "");
+        	String value = Utility.assertConfigParam( config, "quantity.attr.ordinals", "quantity field ordinals must be provided");
+        	quantityAttrOrdinals = Utility.intArrayFromString(value);
+        	
+        	String aggrFilePrefix = config.get("aggregate.file.prefix", "");
         	if (!aggrFilePrefix.isEmpty()) {
         		isAggrFileSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(aggrFilePrefix);
         	} else {
-            	String incrFilePrefix = context.getConfiguration().get("incremental.file.prefix", "");
-            	if (!incrFilePrefix.isEmpty()) {
-            		isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
-            	} else {
-            		throw new IOException("Aggregate or incremental file prefix needs to be specified");
-            	}
+            	String incrFilePrefix =Utility.assertConfigParam( config, "incremental.file.prefix", "Incremental file prefix needs to be specified");
+            	isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
         	}
+        	
+        	value = Utility.assertConfigParam( config, "id.field.ordinals", "ID field ordinals must be provided");
+        	idFieldOrdinals = Utility.intArrayFromString(value);
        }
  
         @Override
@@ -108,21 +123,28 @@ public class RunningAggregator  extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
         	outKey.initialize();
         	outVal.initialize();
-        	int initValue = 0;
-            for (int i = 0; i < quantityAttr;  ++i) {
-            	outKey.append(items[i]);
-            }
-            
+        	
         	if (isAggrFileSplit) {
-        		if (items.length >= quantityAttr) {
-        			//existing aggregation
-                    outVal.add(Integer.parseInt(items[quantityAttr]) ,   Integer.parseInt(items[quantityAttr + 1]) );
-        		} else {
-        			//first aggregation
-        			outVal.add(initValue, initValue);
+        		for (int i = 0; i < idFieldOrdinals.length; ++i) {
+      				outKey.append(items[i]);
         		}
+    			statOrd = idFieldOrdinals.length;
+    			for ( int ord : quantityAttrOrdinals) {
+        			//existing aggregation - quantity attrubute ordinal, count, sum, sum of squares
+                    outVal.add(0, Integer.parseInt(items[statOrd]), Long.parseLong(items[statOrd+1]) ,  
+                    		Long.parseLong(items[statOrd + 2]),  Long.parseLong(items[statOrd + 3]));
+                    statOrd += PER_FIELD_STAT_VAR_COUNT;
+    			}
         	} else {
-                outVal.add((int)1, Integer.parseInt( items[quantityAttr]));
+          		for (int ord : idFieldOrdinals ) {
+          			outKey.append(items[ord]);
+          		}
+            	
+            	//incremental - first run will have only incremental file
+    			for ( int ord : quantityAttrOrdinals) {
+	        		newValue = Long.parseLong( items[ord]);
+	                outVal.add(1,ord, (long)1, newValue, newValue * newValue);
+    			}
         	}
         	context.write(outKey, outVal);
         }
@@ -136,16 +158,29 @@ public class RunningAggregator  extends Configured implements Tool {
  		private Text outVal = new Text();
  		private StringBuilder stBld =  new StringBuilder();;
  		private  String fieldDelim;
-		private int sum;
-		private int count;
-		private int avg;
+ 		private int ord;
+		private long sum;
+		private long count;
+		private long sumSq;
+        private int[] quantityAttrOrdinals;
+        private int index;
+        private Map<Integer, LongRunningStats> runningStats = new HashMap<Integer, LongRunningStats>();
+        private boolean  handleMissingIncremental;
+        private int recType;
+        private int recCount;
+        private static final Logger LOG = Logger.getLogger(RunningAggregator.AggrReducer.class);
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
+            if (config.getBoolean("debug.on", false)) {
+             	LOG.setLevel(Level.DEBUG);
+            }
         	fieldDelim = config.get("field.delim.out", ",");
+        	quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
+        	handleMissingIncremental = config.getBoolean("handle.missing.incremental",  false);
        }
 		
     	/* (non-Javadoc)
@@ -153,17 +188,53 @@ public class RunningAggregator  extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
-    		sum = 0;
-    		count = 0;
+    		runningStats.clear();
+    		recCount = 0;
     		for (Tuple val : values) {
-				count += val.getInt(0);
-    			sum  += val.getInt(1);
+    			index = 0;
+    			recType = val.getInt(index++);
+    			
+    			//all quant fields
+    			for ( int quantOrd : quantityAttrOrdinals) {
+    				ord = val.getInt(index++);
+    				if (quantOrd != ord) {
+    					throw new IllegalStateException("field ordinal does not match");
+    				}
+    				count = val.getLong(index++);
+    				sum  = val.getLong(index++);
+    				sumSq  = val.getLong(index++);
+    				
+    				LongRunningStats stat = runningStats.get(ord);
+    				if (null == stat) {
+    					runningStats.put(ord, new LongRunningStats(ord, count, sum, sumSq));
+    				} else {
+    					//LOG.debug("aggregating key: " + key.toString() + " count : " + count + " sum: " + sum + " sumSq: " + sumSq);
+    					stat.accumulate(count, sum, sumSq);
+    				}
+    			}
+    			++recCount;
     		}   	
-    		avg = count > 0 ? sum / count  :  0;
+    		
+    		//if only aggregate record, increment count by 1
+    		if (handleMissingIncremental && recCount == 1 && recType == 0) {
+    			for ( int quantOrd : quantityAttrOrdinals) {
+    				LongRunningStats stat = runningStats.get(quantOrd);
+    				stat.incrementCount();
+    			}
+    		}
     		
     		stBld.delete(0, stBld.length());
     		stBld.append(key.toString()).append(fieldDelim);
-    		stBld.append(count).append(fieldDelim).append(sum).append(fieldDelim).append(avg);
+    		
+    		//all quant field
+			for ( int quantOrd : quantityAttrOrdinals) {
+				LongRunningStats stat = runningStats.get(quantOrd);
+				stat.process();
+				stBld.append(stat.getField()).append(fieldDelim).append(stat.getCount()).append(fieldDelim).
+				  	append(stat.getSum()).append(fieldDelim).append(stat.getSumSq()).append(fieldDelim).
+				  	append(stat.getAvg()).append(fieldDelim).append(stat.getStdDev());
+			}
+    		
         	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}
@@ -174,8 +245,8 @@ public class RunningAggregator  extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-     int exitCode = ToolRunner.run(new RunningAggregator(), args);
-     System.exit(exitCode);
+		int exitCode = ToolRunner.run(new RunningAggregator(), args);
+		System.exit(exitCode);
 	}
 
  

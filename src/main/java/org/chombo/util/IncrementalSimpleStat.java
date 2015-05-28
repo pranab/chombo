@@ -18,30 +18,26 @@
 package org.chombo.util;
 
 /**
+ * Incremental average
  * @author pranab
  *
  */
-public class SimpleStat implements AverageValue {
-	private double sum;
+public class IncrementalSimpleStat implements AverageValue {
+	private double avgValue;
 	private long count;
 	
 	public void add(double value) {
-		sum +=  value;
 		++count;
+		avgValue += (value - avgValue) / count;
 	}
 	
-	public double getMean() {
-		return sum / count;
-	}
-
-	@Override
 	public double getAvgValue() {
-		return sum / count;
+		return avgValue;
 	}
-
+	
 	@Override
 	public void setAvgValue(double avgValue) {
-		sum = avgValue;
-		count = 1;
+		this.avgValue = avgValue;
 	}
+	
 }
