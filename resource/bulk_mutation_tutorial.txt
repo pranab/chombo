@@ -1,6 +1,11 @@
 Thos tutorial is bulk insert, update and delete for data in HDFS. This is a common
 scenario in many big data analytic projects.
 
+Dependent script
+================
+Checkout the project visitante. Take the script util.py from the project and placeit
+in ../lib directory with respect the directory containing product.py
+
 Input Data
 ==========
 Generate master base data

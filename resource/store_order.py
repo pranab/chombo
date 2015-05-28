@@ -9,6 +9,23 @@ from util import *
 
 allProducts = []
 allStores = []
+categories = ["general", "produce", "poultry", "dairy"]
+zipCodes = ["95126", "95137", "94936", "95024", "94925"]
+
+#create product data
+def createProducts(count):
+	for i in range(0,count):
+		it = genID(10)
+		cat = selectRandomFromList(categories)
+		price = 100 +  randint(0,200)
+		print "%s,%s,%d" %(it, cat, price)
+
+#create store data
+def createStores(count):
+	for i in range(0,count):
+		it = genID(8)
+		cat = selectRandomFromList(zipCodes)
+		print "%s,%s" %(it, cat)
 
 # load item file
 def load(existFile, idArray):
@@ -34,18 +51,35 @@ def createStoreOrders(allStores, allProducts, avNumProduct):
 			while prod in prodSelected:
 				prod =  selectRandomFromList(allProducts)
 			prodSelected.add(prod)
-			variance = randint(2,10)
-			quantity = (abs(hash(store + prod)) % 5 + 3) * 10  + randint(-variance, variance)
+			variance = randint(6,10)
+			quantity = (abs(hash(store + prod)) % 5 + 3) * 10
+			if (randint(0,10) < 7):
+				quantity = quantity + randint(-variance, variance)
+			else:
+				variance = 2 * variance
+				quantity = quantity + randint(-variance, variance)
+			
 			if (randint(0,10) < 3):
 				shipping = "express"
 			else:
 				shipping = "normal"
 			print "%s,%s,%s,%d,%s" %(store, orderID, prod, quantity, shipping)
 			
-existProdFile = sys.argv[1]
-existStoreFile = sys.argv[2]	
-avNumProduct = int(sys.argv[3])
+##############################################################################
+op = sys.argv[1]
+			
+if (op == "createOrders"):
+	existProdFile = sys.argv[2]
+	existStoreFile = sys.argv[3]	
+	avNumProduct = int(sys.argv[4])
 	
-load(existProdFile, allProducts)
-load(existStoreFile, allStores)
-createStoreOrders(allStores, allProducts, avNumProduct)
+	load(existProdFile, allProducts)
+	load(existStoreFile, allStores)
+	createStoreOrders(allStores, allProducts, avNumProduct)
+elif (op == "createProducts"):
+	count = int(sys.argv[2])
+	createProducts(count)
+elif (op == "createStores"):
+	count = int(sys.argv[2])
+	createStores(count)
+	

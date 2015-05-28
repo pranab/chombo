@@ -15,7 +15,7 @@ HDFS_META_BASE_DIR=/user/pranab/meta
 case "$1" in
 
 "genOrder")
-	 ./store_order.py $2 $3 $4 > $5
+	 ./store_order.py createOrders $2 $3 $4 > $5
 	 ls -l $5
 ;;
 
@@ -48,13 +48,13 @@ case "$1" in
 "valOutlier")
 	echo "running MR OutlierBasedDataValidation"
 	CLASS_NAME=org.chombo.mr.OutlierBasedDataValidation
-	IN_PATH=$HDFS_BASE_DIR/ruag/aggr,$HDFS_BASE_DIR/ouva/incr
+	IN_PATH=$HDFS_BASE_DIR/ruag/input
 	OUT_PATH=$HDFS_BASE_DIR/ouva/output
 	echo "input $IN_PATH output $OUT_PATH"
 	hadoop fs -rmr $OUT_PATH
 	echo "removed output dir"
 	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
-	haddop fs -ls $HDFS_BASE_DIR/ruag/output
+	hadoop fs -ls $HDFS_BASE_DIR/ouva/output
 ;;
 
 
