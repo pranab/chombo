@@ -64,22 +64,6 @@ public class StringValidator {
 	 * @author pranab
 	 *
 	 */
-	public static class NotMissingValidator extends Validator {
-		
-		public NotMissingValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
-		}
-
-		@Override
-		public boolean isValid(String value) {
-			return !value.isEmpty();
-		}
-	}
-	
-	/**
-	 * @author pranab
-	 *
-	 */
 	public static class PatternValidator extends Validator {
 		private Pattern pattern;
 		

@@ -161,10 +161,14 @@ public class Attribute {
 		return dataType.equals(DATA_TYPE_DOUBLE);
 	}
 
+	public boolean isString() {
+		return dataType.equals(DATA_TYPE_STRING );
+	}
+	
 	public boolean isText() {
 		return dataType.equals(DATA_TYPE_TEXT );
 	}
-	
+
 	public boolean isMinDefined() {
 		return minDefined;
 	}
