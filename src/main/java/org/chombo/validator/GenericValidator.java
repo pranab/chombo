@@ -40,5 +40,70 @@ public class GenericValidator {
 			return !value.isEmpty();
 		}
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class EnsureIntValidator extends Validator {
+		
+		public EnsureIntValidator(String tag, int ordinal, AttributeSchema schema) {
+			super(tag, ordinal, schema);
+		}
 
+		@Override
+		public boolean isValid(String value) {
+			boolean valid = true;
+			try {
+				int intVal = Integer.parseInt(value);
+			} catch (Exception ex) {
+				valid = false;
+			}
+			return valid;
+		}
+	}
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class EnsureLongValidator extends Validator {
+		
+		public EnsureLongValidator(String tag, int ordinal, AttributeSchema schema) {
+			super(tag, ordinal, schema);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			boolean valid = true;
+			try {
+				long longVal = Long.parseLong(value);
+			} catch (Exception ex) {
+				valid = false;
+			}
+			return valid;
+		}
+	}
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class EnsureDoubleValidator extends Validator {
+		
+		public EnsureDoubleValidator(String tag, int ordinal, AttributeSchema schema) {
+			super(tag, ordinal, schema);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			boolean valid = true;
+			try {
+				double dblVal = Double.parseDouble(value);
+			} catch (Exception ex) {
+				valid = false;
+			}
+			return valid;
+		}
+	}
 }

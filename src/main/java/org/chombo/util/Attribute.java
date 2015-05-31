@@ -46,6 +46,8 @@ public class Attribute {
 	protected String datePattern;
 	protected boolean nullable;
 	protected String stringPattern;
+	protected String minString;
+	protected String maxString;
 	public static final String DATA_TYPE_STRING = "string";
 	public static final String DATA_TYPE_CATEGORICAL = "categorical";
 	public static final String DATA_TYPE_INT = "int";
@@ -148,6 +150,18 @@ public class Attribute {
 	}
 	public void setStringPattern(String stringPattern) {
 		this.stringPattern = stringPattern;
+	}
+	public String getMinString() {
+		return minString;
+	}
+	public void setMinString(String minString) {
+		this.minString = minString;
+	}
+	public String getMaxString() {
+		return maxString;
+	}
+	public void setMaxString(String maxString) {
+		this.maxString = maxString;
 	}
 	public boolean isCategorical() {
 		return dataType.equals(DATA_TYPE_CATEGORICAL);

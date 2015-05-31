@@ -64,6 +64,38 @@ public class StringValidator {
 	 * @author pranab
 	 *
 	 */
+	public static class MinValidator extends Validator {
+
+		public MinValidator(String tag, int ordinal, AttributeSchema schema) {
+			super(tag, ordinal, schema);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			return value.compareTo(attribute.getMinString()) >= 0;
+		}
+	}
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class MaxValidator extends Validator {
+
+		public MaxValidator(String tag, int ordinal, AttributeSchema schema) {
+			super(tag, ordinal, schema);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			return value.compareTo(attribute.getMaxString()) <= 0;
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static class PatternValidator extends Validator {
 		private Pattern pattern;
 		

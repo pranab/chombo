@@ -25,11 +25,16 @@ import org.chombo.util.AttributeSchema;
  *
  */
 public class ValidatorFactory {
-	public static final String MIN_VALIDATOR = "minValidator";
-	public static final String MAX_VALIDATOR = "maxValidator";
-	public static final String NOT_MISSING_VALIDATOR = "notMissingValidator";
-	public static final String PATTERN_VALIDATOR = "patternValidator";
-	public static final String MEMEBERSHIP_VALIDATOR = "membershipValidator";
+	public static final String MIN_VALIDATOR = "min";
+	public static final String MAX_VALIDATOR = "max";
+	public static final String MIN_LENGTH_VALIDATOR = "minLength";
+	public static final String MAX_LENGTH_VALIDATOR = "maxLength";
+	public static final String NOT_MISSING_VALIDATOR = "notMissing";
+	public static final String PATTERN_VALIDATOR = "pattern";
+	public static final String MEMEBERSHIP_VALIDATOR = "membership";
+	public static final String ENSURE_INT_VALIDATOR = "ensureInt";
+	public static final String ENSURE_LONG_VALIDATOR = "ensureLong";
+	public static final String ENSURE_DOUBLE_VALIDATOR = "ensureDouble";
 	
 	
 	/**
@@ -48,7 +53,7 @@ public class ValidatorFactory {
 			} else if (attribute.isDouble()) {
 				validator = new  NumericalValidator.DoubleMinValidator(validatorType, ordinal, schema);
 			} else if (attribute.isString()) {
-				validator = new  StringValidator.MinLengthValidator(validatorType, ordinal, schema);
+				validator = new  StringValidator.MinValidator(validatorType, ordinal, schema);
 			}
 		} else if (validatorType.equals(MAX_VALIDATOR)) {
 			if (attribute.isInteger()) {
@@ -56,6 +61,14 @@ public class ValidatorFactory {
 			} else if (attribute.isDouble()) {
 				validator = new  NumericalValidator.DoubleMaxValidator(validatorType, ordinal, schema);
 			} else if (attribute.isString()) {
+				validator = new  StringValidator.MaxValidator(validatorType, ordinal, schema);
+			}
+		} else if (validatorType.equals(MIN_LENGTH_VALIDATOR)) {
+			if (attribute.isString()) {
+				validator = new  StringValidator.MinLengthValidator(validatorType, ordinal, schema);
+			}
+		} else if (validatorType.equals(MAX_LENGTH_VALIDATOR)) {
+			if (attribute.isString()) {
 				validator = new  StringValidator.MaxLengthValidator(validatorType, ordinal, schema);
 			}
 		} else if (validatorType.equals(NOT_MISSING_VALIDATOR)) {
@@ -68,7 +81,13 @@ public class ValidatorFactory {
 			if (attribute.isCategorical()) {
 				validator = new CategoricalValidator.MembershipValidator(validatorType, ordinal, schema);
 			}
-		} else {
+		} else if (validatorType.equals(ENSURE_INT_VALIDATOR)) {
+				validator = new GenericValidator.EnsureIntValidator(validatorType, ordinal, schema);
+		} else if (validatorType.equals(ENSURE_LONG_VALIDATOR)) {
+			validator = new GenericValidator.EnsureLongValidator(validatorType, ordinal, schema);
+		}else if (validatorType.equals(ENSURE_DOUBLE_VALIDATOR)) {
+			validator = new GenericValidator.EnsureDoubleValidator(validatorType, ordinal, schema);
+		}else {
 			throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType);
 		}
 		
