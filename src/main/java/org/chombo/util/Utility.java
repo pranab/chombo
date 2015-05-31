@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +40,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.lucene.analysis.Analyzer;
@@ -277,6 +279,40 @@ public class Utility {
         return fs;
     }
     
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static OutputStream getCreateFileOutputStream(Configuration conf, String pathConfig) throws IOException {
+        String filePath = conf.get(pathConfig);
+        FSDataOutputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.create(src, true);
+        }
+        return fs;
+    }
+
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static OutputStream getAppendFileOutputStream(Configuration conf, String pathConfig) throws IOException {
+        String filePath = conf.get(pathConfig);
+        FSDataOutputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.append(src);
+        }
+        return fs;
+    }
+
     /**
      * @param conf
      * @param filePathParam

@@ -34,6 +34,27 @@ public class AttributeSchema {
 		this.attributes = attributes;
 	}
 	
+	public int getAttributeCount() {
+		return attributes.size();
+	}
+	
+	/**
+	 * @return
+	 */
+	public int[] getAttributeOrdinals() {
+		int[] ordinals = new int[attributes.size()];
+		int i = 0;
+		for (Attribute attr :  attributes) {
+			ordinals[i++] = attr.getOrdinal();
+		}
+		
+		return ordinals;
+	}
+	
+	/**
+	 * @param ordinal
+	 * @return
+	 */
 	public Attribute findAttributeByOrdinal(int ordinal) {
 		Attribute attribute = null;
 		for (Attribute attr :  attributes) {
