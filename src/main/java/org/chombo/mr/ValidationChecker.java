@@ -110,7 +110,7 @@ public class ValidationChecker extends Configured implements Tool {
             	if (null != validatorString ) {
             		List<Validator> validatorList = new ArrayList<Validator>();  
             		validators.put(ord, validatorList);
-            		String[] valTags = validatorString.split(",");
+            		String[] valTags = validatorString.split(fieldDelimOut);
             		for (String valTag :  valTags) {
             			validatorList.add(ValidatorFactory.create(valTag, ord, schema));
             		}
@@ -126,9 +126,10 @@ public class ValidationChecker extends Configured implements Tool {
             OutputStream os = Utility.getAppendFileOutputStream(config, "invalid.data.file.path");
 			
             for (InvalidData invalidData : invalidDataList ) {
-            	
+            	byte[] data = invalidData.toString().getBytes();
+            	os.write(data);
             }
-            
+            os.flush();
             os.close();
 		}
 
@@ -197,6 +198,9 @@ public class ValidationChecker extends Configured implements Tool {
 				validationTypes.add(validationType);
 			}
 			
+			/* (non-Javadoc)
+			 * @see java.lang.Object#toString()
+			 */
 			public String toString() {
 				StringBuilder stBld = new StringBuilder();
 				stBld.append(record).append("\n");
