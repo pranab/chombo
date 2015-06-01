@@ -39,6 +39,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.AttributeSchema;
 import org.chombo.util.Utility;
+import org.chombo.validator.InvalidData;
 import org.chombo.validator.Validator;
 import org.chombo.validator.ValidatorFactory;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -169,52 +170,6 @@ public class ValidationChecker extends Configured implements Tool {
         }
 	}	
 
-	/**
-	 * @author pranab
-	 *
-	 */
-	private static class InvalidData {
-			private String record;
-			private Map<Integer, List<String>> invalidFields  = new HashMap<Integer, List<String>>();
-			
-			/**
-			 * @param record
-			 */
-			public InvalidData(String record) {
-				super();
-				this.record = record;
-			}
-			
-			/**
-			 * @param ordinal
-			 * @param validationType
-			 */
-			public void addValidationFailure(int ordinal, String validationType) {
-				List<String> validationTypes = invalidFields.get(ordinal);
-				if (null == validationTypes) {
-					validationTypes = new ArrayList<String>();
-					invalidFields.put(ordinal, validationTypes);
-				}
-				validationTypes.add(validationType);
-			}
-			
-			/* (non-Javadoc)
-			 * @see java.lang.Object#toString()
-			 */
-			public String toString() {
-				StringBuilder stBld = new StringBuilder();
-				stBld.append(record).append("\n");
-				for (int ord : invalidFields.keySet()) {
-					stBld.append("field:" + ord).append("\n");
-					for (String valType : invalidFields.get(ord)) {
-						stBld.append(valType).append("  ");
-					}
-					stBld.append("\n");
-				}
-				
-				return stBld.toString();
-			}
-	}
 	
 	/**
 	 * @param args
