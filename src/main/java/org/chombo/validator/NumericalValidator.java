@@ -17,6 +17,8 @@
 
 package org.chombo.validator;
 
+import java.util.Map;
+
 import org.chombo.util.AttributeSchema;
 
 /**
@@ -58,6 +60,29 @@ public class NumericalValidator {
 			return intValue <= attribute.getMax();
 		}
 	}
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class StatsBasedIntRangeValidator extends Validator {
+		private int min;
+		private int max;
+		
+		public StatsBasedIntRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
+			super(tag, ordinal, schema);
+			double mean = (Double)validatorContext.get("mean:" + ordinal);
+			double stdDev = (Double)validatorContext.get("stdDev:" + ordinal);
+			min = (int)(mean - attribute.getMaxZscore() * stdDev);
+			max = (int)(mean + attribute.getMaxZscore() * stdDev);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			int intValue = Integer.parseInt(value);
+			return intValue >= min && intValue <= max;
+		}
+	}
 	
 	/**
 	 * @author pranab
@@ -92,4 +117,28 @@ public class NumericalValidator {
 			return dblValue <= attribute.getMax();
 		}
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class StatsBasedDoubleRangeValidator extends Validator {
+		private double min;
+		private double max;
+		
+		public StatsBasedDoubleRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
+			super(tag, ordinal, schema);
+			double mean = (Double)validatorContext.get("mean:" + ordinal);
+			double stdDev = (Double)validatorContext.get("stdDev:" + ordinal);
+			min = mean - attribute.getMaxZscore() * stdDev;
+			max = mean + attribute.getMaxZscore() * stdDev;
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			double dblValue = Double.parseDouble(value);
+			return dblValue >= min && dblValue <= max;
+		}
+	}
+	
 }

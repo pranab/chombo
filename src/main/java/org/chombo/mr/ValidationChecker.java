@@ -87,6 +87,7 @@ public class ValidationChecker extends Configured implements Tool {
         private String fieldValue;
         private boolean valid;
         private String invalidDataFilePath;
+        private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -105,6 +106,7 @@ public class ValidationChecker extends Configured implements Tool {
 
             //build validator objects
             int[] ordinals  = schema.getAttributeOrdinals();
+            boolean statsIntialized = false;
             for (int ord : ordinals ) {
             	String key = "validator." + ord;
             	String validatorString = config.get(key);
@@ -113,7 +115,25 @@ public class ValidationChecker extends Configured implements Tool {
             		validators.put(ord, validatorList);
             		String[] valTags = validatorString.split(fieldDelimOut);
             		for (String valTag :  valTags) {
-            			validatorList.add(ValidatorFactory.create(valTag, ord, schema));
+            			if (valTag.equals("statBasedRange")) {
+            				if (!statsIntialized) {
+            					List<String[]> statContent = Utility.parseFileLines(config, "stat.file.path",  fieldDelimOut);
+            					int ordFieldIndex = config.getInt("stat.ord.index", -1);
+            					int meanFieldIndex = config.getInt("stat.mean.index", -1);
+            					int stdDevFieldIndex = config.getInt("stat.stdDev.index", -1);
+            					for (String[] items :  statContent) {
+            						int statOrd = Integer.parseInt(items[ordFieldIndex]);
+            						double mean = Double.parseDouble(items[meanFieldIndex]);
+            						double stdDev = Double.parseDouble(items[stdDevFieldIndex]);
+            						validatorContext.put("mean:" + statOrd,  mean);
+            						validatorContext.put("stdDev:" + statOrd,  stdDev);
+            					}
+            					statsIntialized = true;
+            				}
+            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
+            			} else {
+            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,null));
+            			}
             		}
             	}
             }

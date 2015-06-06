@@ -17,6 +17,8 @@
 
 package org.chombo.validator;
 
+import java.util.Map;
+
 import org.chombo.util.Attribute;
 import org.chombo.util.AttributeSchema;
 
@@ -35,6 +37,7 @@ public class ValidatorFactory {
 	public static final String ENSURE_INT_VALIDATOR = "ensureInt";
 	public static final String ENSURE_LONG_VALIDATOR = "ensureLong";
 	public static final String ENSURE_DOUBLE_VALIDATOR = "ensureDouble";
+	public static final String STATS_BASED_RANGE_VALIDATOR = "statBasedRange";
 	
 	
 	/**
@@ -43,7 +46,7 @@ public class ValidatorFactory {
 	 * @param schema
 	 * @return
 	 */
-	public static Validator create(String validatorType, int ordinal, AttributeSchema schema) {
+	public static Validator create(String validatorType, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
 		Validator validator = null;
 		Attribute attribute = schema.findAttributeByOrdinal(ordinal);
 		
@@ -85,9 +88,15 @@ public class ValidatorFactory {
 				validator = new GenericValidator.EnsureIntValidator(validatorType, ordinal, schema);
 		} else if (validatorType.equals(ENSURE_LONG_VALIDATOR)) {
 			validator = new GenericValidator.EnsureLongValidator(validatorType, ordinal, schema);
-		}else if (validatorType.equals(ENSURE_DOUBLE_VALIDATOR)) {
+		} else if (validatorType.equals(ENSURE_DOUBLE_VALIDATOR)) {
 			validator = new GenericValidator.EnsureDoubleValidator(validatorType, ordinal, schema);
-		}else {
+		} else if (validatorType.equals(STATS_BASED_RANGE_VALIDATOR)) {
+			if (attribute.isInteger()) {
+				validator = new  NumericalValidator.StatsBasedIntRangeValidator(validatorType, ordinal, schema, validatorContext);
+			} else if (attribute.isDouble()) {
+				validator = new  NumericalValidator.StatsBasedDoubleRangeValidator(validatorType, ordinal, schema, validatorContext);
+			} 
+		} else {
 			throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType);
 		}
 		

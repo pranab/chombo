@@ -43,6 +43,7 @@ public class Attribute {
 	protected boolean stdDevDefined;
 	protected double skew;
 	protected boolean skewDefined;
+	protected double maxZscore;
 	protected String datePattern;
 	protected boolean nullable;
 	protected String stringPattern;
@@ -132,6 +133,12 @@ public class Attribute {
 	public void setSkew(double skew) {
 		this.skew = skew;
 		skewDefined = true;
+	}
+	public double getMaxZscore() {
+		return maxZscore;
+	}
+	public void setMaxZscore(double maxZscore) {
+		this.maxZscore = maxZscore;
 	}
 	public String getDatePattern() {
 		return datePattern;
