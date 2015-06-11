@@ -20,6 +20,7 @@ package org.chombo.util;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Histogram that c hnges as data gets added
@@ -29,10 +30,12 @@ import java.util.Map;
  */
 public class HistogramStat {
 	protected int binWidth;
-	protected Map<Integer, Bin> binMap = new HashMap<Integer, Bin>();
+	protected double dblBinWidth;
+	protected Map<Integer, Bin> binMap = new TreeMap<Integer, Bin>();
 	protected int count;
 	protected double sum = 0.0;
 	protected int  sampleCount;
+	
 	
 	/**
 	 * @param binWidth
@@ -42,6 +45,20 @@ public class HistogramStat {
 		this.binWidth = binWidth;
 	}
 
+	/**
+	 * @param binWidth
+	 */
+	public HistogramStat(double dblBinWidth) {
+		super();
+		this.dblBinWidth = dblBinWidth;
+	}
+
+	public void initialize() {
+		binMap.clear();
+		count = 0;
+		sum = 0;
+	}
+	
 	/**
 	 * @param value
 	 */
@@ -55,6 +72,30 @@ public class HistogramStat {
 	 */
 	public void add(int value, int count) {
 		int index = value / binWidth;
+		Bin bin = binMap.get(index);
+		if (null == bin) {
+			bin = new Bin(index);
+			binMap.put(index, bin);
+		}
+		bin.addCount(count);
+		this.count += count;
+		sum += value * count;
+		++sampleCount;
+	}
+
+	/**
+	 * @param value
+	 */
+	public void add(double value) {
+		add(value, 1);
+	}
+	
+	/**
+	 * @param value
+	 * @param count
+	 */
+	public void add(double value, int count) {
+		int index = (int)(value / dblBinWidth);
 		Bin bin = binMap.get(index);
 		if (null == bin) {
 			bin = new Bin(index);
@@ -137,6 +178,70 @@ public class HistogramStat {
 		return bins;
 	}
 	
+	/**
+	 * @return
+	 */
+	public int getIntMedian() {
+		return getIntQuantile(0.5);
+	}
+	
+	/**
+	 * @param quantile
+	 * @return
+	 */
+	public int getIntQuantile(double quantile) {
+		int median = 0;
+		int quantileCount = (int)(count * quantile);
+		
+		int curCount = 0;
+		Bin bin = null;
+		for (int binIndex: binMap.keySet()) {
+			curCount += binMap.get(binIndex).count;
+			if (curCount > quantileCount) {
+				bin = binMap.get(binIndex);
+				break;
+			}
+		}
+		
+		//assume uniform distribution within bin
+		median = bin.index * binWidth;
+		int prevCount = curCount - bin.count;
+		median += (binWidth * (quantileCount - prevCount)) / bin.count;
+		return median;
+	}
+
+	/**
+	 * @return
+	 */
+	public double getDoubleMedian() {
+		return getDoubleQuantile(0.5);
+	}
+	
+	/**
+	 * @param quantile
+	 * @return
+	 */
+	public double getDoubleQuantile(double quantile) {
+		double median = 0;
+		int quantileCount = (int)(count * quantile);
+
+		int curCount = 0;
+		Bin bin = null;
+		for (int binIndex: binMap.keySet()) {
+			curCount += binMap.get(binIndex).count;
+			if (curCount > quantileCount) {
+				bin = binMap.get(binIndex);
+				break;
+			}
+		}
+		
+		//assume uniform distribution within bin
+		median = bin.index * dblBinWidth;
+		int prevCount = curCount - bin.count;
+		median += (dblBinWidth * (quantileCount - prevCount)) / bin.count;
+		return median;
+	}
+
 	/**
 	 * @author pranab
 	 *
