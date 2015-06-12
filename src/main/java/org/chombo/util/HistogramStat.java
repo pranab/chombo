@@ -29,13 +29,13 @@ import java.util.TreeMap;
  *
  */
 public class HistogramStat {
-	protected int binWidth = -1;
-	protected double dblBinWidth = -1;
+	protected double binWidth = -1;
 	protected Map<Integer, Bin> binMap = new TreeMap<Integer, Bin>();
 	protected int count;
 	protected double sum = 0.0;
 	protected double sumSq = 0.0;
 	protected int  sampleCount;
+	protected Map<Integer, Double> histogram = new HashMap<Integer, Double>();
 	
 	
 	/**
@@ -49,13 +49,14 @@ public class HistogramStat {
 	/**
 	 * @param binWidth
 	 */
-	public HistogramStat(double dblBinWidth) {
+	public HistogramStat(double binWidth) {
 		super();
-		this.dblBinWidth = dblBinWidth;
+		this.binWidth = binWidth;
 	}
 
 	public void initialize() {
 		binMap.clear();
+		histogram.clear();
 		count = 0;
 		sum = 0;
 		sumSq = 0;
@@ -73,17 +74,8 @@ public class HistogramStat {
 	 * @param count
 	 */
 	public void add(int value, int count) {
-		int index = value / binWidth;
-		Bin bin = binMap.get(index);
-		if (null == bin) {
-			bin = new Bin(index);
-			binMap.put(index, bin);
-		}
-		bin.addCount(count);
-		this.count += count;
-		sum += value * count;
-		sumSq += value * value * count;
-		++sampleCount;
+		int index = (int)(value / binWidth);
+		addToBin(index, value);
 	}
 
 	/**
@@ -98,7 +90,15 @@ public class HistogramStat {
 	 * @param count
 	 */
 	public void add(double value, int count) {
-		int index = (int)(value / dblBinWidth);
+		int index = (int)(value / binWidth);
+		addToBin(index, value);
+	}
+	
+	/**
+	 * @param index
+	 * @param value
+	 */
+	private void addToBin(int index, double value) {
 		Bin bin = binMap.get(index);
 		if (null == bin) {
 			bin = new Bin(index);
@@ -127,7 +127,7 @@ public class HistogramStat {
 		int[] confidenceBounds = new int[2];
 		
 		int mean = (int)getMean();
-		int meanIndex = mean / binWidth;
+		int meanIndex = (int)(mean / binWidth);
 		int confCount = 0;
 		int confidenceLimit = (count * confidenceLimitPercent) / 100;
 		int binCount = 0;
@@ -195,54 +195,23 @@ public class HistogramStat {
 			Bin bin = binMap.get(index);
 			bins[i++] = bin;
 		}		
-		Arrays.sort(bins);
+		//Arrays.sort(bins);
 		return bins;
 	}
 	
-	/**
-	 * @return
-	 */
-	public int getIntMedian() {
-		return getIntQuantile(0.5);
-	}
-	
-	/**
-	 * @param quantile
-	 * @return
-	 */
-	public int getIntQuantile(double quantile) {
-		int median = 0;
-		int quantileCount = (int)(count * quantile);
-		
-		int curCount = 0;
-		Bin bin = null;
-		for (int binIndex: binMap.keySet()) {
-			curCount += binMap.get(binIndex).count;
-			if (curCount > quantileCount) {
-				bin = binMap.get(binIndex);
-				break;
-			}
-		}
-		
-		//assume uniform distribution within bin
-		median = bin.index * binWidth;
-		int prevCount = curCount - bin.count;
-		median += (binWidth * (quantileCount - prevCount)) / bin.count;
-		return median;
-	}
 
 	/**
 	 * @return
 	 */
-	public double getDoubleMedian() {
-		return getDoubleQuantile(0.5);
+	public double getMedian() {
+		return getQuantile(0.5);
 	}
 	
 	/**
 	 * @param quantile
 	 * @return
 	 */
-	public double getDoubleQuantile(double quantile) {
+	public double getQuantile(double quantile) {
 		double median = 0;
 		int quantileCount = (int)(count * quantile);
 
@@ -257,9 +226,9 @@ public class HistogramStat {
 		}
 		
 		//assume uniform distribution within bin
-		median = bin.index * dblBinWidth;
+		median = bin.index * binWidth;
 		int prevCount = curCount - bin.count;
-		median += (dblBinWidth * (quantileCount - prevCount)) / bin.count;
+		median += (binWidth * (quantileCount - prevCount)) / bin.count;
 		return median;
 	}
 	
@@ -277,14 +246,37 @@ public class HistogramStat {
 				maxBin = binMap.get(binIndex);
 			}
 		}		
-		if (binWidth > 0) {
-			mode = maxBin.index * binWidth + binWidth / 2;
-		} else {
-			mode = maxBin.index * dblBinWidth + dblBinWidth / 2;
-		}
+		
+		//average within bin
+		mode = maxBin.index * binWidth + binWidth / 2;
 		return mode;
 	}
 
+	/**
+	 * @return
+	 */
+	public Map<Integer, Double> getDistribution() {
+		if (histogram.isEmpty()) {
+			for (Integer index : binMap.keySet()) {
+				histogram.put(index,  ((double)binMap.get(index).count) / count);
+			}
+		}
+		return histogram;
+	}
+	
+	/**
+	 * @return
+	 */
+	public double getEntropy() {
+		double entropy = 0;
+		getDistribution();
+		for (Integer index : histogram.keySet()) {
+			double distrVal = histogram.get(index);
+			entropy -= distrVal * Math.log(distrVal);
+		}
+		return entropy;
+	}
+	
 	/**
 	 * @author pranab
 	 *
