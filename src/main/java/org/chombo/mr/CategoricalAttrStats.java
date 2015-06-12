@@ -198,6 +198,7 @@ public class CategoricalAttrStats  extends Configured implements Tool {
  			stBld.append(attrValue).append(fieldDelim).append(distr.get(attrValue)).append(fieldDelim);
  		}
  		stBld.append(histogram.getEntropy()) ;
+ 		stBld.append(fieldDelim).append(histogram.getMode()) ;
      	outVal.set(stBld.toString());
 		context.write(NullWritable.get(), outVal);
  	}
