@@ -34,6 +34,7 @@ public class HistogramStat {
 	protected Map<Integer, Bin> binMap = new TreeMap<Integer, Bin>();
 	protected int count;
 	protected double sum = 0.0;
+	protected double sumSq = 0.0;
 	protected int  sampleCount;
 	
 	
@@ -57,6 +58,7 @@ public class HistogramStat {
 		binMap.clear();
 		count = 0;
 		sum = 0;
+		sumSq = 0;
 	}
 	
 	/**
@@ -80,6 +82,7 @@ public class HistogramStat {
 		bin.addCount(count);
 		this.count += count;
 		sum += value * count;
+		sumSq += value * value * count;
 		++sampleCount;
 	}
 
@@ -104,7 +107,16 @@ public class HistogramStat {
 		bin.addCount(count);
 		this.count += count;
 		sum += value * count;
+		sumSq += value * value * count;
 		++sampleCount;
+	}
+	
+	/**
+	 * @param index
+	 * @param count
+	 */
+	public void addBin(int index, int count) {
+		binMap.put(index, new Bin(index, count));
 	}
 
 	/**
@@ -114,7 +126,7 @@ public class HistogramStat {
 	public int[] getConfidenceBounds(int confidenceLimitPercent) {
 		int[] confidenceBounds = new int[2];
 		
-		int mean = getMean();
+		int mean = (int)getMean();
 		int meanIndex = mean / binWidth;
 		int confCount = 0;
 		int confidenceLimit = (count * confidenceLimitPercent) / 100;
@@ -152,9 +164,18 @@ public class HistogramStat {
 	/**
 	 * @return
 	 */
-	public int getMean() {
-		int mean = (int)(sum / count);
+	public double getMean() {
+		double mean = sum / count;
 		return mean;
+	}
+	
+	/**
+	 * @return
+	 */
+	public double getStdDev() {
+		double mean = getMean();
+		double stdDev = Math.sqrt(sumSq / count - mean * mean);
+		return stdDev;
 	}
 	
 	/**
