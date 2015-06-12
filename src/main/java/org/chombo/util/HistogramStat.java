@@ -69,6 +69,7 @@ public class HistogramStat {
 		add(value, 1);
 	}
 	
+
 	/**
 	 * @param value
 	 * @param count
@@ -78,6 +79,39 @@ public class HistogramStat {
 		addToBin(index, value);
 	}
 
+	/**
+	 * @param value
+	 */
+	public void add(long value) {
+		add(value, 1);
+	}
+	
+	/**
+	 * @param value
+	 * @param count
+	 */
+	public void add(long value, int count) {
+		int index = (int)(value / binWidth);
+		addToBin(index, value);
+	}
+
+	/**
+	 * @param value
+	 */
+	public void add(float value) {
+		add(value, 1);
+	}
+	
+	/**
+	 * @param value
+	 * @param count
+	 */
+	public void add(float value, int count) {
+		int index = (int)(value / binWidth);
+		addToBin(index, value);
+	}
+	
+	
 	/**
 	 * @param value
 	 */
