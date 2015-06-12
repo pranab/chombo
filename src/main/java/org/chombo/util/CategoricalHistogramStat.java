@@ -20,6 +20,8 @@ package org.chombo.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.chombo.util.HistogramStat.Bin;
+
 
 /**
  * Histogram for categorical attributes
@@ -85,4 +87,20 @@ public class CategoricalHistogramStat {
 		return entropy;
 	}
 
+	/**
+	 * @return
+	 */
+	public String getMode() {
+		String mode = null;
+		int maxCount = 0;
+		for (String binIndex: binMap.keySet()) {
+			int thisCount = binMap.get(binIndex);
+			if (thisCount > maxCount) {
+				maxCount = thisCount;
+				mode = binIndex;
+			}
+		}		
+		return mode;
+	}
+	
 }

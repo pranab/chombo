@@ -29,8 +29,8 @@ import java.util.TreeMap;
  *
  */
 public class HistogramStat {
-	protected int binWidth;
-	protected double dblBinWidth;
+	protected int binWidth = -1;
+	protected double dblBinWidth = -1;
 	protected Map<Integer, Bin> binMap = new TreeMap<Integer, Bin>();
 	protected int count;
 	protected double sum = 0.0;
@@ -261,6 +261,28 @@ public class HistogramStat {
 		int prevCount = curCount - bin.count;
 		median += (dblBinWidth * (quantileCount - prevCount)) / bin.count;
 		return median;
+	}
+	
+	/**
+	 * @return
+	 */
+	public double getMode() {
+		double mode = 0;
+		int maxCount = 0;
+		Bin maxBin = null;
+		for (int binIndex: binMap.keySet()) {
+			int thisCount = binMap.get(binIndex).count;
+			if (thisCount > maxCount) {
+				maxCount = thisCount;
+				maxBin = binMap.get(binIndex);
+			}
+		}		
+		if (binWidth > 0) {
+			mode = maxBin.index * binWidth + binWidth / 2;
+		} else {
+			mode = maxBin.index * dblBinWidth + dblBinWidth / 2;
+		}
+		return mode;
 	}
 
 	/**
