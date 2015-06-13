@@ -43,7 +43,7 @@ import org.chombo.util.Utility;
  * @author pranab
  *
  */
-public class CategoricalAttrStats  extends Configured implements Tool {
+public class CategoricalAttrDistrStats  extends Configured implements Tool {
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -51,15 +51,15 @@ public class CategoricalAttrStats  extends Configured implements Tool {
         String jobName = "Basic stats for categorical attributes";
         job.setJobName(jobName);
         
-        job.setJarByClass(CategoricalAttrStats.class);
+        job.setJarByClass(CategoricalAttrDistrStats.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration(), "chombo");
-        job.setMapperClass(CategoricalAttrStats.StatsMapper.class);
-        job.setReducerClass(CategoricalAttrStats.StatsReducer.class);
-        job.setCombinerClass(CategoricalAttrStats.StatsCombiner.class);
+        job.setMapperClass(CategoricalAttrDistrStats.StatsMapper.class);
+        job.setReducerClass(CategoricalAttrDistrStats.StatsReducer.class);
+        job.setCombinerClass(CategoricalAttrDistrStats.StatsCombiner.class);
         
         job.setMapOutputKeyClass(Tuple.class);
         job.setMapOutputValueClass(Tuple.class);
@@ -209,7 +209,7 @@ public class CategoricalAttrStats  extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		int exitCode = ToolRunner.run(new CategoricalAttrStats(), args);
+		int exitCode = ToolRunner.run(new CategoricalAttrDistrStats(), args);
 		System.exit(exitCode);
 	}
 
