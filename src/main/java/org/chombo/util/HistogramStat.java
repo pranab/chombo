@@ -35,8 +35,15 @@ public class HistogramStat {
 	protected double sum = 0.0;
 	protected double sumSq = 0.0;
 	protected int  sampleCount;
-	protected Map<Integer, Double> histogram = new HashMap<Integer, Double>();
-	
+	protected Map<Double, Double> histogram = new HashMap<Double, Double>();
+
+	/**
+	 * @param binWidth
+	 */
+	public HistogramStat() {
+		super();
+	}
+
 	
 	/**
 	 * @param binWidth
@@ -60,6 +67,20 @@ public class HistogramStat {
 		count = 0;
 		sum = 0;
 		sumSq = 0;
+	}
+
+	/**
+	 * @param binWidth
+	 */
+	public void setBinWidth(int binWidth) {
+		this.binWidth = binWidth;
+	}
+
+	/**
+	 * @param binWidth
+	 */
+	public void setBinWidth(double binWidth) {
+		this.binWidth = binWidth;
 	}
 	
 	/**
@@ -289,10 +310,11 @@ public class HistogramStat {
 	/**
 	 * @return
 	 */
-	public Map<Integer, Double> getDistribution() {
+	public Map<Double, Double> getDistribution() {
 		if (histogram.isEmpty()) {
 			for (Integer index : binMap.keySet()) {
-				histogram.put(index,  ((double)binMap.get(index).count) / count);
+				double val = index * binWidth + binWidth / 2;
+				histogram.put(val,  ((double)binMap.get(index).count) / count);
 			}
 		}
 		return histogram;
@@ -304,8 +326,8 @@ public class HistogramStat {
 	public double getEntropy() {
 		double entropy = 0;
 		getDistribution();
-		for (Integer index : histogram.keySet()) {
-			double distrVal = histogram.get(index);
+		for (double val : histogram.keySet()) {
+			double distrVal = histogram.get(val);
 			entropy -= distrVal * Math.log(distrVal);
 		}
 		return entropy;

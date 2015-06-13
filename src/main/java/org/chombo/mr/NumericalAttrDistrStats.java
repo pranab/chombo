@@ -35,7 +35,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.chombo.util.CategoricalHistogramStat;
+import org.chombo.util.HistogramStat;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -43,23 +43,23 @@ import org.chombo.util.Utility;
  * @author pranab
  *
  */
-public class CategoricalAttrDistrStats  extends Configured implements Tool {
+public class NumericalAttrDistrStats extends Configured implements Tool {
 
 	@Override
 	public int run(String[] args) throws Exception {
         Job job = new Job(getConf());
-        String jobName = "Distribution based stats for categorical attributes";
+        String jobName = "Distribution based stats for numerical attributes";
         job.setJobName(jobName);
         
-        job.setJarByClass(CategoricalAttrDistrStats.class);
+        job.setJarByClass(NumericalAttrDistrStats.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration(), "chombo");
-        job.setMapperClass(CategoricalAttrDistrStats.StatsMapper.class);
-        job.setReducerClass(CategoricalAttrDistrStats.StatsReducer.class);
-        job.setCombinerClass(CategoricalAttrDistrStats.StatsCombiner.class);
+        job.setMapperClass(NumericalAttrDistrStats.StatsMapper.class);
+        job.setReducerClass(NumericalAttrDistrStats.StatsReducer.class);
+        job.setCombinerClass(NumericalAttrDistrStats.StatsCombiner.class);
         
         job.setMapOutputKeyClass(Tuple.class);
         job.setMapOutputValueClass(Tuple.class);
@@ -67,14 +67,14 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
-        int numReducer = job.getConfiguration().getInt("cads.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("nads.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
 
         int status =  job.waitForCompletion(true) ? 0 : 1;
         return status;
 	}
-	
+
 	/**
 	 * @author pranab
 	 *
@@ -82,16 +82,22 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 	public static class StatsMapper extends Mapper<LongWritable, Text, Tuple, Tuple> {
 		private Tuple outKey = new Tuple();
 		private Tuple outVal = new Tuple();
-		private int[]  attributes;
         private String fieldDelimRegex;
         private int conditionedAttr;
         private String[] items;
+        private Map<Integer, Double> attrBinWidths = new HashMap<Integer, Double>();
+        private double fieldVal;
+        private int binIndex;
         private static final int ONE = 1;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
-        	attributes = Utility.intArrayFromString(config.get("attr.list"),fieldDelimRegex );
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	String[] items = config.get("attr.list").split(",");
+        	for (String item : items) {
+        		String[] parts = item.split(":");
+        		attrBinWidths.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
+        	}
         	conditionedAttr = config.getInt("conditioned.attr",-1);
        }
 
@@ -99,11 +105,13 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
-        	for (int attr : attributes) {
+        	for (int attr : attrBinWidths.keySet()) {
             	outKey.initialize();
             	outVal.initialize();
             	outKey.add(attr, "0");
-            	outVal.add(items[attr], ONE);
+            	fieldVal = Double.parseDouble(items[attr]);
+            	binIndex = (int)(fieldVal / attrBinWidths.get(attr));
+            	outVal.add(binIndex, ONE);
             	context.write(outKey, outVal);
 
             	//conditioned on another attribute
@@ -111,42 +119,47 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
                 	outKey.initialize();
                 	outVal.initialize();
                 	outKey.add(attr, items[conditionedAttr]);
-                	outVal.add(items[attr], ONE);
+                	fieldVal = Double.parseDouble(items[attr]);
+                	binIndex = (int)(fieldVal / attrBinWidths.get(attr));
+                	outVal.add(binIndex, ONE);
                 	context.write(outKey, outVal);
             	}
         	}
         }
  	}
-
+	
 	/**
 	 * @author pranab
 	 *
 	 */
 	public static class StatsCombiner extends Reducer<Tuple, Tuple, Tuple, Tuple> {
 		private Tuple outVal = new Tuple();
-		private Map<String, Integer> attrValueCounts = new HashMap<String, Integer>();
-		
+		private Map<Integer, Integer> attrBinCounts = new HashMap<Integer, Integer>();
+        private int binIndex;
+        private int count;
+        
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+         */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
-    		attrValueCounts.clear();
+        	attrBinCounts.clear();
     		for (Tuple val : values) {
-    			for (int i = 0; i < val.getSize(); i += 2) {
-    				String attrVal = val.getString(i);
-    				Integer attrValCount = val.getInt(i + 1);
-    				Integer curAttrValCount = attrValueCounts.get(attrVal);
-    				if (null == curAttrValCount) {
-    					curAttrValCount = attrValCount;
-    				} else {
-    					curAttrValCount += attrValCount;
-    				}
-    				 attrValueCounts.put(attrVal, curAttrValCount);
-    			}
+    			binIndex = val.getInt(0);
+    			count = val.getInt(1);
+				Integer curCount = attrBinCounts.get(binIndex);
+				if (null == curCount) {
+					curCount = count;
+				} else {
+					curCount += count;
+				}
+				attrBinCounts.put(binIndex, curCount);
     		}
-    		outVal.initialize();
-    		for (String thisAttrValue :  attrValueCounts.keySet()) {
-        		outVal.add(thisAttrValue,  attrValueCounts.get(thisAttrValue));
-    		}
-        	context.write(key, outVal);       	
+	    	outVal.initialize();
+	    	for (int binIndex :  attrBinCounts.keySet()) {
+	        	outVal.add(binIndex,  attrBinCounts.get(binIndex));
+	    	}
+	        context.write(key, outVal);       	
         }		
 	}	
 	
@@ -155,10 +168,13 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
   	*
   	*/
 	public static class StatsReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
- 		protected Text outVal = new Text();
-		protected StringBuilder stBld =  new StringBuilder();;
-		protected String fieldDelim;
-		protected CategoricalHistogramStat histogram = new CategoricalHistogramStat();
+		private Text outVal = new Text();
+		private StringBuilder stBld =  new StringBuilder();;
+		private String fieldDelim;
+		private HistogramStat histogram = new HistogramStat();
+        private int binIndex;
+        private int count;
+        private Map<Integer, Double> attrBinWidths = new HashMap<Integer, Double>();
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -166,6 +182,12 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
+			
+        	String[] items = config.get("attr.list").split(",");
+        	for (String item : items) {
+        		String[] parts = item.split(":");
+        		attrBinWidths.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
+        	}
 		}
 		
 		/* (non-Javadoc)
@@ -173,12 +195,14 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		 */
 		protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
      	throws IOException, InterruptedException {
-			histogram.intialize();
+			histogram.initialize();
+			double binWidth = attrBinWidths.get(key.get(0));
+			histogram.setBinWidth(binWidth);
 			for (Tuple val : values) {
 				for (int i = 0; i < val.getSize(); i += 2) {
-					String attrVal = val.getString(i);
-					Integer attrValCount = val.getInt(i + 1);
-					histogram.add(attrVal, attrValCount);
+	    			binIndex = val.getInt(i);
+	    			count = val.getInt(i+1);
+	    			histogram.addBin(binIndex, count);
 				}
 			}
 			emitOutput( key,  context);
@@ -193,12 +217,15 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
 			stBld.delete(0, stBld.length());
 			stBld.append(key.getInt(0)).append(fieldDelim).append(key.getString(1)).append(fieldDelim);
-			Map<String, Double> distr = histogram.getDistribution();
-			for (String  attrValue : distr.keySet() ) {
-				stBld.append(attrValue).append(fieldDelim).append(distr.get(attrValue)).append(fieldDelim);
+			Map<Double, Double> distr = histogram.getDistribution();
+			for (Double  value : distr.keySet() ) {
+				stBld.append(value).append(fieldDelim).append(distr.get(value)).append(fieldDelim);
 			}
 			stBld.append(histogram.getEntropy()) ;
 			stBld.append(fieldDelim).append(histogram.getMode()) ;
+			stBld.append(fieldDelim).append(histogram.getQuantile(0.25)) ;
+			stBld.append(fieldDelim).append(histogram.getQuantile(0.50)) ;
+			stBld.append(fieldDelim).append(histogram.getQuantile(0.75)) ;
 			outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
 		}
@@ -208,8 +235,8 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		int exitCode = ToolRunner.run(new CategoricalAttrDistrStats(), args);
-		System.exit(exitCode);
+        int exitCode = ToolRunner.run(new NumericalAttrDistrStats(), args);
+        System.exit(exitCode);
 	}
 
 }
