@@ -145,15 +145,17 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         		throws IOException, InterruptedException {
         	attrBinCounts.clear();
     		for (Tuple val : values) {
-    			binIndex = val.getInt(0);
-    			count = val.getInt(1);
-				Integer curCount = attrBinCounts.get(binIndex);
-				if (null == curCount) {
-					curCount = count;
-				} else {
-					curCount += count;
-				}
-				attrBinCounts.put(binIndex, curCount);
+    			for (int i = 0; i < val.getSize(); i += 2) {
+    				binIndex = val.getInt(i);
+        			count = val.getInt(i + 1);
+        			Integer curCount = attrBinCounts.get(binIndex);
+    				if (null == curCount) {
+    					curCount = count;
+    				} else {
+    					curCount += count;
+    				}
+    				attrBinCounts.put(binIndex, curCount);
+    			}
     		}
 	    	outVal.initialize();
 	    	for (int binIndex :  attrBinCounts.keySet()) {

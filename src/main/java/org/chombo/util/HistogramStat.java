@@ -97,7 +97,7 @@ public class HistogramStat {
 	 */
 	public void add(int value, int count) {
 		int index = (int)(value / binWidth);
-		addToBin(index, value);
+		addToBin(index, value, count);
 	}
 
 	/**
@@ -113,7 +113,7 @@ public class HistogramStat {
 	 */
 	public void add(long value, int count) {
 		int index = (int)(value / binWidth);
-		addToBin(index, value);
+		addToBin(index, value, count);
 	}
 
 	/**
@@ -129,7 +129,7 @@ public class HistogramStat {
 	 */
 	public void add(float value, int count) {
 		int index = (int)(value / binWidth);
-		addToBin(index, value);
+		addToBin(index, value, count);
 	}
 	
 	
@@ -146,14 +146,14 @@ public class HistogramStat {
 	 */
 	public void add(double value, int count) {
 		int index = (int)(value / binWidth);
-		addToBin(index, value);
+		addToBin(index, value, count);
 	}
 	
 	/**
 	 * @param index
 	 * @param value
 	 */
-	private void addToBin(int index, double value) {
+	private void addToBin(int index, double value, int count) {
 		Bin bin = binMap.get(index);
 		if (null == bin) {
 			bin = new Bin(index);
@@ -171,7 +171,12 @@ public class HistogramStat {
 	 * @param count
 	 */
 	public void addBin(int index, int count) {
-		binMap.put(index, new Bin(index, count));
+		Bin bin = binMap.get(index);
+		if (null == bin) {
+			bin = new Bin(index);
+			binMap.put(index, bin);
+		}
+		bin.addCount(count);
 	}
 
 	/**
