@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.chombo.util.StatsParameters;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -143,4 +144,10 @@ public class NumericalAttrStatsManager {
 		return tuple.getDouble(6);
 	}
 	
+	public StatsParameters getStatsParameters(int attr) {
+		StatsParameters stats = new StatsParameters();
+		stats.setMean(getMean(attr));
+		stats.setStdDev(getStdDev(attr));
+		return stats;
+	}
 }
