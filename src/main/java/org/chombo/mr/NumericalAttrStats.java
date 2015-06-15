@@ -242,6 +242,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
     	 * @throws InterruptedException
     	 */
     	protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
+    		//(0)attr ord (1)cond attr (2)sum (3)sum square (4)count (5)mean (6)variance (7)std dev (8)min (9)max 
     		stBld.delete(0, stBld.length());
     		stBld.append(key.getInt(0)).append(fieldDelim).append(key.getString(1)).append(fieldDelim);
     		stBld.append(sum).append(fieldDelim).append(sumSq).append(fieldDelim).append(totalCount).append(fieldDelim) ;

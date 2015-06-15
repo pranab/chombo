@@ -52,6 +52,7 @@ public class NumericalAttrStatsManager {
     	String line = null; 
     	String[] items = null;
     	
+		//(0)attr ord (1)cond attr (2)sum (3)sum square (4)count (5)mean (6)variance (7)std dev (8)min (9)max 
     	while((line = reader.readLine()) != null) {
     		items = line.split(delim);
     		Tuple tuple = new Tuple();
@@ -144,10 +145,30 @@ public class NumericalAttrStatsManager {
 		return tuple.getDouble(6);
 	}
 	
+	/**
+	 * @param attr
+	 * @return
+	 */
+	public double getMin(int attr) {
+		Tuple tuple = getStats(attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(7);
+	}
+
+	/**
+	 * @param attr
+	 * @return
+	 */
+	public double getMax(int attr) {
+		Tuple tuple = getStats(attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(8);
+	}
+
 	public StatsParameters getStatsParameters(int attr) {
 		StatsParameters stats = new StatsParameters();
 		stats.setMean(getMean(attr));
 		stats.setStdDev(getStdDev(attr));
+		stats.setMin(getMin(attr));
+		stats.setMin(getMax(attr));
 		return stats;
 	}
 }

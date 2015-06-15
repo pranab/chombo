@@ -35,7 +35,7 @@ public abstract class Validator {
 	 * @param ordinal
 	 * @param schema
 	 */
-	public Validator(String tag, int ordinal, AttributeSchema schema) {
+	public Validator(String tag, int ordinal, AttributeSchema<Attribute> schema) {
 		super();
 		this.tag = tag;
 		this.ordinal = ordinal;

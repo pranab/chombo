@@ -25,12 +25,9 @@ import java.util.List;
  * @author pranab
  *
  */
-public class Attribute {
-	protected String name;
-	protected int ordinal = -1;
+public class Attribute extends BaseAttribute{
 	protected boolean id;
 	protected boolean classAttribute;
-	protected String dataType;
 	protected List<String> cardinality;
 	protected double  min;
 	protected boolean minDefined;
@@ -49,25 +46,7 @@ public class Attribute {
 	protected String stringPattern;
 	protected String minString;
 	protected String maxString;
-	public static final String DATA_TYPE_STRING = "string";
-	public static final String DATA_TYPE_CATEGORICAL = "categorical";
-	public static final String DATA_TYPE_INT = "int";
-	public static final String DATA_TYPE_DOUBLE = "double";
-	public static final String DATA_TYPE_TEXT = "text";
-	public static final String DATA_TYPE_DATE = "date";
 	
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public int getOrdinal() {
-		return ordinal;
-	}
-	public void setOrdinal(int ordinal) {
-		this.ordinal = ordinal;
-	}
 	public boolean isId() {
 		return id;
 	}
@@ -79,14 +58,7 @@ public class Attribute {
 	}
 	public void setClassAttribute(boolean classAttribute) {
 		this.classAttribute = classAttribute;
-	}
-	public String getDataType() {
-		return dataType;
-	}
-	public void setDataType(String dataType) {
-		this.dataType = dataType;
-	}
-	
+	}	
 	public double getMin() {
 		return min;
 	}
@@ -169,25 +141,6 @@ public class Attribute {
 	}
 	public void setMaxString(String maxString) {
 		this.maxString = maxString;
-	}
-	public boolean isCategorical() {
-		return dataType.equals(DATA_TYPE_CATEGORICAL);
-	}
-
-	public boolean isInteger() {
-		return dataType.equals(DATA_TYPE_INT );
-	}
-
-	public boolean isDouble() {
-		return dataType.equals(DATA_TYPE_DOUBLE);
-	}
-
-	public boolean isString() {
-		return dataType.equals(DATA_TYPE_STRING );
-	}
-	
-	public boolean isText() {
-		return dataType.equals(DATA_TYPE_TEXT );
 	}
 
 	public boolean isMinDefined() {

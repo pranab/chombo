@@ -36,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
+import org.chombo.util.AttributeCleanser;
 import org.chombo.util.AttributeSchema;
 import org.chombo.util.StatsParameters;
 import org.chombo.util.Utility;
@@ -74,7 +75,7 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
 		private StringBuilder stBld = new  StringBuilder();
 		private String itemValue;
         private String[] items;
-        private AttributeSchema schema;
+        private AttributeSchema<Attribute> schema;
         private int scale;
         private Map<Integer, StatsParameters> attrStats = new HashMap<Integer, StatsParameters>();
         private int intFieldValue;
@@ -82,6 +83,10 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
         private double normFieldValue;
         private String decFormat;
         private float outlierTruncationLevel;
+        private AttributeSchema<AttributeCleanser> cleanserSchema;
+        private Map<Integer, String> normalizers = new HashMap<Integer, String>();
+        private StatsParameters stats;
+        private Attribute attr;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -91,7 +96,8 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
         	//schema
         	InputStream is = Utility.getFileStream(config,  "schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
-            schema = mapper.readValue(is, AttributeSchema.class);
+        	AttributeSchema<Attribute> tempSchema = new AttributeSchema<Attribute>(){};
+        	schema = mapper.readValue(is, tempSchema.getClass());
             
             //stats data
             String statsFilePath = config.get("stats.file.path");
@@ -117,7 +123,29 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
             
             //outlier truncation level
             outlierTruncationLevel = config.getFloat("outlier.truncation.level", (float)-1.0);
-       }
+
+        	//schema
+            String cleanserSchemPath = config.get("cleanser.schema.file.path");
+            if (null != cleanserSchemPath) {
+            	is = Utility.getFileStream(config,  "cleanser.schema.file.path");
+            	mapper = new ObjectMapper();
+            	AttributeSchema<AttributeCleanser> tempCleanserSchema = new AttributeSchema<AttributeCleanser>(){};
+            	cleanserSchema = mapper.readValue(is, tempCleanserSchema.getClass());
+            	for (int i : cleanserSchema.getAttributeOrdinals()) {
+            		AttributeCleanser attr = cleanserSchema.findAttributeByOrdinal(i);
+            		if (attr.isInteger() || attr.isDouble()) {
+            			normalizers.put(i, attr.getNormalizerStrategy());
+            		}
+            	}
+            	
+            } else {
+            	String[] items = config.get("attr.normalizer.list").split(",");
+            	for (String item : items) {
+            		String[] parts = item.split(":");
+            		normalizers.put(Integer.parseInt(parts[0]), parts[1]);
+            	}
+            }
+        }
         
 
         @Override
@@ -130,16 +158,20 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
             for (int i = 0; i < items.length; ++i) {
             	toInclude = true;
             	itemValue = items[i];
-            	Attribute attr = schema.findAttributeByOrdinal(i);
+            	attr = schema.findAttributeByOrdinal(i);
+            	stats = attrStats.get(i);
             	
             	if (attr.isInteger()) {
             		intFieldValue = Integer.parseInt(itemValue);
-            		normFieldValue = (intFieldValue - attrStats.get(i).getMean()) / attrStats.get(i).getStdDev();
-        			if (isOutlier()) {
-        				toInclude = false;
-        				break;
-        			}
-
+            		if (normalizers.get(i).equals("zScore")) {
+	            		normFieldValue = (intFieldValue - stats.getMean()) / stats.getStdDev();
+	        			if (isOutlier()) {
+	        				toInclude = false;
+	        				break;
+	        			}
+            		} else {
+            			normFieldValue = (intFieldValue - stats.getMin()) / (stats.getMax() - stats.getMin());
+            		}
             		if (scale > 0) {
             			stBld.append((int)(scale * normFieldValue)).append(fieldDelimOut);
             		} else {
@@ -147,11 +179,15 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
             		}
             	}else if (attr.isDouble()) {
             		dblFieldValue = Double.parseDouble(itemValue);
-            		normFieldValue = (dblFieldValue - attrStats.get(i).getMean()) / attrStats.get(i).getStdDev();
-        			if (isOutlier()) {
-        				toInclude = false;
-        				break;
-        			}
+            		if (normalizers.get(i).equals("zScore")) {
+	            		normFieldValue = (dblFieldValue - stats.getMean()) / stats.getStdDev();
+	        			if (isOutlier()) {
+	        				toInclude = false;
+	        				break;
+	        			}
+            		} else {
+            			normFieldValue = (dblFieldValue - stats.getMin()) / (stats.getMax() - stats.getMin());
+            		}
             		if (scale > 0) {
             			stBld.append(String.format(decFormat, scale * normFieldValue)).append(fieldDelimOut);
             		} else {

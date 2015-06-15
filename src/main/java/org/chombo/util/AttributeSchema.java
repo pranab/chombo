@@ -23,14 +23,14 @@ import java.util.List;
  * @author pranab
  *
  */
-public class AttributeSchema {
-	private List<Attribute> attributes;
+public class AttributeSchema<T extends BaseAttribute> {
+	private List<T> attributes;
 
-	public List<Attribute> getAttributes() {
+	public List<T> getAttributes() {
 		return attributes;
 	}
 
-	public void setAttributes(List<Attribute> attributes) {
+	public void setAttributes(List<T> attributes) {
 		this.attributes = attributes;
 	}
 	
@@ -44,7 +44,7 @@ public class AttributeSchema {
 	public int[] getAttributeOrdinals() {
 		int[] ordinals = new int[attributes.size()];
 		int i = 0;
-		for (Attribute attr :  attributes) {
+		for (T attr :  attributes) {
 			ordinals[i++] = attr.getOrdinal();
 		}
 		
@@ -55,9 +55,9 @@ public class AttributeSchema {
 	 * @param ordinal
 	 * @return
 	 */
-	public Attribute findAttributeByOrdinal(int ordinal) {
-		Attribute attribute = null;
-		for (Attribute attr :  attributes) {
+	public T findAttributeByOrdinal(int ordinal) {
+		T attribute = null;
+		for (T attr :  attributes) {
 			if (attr.getOrdinal() == ordinal) {
 				attribute = attr;
 				break;

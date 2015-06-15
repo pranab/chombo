@@ -37,6 +37,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.Attribute;
 import org.chombo.util.AttributeSchema;
 import org.chombo.util.Utility;
 import org.chombo.validator.InvalidData;
@@ -80,7 +81,7 @@ public class ValidationChecker extends Configured implements Tool {
         private String fieldDelimOut;
 		private StringBuilder stBld = new  StringBuilder();
         private String[] items;
-        private AttributeSchema schema;
+        private AttributeSchema<Attribute> schema;
         private Map<Integer, List<Validator>> validators = new HashMap<Integer, List<Validator>>();
         private List<InvalidData> invalidDataList = new ArrayList<InvalidData>();
         private boolean filterInvalidRecords;
@@ -102,7 +103,8 @@ public class ValidationChecker extends Configured implements Tool {
         	//schema
         	InputStream is = Utility.getFileStream(config,  "schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
-            schema = mapper.readValue(is, AttributeSchema.class);
+        	AttributeSchema<Attribute> tempSchema = new AttributeSchema<Attribute>(){};
+            schema = mapper.readValue(is, tempSchema.getClass());
 
             //build validator objects
             int[] ordinals  = schema.getAttributeOrdinals();
