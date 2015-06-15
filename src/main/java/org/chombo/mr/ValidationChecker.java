@@ -38,7 +38,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
+import org.chombo.util.AttributeCleanser;
 import org.chombo.util.AttributeSchema;
+import org.chombo.util.StatsParameters;
 import org.chombo.util.Utility;
 import org.chombo.validator.InvalidData;
 import org.chombo.validator.Validator;
@@ -89,6 +91,8 @@ public class ValidationChecker extends Configured implements Tool {
         private boolean valid;
         private String invalidDataFilePath;
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
+        private AttributeSchema<AttributeCleanser> cleanserSchema;
+        
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -107,39 +111,76 @@ public class ValidationChecker extends Configured implements Tool {
             schema = mapper.readValue(is, tempSchema.getClass());
 
             //build validator objects
-            int[] ordinals  = schema.getAttributeOrdinals();
+            String cleanserSchemPath = config.get("cleanser.schema.file.path");
             boolean statsIntialized = false;
-            for (int ord : ordinals ) {
-            	String key = "validator." + ord;
-            	String validatorString = config.get(key);
-            	if (null != validatorString ) {
-            		List<Validator> validatorList = new ArrayList<Validator>();  
-            		validators.put(ord, validatorList);
-            		String[] valTags = validatorString.split(fieldDelimOut);
-            		for (String valTag :  valTags) {
-            			if (valTag.equals("statBasedRange")) {
-            				if (!statsIntialized) {
-            					List<String[]> statContent = Utility.parseFileLines(config, "stat.file.path",  fieldDelimOut);
-            					int ordFieldIndex = config.getInt("stat.ord.index", -1);
-            					int meanFieldIndex = config.getInt("stat.mean.index", -1);
-            					int stdDevFieldIndex = config.getInt("stat.stdDev.index", -1);
-            					for (String[] items :  statContent) {
-            						int statOrd = Integer.parseInt(items[ordFieldIndex]);
-            						double mean = Double.parseDouble(items[meanFieldIndex]);
-            						double stdDev = Double.parseDouble(items[stdDevFieldIndex]);
-            						validatorContext.put("mean:" + statOrd,  mean);
-            						validatorContext.put("stdDev:" + statOrd,  stdDev);
-            					}
-            					statsIntialized = true;
-            				}
-            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
-            			} else {
-            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,null));
+            if (null != cleanserSchemPath) {
+            	//use data cleanser schema
+            	is = Utility.getFileStream(config,  "cleanser.schema.file.path");
+            	mapper = new ObjectMapper();
+            	AttributeSchema<AttributeCleanser> tempCleanserSchema = new AttributeSchema<AttributeCleanser>(){};
+            	cleanserSchema = mapper.readValue(is, tempCleanserSchema.getClass());
+            	for (int i : cleanserSchema.getAttributeOrdinals()) {
+            		AttributeCleanser attr = cleanserSchema.findAttributeByOrdinal(i);
+            		if (attr.isInteger() || attr.isDouble()) {
+            			List<Validator> validatorList = new ArrayList<Validator>();  
+                		validators.put(i, validatorList);
+            			for (String validator : attr.getValidators()) {
+	            			if (validator.equals("statBasedRange")) {
+	            				if (!statsIntialized) {
+	            					getAttributeStats(config, "stat.file.path");
+	            					statsIntialized = true;
+	            				}
+	            				validatorList.add(ValidatorFactory.create(validator, i, schema,validatorContext));
+	            			} else {
+	            				validatorList.add(ValidatorFactory.create(validator, i, schema,null));
+	            			}
             			}
             		}
             	}
+            } else {           
+            	//use configuration
+	            int[] ordinals  = schema.getAttributeOrdinals();
+	            for (int ord : ordinals ) {
+	            	String key = "validator." + ord;
+	            	String validatorString = config.get(key);
+	            	if (null != validatorString ) {
+	            		List<Validator> validatorList = new ArrayList<Validator>();  
+	            		validators.put(ord, validatorList);
+	            		String[] valTags = validatorString.split(fieldDelimOut);
+	            		for (String valTag :  valTags) {
+	            			if (valTag.equals("statBasedRange")) {
+	            				if (!statsIntialized) {
+	            					getAttributeStats(config, "stat.file.path");
+	            					statsIntialized = true;
+	            				}
+	            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
+	            			} else {
+	            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,null));
+	            			}
+	            		}
+	            	}
+	            }
+            
             }
+            
        }
+        
+        /**
+         * @param config
+         * @param statsFilePath
+         * @throws IOException
+         */
+        private void getAttributeStats(Configuration config, String statsFilePath) throws IOException {
+        	NumericalAttrStatsManager statsManager = new NumericalAttrStatsManager(config, statsFilePath, ",");
+        	for (int i : schema.getAttributeOrdinals()) {
+        		Attribute attr = schema.findAttributeByOrdinal(i);
+        		if (attr.isInteger() || attr.isDouble()) {
+        			StatsParameters stats = statsManager.getStatsParameters(i);
+        			validatorContext.put("mean:" + i,  stats.getMean());
+					validatorContext.put("stdDev:" + i,  stats.getStdDev());
+        		}
+        	}
+        }
         
         @Override
 		protected void cleanup(Context context) throws IOException,

@@ -124,7 +124,7 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
             //outlier truncation level
             outlierTruncationLevel = config.getFloat("outlier.truncation.level", (float)-1.0);
 
-        	//schema
+        	//data cleanser schema
             String cleanserSchemPath = config.get("cleanser.schema.file.path");
             if (null != cleanserSchemPath) {
             	is = Utility.getFileStream(config,  "cleanser.schema.file.path");
