@@ -1,0 +1,53 @@
+Thos tutorial is bulk insert, update and delete for data in HDFS. This is a common
+scenario in many big data analytic projects.
+
+Dependent script
+================
+Checkout the project visitante. Take the script util.py from the project and placeit
+in ../lib directory with respect the directory containing product.py
+
+Input Data
+==========
+Generate master base data
+./product.py new 10000 1000 > base_prod.txt
+where 
+number of products = 10000
+time shift hours = 1000
+
+Copy to HDFS
+hadoop fs -put base_prod.txt /user/pranab/bumu/master
+
+Generate incremental insert, update data
+./product.py upsert  300 500 base_prod.txt > ups_prod.txt
+where 
+number of products updated and inserted = 300
+time shift hours = 500
+
+Copy to HDFS
+hadoop fs -put ups_prod.txt /user/pranab/bumu/working
+
+Generate delete data
+./product.py delete  50 200 base_prod.txt > del_prod.txt
+where
+number of products deleted = 50
+time shift hours = 20
+
+Copy to HDFS
+hadoop fs -put del_prod.txt /user/pranab/bumu/working
+
+
+Run Map Reduce
+==============
+JAR_NAME=/home/pranab/Projects/chombo/target/chombo-1.0.jar
+CLASS_NAME=org.chombo.mr.RecordSetBulkMutator
+echo "running mr"
+IN_PATH=/user/pranab/bumu/master,/user/pranab/bumu/working
+OUT_PATH=/user/pranab/bumu/output
+echo "input $IN_PATH output $OUT_PATH"
+hadoop fs -rmr $OUT_PATH
+echo "removed output dir"
+hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=/home/pranab/Projects/bin/chombo/bumu.properties  $IN_PATH  $OUT_PATH
+
+Configuration
+=============
+It's in bumu.properties

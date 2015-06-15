@@ -15,33 +15,18 @@
  * permissions and limitations under the License.
  */
 
+
 package org.chombo.util;
 
 /**
  * @author pranab
  *
  */
-public class SimpleStat implements AverageValue {
-	private double sum;
-	private long count;
+public interface AverageValue {
 	
-	public void add(double value) {
-		sum +=  value;
-		++count;
-	}
+	public void add(double value);
 	
-	public double getMean() {
-		return sum / count;
-	}
-
-	@Override
-	public double getAvgValue() {
-		return sum / count;
-	}
-
-	@Override
-	public void setAvgValue(double avgValue) {
-		sum = avgValue;
-		count = 1;
-	}
+	public double getAvgValue();
+	
+	public void setAvgValue(double avgValue);
 }

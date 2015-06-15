@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +40,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.lucene.analysis.Analyzer;
@@ -279,6 +281,40 @@ public class Utility {
     
     /**
      * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static OutputStream getCreateFileOutputStream(Configuration conf, String pathConfig) throws IOException {
+        String filePath = conf.get(pathConfig);
+        FSDataOutputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.create(src, true);
+        }
+        return fs;
+    }
+
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static OutputStream getAppendFileOutputStream(Configuration conf, String pathConfig) throws IOException {
+        String filePath = conf.get(pathConfig);
+        FSDataOutputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.append(src);
+        }
+        return fs;
+    }
+
+    /**
+     * @param conf
      * @param filePathParam
      * @param fieldDelimRegex
      * @return
@@ -384,6 +420,36 @@ public class Utility {
     	}
     }    
     
+    /**
+     * @param recordItems
+     * @param filterFieldOrdinal
+     * @param tuple
+     * @param toInclude
+     */
+    public static void createStringTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple, boolean toInclude) {
+    	tuple.initialize();
+    	for (int i = 0; i < recordItems.length; ++i) {
+    		if (!toInclude && !ArrayUtils.contains(filterFieldOrdinal, i)  || toInclude && ArrayUtils.contains(filterFieldOrdinal, i)) {
+    			tuple.add(recordItems[i]);
+    		}
+    	}
+    }    
+
+    /**
+     * @param recordItems
+     * @param filterFieldOrdinal
+     * @param tuple
+     * @param toInclude
+     */
+    public static void createIntTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple, boolean toInclude) {
+    	tuple.initialize();
+    	for (int i = 0; i < recordItems.length; ++i) {
+    		if (!toInclude && !ArrayUtils.contains(filterFieldOrdinal, i)  || toInclude && ArrayUtils.contains(filterFieldOrdinal, i)) {
+    			tuple.add(Integer.parseInt(recordItems[i]));
+    		}
+    	}
+    }    
+    
     /** creates tuple
      * @param record coma separated  fields
      * @param tuple
@@ -439,11 +505,38 @@ public class Utility {
     public static double[] doubleArrayFromString(String record) {
     	return doubleArrayFromString(record, DEF_FIELD_DELIM);
     }
+
+    /**
+     * @param items
+     * @param fields
+     * @return
+     */
+    public static String[]  extractFieldsAsStringArray(String[] items , int[] fields) {
+    	String[] fieldValues = new String[fields.length];
+    	for (int i = 0; i < fields.length; ++i) {
+    		fieldValues[i] = items[fields[i]];
+    	}
+    	return fieldValues;
+    }
+  
+    /**
+     * @param items
+     * @param fields
+     * @return
+     */
+    public static int[]  extractFieldsAsIntArray(String[] items , int[] fields) {
+    	int[] fieldValues = new int[fields.length];
+    	for (int i = 0; i < fields.length; ++i) {
+    		fieldValues[i] = Integer.parseInt((items[fields[i]]));
+    	}
+    	return fieldValues;
+    }
     
     /**
      * @param items
      * @param fields
      * @param delim
+     * @param sortKeyFields
      * @return
      */
     public static String extractFields(String[] items , int[] fields, String delim, boolean sortKeyFields) {
@@ -469,7 +562,7 @@ public class Utility {
     	}
     	return stBld.toString();
     }
-    
+
     /**
      * @param items
      * @param filteredFields
@@ -688,7 +781,43 @@ public class Utility {
 		return intStringPairs;
 	}
 	
+	/**
+	 * @return
+	 */
 	public static String generateId() {
 		return UUID.randomUUID().toString().replaceAll("-", "");
+	}
+	
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 */
+	public static String  assertConfigParam(Configuration config, String param, String msg) {
+		String value = config.get(param);
+		if (value == null) {
+			throw new IllegalStateException(msg);
+		}
+		return value;
+	}
+	
+	/**
+	 * @param list
+	 * @return
+	 */
+	public static <T> T selectRandom(List<T> list) {
+   		int index = (int)(Math.random() * list.size());
+		return list.get(index);
+	}
+	
+	public static boolean isFieldCountValid(String[] record, int numFields, boolean throwEx) {
+		boolean valid = true;
+		if (record.length != numFields) {
+			valid = false;
+			if (throwEx) {
+				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + record.length);
+			}
+		}
+		return valid;
 	}
 }

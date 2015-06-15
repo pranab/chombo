@@ -15,33 +15,41 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.validator;
+
+import org.chombo.util.Attribute;
+import org.chombo.util.AttributeSchema;
 
 /**
  * @author pranab
  *
  */
-public class SimpleStat implements AverageValue {
-	private double sum;
-	private long count;
+public abstract class Validator {
+	protected String tag;
+	protected int ordinal;
+	protected Attribute attribute;
 	
-	public void add(double value) {
-		sum +=  value;
-		++count;
+	
+	/**
+	 * @param tag
+	 * @param ordinal
+	 * @param schema
+	 */
+	public Validator(String tag, int ordinal, AttributeSchema<Attribute> schema) {
+		super();
+		this.tag = tag;
+		this.ordinal = ordinal;
+		attribute = schema.findAttributeByOrdinal(ordinal);
 	}
 	
-	public double getMean() {
-		return sum / count;
+	public abstract boolean isValid(String value);
+
+	public String getTag() {
+		return tag;
 	}
 
-	@Override
-	public double getAvgValue() {
-		return sum / count;
+	public int getOrdinal() {
+		return ordinal;
 	}
-
-	@Override
-	public void setAvgValue(double avgValue) {
-		sum = avgValue;
-		count = 1;
-	}
+	
 }

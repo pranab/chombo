@@ -25,11 +25,9 @@ import java.util.List;
  * @author pranab
  *
  */
-public class Attribute {
-	protected String name;
-	protected int ordinal = -1;
+public class Attribute extends BaseAttribute{
 	protected boolean id;
-	protected String dataType;
+	protected boolean classAttribute;
 	protected List<String> cardinality;
 	protected double  min;
 	protected boolean minDefined;
@@ -40,32 +38,27 @@ public class Attribute {
 	protected double variance;
 	protected double stdDev;
 	protected boolean stdDevDefined;
+	protected double skew;
+	protected boolean skewDefined;
+	protected double maxZscore;
+	protected String datePattern;
+	protected boolean nullable;
+	protected String stringPattern;
+	protected String minString;
+	protected String maxString;
 	
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public int getOrdinal() {
-		return ordinal;
-	}
-	public void setOrdinal(int ordinal) {
-		this.ordinal = ordinal;
-	}
 	public boolean isId() {
 		return id;
 	}
 	public void setId(boolean id) {
 		this.id = id;
 	}
-	public String getDataType() {
-		return dataType;
+	public boolean isClassAttribute() {
+		return classAttribute;
 	}
-	public void setDataType(String dataType) {
-		this.dataType = dataType;
-	}
-	
+	public void setClassAttribute(boolean classAttribute) {
+		this.classAttribute = classAttribute;
+	}	
 	public double getMin() {
 		return min;
 	}
@@ -106,22 +99,65 @@ public class Attribute {
 		this.stdDev = stdDev;
 		stdDevDefined = true;
 	}
-	public boolean isCategorical() {
-		return dataType.equals("categorical");
+	public double getSkew() {
+		return skew;
+	}
+	public void setSkew(double skew) {
+		this.skew = skew;
+		skewDefined = true;
+	}
+	public double getMaxZscore() {
+		return maxZscore;
+	}
+	public void setMaxZscore(double maxZscore) {
+		this.maxZscore = maxZscore;
+	}
+	public String getDatePattern() {
+		return datePattern;
+	}
+	public void setDatePattern(String datePattern) {
+		this.datePattern = datePattern;
+	}
+	public boolean isNullable() {
+		return nullable;
+	}
+	public void setNullable(boolean nullable) {
+		this.nullable = nullable;
+	}
+	public String getStringPattern() {
+		return stringPattern;
+	}
+	public void setStringPattern(String stringPattern) {
+		this.stringPattern = stringPattern;
+	}
+	public String getMinString() {
+		return minString;
+	}
+	public void setMinString(String minString) {
+		this.minString = minString;
+	}
+	public String getMaxString() {
+		return maxString;
+	}
+	public void setMaxString(String maxString) {
+		this.maxString = maxString;
 	}
 
-	public boolean isInteger() {
-		return dataType.equals("int");
+	public boolean isMinDefined() {
+		return minDefined;
 	}
-
-	public boolean isDouble() {
-		return dataType.equals("double");
+	public boolean isMaxDefined() {
+		return maxDefined;
 	}
-
-	public boolean isText() {
-		return dataType.equals("text");
+	public boolean isMeanDefined() {
+		return meanDefined;
 	}
-	
+	public boolean isStdDevDefined() {
+		return stdDevDefined;
+	}
+	public boolean isSkewDefined() {
+		return skewDefined;
+	}
 	public int cardinalityIndex(String value) {
 		return cardinality.indexOf(value);
 	}

@@ -1,0 +1,58 @@
+This tutorial is data quality check with outlier. Statistics are caculated for a field.
+Outliers are defined in terms z score or . The use case is for supply chain. A wholeseller
+receives orders from different retailer stores. 
+
+The statistics are calculated for for  order quantity for each (store, product) pair. 
+Statistics are calculated by repeatedly excuting RunningAggregator map reduce with 
+fresh batch of store order data. By statistics, we mean average and std deviation.
+
+Dependent script
+================
+Checkout the project visitante. Take the script util.py from the project and placeit
+in ../lib directory with respect the directory containing store_order.py
+
+
+1. Create products
+==================
+./store_order.py createProducts <num_of_products> > <product_data_file>
+
+2. Create stores
+================
+./store_order.py createStores <num_of_stores> > <store_data_file>
+
+3. Create store order
+=====================
+./vaou.sh genOrder  <product_data_file> <store_data_file> <average_num_products>  <order_data_file>
+
+where 
+product_data_file contains the product data, the first field being the product ID
+store_data_file contains the store data, the first field being the store ID
+average_num_products is the average number of products ordered by a store
+order_data_file is the outfile with order data
+
+For product_data_file and store_data_file it's only the first field that matters.
+
+4. Export order data to HDFS
+============================
+./vaou.sh loadIncr   <order_data_file>
+
+5. Generate running statistics
+==============================
+./vaou.sh runningAggr
+
+6. Replace old Stas with new
+============================
+./vaou.sh replaceAggr
+
+7. Final stats
+==============
+Steps 3,4,5,6 should be repeated as many times as necessary to  to generate
+reliable stats for order quantity.
+
+8. Check quality with outliers
+==============================
+./vaou.sh  valOutlier
+
+Configuration
+=============
+Sample configuration is in vaou.properties file

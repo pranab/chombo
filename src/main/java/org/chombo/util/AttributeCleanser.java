@@ -17,31 +17,28 @@
 
 package org.chombo.util;
 
-/**
- * @author pranab
- *
- */
-public class SimpleStat implements AverageValue {
-	private double sum;
-	private long count;
-	
-	public void add(double value) {
-		sum +=  value;
-		++count;
-	}
-	
-	public double getMean() {
-		return sum / count;
-	}
+import java.util.ArrayList;
+import java.util.List;
 
-	@Override
-	public double getAvgValue() {
-		return sum / count;
+public class AttributeCleanser extends BaseAttribute {
+	private String normalizerStrategy;
+	private List<String> validators = new ArrayList<String>();
+	
+	public static final String NORMALIZER_ZSCORE = "zScore";
+	public static final String NORMALIZER_MIN_MAX = "minMax";
+	
+	public String getNormalizerStrategy() {
+		return normalizerStrategy;
 	}
-
-	@Override
-	public void setAvgValue(double avgValue) {
-		sum = avgValue;
-		count = 1;
+	public void setNormalizerStrategy(String normalizerStrategy) {
+		this.normalizerStrategy = normalizerStrategy;
 	}
+	public List<String> getValidators() {
+		return validators;
+	}
+	public void setValidators(List<String> validators) {
+		this.validators = validators;
+	}
+	
+	
 }

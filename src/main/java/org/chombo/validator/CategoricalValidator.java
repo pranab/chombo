@@ -15,33 +15,30 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.validator;
+
+import org.chombo.util.AttributeSchema;
 
 /**
  * @author pranab
  *
  */
-public class SimpleStat implements AverageValue {
-	private double sum;
-	private long count;
+public class CategoricalValidator {
 	
-	public void add(double value) {
-		sum +=  value;
-		++count;
-	}
-	
-	public double getMean() {
-		return sum / count;
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class MembershipValidator extends Validator {
+
+		public MembershipValidator(String tag, int ordinal, AttributeSchema schema) {
+			super(tag, ordinal, schema);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			return attribute.getCardinality().contains(value);
+		}
 	}
 
-	@Override
-	public double getAvgValue() {
-		return sum / count;
-	}
-
-	@Override
-	public void setAvgValue(double avgValue) {
-		sum = avgValue;
-		count = 1;
-	}
 }
