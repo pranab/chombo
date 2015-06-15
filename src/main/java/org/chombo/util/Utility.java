@@ -809,4 +809,15 @@ public class Utility {
    		int index = (int)(Math.random() * list.size());
 		return list.get(index);
 	}
+	
+	public static boolean isFieldCountValid(String[] record, int numFields, boolean throwEx) {
+		boolean valid = true;
+		if (record.length != numFields) {
+			valid = false;
+			if (throwEx) {
+				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + record.length);
+			}
+		}
+		return valid;
+	}
 }
