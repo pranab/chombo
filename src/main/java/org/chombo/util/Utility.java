@@ -810,6 +810,12 @@ public class Utility {
 		return list.get(index);
 	}
 	
+	/**
+	 * @param record
+	 * @param numFields
+	 * @param throwEx
+	 * @return
+	 */
 	public static boolean isFieldCountValid(String[] record, int numFields, boolean throwEx) {
 		boolean valid = true;
 		if (record.length != numFields) {
