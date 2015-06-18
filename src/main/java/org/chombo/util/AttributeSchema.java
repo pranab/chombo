@@ -24,7 +24,7 @@ import java.util.List;
  *
  */
 public class AttributeSchema<T extends BaseAttribute> {
-	private List<T> attributes;
+	protected List<T> attributes;
 
 	public List<T> getAttributes() {
 		return attributes;

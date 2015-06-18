@@ -127,4 +127,20 @@ public class RawAttribute extends BaseAttribute {
 		
 		return extractedAttrs;
 	}
+	
+	/**
+	 * @param rawAttr
+	 * @param derivedAttr
+	 * @param offset
+	 * @return num of derived attributes added
+	 */
+	public int extractAttributes(String rawAttr, String[]derivedAttr, int offset) {
+		String[] curDervivedAttrs = extractAttributes(rawAttr);
+		for (int i = 0; i < curDervivedAttrs.length; ++i) {
+			derivedAttr[offset+i] = curDervivedAttrs[i];
+		}
+		
+		return curDervivedAttrs.length;
+	}
+
 }
