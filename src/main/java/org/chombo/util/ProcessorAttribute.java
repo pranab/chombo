@@ -20,7 +20,7 @@ package org.chombo.util;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AttributeCleanser extends BaseAttribute {
+public class ProcessorAttribute extends BaseAttribute {
 	private String normalizerStrategy;
 	private List<String> validators = new ArrayList<String>();
 	
