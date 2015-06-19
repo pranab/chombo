@@ -84,7 +84,7 @@ public class FlatRecordExtractor extends Configured implements Tool {
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	fieldDelimRegex = config.get("raw.field.delim.regex");
         	fieldDelimOut = config.get("field.delim", ",");
         	
         	//schema

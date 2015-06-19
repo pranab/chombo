@@ -30,7 +30,7 @@ import org.chombo.util.AttributeSchema;
 public class RawAttributeSchema extends AttributeSchema<RawAttribute> {
 	private String recordType;
 	private List<String> recordBegDetectors = new ArrayList<String>();
-	private boolean regExrecordBegDetectors;
+	private boolean regExRecordBegDetectors;
 	
 	/**
 	 * @return
@@ -63,15 +63,15 @@ public class RawAttributeSchema extends AttributeSchema<RawAttribute> {
 	/**
 	 * @return
 	 */
-	public boolean isRegExrecordBegDetectors() {
-		return regExrecordBegDetectors;
+	public boolean isRegExRecordBegDetectors() {
+		return regExRecordBegDetectors;
 	}
 
 	/**
 	 * @param regExrecordBegDetectors
 	 */
-	public void setRegExrecordBegDetectors(boolean regExrecordBegDetectors) {
-		this.regExrecordBegDetectors = regExrecordBegDetectors;
+	public void setRegExRecordBegDetectors(boolean regExRecordBegDetectors) {
+		this.regExRecordBegDetectors = regExRecordBegDetectors;
 	}
 
 	/**
