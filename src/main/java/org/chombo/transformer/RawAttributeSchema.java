@@ -17,14 +17,66 @@
 
 package org.chombo.transformer;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.chombo.util.AttributeSchema;
 
 /**
+ * Schema from processing unstructured or JSON data
  * @author pranab
  *
  */
 public class RawAttributeSchema extends AttributeSchema<RawAttribute> {
+	private String recordType;
+	private List<String> recordBegDetectors = new ArrayList<String>();
+	private boolean regExrecordBegDetectors;
 	
+	/**
+	 * @return
+	 */
+	public String getRecordType() {
+		return recordType;
+	}
+
+	/**
+	 * @param recordType
+	 */
+	public void setRecordType(String recordType) {
+		this.recordType = recordType;
+	}
+
+	/**
+	 * @return
+	 */
+	public List<String> getRecordBegDetectors() {
+		return recordBegDetectors;
+	}
+
+	/**
+	 * @param recordBegDetectors
+	 */
+	public void setRecordBegDetectors(List<String> recordBegDetectors) {
+		this.recordBegDetectors = recordBegDetectors;
+	}
+
+	/**
+	 * @return
+	 */
+	public boolean isRegExrecordBegDetectors() {
+		return regExrecordBegDetectors;
+	}
+
+	/**
+	 * @param regExrecordBegDetectors
+	 */
+	public void setRegExrecordBegDetectors(boolean regExrecordBegDetectors) {
+		this.regExrecordBegDetectors = regExrecordBegDetectors;
+	}
+
+	/**
+	 * @return
+	 */
 	public int getDerivedAttributeCount() {
 		int count = 0;
 		
@@ -32,5 +84,17 @@ public class RawAttributeSchema extends AttributeSchema<RawAttribute> {
 			count += attr.getNumDerivedAttributes();
 		}
 		return count;
+	}
+	
+	/**
+	 * @param rawAttrIndex
+	 * @param rawAttr
+	 * @param derivedAttr
+	 * @param offset
+	 * @return
+	 */
+	public int extractAttributes(int rawAttrIndex, String rawAttr, String[]derivedAttr, int offset) {
+		RawAttribute rawAttrMeta = attributes.get(rawAttrIndex);
+		return rawAttrMeta.extractAttributes(rawAttr, derivedAttr, offset);
 	}
 }
