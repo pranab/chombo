@@ -32,6 +32,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.transformer.MultiLineFlattener;
 import org.chombo.transformer.RawAttributeSchema;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -78,6 +79,7 @@ public class FlatRecordExtractor extends Configured implements Tool {
         private int exAttrOffset;
         private int rawAttrIndex;
         private int exAttrCount;
+        private MultiLineFlattener flattener;
 
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -97,6 +99,21 @@ public class FlatRecordExtractor extends Configured implements Tool {
         	if (null == fieldDelimRegex) {
         		items = new String[1];
         	}
+        	
+        	//record type
+        	if (rawSchema.getRecordType().equals(RawAttributeSchema.REC_MULTI_LINE)) {
+        		flattener = new MultiLineFlattener(rawSchema);
+        	}
+        }
+        
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#cleanup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
+        public void cleanup(Context context) throws IOException, InterruptedException {
+            if (null != flattener) {
+            	rawLine = flattener.processCleanup();
+            	emitOutput(context);
+            }
         }
         
 		/* (non-Javadoc)
@@ -105,7 +122,26 @@ public class FlatRecordExtractor extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            rawLine  =  value.toString();
+            
+            if (null != flattener) {
+            	//multi line
+            	rawLine  = flattener.processRawLine(value.toString());
+            } else {
+            	//single line
+            	rawLine  =  value.toString();
+            }
+            
+            if (null != rawLine) {
+            	emitOutput(context);
+            }
+        }      
+        
+        /**
+         * @param context
+         * @throws IOException
+         * @throws InterruptedException
+         */
+        private void emitOutput(Context context) throws IOException, InterruptedException {
             if (null != fieldDelimRegex) {
             	items = rawLine.split(fieldDelimRegex);
             } else {
@@ -123,8 +159,7 @@ public class FlatRecordExtractor extends Configured implements Tool {
             
             outVal.set(Utility.join(itemsOut, fieldDelimOut));
             context.write(NullWritable.get(), outVal);
-        }        
-        
+        }
 	}
 	
 	/**

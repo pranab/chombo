@@ -32,6 +32,12 @@ public class RawAttributeSchema extends AttributeSchema<RawAttribute> {
 	private List<String> recordBegDetectors = new ArrayList<String>();
 	private boolean regExRecordBegDetectors;
 	
+	public static final String REC_ONE_LINE = "oneLine";
+	public static final String REC_MULTI_LINE = "multiLine";
+	public static final String REC_ONE_LINE_JSON = "oneLineJson";
+	public static final String REC_MULTI_LINE_JSON = "multiLineJson";
+	
+	
 	/**
 	 * @return
 	 */
