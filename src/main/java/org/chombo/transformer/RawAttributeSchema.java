@@ -29,8 +29,9 @@ import org.chombo.util.AttributeSchema;
  */
 public class RawAttributeSchema extends AttributeSchema<RawAttribute> {
 	private String recordType;
-	private List<String> recordBegDetectors = new ArrayList<String>();
+	private List<String> recordBegDetectors;
 	private boolean regExRecordBegDetectors;
+	private List<String> jsonPaths;
 	
 	public static final String REC_ONE_LINE = "oneLine";
 	public static final String REC_MULTI_LINE = "multiLine";
@@ -78,6 +79,14 @@ public class RawAttributeSchema extends AttributeSchema<RawAttribute> {
 	 */
 	public void setRegExRecordBegDetectors(boolean regExRecordBegDetectors) {
 		this.regExRecordBegDetectors = regExRecordBegDetectors;
+	}
+
+	public List<String> getJsonPaths() {
+		return jsonPaths;
+	}
+
+	public void setJsonPaths(List<String> jsonPaths) {
+		this.jsonPaths = jsonPaths;
 	}
 
 	/**

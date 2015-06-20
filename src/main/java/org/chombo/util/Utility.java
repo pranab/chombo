@@ -816,14 +816,33 @@ public class Utility {
 	 * @param throwEx
 	 * @return
 	 */
-	public static boolean isFieldCountValid(String[] record, int numFields, boolean throwEx) {
+	public static boolean isFieldCountValid(String[] record, int numFields, boolean failOnInvalid) {
 		boolean valid = true;
 		if (record.length != numFields) {
 			valid = false;
-			if (throwEx) {
+			if (failOnInvalid) {
 				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + record.length);
 			}
 		}
 		return valid;
 	}
+	
+	/**
+	 * @param record
+	 * @param fieldDelem
+	 * @param numFields
+	 * @param throwEx
+	 * @return
+	 */
+	public static String[] getFields(String record, String fieldDelem, int numFields, boolean failOnInvalid) {
+		String[] fields = record.split(fieldDelem);
+		if (fields.length != numFields) {
+			if (failOnInvalid) {
+				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + fields.length);
+			}
+			fields = null;
+		}
+		return fields;
+	}
+
 }

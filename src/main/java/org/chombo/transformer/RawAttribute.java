@@ -37,6 +37,7 @@ public class RawAttribute extends BaseAttribute {
 	private Pattern pattern;
 	private List<String> attrTranformers = new ArrayList<String>();
 	private Matcher matcher;
+	private List<String> jsonPaths = new ArrayList<String>();
 	
 	public static final String TRANS_ALL_CAP = "allCap";
 	public static final String TRANS_ALL_SMALL = "allSmall";
@@ -78,6 +79,14 @@ public class RawAttribute extends BaseAttribute {
 	
 	public void setSubSequenceIndexes(List<int[]> subSequenceIndexes) {
 		this.subSequenceIndexes = subSequenceIndexes;
+	}
+
+	public List<String> getJsonPaths() {
+		return jsonPaths;
+	}
+
+	public void setJsonPaths(List<String> jsonPaths) {
+		this.jsonPaths = jsonPaths;
 	}
 
 	public List<String> getAttrTranformers() {
