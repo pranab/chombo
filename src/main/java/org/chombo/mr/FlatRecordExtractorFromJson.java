@@ -34,6 +34,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.transformer.JsonFieldExtractor;
+import org.chombo.transformer.MultiLineFlattener;
+import org.chombo.transformer.MultiLineJsonFlattener;
 import org.chombo.transformer.RawAttributeSchema;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -76,6 +78,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         private RawAttributeSchema rawSchema;
         private String jsonString;
         private JsonFieldExtractor fieldExtractor;
+        private MultiLineJsonFlattener flattener;
 
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -94,6 +97,12 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	
         	boolean failOnInvalid = config.getBoolean("fail.on.invalid", true);
         	fieldExtractor = new JsonFieldExtractor(failOnInvalid);
+        	
+        	//record type
+        	if (rawSchema.getRecordType().equals(RawAttributeSchema.REC_MULTI_LINE_JSON)) {
+        		flattener = new MultiLineJsonFlattener();
+        	}
+
         }
         
 		/* (non-Javadoc)
@@ -102,8 +111,15 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-        	jsonString = value.toString();
-        	if (fieldExtractor.extractAllFields(jsonString, rawSchema.getJsonPaths(), itemsOut)) {
+        	if (null != flattener) {
+        		//multi ine
+        		jsonString = flattener.processRawLine(value.toString());
+        	} else {
+        		//single line
+        		jsonString = value.toString();
+        	}
+        	
+        	if (null != jsonString && fieldExtractor.extractAllFields(jsonString, rawSchema.getJsonPaths(), itemsOut)) {
                 outVal.set(Utility.join(itemsOut, fieldDelimOut));
                 context.write(NullWritable.get(), outVal);
         	}
