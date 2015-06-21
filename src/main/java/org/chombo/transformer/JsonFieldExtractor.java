@@ -39,6 +39,9 @@ public class JsonFieldExtractor {
 	private String extField = null;
 	private boolean failOnInvalid;
 
+	/**
+	 * @param failOnInvalid
+	 */
 	public JsonFieldExtractor(boolean failOnInvalid) {
 		mapper = new ObjectMapper();
 		this.failOnInvalid = failOnInvalid;

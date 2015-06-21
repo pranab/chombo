@@ -32,8 +32,10 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.transformer.JsonFieldExtractor;
 import org.chombo.transformer.MultiLineFlattener;
 import org.chombo.transformer.RawAttributeSchema;
+import org.chombo.transformer.UnstructuredFieldExtractor;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -80,6 +82,8 @@ public class FlatRecordExtractor extends Configured implements Tool {
         private int rawAttrIndex;
         private int exAttrCount;
         private MultiLineFlattener flattener;
+        private UnstructuredFieldExtractor fieldExtractor;
+        private boolean valid;
 
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -99,6 +103,10 @@ public class FlatRecordExtractor extends Configured implements Tool {
         	if (null == fieldDelimRegex) {
         		items = new String[1];
         	}
+        	
+        	//field extractor
+        	boolean failOnInvalid = config.getBoolean("fail.on.invalid", true);
+        	fieldExtractor = new UnstructuredFieldExtractor(rawSchema, failOnInvalid);
         	
         	//record type
         	if (rawSchema.getRecordType().equals(RawAttributeSchema.REC_MULTI_LINE)) {
@@ -151,14 +159,22 @@ public class FlatRecordExtractor extends Configured implements Tool {
             //generate extracted attributes
             rawAttrIndex = 0;
             exAttrOffset = 0;
+            valid = true;
             for (String item : items) {
-            	exAttrCount = rawSchema.extractAttributes(rawAttrIndex, item, itemsOut, exAttrOffset);
-            	++rawAttrIndex;
-            	exAttrOffset += exAttrCount;
+            	exAttrCount = fieldExtractor.extractAttributes(rawAttrIndex, item, itemsOut, exAttrOffset);
+            	if (exAttrCount > 0) {
+            		++rawAttrIndex;
+            		exAttrOffset += exAttrCount;
+            	} else {
+            		valid = false;
+            		break;
+            	}
             }
             
-            outVal.set(Utility.join(itemsOut, fieldDelimOut));
-            context.write(NullWritable.get(), outVal);
+            if (valid) {
+            	outVal.set(Utility.join(itemsOut, fieldDelimOut));
+            	context.write(NullWritable.get(), outVal);
+            }
         }
 	}
 	

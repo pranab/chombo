@@ -66,4 +66,12 @@ public class AttributeSchema<T extends BaseAttribute> {
 		
 		return attribute;
 	}
+
+	/**
+	 * @param index
+	 * @return
+	 */
+	public T findAttribute(int index) {
+		return attributes.get(index);
+	}	
 }

@@ -101,15 +101,4 @@ public class RawAttributeSchema extends AttributeSchema<RawAttribute> {
 		return count;
 	}
 	
-	/**
-	 * @param rawAttrIndex
-	 * @param rawAttr
-	 * @param derivedAttr
-	 * @param offset
-	 * @return
-	 */
-	public int extractAttributes(int rawAttrIndex, String rawAttr, String[]derivedAttr, int offset) {
-		RawAttribute rawAttrMeta = attributes.get(rawAttrIndex);
-		return rawAttrMeta.extractAttributes(rawAttr, derivedAttr, offset);
-	}
 }

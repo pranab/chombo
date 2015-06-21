@@ -97,59 +97,8 @@ public class RawAttribute extends BaseAttribute {
 		this.attrTranformers = attrTranformers;
 	}
 	
-	/**
-	 * @param rawAttr
-	 * @return
-	 */
-	public String[] extractAttributes(String rawAttr) {
-		String[] extractedAttrs = new String[numDerivedAttributes];
-		if (verbatim) {
-			extractedAttrs[0] = rawAttr;
-		} else if (null != regEx) {
-			matcher = pattern.matcher(rawAttr);
-			if (matcher.find())
-			for (int i = 0; i < numDerivedAttributes; ++i) {
-		        String extracted = matcher.group(i+1);
-		        if(extracted != null) {
-		        	extractedAttrs[i] = extracted;
-		        } else {
-		        	extractedAttrs[i] = "";
-		        }
-		    }
-		} else if (null != subSequenceIndexes) {
-			if (subSequenceIndexes.size() != numDerivedAttributes) {
-				throw new IllegalStateException("number subsequence indexes is not equal to number of extracted attributes");
-			}
-			int i = 0;
-			for (int[] indexes : subSequenceIndexes) {
-				if (indexes[0] <  rawAttr.length() -1 && indexes[1] <=  rawAttr.length()) {
-					String extracted = rawAttr.substring(indexes[0], indexes[1]);
-					extractedAttrs[i] = extracted;
-				} else {
-		        	extractedAttrs[i] = "";
-				}
-				++i;
-			}
-		} else {
-			throw new IllegalStateException("valid extraction strategy must be provided");
-		}
-		
-		return extractedAttrs;
-	}
-	
-	/**
-	 * @param rawAttr
-	 * @param derivedAttr
-	 * @param offset
-	 * @return num of derived attributes added
-	 */
-	public int extractAttributes(String rawAttr, String[]derivedAttr, int offset) {
-		String[] curDervivedAttrs = extractAttributes(rawAttr);
-		for (int i = 0; i < curDervivedAttrs.length; ++i) {
-			derivedAttr[offset+i] = curDervivedAttrs[i];
-		}
-		
-		return curDervivedAttrs.length;
+	public Pattern getPattern() {
+		return pattern;
 	}
 
 }
