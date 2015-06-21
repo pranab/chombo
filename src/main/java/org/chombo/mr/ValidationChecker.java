@@ -38,8 +38,9 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
-import org.chombo.util.AttributeCleanser;
-import org.chombo.util.AttributeSchema;
+import org.chombo.util.GenericAttributeSchema;
+import org.chombo.util.ProcessorAttribute;
+import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.StatsParameters;
 import org.chombo.util.Utility;
 import org.chombo.validator.InvalidData;
@@ -83,7 +84,7 @@ public class ValidationChecker extends Configured implements Tool {
         private String fieldDelimOut;
 		private StringBuilder stBld = new  StringBuilder();
         private String[] items;
-        private AttributeSchema<Attribute> schema;
+        private GenericAttributeSchema schema;
         private Map<Integer, List<Validator>> validators = new HashMap<Integer, List<Validator>>();
         private List<InvalidData> invalidDataList = new ArrayList<InvalidData>();
         private boolean filterInvalidRecords;
@@ -91,7 +92,7 @@ public class ValidationChecker extends Configured implements Tool {
         private boolean valid;
         private String invalidDataFilePath;
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
-        private AttributeSchema<AttributeCleanser> cleanserSchema;
+        private ProcessorAttributeSchema cleanserSchema;
         
         
         /* (non-Javadoc)
@@ -107,8 +108,7 @@ public class ValidationChecker extends Configured implements Tool {
         	//schema
         	InputStream is = Utility.getFileStream(config,  "schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
-        	AttributeSchema<Attribute> tempSchema = new AttributeSchema<Attribute>(){};
-            schema = mapper.readValue(is, tempSchema.getClass());
+            schema = mapper.readValue(is, GenericAttributeSchema.class);
 
             //build validator objects
             String cleanserSchemPath = config.get("cleanser.schema.file.path");
@@ -117,10 +117,9 @@ public class ValidationChecker extends Configured implements Tool {
             	//use data cleanser schema
             	is = Utility.getFileStream(config,  "cleanser.schema.file.path");
             	mapper = new ObjectMapper();
-            	AttributeSchema<AttributeCleanser> tempCleanserSchema = new AttributeSchema<AttributeCleanser>(){};
-            	cleanserSchema = mapper.readValue(is, tempCleanserSchema.getClass());
+            	cleanserSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
             	for (int i : cleanserSchema.getAttributeOrdinals()) {
-            		AttributeCleanser attr = cleanserSchema.findAttributeByOrdinal(i);
+            		ProcessorAttribute attr = cleanserSchema.findAttributeByOrdinal(i);
             		if (attr.isInteger() || attr.isDouble()) {
             			List<Validator> validatorList = new ArrayList<Validator>();  
                 		validators.put(i, validatorList);

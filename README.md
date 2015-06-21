@@ -8,14 +8,17 @@ Set of helper classes for Hadoop and Storm, Hadoop based ETL
 * Extremely configurable with many configuration knobs
 
 ## Solution
-* Map reduce classes for various relational algebra operation, including Projection, Join etc
-* Various ETL map reduce jobs
-* Data validation ETL
-* Exploratory statistics map reduce
-* Bulk mutation of HDFS data
+* Various relational algebra operation, including Projection, Join etc
+* Data extraction ETL to extract structured record from unstructured data
+* Data extraction ETL to extract structured record from JSON data
+* Data validation ETL with static rules and statistical parameters
+* Data normalization
+* Various statistical parameter  calculation 
+* Various long term statistical parameter calculation with incremental data  
+* Bulk inset, update and delete of Hadoop data
 * Bases classes for Storm Spout and Bolt
 * Utility classes for string, configuration
-* Utility classes for Redis
+* Utility classes for Storm and Redis
 
 ## Blogs
 The following blogs of mine are good source of details. These are the only source

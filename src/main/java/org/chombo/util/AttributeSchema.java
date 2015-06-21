@@ -24,7 +24,7 @@ import java.util.List;
  *
  */
 public class AttributeSchema<T extends BaseAttribute> {
-	private List<T> attributes;
+	protected List<T> attributes;
 
 	public List<T> getAttributes() {
 		return attributes;
@@ -66,4 +66,12 @@ public class AttributeSchema<T extends BaseAttribute> {
 		
 		return attribute;
 	}
+
+	/**
+	 * @param index
+	 * @return
+	 */
+	public T findAttribute(int index) {
+		return attributes.get(index);
+	}	
 }
