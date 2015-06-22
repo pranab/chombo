@@ -17,6 +17,11 @@
 
 package org.chombo.transformer;
 
+/**
+ * Flattens multi line JSON
+ * @author pranab
+ *
+ */
 public class MultiLineJsonFlattener {
 	private StringBuilder flattenedLineBld = new StringBuilder();
 	private String falttenedRec;
