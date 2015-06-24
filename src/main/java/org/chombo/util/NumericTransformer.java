@@ -20,6 +20,8 @@ package org.chombo.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.chombo.transformer.AttributeTransformer;
+
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 
@@ -39,6 +41,7 @@ public class NumericTransformer {
 		private long a;
 		private long b;
 		private long c;
+		private String[] transformed = new String[1];
 		
 		public LongPolynomial(long a, long b, long c) {
 			super();
@@ -48,10 +51,11 @@ public class NumericTransformer {
 		}
 
 		@Override
-		public String tranform(String value) {
+		public String[] tranform(String value) {
 			long in = Long.parseLong(value);
 			long out = a * in * in + b * in + c;
-			return "" + out;
+			transformed[0] =  "" + out;
+			return transformed;
 		}
 	}
 	
@@ -64,6 +68,7 @@ public class NumericTransformer {
 		private double a;
 		private double b;
 		private double c;
+		private String[] transformed = new String[1];
 		
 		public DoublePolynomial(double a, double b, double c) {
 			super();
@@ -73,10 +78,11 @@ public class NumericTransformer {
 		}
 
 		@Override
-		public String tranform(String value) {
+		public String[] tranform(String value) {
 			double in = Double.parseDouble(value);
 			double out = a * in * in + b * in + c;
-			return "" + out;
+			transformed[0] =  "" + out;
+			return transformed;
 		}
 	}
 	
@@ -89,6 +95,7 @@ public class NumericTransformer {
 		private String script;
 		private Map<String, Object> params = new HashMap<String, Object>();
 		private Binding binding = new Binding();
+		private String[] transformed = new String[1];
 		
 		
 		public Custom(String script, Map<String, Object> params) {
@@ -102,12 +109,13 @@ public class NumericTransformer {
 
 
 		@Override
-		public String tranform(String value) {
+		public String[] tranform(String value) {
 			Object in = getFieldValue(value);
 			binding.setVariable("field", in);
 			GroovyShell shell = new GroovyShell(binding);
 			Object out = shell.evaluate(script);
-			return getOutput(out);
+			transformed[0] =  getOutput(out);
+			return transformed;
 		}
 		
 		protected abstract Object getFieldValue(String value);

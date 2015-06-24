@@ -15,10 +15,18 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.transformer;
 
+/**
+ * @author pranab
+ *
+ */
 public interface AttributeTransformer {
 
-	public String tranform(String value);
+	/**
+	 * @param value
+	 * @return
+	 */
+	public String[] tranform(String value);
 	
 }

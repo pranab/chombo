@@ -32,7 +32,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.chombo.util.AttributeTransformer;
+import org.chombo.transformer.AttributeTransformer;
 import org.chombo.util.Utility;
 
 /**
@@ -101,8 +101,9 @@ public class Transformer extends Configured implements Tool {
 		private StringBuilder stBld = new  StringBuilder();
 		private Map<Integer, AttributeTransformer> transformers = new HashMap<Integer, AttributeTransformer>();
 		private AttributeTransformer transformer;
-		private String itemValue;
+		private String[] transformedValues;
         private String[] items;
+        private String[] singleTransformedValue = new String[1];
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
@@ -121,9 +122,18 @@ public class Transformer extends Configured implements Tool {
             for (int i = 0; i < items.length; ++i) {
             	//either transform or pass through
             	transformer = transformers.get(i);
-        		itemValue = null !=transformer ?  transformer.tranform(items[i]) : items[i];
-        		if (null != itemValue) {
-        			stBld.append(itemValue).append(fieldDelimOut);
+        		if (null !=transformer) {
+        			transformedValues = transformer.tranform(items[i]);
+        		} else {
+        			singleTransformedValue[0] = items[i];
+        			transformedValues =  singleTransformedValue;
+        		}
+        		
+        		//add to output
+        		if (null != transformedValues) {
+        			for (String transformedValue :  transformedValues) {
+        				stBld.append(transformedValue).append(fieldDelimOut);
+        			}
         		}
             }
             outVal.set(stBld.substring(0, stBld.length() -1));
@@ -137,8 +147,10 @@ public class Transformer extends Configured implements Tool {
 	 */
 	public static class NullTransformer implements AttributeTransformer {
 		@Override
-		public String tranform(String value) {
-			return null;
+		public String[] tranform(String value) {
+			String[] transformed = new String[1];
+			transformed[0] = null;
+			return transformed;
 		}
 	}
 	
