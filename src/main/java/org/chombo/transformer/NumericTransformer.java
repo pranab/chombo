@@ -15,12 +15,11 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.transformer;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.chombo.transformer.AttributeTransformer;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
