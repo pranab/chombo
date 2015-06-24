@@ -18,7 +18,9 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configured;
@@ -99,19 +101,37 @@ public class Transformer extends Configured implements Tool {
         private String fieldDelimRegex;
         private String fieldDelimOut;
 		private StringBuilder stBld = new  StringBuilder();
-		private Map<Integer, AttributeTransformer> transformers = new HashMap<Integer, AttributeTransformer>();
+		private Map<Integer, List<AttributeTransformer>> transformers = new HashMap<Integer, List<AttributeTransformer>>();
 		private AttributeTransformer transformer;
 		private String[] transformedValues;
         private String[] items;
         private String[] singleTransformedValue = new String[1];
+        private List<AttributeTransformer>  transformerList;
+        private String source;
         
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
         	fieldDelimOut = context.getConfiguration().get("field.delim", ",");
        }
         
-        protected void registerTransformers(int fieldOrd, AttributeTransformer transformer) {
-        	transformers.put(fieldOrd, transformer);
+        /**
+         * @param fieldOrd
+         * @param transformer
+         */
+        protected void registerTransformers(int fieldOrd, AttributeTransformer...  transformer) {
+        	List<AttributeTransformer> transList = transformers.get(fieldOrd);
+        	if (null == transList) {
+        		transList = new ArrayList<AttributeTransformer>();
+        		transformers.put(fieldOrd, transList);
+        	}
+        	
+        	//add all
+        	for (AttributeTransformer trans :  transformer) {
+        		transList.add(trans);
+        	}
         }
 
         @Override
@@ -121,20 +141,36 @@ public class Transformer extends Configured implements Tool {
             stBld.delete(0, stBld.length());
             for (int i = 0; i < items.length; ++i) {
             	//either transform or pass through
-            	transformer = transformers.get(i);
-        		if (null !=transformer) {
-        			transformedValues = transformer.tranform(items[i]);
-        		} else {
-        			singleTransformedValue[0] = items[i];
-        			transformedValues =  singleTransformedValue;
-        		}
-        		
+            	transformerList = transformers.get(i);
+            	int t = 0;
+            	source = items[i];
+            	
+            	//all transformers
+            	for (AttributeTransformer trans :  transformerList) {
+	        		if (null !=trans) {
+	        			transformedValues = trans.tranform(source);
+	        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
+	        				//only last transformer is allowed to emit multiple values
+	        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
+	        			}
+	        		} else {
+	        			singleTransformedValue[0] = source;
+	        			transformedValues =  singleTransformedValue;
+	        		}
+	        		
+	        		source = transformedValues[0];
+	        		++t;
+	            }
+            	
+            	
+            	
         		//add to output
         		if (null != transformedValues) {
         			for (String transformedValue :  transformedValues) {
         				stBld.append(transformedValue).append(fieldDelimOut);
         			}
         		}
+        		
             }
             outVal.set(stBld.substring(0, stBld.length() -1));
 			context.write(NullWritable.get(), outVal);
