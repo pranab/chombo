@@ -20,9 +20,16 @@ package org.chombo.util;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Various meta data related to processing an attribute for validation and transformation
+ * @author pranab
+ *
+ */
 public class ProcessorAttribute extends BaseAttribute {
 	private String normalizerStrategy;
-	private List<String> validators = new ArrayList<String>();
+	private List<String> validators;
+	private List<String> transformers;
+	private int[] targetFieldOrdinals;
 	
 	public static final String NORMALIZER_ZSCORE = "zScore";
 	public static final String NORMALIZER_MIN_MAX = "minMax";
@@ -38,6 +45,18 @@ public class ProcessorAttribute extends BaseAttribute {
 	}
 	public void setValidators(List<String> validators) {
 		this.validators = validators;
+	}
+	public List<String> getTransformers() {
+		return transformers;
+	}
+	public void setTransformers(List<String> transformers) {
+		this.transformers = transformers;
+	}
+	public int[] getTargetFieldOrdinals() {
+		return targetFieldOrdinals;
+	}
+	public void setTargetFieldOrdinals(int[] targetFieldOrdinals) {
+		this.targetFieldOrdinals = targetFieldOrdinals;
 	}
 	
 	
