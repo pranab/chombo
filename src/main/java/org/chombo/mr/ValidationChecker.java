@@ -92,7 +92,7 @@ public class ValidationChecker extends Configured implements Tool {
         private boolean valid;
         private String invalidDataFilePath;
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
-        private ProcessorAttributeSchema cleanserSchema;
+        private ProcessorAttributeSchema validatorSchema;
         
         
         /* (non-Javadoc)
@@ -117,9 +117,9 @@ public class ValidationChecker extends Configured implements Tool {
             	//use data cleanser schema
             	is = Utility.getFileStream(config,  "cleanser.schema.file.path");
             	mapper = new ObjectMapper();
-            	cleanserSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
-            	for (int i : cleanserSchema.getAttributeOrdinals()) {
-            		ProcessorAttribute attr = cleanserSchema.findAttributeByOrdinal(i);
+            	validatorSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+            	for (int i : validatorSchema.getAttributeOrdinals()) {
+            		ProcessorAttribute attr = validatorSchema.findAttributeByOrdinal(i);
             		if (attr.isInteger() || attr.isDouble()) {
             			List<Validator> validatorList = new ArrayList<Validator>();  
                 		validators.put(i, validatorList);

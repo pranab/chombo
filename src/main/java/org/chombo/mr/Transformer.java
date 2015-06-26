@@ -18,11 +18,13 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -35,7 +37,14 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.transformer.AttributeTransformer;
+import org.chombo.transformer.TransformerFactory;
+import org.chombo.util.GenericAttributeSchema;
+import org.chombo.util.ProcessorAttribute;
+import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.Utility;
+import org.codehaus.jackson.map.ObjectMapper;
+
+import com.typesafe.config.Config;
 
 /**
  * Transforms attributes based on plugged in transformers for different attributes.
@@ -102,19 +111,62 @@ public class Transformer extends Configured implements Tool {
         private String fieldDelimOut;
 		private StringBuilder stBld = new  StringBuilder();
 		private Map<Integer, List<AttributeTransformer>> transformers = new HashMap<Integer, List<AttributeTransformer>>();
+		private List<AttributeTransformer> generators = new ArrayList<AttributeTransformer>();
 		private AttributeTransformer transformer;
 		private String[] transformedValues;
         private String[] items;
+        private String[] itemsOut;
         private String[] singleTransformedValue = new String[1];
         private List<AttributeTransformer>  transformerList;
         private String source;
-        
+        private ProcessorAttributeSchema transformerSchema;
+        private Config transformerConfig;
+        private boolean configDriven;
+       
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
          */
         protected void setup(Context context) throws IOException, InterruptedException {
-        	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
-        	fieldDelimOut = context.getConfiguration().get("field.delim", ",");
+        	Configuration config = context.getConfiguration();
+        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
+        	fieldDelimOut = config.get("field.delim", ",");
+        	
+        	//transformer schema
+        	configDriven = config.get("transformer.schema.file.path") != null;
+        	if (configDriven) {
+	        	InputStream is = Utility.getFileStream(config,  "transformer.schema.file.path");
+	        	ObjectMapper mapper = new ObjectMapper();
+	        	transformerSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+	        	transformerSchema.validateTargetAttributeMapping();
+	        	
+	        	//transformer config
+	        	transformerConfig = Utility.getHoconConfig(config, "transformer.config.file.path");
+	        	
+	        	//build transformers
+	        	Config transConfig;
+	        	int fieldOrd;
+	        	AttributeTransformer attrTrans;
+	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributes()) {
+	        		fieldOrd = prAttr.getOrdinal();
+	        		for (String tranformerTag  : prAttr.getTransformers() ) {
+	        			transConfig = transformerConfig.getConfig(tranformerTag);
+	        			attrTrans = TransformerFactory.createTransformer(tranformerTag, transConfig);
+	        			registerTransformers(fieldOrd, attrTrans);
+	        		}
+	        	}
+	        	
+	        	//build generators
+	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
+	        		for (String tranformerTag  : prAttr.getTransformers() ) {
+	        			transConfig = transformerConfig.getConfig(tranformerTag);
+	        			attrTrans = TransformerFactory.createTransformer(tranformerTag, transConfig);
+	        			registerGenerators(attrTrans);
+	        		}
+	        	}
+	        	
+	        	//output
+	        	itemsOut = new String[transformerSchema.findDerivedAttributeCount()];
+        	}
        }
         
         /**
@@ -134,46 +186,62 @@ public class Transformer extends Configured implements Tool {
         	}
         }
 
+        /**
+         * @param transformer
+         */
+        protected void registerGenerators( AttributeTransformer...  transformer) {
+        	//add all
+        	for (AttributeTransformer trans :  transformer) {
+        		generators.add(trans);
+        	}
+        }      
+        
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
             stBld.delete(0, stBld.length());
-            for (int i = 0; i < items.length; ++i) {
-            	//either transform or pass through
-            	transformerList = transformers.get(i);
-            	int t = 0;
-            	source = items[i];
+            if (configDriven) {
+            	//using configuration based transformers
             	
-            	//all transformers
-            	for (AttributeTransformer trans :  transformerList) {
-	        		if (null !=trans) {
-	        			transformedValues = trans.tranform(source);
-	        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
-	        				//only last transformer is allowed to emit multiple values
-	        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
+            } else {
+            	//using directly built transformers
+	            for (int i = 0; i < items.length; ++i) {
+	            	//either transform or pass through
+	            	transformerList = transformers.get(i);
+	            	int t = 0;
+	            	source = items[i];
+	            	
+	            	//all transformers
+	            	for (AttributeTransformer trans :  transformerList) {
+		        		if (null !=trans) {
+		        			transformedValues = trans.tranform(source);
+		        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
+		        				//only last transformer is allowed to emit multiple values
+		        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
+		        			}
+		        		} else {
+		        			singleTransformedValue[0] = source;
+		        			transformedValues =  singleTransformedValue;
+		        		}
+		        		
+		        		source = transformedValues[0];
+		        		++t;
+		            }
+	            	
+	            	
+	            	
+	        		//add to output
+	        		if (null != transformedValues) {
+	        			for (String transformedValue :  transformedValues) {
+	        				stBld.append(transformedValue).append(fieldDelimOut);
 	        			}
-	        		} else {
-	        			singleTransformedValue[0] = source;
-	        			transformedValues =  singleTransformedValue;
 	        		}
 	        		
-	        		source = transformedValues[0];
-	        		++t;
 	            }
-            	
-            	
-            	
-        		//add to output
-        		if (null != transformedValues) {
-        			for (String transformedValue :  transformedValues) {
-        				stBld.append(transformedValue).append(fieldDelimOut);
-        			}
-        		}
-        		
-            }
-            outVal.set(stBld.substring(0, stBld.length() -1));
-			context.write(NullWritable.get(), outVal);
+	            outVal.set(stBld.substring(0, stBld.length() -1));
+				context.write(NullWritable.get(), outVal);
+	        }
         }
 	}
 	

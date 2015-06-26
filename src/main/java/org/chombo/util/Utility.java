@@ -52,6 +52,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 
 /**
@@ -843,6 +845,19 @@ public class Utility {
 			fields = null;
 		}
 		return fields;
+	}
+	
+	/**
+	 * @param conf
+	 * @param pathConfig
+	 * @return Hconf config object
+	 * @throws IOException
+	 */
+	public static Config getHoconConfig(Configuration conf, String pathConfig) throws IOException {
+		 InputStream is = getFileStream(conf, pathConfig);
+		 BufferedReader bufRead =new BufferedReader(new InputStreamReader(is));
+		Config config =  ConfigFactory.parseReader(bufRead);
+		return config;
 	}
 
 }
