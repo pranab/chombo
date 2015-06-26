@@ -122,6 +122,7 @@ public class Transformer extends Configured implements Tool {
         private ProcessorAttributeSchema transformerSchema;
         private Config transformerConfig;
         private boolean configDriven;
+        private int fieldOrd;;
        
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -144,7 +145,6 @@ public class Transformer extends Configured implements Tool {
 	        	
 	        	//build transformers
 	        	Config transConfig;
-	        	int fieldOrd;
 	        	AttributeTransformer attrTrans;
 	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributes()) {
 	        		fieldOrd = prAttr.getOrdinal();
@@ -204,6 +204,14 @@ public class Transformer extends Configured implements Tool {
             if (configDriven) {
             	//using configuration based transformers
             	
+            	//transformers
+            	getTranformedAttributes(transformerSchema.getAttributes(), true);
+	        	
+            	//generators
+	           	getTranformedAttributes(transformerSchema.getAttributeGenerators(), false);
+	           	
+	            outVal.set(Utility.join(itemsOut, fieldDelimOut));
+				context.write(NullWritable.get(), outVal);
             } else {
             	//using directly built transformers
 	            for (int i = 0; i < items.length; ++i) {
@@ -229,8 +237,6 @@ public class Transformer extends Configured implements Tool {
 		        		++t;
 		            }
 	            	
-	            	
-	            	
 	        		//add to output
 	        		if (null != transformedValues) {
 	        			for (String transformedValue :  transformedValues) {
@@ -242,6 +248,41 @@ public class Transformer extends Configured implements Tool {
 	            outVal.set(stBld.substring(0, stBld.length() -1));
 				context.write(NullWritable.get(), outVal);
 	        }
+        }
+        
+        /**
+         * @param prAttrs
+         * @param isTransformer
+         */
+        private void getTranformedAttributes(List<ProcessorAttribute> prAttrs, boolean isTransformer) {
+        	for (ProcessorAttribute prAttr : prAttrs) {
+        		if (isTransformer) {
+        			fieldOrd = prAttr.getOrdinal();
+                	source = items[fieldOrd];
+        			transformerList = transformers.get(fieldOrd);
+        		} else {
+        			source = null;
+        			transformerList = generators;
+        		}
+        		
+            	int t = 0;
+            	for (AttributeTransformer trans :  transformerList) {
+        			transformedValues = trans.tranform(source);
+        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
+        				//only last transformer is allowed to emit multiple values
+        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
+        			}
+	        		source = transformedValues[0];
+        			++t;
+            	}
+            	
+            	t = 0;
+            	for (int targetOrd : prAttr.getTargetFieldOrdinals()) {
+            		itemsOut[targetOrd] = transformedValues[t];
+            		++t;
+            	}
+        	}
+        	
         }
 	}
 	
