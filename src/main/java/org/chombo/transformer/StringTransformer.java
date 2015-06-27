@@ -18,7 +18,13 @@
 
 package org.chombo.transformer;
 
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.chombo.util.ProcessorAttribute;
+
+import com.typesafe.config.Config;
 
 /**
  * @author pranab
@@ -31,8 +37,13 @@ public class StringTransformer {
 	 *
 	 */
 	public static class LowerCaseTransformer extends AttributeTransformer  {
+
 		public LowerCaseTransformer(ProcessorAttribute prAttr) {
 			super(prAttr.getTargetFieldOrdinals().length);
+		}
+
+		public LowerCaseTransformer() {
+			super(1);
 		}
 
 		@Override
@@ -48,8 +59,13 @@ public class StringTransformer {
 	 *
 	 */
 	public static class UpperCaseTransformer extends AttributeTransformer  {
+		
 		public UpperCaseTransformer(ProcessorAttribute prAttr) {
 			super(prAttr.getTargetFieldOrdinals().length);
+		}
+		
+		public UpperCaseTransformer() {
+			super(1);
 		}
 
 		@Override
@@ -59,4 +75,115 @@ public class StringTransformer {
 		}
 		
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class PatternBasedTransformer extends AttributeTransformer {
+		private Pattern pattern;
+		private Matcher matcher;
+		private boolean failOnMissingGroup;
+		
+		public PatternBasedTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			pattern = Pattern.compile(config.getString("regEx"));
+			failOnMissingGroup = config.getBoolean("failOnMissingGroup");
+		}
+
+		public PatternBasedTransformer(int numTransAttributes, String regEx, boolean failOnMissingGroup) {
+			super(numTransAttributes);
+			pattern = Pattern.compile(regEx);
+			this.failOnMissingGroup =  failOnMissingGroup;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			matcher = pattern.matcher(value);
+			if (matcher.matches()) {
+				for (int i = 0; i < transformed.length; ++i) {
+			        String extracted = matcher.group(i+1);
+			        if(extracted != null) {
+			        	transformed[i] = extracted;
+			        } else {
+			        	if (failOnMissingGroup) {
+			        		throw new IllegalArgumentException("mtaching failed for a group in  pattern based transformer");
+			        	} else {
+			        		transformed[i] = "";
+			        	}
+			        }
+			    }
+			} else {
+				throw new IllegalArgumentException("mtaching failed for pattern based transformer");
+			}
+			return transformed;
+		}
+		
+	}
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class SearchReplaceTransformer extends AttributeTransformer {
+		private String regEx;
+		private String replacement;
+		private boolean replaceAll;
+		
+		public SearchReplaceTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			regEx  = config.getString("regEx");
+			replacement = config.getString("replacement");
+			replaceAll = config.getBoolean("replaceAll");
+		}
+		
+		public SearchReplaceTransformer(int numTransAttributes, String regEx, String replacement, boolean replaceAll) {
+			super(numTransAttributes);
+			this.regEx  = regEx;
+			this.replacement = replacement;
+			this.replaceAll = replaceAll;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (replaceAll) {
+				transformed[0] = value.replaceAll(regEx, replacement);
+			} else {
+				transformed[0] = value.replaceFirst(regEx, replacement);
+			}
+			return transformed;
+		}
+		
+	}
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class KeyValueTransformer extends AttributeTransformer {
+		private Config config;
+		private Map<String, String>  kayValues;
+		
+		public KeyValueTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+		}
+
+		public KeyValueTransformer( Map<String, String>  kayValues) {
+			super(1);
+			this.kayValues = kayValues;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			String newValue = null;
+			if (null != config) {
+				newValue = config.getString(value);
+			} else {
+				newValue = kayValues.get(value);
+			}
+			
+			transformed[0] = null != newValue ? newValue  :  value;
+			return transformed;
+		}		
+	}	
 }
