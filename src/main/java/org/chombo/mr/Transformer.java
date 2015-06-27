@@ -156,12 +156,14 @@ public class Transformer extends Configured implements Tool {
 	        	}
 	        	
 	        	//build generators
-	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
-	        		for (String tranformerTag  : prAttr.getTransformers() ) {
-	        			transConfig = transformerConfig.getConfig(tranformerTag);
-	        			attrTrans = TransformerFactory.createTransformer(tranformerTag, transConfig);
-	        			registerGenerators(attrTrans);
-	        		}
+	        	if (null != transformerSchema.getAttributeGenerators()) {
+		        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
+		        		for (String tranformerTag  : prAttr.getTransformers() ) {
+		        			transConfig = transformerConfig.getConfig(tranformerTag);
+		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, transConfig);
+		        			registerGenerators(attrTrans);
+		        		}
+		        	}
 	        	}
 	        	
 	        	//output
@@ -220,30 +222,32 @@ public class Transformer extends Configured implements Tool {
 	            	int t = 0;
 	            	source = items[i];
 	            	
-	            	//all transformers
-	            	for (AttributeTransformer trans :  transformerList) {
-		        		if (null !=trans) {
-		        			transformedValues = trans.tranform(source);
-		        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
-		        				//only last transformer is allowed to emit multiple values
-		        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
+            		//skip field if no transformers defined
+	            	if (null != transformerList) {
+		            	//all transformers
+		            	for (AttributeTransformer trans :  transformerList) {
+			        		if (null !=trans) {
+			        			transformedValues = trans.tranform(source);
+			        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
+			        				//only last transformer is allowed to emit multiple values
+			        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
+			        			}
+			        		} else {
+			        			singleTransformedValue[0] = source;
+			        			transformedValues =  singleTransformedValue;
+			        		}
+			        		
+			        		source = transformedValues[0];
+			        		++t;
+			            }
+		            	
+		        		//add to output
+		        		if (null != transformedValues) {
+		        			for (String transformedValue :  transformedValues) {
+		        				stBld.append(transformedValue).append(fieldDelimOut);
 		        			}
-		        		} else {
-		        			singleTransformedValue[0] = source;
-		        			transformedValues =  singleTransformedValue;
 		        		}
-		        		
-		        		source = transformedValues[0];
-		        		++t;
-		            }
-	            	
-	        		//add to output
-	        		if (null != transformedValues) {
-	        			for (String transformedValue :  transformedValues) {
-	        				stBld.append(transformedValue).append(fieldDelimOut);
-	        			}
-	        		}
-	        		
+	            	}
 	            }
 	            outVal.set(stBld.substring(0, stBld.length() -1));
 				context.write(NullWritable.get(), outVal);
@@ -290,10 +294,13 @@ public class Transformer extends Configured implements Tool {
 	 * @author pranab
 	 *
 	 */
-	public static class NullTransformer implements AttributeTransformer {
+	public static class NullTransformer extends AttributeTransformer {
+		public NullTransformer() {
+			super(1);
+		}
+
 		@Override
 		public String[] tranform(String value) {
-			String[] transformed = new String[1];
 			transformed[0] = null;
 			return transformed;
 		}

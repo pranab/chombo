@@ -1,5 +1,5 @@
 ## Introduction
-Set of helper classes for Hadoop and Storm, Hadoop based ETL
+Hadoop based ETL and various utility classes for Hadoop and Storm
 
 ## Philosophy
 * Simple to use
@@ -11,7 +11,8 @@ Set of helper classes for Hadoop and Storm, Hadoop based ETL
 * Various relational algebra operation, including Projection, Join etc
 * Data extraction ETL to extract structured record from unstructured data
 * Data extraction ETL to extract structured record from JSON data
-* Data validation ETL with static rules and statistical parameters
+* Data validation ETL with configurable rules and statistical parameters 
+* Data transformation ETL with configurable transformation rules
 * Data normalization
 * Various statistical parameter  calculation 
 * Various long term statistical parameter calculation with incremental data  

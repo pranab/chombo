@@ -15,6 +15,7 @@
  * permissions and limitations under the License.
  */
 
+
 package org.chombo.transformer;
 
 import org.chombo.util.ProcessorAttribute;
@@ -23,28 +24,39 @@ import org.chombo.util.ProcessorAttribute;
  * @author pranab
  *
  */
-public class DateTransformer  {
+public class StringTransformer {
 	
 	/**
 	 * @author pranab
 	 *
 	 */
-	public static class EpochTimeGenerator extends AttributeTransformer {
-
-		/**
-		 * @param prAttr
-		 */
-		public EpochTimeGenerator(ProcessorAttribute prAttr) {
+	public static class LowerCaseTransformer extends AttributeTransformer  {
+		public LowerCaseTransformer(ProcessorAttribute prAttr) {
 			super(prAttr.getTargetFieldOrdinals().length);
 		}
-		
+
 		@Override
 		public String[] tranform(String value) {
-			transformed[0] = "" + System.currentTimeMillis();
+			transformed[0] =  value.toLowerCase();
 			return transformed;
 		}
 		
 	}
-	
-	
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class UpperCaseTransformer extends AttributeTransformer  {
+		public UpperCaseTransformer(ProcessorAttribute prAttr) {
+			super(prAttr.getTargetFieldOrdinals().length);
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] =  value.toUpperCase();
+			return transformed;
+		}
+		
+	}
 }

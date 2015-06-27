@@ -20,6 +20,11 @@ package org.chombo.transformer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.chombo.util.ProcessorAttribute;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigValue;
+
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
@@ -29,21 +34,27 @@ import groovy.lang.GroovyShell;
  * @author pranab
  *
  */
-public class NumericTransformer {
+public class NumericTransformer  {
 
 	/**
 	 * polynomoial expression
 	 * @author pranab
 	 *
 	 */
-	public static class LongPolynomial  implements AttributeTransformer {
+	public static class LongPolynomial  extends AttributeTransformer {
 		private long a;
 		private long b;
 		private long c;
-		private String[] transformed = new String[1];
+
+		public LongPolynomial(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			this.a = config.getInt("a");
+			this.b = config.getInt("b");
+			this.c = config.getInt("c");
+		}
 		
 		public LongPolynomial(long a, long b, long c) {
-			super();
+			super(1);
 			this.a = a;
 			this.b = b;
 			this.c = c;
@@ -63,14 +74,20 @@ public class NumericTransformer {
 	 * @author pranab
 	 *
 	 */
-	public static class DoublePolynomial  implements AttributeTransformer {
+	public static class DoublePolynomial  extends AttributeTransformer {
 		private double a;
 		private double b;
 		private double c;
-		private String[] transformed = new String[1];
+
+		public DoublePolynomial(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			this.a = config.getInt("a");
+			this.b = config.getInt("b");
+			this.c = config.getInt("c");
+		}
 		
 		public DoublePolynomial(double a, double b, double c) {
-			super();
+			super(1);
 			this.a = a;
 			this.b = b;
 			this.c = c;
@@ -90,15 +107,22 @@ public class NumericTransformer {
 	 * @author pranab
 	 *
 	 */
-	public static abstract class Custom implements AttributeTransformer {
+	public static abstract class Custom extends AttributeTransformer {
 		private String script;
 		private Map<String, Object> params = new HashMap<String, Object>();
 		private Binding binding = new Binding();
-		private String[] transformed = new String[1];
 		
+		public Custom(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			this.script = config.getString("script");
+			for (Map.Entry<String, ConfigValue> entry : config.entrySet()) {
+				Object value = entry.getValue().unwrapped();
+				binding.setVariable(entry.getKey(), value);
+			}
+		}
 		
 		public Custom(String script, Map<String, Object> params) {
-			super();
+			super(1);
 			this.script = script;
 			this.params = params;
 			for (String name : params.keySet()) {
@@ -129,6 +153,11 @@ public class NumericTransformer {
 	 *
 	 */
 	public static class LongCustom extends Custom {
+		
+		public LongCustom(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}		
+		
 		public LongCustom(String script, Map<String, Object> params) {
 			super(script,  params);
 		}
@@ -159,6 +188,10 @@ public class NumericTransformer {
 	 *
 	 */
 	public static class DoubleCustom extends Custom {
+
+		public DoubleCustom(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}		
 		public DoubleCustom(String script, Map<String, Object> params) {
 			super(script,  params);
 		}

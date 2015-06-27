@@ -17,16 +17,27 @@
 
 package org.chombo.transformer;
 
+import org.chombo.util.ProcessorAttribute;
+
 /**
  * @author pranab
  *
  */
-public interface AttributeTransformer {
+public abstract class  AttributeTransformer {
+	protected String[] transformed;
+	
+	
+	/**
+	 * @param numTrans
+	 */
+	public AttributeTransformer(int numTrans) {
+		transformed = new String[numTrans];
+	}
 
 	/**
 	 * @param value
 	 * @return
 	 */
-	public String[] tranform(String value);
+	public abstract String[] tranform(String value);
 	
 }
