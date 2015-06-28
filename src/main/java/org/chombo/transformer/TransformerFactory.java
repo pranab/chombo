@@ -35,6 +35,9 @@ public class TransformerFactory {
 	public static final String DOUBLE_POLYNOMIAL_TRANSFORMER  = "doublePolynomial";
 	public static final String LONG_CUSTOM_TRANSFORMER  = "longCustom";
 	public static final String DOUBLE_CUSTOM_TRANSFORMER  = "longCustom";
+	public static final String EPOCH_TIME_GENERATOR = "epochTimeGen";
+	public static final String DATE_GENERATOR = "dateGen";
+	public static final String DATE_FORMAT_TRANSFORMER = "dateFormat";
 	
 	/**
 	 * @param tag
@@ -61,6 +64,12 @@ public class TransformerFactory {
 			transformer = new NumericTransformer.LongCustom(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(DOUBLE_CUSTOM_TRANSFORMER)) {
 			transformer = new NumericTransformer.DoubleCustom(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(EPOCH_TIME_GENERATOR)) {
+			transformer = new DateTransformer.EpochTimeGenerator(prAttr);
+		} else if (transformerTag.equals(DATE_GENERATOR)) {
+			transformer = new DateTransformer.DateGenerator(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(DATE_FORMAT_TRANSFORMER)) {
+			transformer = new DateTransformer.DateFormatTransformer(prAttr, config.getConfig(transformerTag));
 		} else {
 			throw new IllegalArgumentException("invalid transformer");
 		}

@@ -17,7 +17,14 @@
 
 package org.chombo.transformer;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
 import org.chombo.util.ProcessorAttribute;
+
+import com.typesafe.config.Config;
 
 /**
  * @author pranab
@@ -38,6 +45,10 @@ public class DateTransformer  {
 			super(prAttr.getTargetFieldOrdinals().length);
 		}
 		
+		public EpochTimeGenerator() {
+			super(1);
+		}
+
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] = "" + System.currentTimeMillis();
@@ -46,5 +57,69 @@ public class DateTransformer  {
 		
 	}
 	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class DateGenerator extends AttributeTransformer {
+		private SimpleDateFormat dateFormat;
+		
+		/**
+		 * @param prAttr
+		 */
+		public DateGenerator(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			dateFormat =   new SimpleDateFormat(config.getString("dateFormat"));
+		}
+		
+		public DateGenerator(String dateFormat) {
+			super(1);
+			this.dateFormat = new SimpleDateFormat(dateFormat);
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] = dateFormat.format(Calendar.getInstance().getTime());
+			return transformed;
+		}
+	}	
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class DateFormatTransformer extends AttributeTransformer {
+		private SimpleDateFormat sourceDateFormat;
+		private SimpleDateFormat targetDateFormat;
+		
+		/**
+		 * @param prAttr
+		 */
+		public DateFormatTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			intialize(config.getString("sourceDateFormat"), config.getString("targetDateFormat"));
+		}
+		
+		public DateFormatTransformer(String sourceDateFormat, String targetDateFormat) {
+			super(1);
+			intialize(sourceDateFormat, targetDateFormat);
+		}
+
+		private void intialize(String sourceDateFormatStr, String targetDateFormatStr) {
+			sourceDateFormat = new SimpleDateFormat(sourceDateFormatStr);
+			targetDateFormat = new SimpleDateFormat(targetDateFormatStr);
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			try {
+				Date date = sourceDateFormat.parse(value);
+				transformed[0] = targetDateFormat.format(date);
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+			return transformed;
+		}
+	}	
 	
 }
