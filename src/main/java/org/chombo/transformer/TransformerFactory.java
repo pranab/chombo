@@ -31,6 +31,10 @@ public class TransformerFactory {
 	public static final String PATTERN_BASED_TRANSFORMER  = "patternBased";
 	public static final String SEARCH_REPLACE_TRANSFORMER  = "searchReplace";
 	public static final String KEY_VALUE_TRANSFORMER  = "keyValue";
+	public static final String DEFAULT_VALUE_TRANSFORMER  = "defaultValue";
+	public static final String ANOYNMIZER_TRANSFORMER  = "anoynmizer";
+	public static final String UNIQUE_KEY_GENERATOR  = "uniqueKey";
+	public static final String TRIM_TRANSFORMER  = "trim";
 	public static final String LONG_POLYNOMIAL_TRANSFORMER  = "longPolynomial";
 	public static final String DOUBLE_POLYNOMIAL_TRANSFORMER  = "doublePolynomial";
 	public static final String LONG_CUSTOM_TRANSFORMER  = "longCustom";
@@ -56,6 +60,14 @@ public class TransformerFactory {
 			transformer = new StringTransformer.PatternBasedTransformer(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(KEY_VALUE_TRANSFORMER)) {
 			transformer = new StringTransformer.KeyValueTransformer(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(DEFAULT_VALUE_TRANSFORMER)) {
+			transformer = new StringTransformer.DefaultValueTransformer(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(ANOYNMIZER_TRANSFORMER)) {
+			transformer = new StringTransformer.AnoynmizerTransformer(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(UNIQUE_KEY_GENERATOR)) {
+			transformer = new StringTransformer.UniqueKeyGenerator(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(TRIM_TRANSFORMER)) {
+			transformer = new StringTransformer.TrimTransformer(prAttr);
 		} else if (transformerTag.equals(LONG_POLYNOMIAL_TRANSFORMER)) {
 			transformer = new NumericTransformer.LongPolynomial(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(DOUBLE_POLYNOMIAL_TRANSFORMER)) {

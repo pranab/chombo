@@ -19,9 +19,11 @@
 package org.chombo.transformer;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
@@ -187,4 +189,108 @@ public class StringTransformer {
 			return transformed;
 		}		
 	}	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class DefaultValueTransformer extends AttributeTransformer {
+		private String defaultValue;
+		
+		public DefaultValueTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			defaultValue  = config.getString("defaultValue");
+		}
+
+		public DefaultValueTransformer( Config config, String defaultValue) {
+			super(1);
+			this.defaultValue  = defaultValue;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (value.isEmpty()) {
+				transformed[0] = defaultValue;
+			} else {
+				transformed[0] = value;
+			}
+			return transformed;
+		}
+	}	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class AnoynmizerTransformer extends AttributeTransformer {
+		private String mask;
+		
+		public AnoynmizerTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			mask  = config.getString("mask");
+		}
+
+		public AnoynmizerTransformer( String mask) {
+			super(1);
+			this.mask  = mask;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] = StringUtils.repeat(mask, value.length());
+			return transformed;
+		}
+	}	
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class UniqueKeyGenerator extends AttributeTransformer {
+		private String algorithm;
+		
+		public UniqueKeyGenerator(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			algorithm  = config.getString("algorithm");
+		}
+
+		public UniqueKeyGenerator( String algorithm) {
+			super(1);
+			this.algorithm  = algorithm;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (algorithm.equals("uuid")) {
+				transformed[0] =  UUID.randomUUID().toString().replaceAll("-", "");
+			} else {
+				throw new IllegalArgumentException("invalid key generation algorithm");
+			}
+			return transformed;
+		}
+		
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class TrimTransformer extends AttributeTransformer {
+		
+		public TrimTransformer(ProcessorAttribute prAttr) {
+			super(prAttr.getTargetFieldOrdinals().length);
+		}
+
+		public TrimTransformer( ) {
+			super(1);
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] =   value.trim();
+			return transformed;
+		}
+	}	
+	
+	
 }
