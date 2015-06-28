@@ -166,6 +166,7 @@ public class StringTransformer {
 		
 		public KeyValueTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
+			this.config = config;
 		}
 
 		public KeyValueTransformer( Map<String, String>  kayValues) {
