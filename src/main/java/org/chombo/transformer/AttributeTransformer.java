@@ -17,7 +17,6 @@
 
 package org.chombo.transformer;
 
-import org.chombo.util.ProcessorAttribute;
 
 /**
  * @author pranab
@@ -25,7 +24,6 @@ import org.chombo.util.ProcessorAttribute;
  */
 public abstract class  AttributeTransformer {
 	protected String[] transformed;
-	
 	
 	public AttributeTransformer() {
 	}
