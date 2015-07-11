@@ -27,6 +27,9 @@ public abstract class  AttributeTransformer {
 	protected String[] transformed;
 	
 	
+	public AttributeTransformer() {
+	}
+	
 	/**
 	 * @param numTrans
 	 */

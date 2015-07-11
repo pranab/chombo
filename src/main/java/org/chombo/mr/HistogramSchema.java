@@ -34,4 +34,14 @@ public class HistogramSchema {
 		this.fields = fields;
 	}
 	
+	public HistogramField getIdField() {
+		HistogramField idField = null;
+		for (HistogramField field : fields) {
+			if (field.isId()) {
+				idField = field;
+			}
+		}
+		return idField;
+	}
+	
 }

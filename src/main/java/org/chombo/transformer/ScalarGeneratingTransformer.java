@@ -21,7 +21,8 @@ package org.chombo.transformer;
  * @author pranab
  *
  */
-public abstract class ScalarGeneratingTransformer  implements AttributeTransformer  {
-	protected String[] transformed = new String[1];
-
+public abstract class ScalarGeneratingTransformer  extends AttributeTransformer  {
+	public ScalarGeneratingTransformer() {
+		transformed = new String[1];
+	}
 }

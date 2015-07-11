@@ -150,7 +150,7 @@ public class Transformer extends Configured implements Tool {
 	        		fieldOrd = prAttr.getOrdinal();
 	        		for (String tranformerTag  : prAttr.getTransformers() ) {
 	        			transConfig = transformerConfig.getConfig(tranformerTag);
-	        			attrTrans = TransformerFactory.createTransformer(tranformerTag, transConfig);
+	        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transConfig);
 	        			registerTransformers(fieldOrd, attrTrans);
 	        		}
 	        	}
@@ -160,7 +160,7 @@ public class Transformer extends Configured implements Tool {
 		        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
 		        		for (String tranformerTag  : prAttr.getTransformers() ) {
 		        			transConfig = transformerConfig.getConfig(tranformerTag);
-		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, transConfig);
+		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transConfig);
 		        			registerGenerators(attrTrans);
 		        		}
 		        	}
