@@ -470,10 +470,13 @@ public class Utility {
      * @return
      */
     public static int[] intArrayFromString(String record, String delimRegex ) {
-    	String[] items = record.split(delimRegex);
-    	int[] data = new int[items.length];
-    	for (int i = 0; i < items.length; ++i) {
-    		data[i] = Integer.parseInt(items[i]);
+    	int[] data = null;
+    	if (null != record) {
+	    	String[] items = record.split(delimRegex);
+	    	data = new int[items.length];
+	    	for (int i = 0; i < items.length; ++i) {
+	    		data[i] = Integer.parseInt(items[i]);
+	    	}
     	}
     	return data;
     }

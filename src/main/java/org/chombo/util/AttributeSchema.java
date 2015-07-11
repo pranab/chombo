@@ -19,6 +19,8 @@ package org.chombo.util;
 
 import java.util.List;
 
+import org.chombo.mr.HistogramField;
+
 /**
  * @author pranab
  *

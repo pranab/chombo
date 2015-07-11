@@ -26,6 +26,7 @@ import java.util.List;
  *
  */
 public class Attribute extends BaseAttribute{
+	protected boolean partitionAttribute;
 	protected boolean id;
 	protected boolean classAttribute;
 	protected List<String> cardinality;
@@ -47,6 +48,12 @@ public class Attribute extends BaseAttribute{
 	protected String minString;
 	protected String maxString;
 	
+	public boolean isPartitionAttribute() {
+		return partitionAttribute;
+	}
+	public void setPartitionAttribute(boolean partitionAttribute) {
+		this.partitionAttribute = partitionAttribute;
+	}
 	public boolean isId() {
 		return id;
 	}

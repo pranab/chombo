@@ -19,24 +19,28 @@ package org.chombo.mr;
 
 import java.util.List;
 
+import org.chombo.util.AttributeSchema;
+
 /**
  * @author pranab
  *
  */
-public class HistogramSchema {
-	private List<HistogramField> fields;
+public class HistogramSchema  extends AttributeSchema<HistogramField> {
 
+	/**
+	 * @return
+	 */
 	public List<HistogramField> getFields() {
-		return fields;
+		return getAttributes();
 	}
 
-	public void setFields(List<HistogramField> fields) {
-		this.fields = fields;
-	}
 	
+	/**
+	 * @return
+	 */
 	public HistogramField getIdField() {
 		HistogramField idField = null;
-		for (HistogramField field : fields) {
+		for (HistogramField field : attributes) {
 			if (field.isId()) {
 				idField = field;
 			}
@@ -44,4 +48,16 @@ public class HistogramSchema {
 		return idField;
 	}
 	
+	/**
+	 * @return
+	 */
+	public HistogramField getPartitionField() {
+		HistogramField partitionField = null;
+		for (HistogramField field : attributes) {
+			if (field.isPartitionAttribute()) {
+				partitionField = field;
+			}
+		}
+		return partitionField;
+	}
 }
