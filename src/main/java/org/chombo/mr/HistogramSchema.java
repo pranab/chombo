@@ -17,6 +17,7 @@
 
 package org.chombo.mr;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.chombo.util.AttributeSchema;
@@ -51,6 +52,19 @@ public class HistogramSchema  extends AttributeSchema<HistogramField> {
 	/**
 	 * @return
 	 */
+	public List<HistogramField> getIdFields() {
+		List<HistogramField> idFields = new ArrayList<HistogramField>();
+		for (HistogramField field : attributes) {
+			if (field.isId()) {
+				idFields.add(field);
+			}
+		}
+		return idFields;
+	}
+
+	/**
+	 * @return
+	 */
 	public HistogramField getPartitionField() {
 		HistogramField partitionField = null;
 		for (HistogramField field : attributes) {
@@ -60,4 +74,32 @@ public class HistogramSchema  extends AttributeSchema<HistogramField> {
 		}
 		return partitionField;
 	}
+	
+	/**
+	 * @return
+	 */
+	public List<HistogramField> getPartitionFields() {
+		List<HistogramField> partitionFields = new ArrayList<HistogramField>();
+		for (HistogramField field : attributes) {
+			if (field.isPartitionAttribute()) {
+				partitionFields.add(field);
+			}
+		}
+		return partitionFields;
+	}
+
+	/**
+	 * @param skipId
+	 * @param skipPartition
+	 * @return
+	 */
+	public int getAttributeCount(boolean skipId, boolean skipPartition) {
+		int count = 0;
+		for (HistogramField attr : attributes) {
+			if (!(attr.isId() && skipId || attr.isPartitionAttribute() && skipPartition))
+				++count;
+		}
+		return count;
+	}
+	
 }
