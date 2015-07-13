@@ -15,12 +15,10 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.mr;
+package org.chombo.util;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.chombo.util.AttributeSchema;
 
 /**
  * @author pranab

@@ -15,9 +15,8 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.mr;
+package org.chombo.util;
 
-import org.chombo.util.Attribute;
 
 /**
  * Derived class for attributes that require histogram

@@ -17,6 +17,8 @@
 
 package org.chombo.mr;
 
+import org.chombo.util.RichAttribute;
+
 /**
  * Field for feature attribute and class attribute
  * @author pranab

@@ -36,6 +36,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.RichAttribute;
+import org.chombo.util.RichAttributeSchema;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 
