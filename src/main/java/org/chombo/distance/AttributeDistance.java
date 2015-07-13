@@ -27,7 +27,7 @@ import org.chombo.util.BaseAttribute;
 public class AttributeDistance extends BaseAttribute{
 	private String algorithm;
 	private double weight;
-	private double upperhreshold;
+	private double upperThreshold;
 	private double lowerThreshold;
 	private int setting;
 	
@@ -45,11 +45,11 @@ public class AttributeDistance extends BaseAttribute{
 		this.weight = weight;
 		setting = setting | 1;
 	}
-	public double getUpperhreshold() {
-		return upperhreshold;
+	public double getUpperThreshold() {
+		return upperThreshold;
 	}
-	public void setUpperhreshold(double upperhreshold) {
-		this.upperhreshold = upperhreshold;
+	public void setUpperThreshold(double upperThreshold) {
+		this.upperThreshold = upperThreshold;
 		setting = setting | 2;
 	}
 	public double getLowerThreshold() {
@@ -64,10 +64,14 @@ public class AttributeDistance extends BaseAttribute{
 		return (setting & 1) == 1;
 	}
 
-	public boolean isUpperhresholdSet() {
+	public boolean isUpperThresholdSet() {
 		return (setting & 2) == 1;
 	}
 	
+	public boolean isLowerThresholdSet() {
+		return (setting & 4) == 1;
+	}
+
 	public boolean isAlgorithmSet() {
 		return (setting & 8) == 1;
 	}

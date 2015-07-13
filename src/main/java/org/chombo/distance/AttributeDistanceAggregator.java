@@ -27,6 +27,7 @@ public class AttributeDistanceAggregator {
 	private int[] ordinals;
 	private String algorithm = "euclidean";
 	private double weight = 1.0;
+	private double param;
 	
 	public int[] getOrdinals() {
 		return ordinals;
@@ -45,6 +46,12 @@ public class AttributeDistanceAggregator {
 	}
 	public void setWeight(double weight) {
 		this.weight = weight;
+	}
+	public double getParam() {
+		return param;
+	}
+	public void setParam(double param) {
+		this.param = param;
 	}
 	
 }
