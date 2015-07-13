@@ -24,7 +24,7 @@ import org.chombo.util.Attribute;
  * @author pranab
  *
  */
-public class HistogramField  extends Attribute {
+public class RichAttribute  extends Attribute {
 	protected int bucketWidth;
 	protected boolean bucketWidthDefined;
 	protected int numBuckets;

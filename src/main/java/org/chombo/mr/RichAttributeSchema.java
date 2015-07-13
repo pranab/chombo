@@ -26,12 +26,12 @@ import org.chombo.util.AttributeSchema;
  * @author pranab
  *
  */
-public class HistogramSchema  extends AttributeSchema<HistogramField> {
+public class RichAttributeSchema  extends AttributeSchema<RichAttribute> {
 
 	/**
 	 * @return
 	 */
-	public List<HistogramField> getFields() {
+	public List<RichAttribute> getFields() {
 		return getAttributes();
 	}
 
@@ -39,9 +39,9 @@ public class HistogramSchema  extends AttributeSchema<HistogramField> {
 	/**
 	 * @return
 	 */
-	public HistogramField getIdField() {
-		HistogramField idField = null;
-		for (HistogramField field : attributes) {
+	public RichAttribute getIdField() {
+		RichAttribute idField = null;
+		for (RichAttribute field : attributes) {
 			if (field.isId()) {
 				idField = field;
 			}
@@ -52,9 +52,9 @@ public class HistogramSchema  extends AttributeSchema<HistogramField> {
 	/**
 	 * @return
 	 */
-	public List<HistogramField> getIdFields() {
-		List<HistogramField> idFields = new ArrayList<HistogramField>();
-		for (HistogramField field : attributes) {
+	public List<RichAttribute> getIdFields() {
+		List<RichAttribute> idFields = new ArrayList<RichAttribute>();
+		for (RichAttribute field : attributes) {
 			if (field.isId()) {
 				idFields.add(field);
 			}
@@ -65,9 +65,9 @@ public class HistogramSchema  extends AttributeSchema<HistogramField> {
 	/**
 	 * @return
 	 */
-	public HistogramField getPartitionField() {
-		HistogramField partitionField = null;
-		for (HistogramField field : attributes) {
+	public RichAttribute getPartitionField() {
+		RichAttribute partitionField = null;
+		for (RichAttribute field : attributes) {
 			if (field.isPartitionAttribute()) {
 				partitionField = field;
 			}
@@ -78,9 +78,9 @@ public class HistogramSchema  extends AttributeSchema<HistogramField> {
 	/**
 	 * @return
 	 */
-	public List<HistogramField> getPartitionFields() {
-		List<HistogramField> partitionFields = new ArrayList<HistogramField>();
-		for (HistogramField field : attributes) {
+	public List<RichAttribute> getPartitionFields() {
+		List<RichAttribute> partitionFields = new ArrayList<RichAttribute>();
+		for (RichAttribute field : attributes) {
 			if (field.isPartitionAttribute()) {
 				partitionFields.add(field);
 			}
@@ -95,7 +95,7 @@ public class HistogramSchema  extends AttributeSchema<HistogramField> {
 	 */
 	public int getAttributeCount(boolean skipId, boolean skipPartition) {
 		int count = 0;
-		for (HistogramField attr : attributes) {
+		for (RichAttribute attr : attributes) {
 			if (!(attr.isId() && skipId || attr.isPartitionAttribute() && skipPartition))
 				++count;
 		}

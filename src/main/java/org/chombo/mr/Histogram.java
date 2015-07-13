@@ -79,7 +79,7 @@ public class Histogram extends Configured implements Tool {
 		private IntWritable outVal = new IntWritable(1);
         private String fieldDelim;
         private String fieldDelimRegex;
-        private HistogramSchema schema;
+        private RichAttributeSchema schema;
         private IntWritable one = new IntWritable(1);
         private int bucket;
         
@@ -93,7 +93,7 @@ public class Histogram extends Configured implements Tool {
             Path src = new Path(filePath);
             FSDataInputStream fs = dfs.open(src);
             ObjectMapper mapper = new ObjectMapper();
-            schema = mapper.readValue(fs, HistogramSchema.class);
+            schema = mapper.readValue(fs, RichAttributeSchema.class);
        }
 
         @Override
@@ -101,7 +101,7 @@ public class Histogram extends Configured implements Tool {
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
             
-            for (HistogramField field : schema.getFields()) {
+            for (RichAttribute field : schema.getFields()) {
             	if (field.isCategorical()){
             		outKey.set("" + field.getOrdinal() +fieldDelim + items[field.getOrdinal()]);
             	} else if (field.isInteger()) {

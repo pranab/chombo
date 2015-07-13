@@ -19,7 +19,7 @@ package org.chombo.util;
 
 import java.util.List;
 
-import org.chombo.mr.HistogramField;
+import org.chombo.mr.RichAttribute;
 
 /**
  * @author pranab

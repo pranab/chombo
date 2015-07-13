@@ -22,7 +22,7 @@ package org.chombo.mr;
  * @author pranab
  *
  */
-public class FeatureField extends HistogramField implements  Comparable<FeatureField>{
+public class FeatureField extends RichAttribute implements  Comparable<FeatureField>{
 	protected boolean  feature;
 	protected int maxSplit;
 
