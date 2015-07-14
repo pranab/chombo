@@ -46,6 +46,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.s3.AmazonS3;
@@ -861,6 +862,23 @@ public class Utility {
 		 BufferedReader bufRead =new BufferedReader(new InputStreamReader(is));
 		Config config =  ConfigFactory.parseReader(bufRead);
 		return config;
+	}
+	
+	/**
+	 * @param conf
+	 * @param pathParam
+	 * @return
+	 * @throws IOException
+	 */
+	public static RichAttributeSchema getRichAttributeSchema(Configuration conf, String pathParam) throws IOException {
+    	String filePath = conf.get(pathParam);
+        FileSystem dfs = FileSystem.get(conf);
+        Path src = new Path(filePath);
+        FSDataInputStream fs = dfs.open(src);
+        ObjectMapper mapper = new ObjectMapper();
+        RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
+        return schema;
+		
 	}
 
 }

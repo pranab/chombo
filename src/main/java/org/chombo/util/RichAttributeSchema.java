@@ -100,4 +100,23 @@ public class RichAttributeSchema  extends AttributeSchema<RichAttribute> {
 		return count;
 	}
 	
+	/**
+	 * @return
+	 */
+	public int[] getNumericAttributeOrdinals() {
+		int[] ordinals = null;
+		List<Integer> ordinalList = new ArrayList<Integer>();
+		
+		for (RichAttribute attr : attributes) {
+			if (attr.isInteger() || attr.isDouble()) {
+				ordinalList.add(attr.ordinal);
+			}
+		}
+		ordinals = new int[ordinalList.size()];
+		for (int i = 0; i < ordinalList.size(); ++i) {
+			ordinals[i] = ordinalList.get(i);
+		}
+		
+		return ordinals;
+	}
 }
