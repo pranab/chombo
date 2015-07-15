@@ -3,6 +3,7 @@ package org.chombo.mr;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -78,10 +79,12 @@ public class NumericalAttrMedian extends Configured implements Tool {
         private RichAttribute[] numericAttrs;
         private double val;
         private int bin;
+        private String operation;
+        private Map<Integer, Double> medians = new HashMap<Integer, Double>();
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
         	schema = Utility.getRichAttributeSchema(config, "rich.attribute.schema");
         	attributes = Utility.intArrayFromString(config.get("attr.list"), fieldDelimRegex);
         	if (null == attributes) {
@@ -94,16 +97,30 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	for (int i = 0; i < attributes.length; ++i) {
         		numericAttrs[i] = schema.findAttributeByOrdinal(attributes[i]);
         	}
+        	
+        	operation = config.get("op.type", "med");
+        	if (operation.equals("mad")) {
+        		//median of deviation from median
+        		List<String> lines = Utility.getFileLines(config, "med.file.path");
+        		for (String line : lines) {
+        			String[] items = line.split(fieldDelimRegex);
+        			medians.put(Integer.parseInt(items[0]), Double.parseDouble(items[1]));
+        		}
+        	}
        }
 
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
+            
         	for (int i = 0; i < attributes.length; ++i) {
             	outKey.initialize();
             	outVal.initialize();
             	val = Double.parseDouble(items[attributes[i]]);
+            	if (operation.equals("mad")) {
+            		val = Math.abs(val - medians.get(attributes[i]));
+            	}
             	bin = (int)(val / numericAttrs[i].getBucketWidth());
             	outKey.add(attributes[i], bin);
             	
@@ -125,7 +142,9 @@ public class NumericalAttrMedian extends Configured implements Tool {
 		private int count;
 		private int bin;
 		private Map<Integer, List<Double>> histogram = new TreeMap<Integer, List<Double>>();
-		private double median;
+		private double med;
+		private double mad;
+        private String operation;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -133,6 +152,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
+        	operation = config.get("op.type", "med");
 		}
 		
 		/* (non-Javadoc)
@@ -161,16 +181,16 @@ public class NumericalAttrMedian extends Configured implements Tool {
 				if (count + fieldValues.size() > midPoint) {
 					int offset = midPoint - count;
 					Collections.sort(fieldValues);
-					median = fieldValues.get(offset);
+					med = fieldValues.get(offset);
 					if (midPoint % 2 == 0) {
 						//take average of adjacent points
 						if (offset > 0) {
-							median = (median + fieldValues.get(offset -1)) / 2;
+							med = (med + fieldValues.get(offset -1)) / 2;
 						} else {
 							//last element from previous bin
 							List<Double> prevBinfieldValues = histogram.get(i-1);
 							Collections.sort(prevBinfieldValues);
-							median = (median + prevBinfieldValues.get(prevBinfieldValues.size() - 1)) / 2;
+							med = (med + prevBinfieldValues.get(prevBinfieldValues.size() - 1)) / 2;
 						}
 					}
 					break;
@@ -178,8 +198,12 @@ public class NumericalAttrMedian extends Configured implements Tool {
 					count += histogram.get(i).size();
 				}
 			}
-			
-			outVal.set("" + key.getInt(0) + fieldDelim + median);
+        	if (operation.equals("mad")) {
+        		mad = 1.4296 * med;
+    			outVal.set("" + key.getInt(0) + fieldDelim + mad);
+        	} else {
+    			outVal.set("" + key.getInt(0) + fieldDelim + med);
+        	}
 			context.write(NullWritable.get(), outVal);
 		}
 	}	
