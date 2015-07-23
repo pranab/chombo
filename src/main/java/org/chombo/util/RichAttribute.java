@@ -63,7 +63,7 @@ public class RichAttribute  extends Attribute {
 			if (numBucketsDefined) {
 				//symmetric wrt to mean
 				if (null == bucketBoundaries) {
-					if (!meanDefined || !stdDevDefined) {
+					if (!isMeanDefined() || !isStdDevDefined()) {
 						throw new IllegalArgumentException("when bucket count and width are set, mean and std dev are required");
 					}
 					double width = bucketWidth *  stdDev / 100.0;
@@ -79,7 +79,7 @@ public class RichAttribute  extends Attribute {
 			if (numBucketsDefined) {
 				//divide range by bucket count
 				if (null == bucketBoundaries) {
-					if (!minDefined || !maxDefined) {
+					if (!isMinDefined() || !isMaxDefined()) {
 						throw new IllegalArgumentException("when only bucket count is set, min and max are required");
 					}
 					double offset = min;

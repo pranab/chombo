@@ -31,22 +31,18 @@ public class Attribute extends BaseAttribute{
 	protected boolean classAttribute;
 	protected List<String> cardinality;
 	protected double  min;
-	protected boolean minDefined;
 	protected double  max;
-	protected boolean maxDefined;
 	protected double mean;
-	protected boolean meanDefined;
 	protected double variance;
 	protected double stdDev;
-	protected boolean stdDevDefined;
 	protected double skew;
-	protected boolean skewDefined;
 	protected double maxZscore;
 	protected String datePattern;
 	protected boolean nullable;
 	protected String stringPattern;
 	protected String minString;
 	protected String maxString;
+	private int settings;
 	
 	public boolean isPartitionAttribute() {
 		return partitionAttribute;
@@ -71,14 +67,14 @@ public class Attribute extends BaseAttribute{
 	}
 	public void setMin(double min) {
 		this.min = min;
-		minDefined = true;
+		settings = settings | 1;
 	}
 	public double getMax() {
 		return max;
 	}
 	public void setMax(double max) {
 		this.max = max;
-		maxDefined = true;
+		settings = settings | 2;
 	}
 	public List<String> getCardinality() {
 		return cardinality;
@@ -91,7 +87,7 @@ public class Attribute extends BaseAttribute{
 	}
 	public void setMean(double mean) {
 		this.mean = mean;
-		meanDefined = true;
+		settings = settings | 4;
 	}
 	public double getVariance() {
 		return variance;
@@ -104,14 +100,14 @@ public class Attribute extends BaseAttribute{
 	}
 	public void setStdDev(double stdDev) {
 		this.stdDev = stdDev;
-		stdDevDefined = true;
+		settings = settings | 8;
 	}
 	public double getSkew() {
 		return skew;
 	}
 	public void setSkew(double skew) {
 		this.skew = skew;
-		skewDefined = true;
+		settings = settings | 16;
 	}
 	public double getMaxZscore() {
 		return maxZscore;
@@ -149,21 +145,20 @@ public class Attribute extends BaseAttribute{
 	public void setMaxString(String maxString) {
 		this.maxString = maxString;
 	}
-
 	public boolean isMinDefined() {
-		return minDefined;
+		return (settings & 1) == 1;
 	}
 	public boolean isMaxDefined() {
-		return maxDefined;
+		return (settings & 2) == 2;
 	}
 	public boolean isMeanDefined() {
-		return meanDefined;
+		return (settings & 4) ==4;	
 	}
 	public boolean isStdDevDefined() {
-		return stdDevDefined;
+		return (settings & 8) == 8;	
 	}
 	public boolean isSkewDefined() {
-		return skewDefined;
+		return (settings & 16) == 16;	
 	}
 	public int cardinalityIndex(String value) {
 		return cardinality.indexOf(value);
