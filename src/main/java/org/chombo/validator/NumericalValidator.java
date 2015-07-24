@@ -39,8 +39,14 @@ public class NumericalValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			int intValue = Integer.parseInt(value);
-			return intValue >= attribute.getMin();
+			int intValue =  0;
+			boolean status = false;
+			try {
+				intValue = Integer.parseInt(value);
+				status = intValue >= attribute.getMin();
+			} catch (Exception ex) {
+			}
+			return status;
 		}
 	}
 
@@ -56,8 +62,14 @@ public class NumericalValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			int intValue = Integer.parseInt(value);
-			return intValue <= attribute.getMax();
+			int intValue =  0;
+			boolean status = false;
+			try {
+				intValue = Integer.parseInt(value);
+				status = intValue <= attribute.getMax();
+			} catch (Exception ex) {
+			}
+			return status;
 		}
 	}
 
@@ -79,8 +91,14 @@ public class NumericalValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			int intValue = Integer.parseInt(value);
-			return intValue >= min && intValue <= max;
+			int intValue =  0;
+			boolean status = false;
+			try {
+				intValue = Integer.parseInt(value);
+				status = intValue >= min && intValue <= max;
+			} catch (Exception ex) {
+			}
+			return status;
 		}
 	}
 	
@@ -96,8 +114,14 @@ public class NumericalValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			double dblValue = Double.parseDouble(value);
-			return dblValue >= attribute.getMin();
+			double dblValue =  0;
+			boolean status = false;
+			try {
+				dblValue = Double.parseDouble(value);
+				status = dblValue >= attribute.getMin();
+			} catch (Exception ex) {
+			}
+			return status;
 		}
 	}
 	
@@ -113,8 +137,14 @@ public class NumericalValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			double dblValue = Double.parseDouble(value);
-			return dblValue <= attribute.getMax();
+			double dblValue =  0;
+			boolean status = false;
+			try {
+				dblValue = Double.parseDouble(value);
+				status = dblValue <= attribute.getMax();
+			} catch (Exception ex) {
+			}
+			return status;
 		}
 	}
 	
@@ -136,8 +166,14 @@ public class NumericalValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			double dblValue = Double.parseDouble(value);
-			return dblValue >= min && dblValue <= max;
+			double dblValue =  0;
+			boolean status = false;
+			try {
+				dblValue = Double.parseDouble(value);
+				status = dblValue >= min && dblValue <= max;
+			} catch (Exception ex) {
+			}
+			return status;
 		}
 	}
 	

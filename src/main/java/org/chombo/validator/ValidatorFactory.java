@@ -31,6 +31,7 @@ public class ValidatorFactory {
 	public static final String MAX_VALIDATOR = "max";
 	public static final String MIN_LENGTH_VALIDATOR = "minLength";
 	public static final String MAX_LENGTH_VALIDATOR = "maxLength";
+	public static final String EXACT_LENGTH_VALIDATOR = "exactLength";
 	public static final String NOT_MISSING_VALIDATOR = "notMissing";
 	public static final String PATTERN_VALIDATOR = "pattern";
 	public static final String MEMEBERSHIP_VALIDATOR = "membership";
@@ -73,6 +74,10 @@ public class ValidatorFactory {
 		} else if (validatorType.equals(MAX_LENGTH_VALIDATOR)) {
 			if (attribute.isString()) {
 				validator = new  StringValidator.MaxLengthValidator(validatorType, ordinal, schema);
+			}
+		} else if (validatorType.equals(EXACT_LENGTH_VALIDATOR)) {
+			if (attribute.isString()) {
+				validator = new  StringValidator.LengthValidator(validatorType, ordinal, schema);
 			}
 		} else if (validatorType.equals(NOT_MISSING_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingValidator(validatorType, ordinal, schema);

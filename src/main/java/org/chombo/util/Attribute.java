@@ -42,6 +42,7 @@ public class Attribute extends BaseAttribute{
 	protected String stringPattern;
 	protected String minString;
 	protected String maxString;
+	protected int length;
 	private int settings;
 	
 	public boolean isPartitionAttribute() {
@@ -69,12 +70,18 @@ public class Attribute extends BaseAttribute{
 		this.min = min;
 		settings = settings | 1;
 	}
+	public double getMinLength() {
+		return min;
+	}
 	public double getMax() {
 		return max;
 	}
 	public void setMax(double max) {
 		this.max = max;
 		settings = settings | 2;
+	}
+	public double getMaxLength() {
+		return max;
 	}
 	public List<String> getCardinality() {
 		return cardinality;
@@ -144,6 +151,12 @@ public class Attribute extends BaseAttribute{
 	}
 	public void setMaxString(String maxString) {
 		this.maxString = maxString;
+	}
+	public int getLength() {
+		return length;
+	}
+	public void setLength(int length) {
+		this.length = length;
 	}
 	public boolean isMinDefined() {
 		return (settings & 1) == 1;

@@ -40,7 +40,7 @@ public class StringValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			return value.length() >= attribute.getMin();
+			return value.length() >= attribute.getMinLength();
 		}
 	}
 
@@ -56,10 +56,26 @@ public class StringValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			return value.length() <= attribute.getMax();
+			return value.length() <= attribute.getMaxLength();
 		}
 	}
 
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class LengthValidator extends Validator {
+
+		public LengthValidator(String tag, int ordinal, AttributeSchema schema) {
+			super(tag, ordinal, schema);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			return value.length() == attribute.getLength();
+		}
+	}
+	
 	/**
 	 * @author pranab
 	 *
