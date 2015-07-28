@@ -1,0 +1,44 @@
+{
+		"name" : "electronicProduct",
+		"attributes" :
+		[
+			{
+				"name" : "productID",
+				"ordinal" : 0,
+				"id" : true,
+				"dataType" : "string"
+			},
+			{
+				"name" : "category",
+				"ordinal" : 1,
+				"dataType" : "categorical",
+				"cardinality" : ["cell phone", "tablet", "laptop", "wearables"]
+			},
+			{
+				"name" : "brand",
+				"ordinal" : 2,
+				"dataType" : "categorical",
+				"cardinality" : ["apple", "samsung", "Nokia", "LG", "HTC","amazon kindle", "google chromo","lenovo", "hp", "acer", "asus", "thinkpad","fitbit", "garmin", "jawbone", "misfit"]
+			},
+			{
+				"name" : "model",
+				"ordinal" : 3,
+				"dataType" : "string",
+				"length" : 6
+			},
+			{
+				"name" : "price",
+				"ordinal" : 4,
+				"dataType" : "int",
+				"min" : 100,
+				"max" : 700
+			},
+			{
+				"name" : "quantity",
+				"ordinal" : 5,
+				"dataType" : "int",
+				"min" : 0,
+				"max" : 150
+			}
+		]
+}
