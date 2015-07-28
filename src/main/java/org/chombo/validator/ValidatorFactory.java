@@ -17,6 +17,8 @@
 
 package org.chombo.validator;
 
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.chombo.util.Attribute;
@@ -40,6 +42,7 @@ public class ValidatorFactory {
 	public static final String ENSURE_DOUBLE_VALIDATOR = "ensureDouble";
 	public static final String STATS_BASED_RANGE_VALIDATOR = "statBasedRange";
 	
+	private static Map<String,String> custValidatorClasses = new HashMap<String,String>();
 	
 	/**
 	 * @param tag
@@ -80,6 +83,7 @@ public class ValidatorFactory {
 				validator = new  StringValidator.LengthValidator(validatorType, ordinal, schema);
 			}
 		} else if (validatorType.equals(NOT_MISSING_VALIDATOR)) {
+			System.out.println("validator type:" + validatorType + " ordinal:" + ordinal );
 			validator = new  GenericValidator.NotMissingValidator(validatorType, ordinal, schema);
 		} else if (validatorType.equals(PATTERN_VALIDATOR)) {
 			if (attribute.isString()) {
@@ -102,15 +106,48 @@ public class ValidatorFactory {
 				validator = new  NumericalValidator.StatsBasedDoubleRangeValidator(validatorType, ordinal, schema, validatorContext);
 			} 
 		} else {
-			throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType);
+			//custor validator
+			validator = createCustomValidator(validatorType, ordinal,  schema);
+			
+			if (null == validator) {
+				throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType);
+			}
 		}
 		
 		if (null == validator) {
-			throw new IllegalArgumentException("validator and attribute data type is not compatible validator: " + 
-					validatorType + " ordinal:" + ordinal );
+			throw new IllegalArgumentException(" validator and attribute data type is not compatible validator: " + 
+					validatorType + " ordinal:" + ordinal + " data type:" + attribute.getDataType() );
 		}
 		
 		return validator;
+	}
+
+	/**
+	 * @param validatorType
+	 * @param ordinal
+	 * @param schema
+	 * @return
+	 */
+	private static Validator  createCustomValidator(String validatorType, int ordinal, AttributeSchema<Attribute> schema) {
+		Validator validator = null;
+		String validatorClass = custValidatorClasses.get(validatorType);
+		if (null != validatorClass) {
+			try {
+				Class<?> clazz = Class.forName(validatorClass);
+				Constructor<?> ctor = clazz.getConstructor(String.class, Integer.class, schema.getClass());
+				validator = (Validator)(ctor.newInstance(new Object[] { validatorType, ordinal, schema }));
+			} catch (Exception ex) {
+				throw new IllegalArgumentException("could not create dynamic validator object for " + validatorType + " " +  ex.getMessage());
+			}
+		}
+		return validator;
+	}
+	
+	/**
+	 * @param custValidatorClasses
+	 */
+	public static void setCustValidatorClasses(Map<String, String> custValidatorClasses) {
+		ValidatorFactory.custValidatorClasses = custValidatorClasses;
 	}
 	
 }

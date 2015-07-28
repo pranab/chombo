@@ -64,10 +64,11 @@ public class ValidationChecker extends Configured implements Tool {
         job.setMapperClass(ValidationChecker.ValidationMapper.class);
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
+        job.setNumReduceTasks(0);
         
         //create invalid data report file
-        OutputStream os = Utility.getCreateFileOutputStream(job.getConfiguration(), "invalid.data.file.path");
-        os.close();
+       OutputStream os = Utility.getCreateFileOutputStream(job.getConfiguration(), "invalid.data.file.path");
+       os.close();
         
         int status =  job.waitForCompletion(true) ? 0 : 1;
         return status;
@@ -100,7 +101,7 @@ public class ValidationChecker extends Configured implements Tool {
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim", ",");
         	filterInvalidRecords = config.getBoolean("filter.invalid.records", true);
         	invalidDataFilePath = config.get("invalid.data.file.path");
@@ -109,10 +110,27 @@ public class ValidationChecker extends Configured implements Tool {
         	InputStream is = Utility.getFileStream(config,  "schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
             schema = mapper.readValue(is, GenericAttributeSchema.class);
+            
+            //custom validator
+            Map<String,String> custValidatorClasses = new HashMap<String,String>();
+            String customValidators = config.get("custom.validators");
+            if (null != customValidators) { 
+            	String[] custItems =  customValidators.split(",");
+	            for (String  custValidatorTag :  custItems ) {
+	            	String key = "custom.validator." + custValidatorTag;
+	            	String CustValidatorClass = config.get(key);
+	            	if (null != CustValidatorClass ) {
+	            		custValidatorClasses.put(custValidatorTag, CustValidatorClass);
+	            	}            
+	            }
+	            ValidatorFactory.setCustValidatorClasses(custValidatorClasses);
+            }
+            
 
             //build validator objects
             String cleanserSchemPath = config.get("cleanser.schema.file.path");
             boolean statsIntialized = false;
+            int[] ordinals  = schema.getAttributeOrdinals();
             if (null != cleanserSchemPath) {
             	//use data cleanser schema
             	is = Utility.getFileStream(config,  "cleanser.schema.file.path");
@@ -138,7 +156,6 @@ public class ValidationChecker extends Configured implements Tool {
             	}
             } else {           
             	//use configuration
-	            int[] ordinals  = schema.getAttributeOrdinals();
 	            for (int ord : ordinals ) {
 	            	String key = "validator." + ord;
 	            	String validatorString = config.get(key);
@@ -161,7 +178,7 @@ public class ValidationChecker extends Configured implements Tool {
 	            }
             
             }
-            
+           
        }
         
         /**

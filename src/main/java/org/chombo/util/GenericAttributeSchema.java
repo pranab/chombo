@@ -17,6 +17,9 @@
 
 package org.chombo.util;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GenericAttributeSchema extends AttributeSchema<Attribute>{
 
 }
