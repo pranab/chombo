@@ -48,6 +48,9 @@ import org.chombo.validator.Validator;
 import org.chombo.validator.ValidatorFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigList;
+
 public class ValidationChecker extends Configured implements Tool {
 
 	@Override
@@ -93,8 +96,9 @@ public class ValidationChecker extends Configured implements Tool {
         private boolean valid;
         private String invalidDataFilePath;
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
-        private ProcessorAttributeSchema validatorSchema;
-        
+        private Map<String,String> custValidatorClasses = new HashMap<String,String>();
+        private Map<String,String> custValidatorParams = new HashMap<String,String>();
+                
         
         
         /* (non-Javadoc)
@@ -111,56 +115,33 @@ public class ValidationChecker extends Configured implements Tool {
         	InputStream is = Utility.getFileStream(config,  "schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
             schema = mapper.readValue(is, GenericAttributeSchema.class);
+
+            //transformer config
+            Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
             
             //custom validator
-            Map<String,String> custValidatorClasses = new HashMap<String,String>();
-            Map<String,String> custValidatorParams = new HashMap<String,String>();
-            String customValidators = config.get("custom.validators");
-            if (null != customValidators) { 
-            	String[] custItems =  customValidators.split(",");
-	            for (String  custValidatorTag :  custItems ) {
-	            	String key = "custom.validator." + custValidatorTag;
-	            	String CustValidatorClass = config.get(key);
-	            	if (null != CustValidatorClass ) {
-	            		custValidatorClasses.put(custValidatorTag, CustValidatorClass);
-	            	}            
-	            }
-	            ValidatorFactory.setCustValidatorClasses(custValidatorClasses);
-	            
-	            //config params
-	            custValidatorParams = config.getValByRegex("custom.validator(\\S)+");
-            }
-            
+        	if (null == validatorConfig)  {
+        		customValidatorsFromProps(config);
+        	} else {
+        		customValidatorsFromHconf( validatorConfig);
+        	}
 
             //build validator objects
-            String cleanserSchemPath = config.get("cleanser.schema.file.path");
             boolean statsIntialized = false;
             int[] ordinals  = schema.getAttributeOrdinals();
-            if (null != cleanserSchemPath) {
-            	//use data cleanser schema
-            	is = Utility.getFileStream(config,  "cleanser.schema.file.path");
-            	mapper = new ObjectMapper();
-            	validatorSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
-            	for (int i : validatorSchema.getAttributeOrdinals()) {
-            		ProcessorAttribute attr = validatorSchema.findAttributeByOrdinal(i);
-            		if (attr.isInteger() || attr.isDouble()) {
-            			List<Validator> validatorList = new ArrayList<Validator>();  
-                		validators.put(i, validatorList);
-            			for (String validator : attr.getValidators()) {
-	            			if (validator.equals("statBasedRange")) {
-	            				if (!statsIntialized) {
-	            					getAttributeStats(config, "stat.file.path");
-	            					statsIntialized = true;
-	            				}
-	            				validatorList.add(ValidatorFactory.create(validator, i, schema,validatorContext));
-	            			} else {
-	            				validatorList.add(ValidatorFactory.create(validator, i, schema,null));
-	            			}
-            			}
-            		}
+ 
+            if (null != validatorConfig) {
+            	//hconf based
+            	List <? extends Config> fieldValidators = validatorConfig.getConfigList("fieldValidators");
+            	for (Config fieldValidator : fieldValidators) {
+            		int ord = fieldValidator.getInt("ordinal");
+            		List<String> validatorTags =  fieldValidator.getStringList("validators");
+            		String[] valTags = validatorTags.toArray(new String[validatorTags.size()]);
+            		List<Validator> validatorList = new ArrayList<Validator>();  
+            		createValidators( config,  valTags,  statsIntialized,  ord,  validatorList );
             	}
             } else {           
-            	//use configuration
+            	//prop  configuration based
 	            for (int ord : ordinals ) {
 	            	String key = "validator." + ord;
 	            	String validatorString = config.get(key);
@@ -168,28 +149,78 @@ public class ValidationChecker extends Configured implements Tool {
 	            		List<Validator> validatorList = new ArrayList<Validator>();  
 	            		validators.put(ord, validatorList);
 	            		String[] valTags = validatorString.split(fieldDelimOut);
-	            		for (String valTag :  valTags) {
-	            			if (valTag.equals("statBasedRange")) {
-	            				if (!statsIntialized) {
-	            					getAttributeStats(config, "stat.file.path");
-	            					statsIntialized = true;
-	            				}
-	            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
-	            			} else {
-	            				Validator validator = ValidatorFactory.create(valTag, ord, schema);
-	            				validatorList.add(validator);
-	            				
-	            				//set config for custom balidators
-	            				if (custValidatorClasses.containsKey(valTag)) {
-	            					validator.setConfigParams(custValidatorParams);
-	            				}
-	            			}
-	            		}
+	            		createValidators( config,  valTags,  statsIntialized,  ord,  validatorList );
 	            	}
 	            }
             }
        }
         
+        /**
+         * @param config
+         */
+        private void customValidatorsFromProps(Configuration config) {
+            String customValidators = config.get("customValidators");
+            if (null != customValidators) { 
+            	String[] custItems =  customValidators.split(",");
+	            for (String  custValidatorTag :  custItems ) {
+	            	String key = "custom.validator." + custValidatorTag +".class";
+	            	String custValidatorClass = config.get(key);
+	            	if (null != custValidatorClass ) {
+	            		custValidatorClasses.put(custValidatorTag, custValidatorClass);
+	            	}            
+	            }
+	            ValidatorFactory.setCustValidatorClasses(custValidatorClasses);
+	            
+	            //config params
+	            custValidatorParams = config.getValByRegex("custom.validator(\\S)+");
+            }
+        }
+        
+        
+        /**
+         * @param config
+         */
+        private void customValidatorsFromHconf( Config validatorConfig) {
+        	List <? extends Config> customvalidators = validatorConfig.getConfigList("customvalidators");
+        	for (Config custValidator : customvalidators ) {
+        		String tag = custValidator.getString("tag");
+        		custValidatorClasses.put("custom.validator." + tag + ".class",  custValidator.getString("class"));
+        		List <? extends Config> params = custValidator.getConfigList("params");
+        		for (Config param : params) {
+        			custValidatorParams.put("custom.validator." + tag + "." + param.getString("name"), param.getString("value"));
+        		}
+        	}
+        }
+        
+        /**
+         * @param config
+         * @param valTags
+         * @param statsIntialized
+         * @param ord
+         * @param validatorList
+         * @throws IOException
+         */
+        private void createValidators( Configuration config, String[] valTags,  boolean statsIntialized, int ord, List<Validator> validatorList ) 
+        		throws IOException {
+    		for (String valTag :  valTags) {
+    			if (valTag.equals("statBasedRange")) {
+    				if (!statsIntialized) {
+    					getAttributeStats(config, "stat.file.path");
+    					statsIntialized = true;
+    				}
+    				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
+    			} else {
+    				Validator validator = ValidatorFactory.create(valTag, ord, schema);
+    				validatorList.add(validator);
+    				
+    				//set config for custom balidators
+    				if (custValidatorClasses.containsKey(valTag)) {
+    					validator.setConfigParams(custValidatorParams);
+    				}
+    			}
+    		}
+       	
+        }
         
         /**
          * @param config
