@@ -96,6 +96,7 @@ public class ValidationChecker extends Configured implements Tool {
         private ProcessorAttributeSchema validatorSchema;
         
         
+        
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
          */
@@ -113,6 +114,7 @@ public class ValidationChecker extends Configured implements Tool {
             
             //custom validator
             Map<String,String> custValidatorClasses = new HashMap<String,String>();
+            Map<String,String> custValidatorParams = new HashMap<String,String>();
             String customValidators = config.get("custom.validators");
             if (null != customValidators) { 
             	String[] custItems =  customValidators.split(",");
@@ -124,6 +126,9 @@ public class ValidationChecker extends Configured implements Tool {
 	            	}            
 	            }
 	            ValidatorFactory.setCustValidatorClasses(custValidatorClasses);
+	            
+	            //config params
+	            custValidatorParams = config.getValByRegex("custom.validator(\\S)+");
             }
             
 
@@ -171,15 +176,20 @@ public class ValidationChecker extends Configured implements Tool {
 	            				}
 	            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
 	            			} else {
-	            				validatorList.add(ValidatorFactory.create(valTag, ord, schema,null));
+	            				Validator validator = ValidatorFactory.create(valTag, ord, schema);
+	            				validatorList.add(validator);
+	            				
+	            				//set config for custom balidators
+	            				if (custValidatorClasses.containsKey(valTag)) {
+	            					validator.setConfigParams(custValidatorParams);
+	            				}
 	            			}
 	            		}
 	            	}
 	            }
-            
             }
-           
        }
+        
         
         /**
          * @param config

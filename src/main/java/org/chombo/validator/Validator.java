@@ -17,6 +17,8 @@
 
 package org.chombo.validator;
 
+import java.util.Map;
+
 import org.chombo.util.Attribute;
 import org.chombo.util.AttributeSchema;
 
@@ -28,7 +30,7 @@ public abstract class Validator {
 	protected String tag;
 	protected int ordinal;
 	protected Attribute attribute;
-	
+	protected Map<String,String> configParams;
 	
 	/**
 	 * @param tag
@@ -50,6 +52,14 @@ public abstract class Validator {
 
 	public int getOrdinal() {
 		return ordinal;
+	}
+
+	public Map<String, String> getConfigParams() {
+		return configParams;
+	}
+
+	public void setConfigParams(Map<String, String> configParams) {
+		this.configParams = configParams;
 	}
 	
 }

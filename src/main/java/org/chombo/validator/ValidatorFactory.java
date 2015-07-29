@@ -50,7 +50,18 @@ public class ValidatorFactory {
 	 * @param schema
 	 * @return
 	 */
-	public static Validator create(String validatorType, int ordinal, AttributeSchema<Attribute> schema, Map<String, Object> validatorContext) {
+	public static Validator create(String validatorType, int ordinal, AttributeSchema<Attribute> schema) {
+		return create(validatorType, ordinal, schema, null);
+	}
+	
+	/**
+	 * @param tag
+	 * @param ordinal
+	 * @param schema
+	 * @return
+	 */
+	public static Validator create(String validatorType, int ordinal, AttributeSchema<Attribute> schema, 
+			Map<String, Object> validatorContext) {
 		Validator validator = null;
 		Attribute attribute = schema.findAttributeByOrdinal(ordinal);
 		
