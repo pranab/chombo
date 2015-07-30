@@ -98,6 +98,7 @@ public class ValidationChecker extends Configured implements Tool {
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
         private Map<String,String> custValidatorClasses = new HashMap<String,String>();
         private Map<String,String> custValidatorParams = new HashMap<String,String>();
+        private boolean statsIntialized = false;
                 
         
         
@@ -127,7 +128,6 @@ public class ValidationChecker extends Configured implements Tool {
         	}
 
             //build validator objects
-            boolean statsIntialized = false;
             int[] ordinals  = schema.getAttributeOrdinals();
  
             if (null != validatorConfig) {
@@ -137,8 +137,7 @@ public class ValidationChecker extends Configured implements Tool {
             		int ord = fieldValidator.getInt("ordinal");
             		List<String> validatorTags =  fieldValidator.getStringList("validators");
             		String[] valTags = validatorTags.toArray(new String[validatorTags.size()]);
-            		List<Validator> validatorList = new ArrayList<Validator>();  
-            		createValidators( config,  valTags,  statsIntialized,  ord,  validatorList );
+            		createValidators( config,  valTags,  ord );
             	}
             } else {           
             	//prop  configuration based
@@ -146,10 +145,8 @@ public class ValidationChecker extends Configured implements Tool {
 	            	String key = "validator." + ord;
 	            	String validatorString = config.get(key);
 	            	if (null != validatorString ) {
-	            		List<Validator> validatorList = new ArrayList<Validator>();  
-	            		validators.put(ord, validatorList);
 	            		String[] valTags = validatorString.split(fieldDelimOut);
-	            		createValidators( config,  valTags,  statsIntialized,  ord,  validatorList );
+	            		createValidators( config,  valTags,  ord );
 	            	}
 	            }
             }
@@ -200,8 +197,10 @@ public class ValidationChecker extends Configured implements Tool {
          * @param validatorList
          * @throws IOException
          */
-        private void createValidators( Configuration config, String[] valTags,  boolean statsIntialized, int ord, List<Validator> validatorList ) 
+        private void createValidators( Configuration config, String[] valTags,   int ord ) 
         		throws IOException {
+        	//create all validator for  a field
+    		List<Validator> validatorList = new ArrayList<Validator>();  
     		for (String valTag :  valTags) {
     			if (valTag.equals("statBasedRange")) {
     				if (!statsIntialized) {
@@ -219,7 +218,7 @@ public class ValidationChecker extends Configured implements Tool {
     				}
     			}
     		}
-       	
+    		validators.put(ord, validatorList);
         }
         
         /**
@@ -270,7 +269,13 @@ public class ValidationChecker extends Configured implements Tool {
             	fieldValue = items[i]; 
             	if(null != validatorList) {
             		for (Validator validator : validatorList) {
-            			valid = validator.isValid(fieldValue);
+            			if (custValidatorClasses.containsKey(validator.getTag())) {
+            				//custom validator, pass whole record
+            				valid = validator.isValid(value.toString());
+            			} else {
+            				//pass only field
+            				valid = validator.isValid(fieldValue);
+            			}
             			if (!valid) {
             				if (null == invalidData) {
             					invalidData = new InvalidData(value.toString());
