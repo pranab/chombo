@@ -28,6 +28,7 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
+ * Calulates median and median absolute difference
  * @author pranab
  *
  */
@@ -81,6 +82,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
         private int bin;
         private String operation;
         private Map<Integer, Double> medians = new HashMap<Integer, Double>();
+        private int[] idOrdinals;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -107,6 +109,8 @@ public class NumericalAttrMedian extends Configured implements Tool {
         			medians.put(Integer.parseInt(items[0]), Double.parseDouble(items[1]));
         		}
         	}
+        	
+        	idOrdinals = Utility.intArrayFromString(config.get("id.ordinals"), fieldDelimRegex);
        }
 
         @Override
@@ -122,6 +126,13 @@ public class NumericalAttrMedian extends Configured implements Tool {
             		val = Math.abs(val - medians.get(attributes[i]));
             	}
             	bin = (int)(val / numericAttrs[i].getBucketWidth());
+            	
+            	if (null != idOrdinals) {
+            		//record id avalable
+            		for (int ord  :  idOrdinals) {
+            			outKey.add(items[ord]);
+            		}
+            	}
             	outKey.add(attributes[i], bin);
             	
             	outVal.add(bin, val);
@@ -145,6 +156,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
 		private double med;
 		private double mad;
         private String operation;
+        private int[] idOrdinals;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -153,6 +165,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
         	operation = config.get("op.type", "med");
+        	idOrdinals = Utility.intArrayFromString(config.get("id.ordinals"), fieldDelim);
 		}
 		
 		/* (non-Javadoc)
@@ -162,6 +175,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
      	throws IOException, InterruptedException {
 			totalCount = 0;
 			histogram.clear();
+			stBld.delete(0, stBld.length());
 			for(Tuple value : values) {
 				bin = value.getInt(0);
 				List<Double> fieldValues = histogram.get(bin);
@@ -179,12 +193,14 @@ public class NumericalAttrMedian extends Configured implements Tool {
 			for (int i : histogram.keySet()) {
 				List<Double> fieldValues = histogram.get(i);
 				if (count + fieldValues.size() > midPoint) {
+					//found the bin that has the median
 					int offset = midPoint - count;
 					Collections.sort(fieldValues);
 					med = fieldValues.get(offset);
 					if (midPoint % 2 == 0) {
 						//take average of adjacent points
 						if (offset > 0) {
+							//adjacent points in the same bin
 							med = (med + fieldValues.get(offset -1)) / 2;
 						} else {
 							//last element from previous bin
@@ -195,15 +211,29 @@ public class NumericalAttrMedian extends Configured implements Tool {
 					}
 					break;
 				} else {
+					//keep going
 					count += histogram.get(i).size();
 				}
 			}
+			
+        	if (null != idOrdinals) {
+        		//record id available
+        		for (int i = 0;  i < idOrdinals.length; ++i) {
+        			stBld.append(key.getString(i)).append(fieldDelim);
+        		}
+    			stBld.append(key.getInt(idOrdinals.length)).append(fieldDelim);
+        	} else {
+        		stBld.append(key.getInt(0)).append(fieldDelim);
+			}
+        	
         	if (operation.equals("mad")) {
         		mad = 1.4296 * med;
-    			outVal.set("" + key.getInt(0) + fieldDelim + mad);
+        		stBld.append(mad);
         	} else {
-    			outVal.set("" + key.getInt(0) + fieldDelim + med);
+        		stBld.append(med);
         	}
+        	
+        	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
 		}
 	}	
