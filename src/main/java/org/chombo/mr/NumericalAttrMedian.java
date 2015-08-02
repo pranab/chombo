@@ -82,6 +82,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
         private int bin;
         private String operation;
         private Map<Integer, Double> medians = new HashMap<Integer, Double>();
+        private Map<String, Map<Integer, Double>> keyedMedians = new HashMap<String, Map<Integer, Double>>();
         private int[] idOrdinals;
         
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -99,6 +100,9 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	for (int i = 0; i < attributes.length; ++i) {
         		numericAttrs[i] = schema.findAttributeByOrdinal(attributes[i]);
         	}
+
+        	//record id
+        	idOrdinals = Utility.intArrayFromString(config.get("id.ordinals"), fieldDelimRegex);
         	
         	operation = config.get("op.type", "med");
         	if (operation.equals("mad")) {
@@ -106,11 +110,22 @@ public class NumericalAttrMedian extends Configured implements Tool {
         		List<String> lines = Utility.getFileLines(config, "med.file.path");
         		for (String line : lines) {
         			String[] items = line.split(fieldDelimRegex);
-        			medians.put(Integer.parseInt(items[0]), Double.parseDouble(items[1]));
+        			if (null != idOrdinals) {
+        				//with IDs
+        				String compId = Utility.join(items, 0, idOrdinals.length, fieldDelimRegex);
+        				Map<Integer, Double> medians = keyedMedians.get(compId);
+        				if (null == medians) {
+        					medians = new HashMap<Integer, Double>();
+        					keyedMedians.put(compId, medians);
+        				}
+        				medians.put(Integer.parseInt(items[idOrdinals.length]), Double.parseDouble(items[idOrdinals.length + 1]));
+        			} else {
+        				//without IDs
+        				medians.put(Integer.parseInt(items[0]), Double.parseDouble(items[1]));
+        			}
         		}
         	}
         	
-        	idOrdinals = Utility.intArrayFromString(config.get("id.ordinals"), fieldDelimRegex);
        }
 
         @Override
@@ -123,12 +138,18 @@ public class NumericalAttrMedian extends Configured implements Tool {
             	outVal.initialize();
             	val = Double.parseDouble(items[attributes[i]]);
             	if (operation.equals("mad")) {
-            		val = Math.abs(val - medians.get(attributes[i]));
+            		if (null != idOrdinals) {
+        				String compId = Utility.join(items, 0, idOrdinals.length, fieldDelimRegex);
+        				Map<Integer, Double> medians = keyedMedians.get(compId);
+            			val = Math.abs(val - medians.get(attributes[i]));
+            		} else {
+            			val = Math.abs(val - medians.get(attributes[i]));
+            		}
             	}
             	bin = (int)(val / numericAttrs[i].getBucketWidth());
             	
             	if (null != idOrdinals) {
-            		//record id avalable
+            		//record id available
             		for (int ord  :  idOrdinals) {
             			outKey.add(items[ord]);
             		}
