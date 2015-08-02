@@ -87,7 +87,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getRichAttributeSchema(config, "rich.attribute.schema");
+        	schema = Utility.getRichAttributeSchema(config, "med.schema.file.path");
         	attributes = Utility.intArrayFromString(config.get("attr.list"), fieldDelimRegex);
         	if (null == attributes) {
         		//all numeric fields

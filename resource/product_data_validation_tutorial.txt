@@ -23,7 +23,7 @@ hadoop fs -put electr_prod.json /user/pranab/meta/dava
 
 4. Run validation map reduce
 ============================
-./dava.sh
+./etl.sh validate
 
 5. Validation report
 ====================
