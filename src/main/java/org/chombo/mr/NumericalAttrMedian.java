@@ -102,7 +102,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	}
 
         	//record id
-        	idOrdinals = Utility.intArrayFromString(config.get("id.ordinals"), fieldDelimRegex);
+        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
         	
         	operation = config.get("op.type", "med");
         	if (operation.equals("mad")) {

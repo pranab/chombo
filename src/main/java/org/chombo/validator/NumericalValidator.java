@@ -20,6 +20,7 @@ package org.chombo.validator;
 import java.util.Map;
 
 import org.chombo.util.AttributeSchema;
+import org.chombo.util.MedianStatsManager;
 
 /**
  * @author pranab
@@ -77,25 +78,52 @@ public class NumericalValidator {
 	 * @author pranab
 	 *
 	 */
-	public static class StatsBasedIntRangeValidator extends Validator {
-		private int min;
-		private int max;
+	public static class StatsBasedRangeValidator extends Validator {
+		private double min;
+		private double max;
 		
-		public StatsBasedIntRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
+		public StatsBasedRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
 			super(tag, ordinal, schema);
 			double mean = (Double)validatorContext.get("mean:" + ordinal);
 			double stdDev = (Double)validatorContext.get("stdDev:" + ordinal);
-			min = (int)(mean - attribute.getMaxZscore() * stdDev);
-			max = (int)(mean + attribute.getMaxZscore() * stdDev);
+			min = mean - attribute.getMaxZscore() * stdDev;
+			max = mean + attribute.getMaxZscore() * stdDev;
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			int intValue =  0;
+			double dblValue =  0;
 			boolean status = false;
 			try {
-				intValue = Integer.parseInt(value);
-				status = intValue >= min && intValue <= max;
+				dblValue = Double.parseDouble(value);
+				status = dblValue >= min && dblValue <= max;
+			} catch (Exception ex) {
+			}
+			return status;
+		}
+	}
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class RobustZscoreBasedRangeValidator extends Validator {
+		private double min;
+		private double max;
+		
+		public RobustZscoreBasedRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
+			super(tag, ordinal, schema);
+			MedianStatsManager statMan = (MedianStatsManager)validatorContext.get("stat");
+			min = statMan.getMedian(ordinal) - attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+			max = statMan.getMedian(ordinal) + attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			double dblValue =  0;
+			boolean status = false;
+			try {
+				dblValue = Double.parseDouble(value);
+				status = dblValue >= min && dblValue <= max;
 			} catch (Exception ex) {
 			}
 			return status;
@@ -148,33 +176,5 @@ public class NumericalValidator {
 		}
 	}
 	
-	/**
-	 * @author pranab
-	 *
-	 */
-	public static class StatsBasedDoubleRangeValidator extends Validator {
-		private double min;
-		private double max;
-		
-		public StatsBasedDoubleRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
-			super(tag, ordinal, schema);
-			double mean = (Double)validatorContext.get("mean:" + ordinal);
-			double stdDev = (Double)validatorContext.get("stdDev:" + ordinal);
-			min = mean - attribute.getMaxZscore() * stdDev;
-			max = mean + attribute.getMaxZscore() * stdDev;
-		}
-
-		@Override
-		public boolean isValid(String value) {
-			double dblValue =  0;
-			boolean status = false;
-			try {
-				dblValue = Double.parseDouble(value);
-				status = dblValue >= min && dblValue <= max;
-			} catch (Exception ex) {
-			}
-			return status;
-		}
-	}
 	
 }

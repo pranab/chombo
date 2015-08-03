@@ -26,6 +26,7 @@ public final class StatsParameters {
 	private double stdDev;
 	private double skew;
 	private double median;
+	private double medAbsDivergence;
 	private double quaterPercentile;
 	private double threeQuaterPercentile;
 	private double min;
@@ -54,6 +55,12 @@ public final class StatsParameters {
 	}
 	public void setMedian(double median) {
 		this.median = median;
+	}
+	public double getMedAbsDivergence() {
+		return medAbsDivergence;
+	}
+	public void setMedAbsDivergence(double medAbsDivergence) {
+		this.medAbsDivergence = medAbsDivergence;
 	}
 	public double getQuaterPercentile() {
 		return quaterPercentile;

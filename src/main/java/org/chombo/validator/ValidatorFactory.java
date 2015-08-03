@@ -40,7 +40,8 @@ public class ValidatorFactory {
 	public static final String ENSURE_INT_VALIDATOR = "ensureInt";
 	public static final String ENSURE_LONG_VALIDATOR = "ensureLong";
 	public static final String ENSURE_DOUBLE_VALIDATOR = "ensureDouble";
-	public static final String STATS_BASED_RANGE_VALIDATOR = "statBasedRange";
+	public static final String ZCORE_BASED_RANGE_VALIDATOR = "zscoreBasedRange";
+	public static final String ROBUST_ZCORE_BASED_RANGE_VALIDATOR = "robustZscoreBasedRange";
 	
 	private static Map<String,String> custValidatorClasses = new HashMap<String,String>();
 	
@@ -110,12 +111,10 @@ public class ValidatorFactory {
 			validator = new GenericValidator.EnsureLongValidator(validatorType, ordinal, schema);
 		} else if (validatorType.equals(ENSURE_DOUBLE_VALIDATOR)) {
 			validator = new GenericValidator.EnsureDoubleValidator(validatorType, ordinal, schema);
-		} else if (validatorType.equals(STATS_BASED_RANGE_VALIDATOR)) {
-			if (attribute.isInteger()) {
-				validator = new  NumericalValidator.StatsBasedIntRangeValidator(validatorType, ordinal, schema, validatorContext);
-			} else if (attribute.isDouble()) {
-				validator = new  NumericalValidator.StatsBasedDoubleRangeValidator(validatorType, ordinal, schema, validatorContext);
-			} 
+		} else if (validatorType.equals( ZCORE_BASED_RANGE_VALIDATOR)) {
+				validator = new  NumericalValidator.StatsBasedRangeValidator(validatorType, ordinal, schema, validatorContext);
+		} else if (validatorType.equals( ROBUST_ZCORE_BASED_RANGE_VALIDATOR)) {
+			validator = new  NumericalValidator.RobustZscoreBasedRangeValidator(validatorType, ordinal, schema, validatorContext);
 		} else {
 			//custor validator
 			validator = createCustomValidator(validatorType, ordinal,  schema);

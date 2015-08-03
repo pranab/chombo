@@ -39,6 +39,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
 import org.chombo.util.GenericAttributeSchema;
+import org.chombo.util.MedianStatsManager;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.StatsParameters;
@@ -99,7 +100,9 @@ public class ValidationChecker extends Configured implements Tool {
         private Map<String,String> custValidatorClasses = new HashMap<String,String>();
         private Map<String,String> custValidatorParams = new HashMap<String,String>();
         private boolean statsIntialized = false;
-                
+        private MedianStatsManager medStatManager;
+        private int[] idOrdinals;
+              
         
         
         /* (non-Javadoc)
@@ -111,7 +114,10 @@ public class ValidationChecker extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim", ",");
         	filterInvalidRecords = config.getBoolean("filter.invalid.records", true);
         	invalidDataFilePath = config.get("invalid.data.file.path");
-        	
+
+           	//record id
+        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
+ 
         	//schema
         	InputStream is = Utility.getFileStream(config,  "schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
@@ -202,13 +208,19 @@ public class ValidationChecker extends Configured implements Tool {
         	//create all validator for  a field
     		List<Validator> validatorList = new ArrayList<Validator>();  
     		for (String valTag :  valTags) {
-    			if (valTag.equals("statBasedRange")) {
+    			if (valTag.equals("zscoreBasedRange")) {
+    				//z score based
     				if (!statsIntialized) {
     					getAttributeStats(config, "stat.file.path");
     					statsIntialized = true;
     				}
     				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
+    			} if (valTag.equals("robustZscoreBasedRange")) {
+    				//robust z score based
+    				getAttributeMeds(config, "med.stat.file.path", "mad.stat.file.path", idOrdinals);
+    				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
     			} else {
+    				//normal
     				Validator validator = ValidatorFactory.create(valTag, ord, schema);
     				validatorList.add(validator);
     				
@@ -230,12 +242,28 @@ public class ValidationChecker extends Configured implements Tool {
         	NumericalAttrStatsManager statsManager = new NumericalAttrStatsManager(config, statsFilePath, ",");
         	for (int i : schema.getAttributeOrdinals()) {
         		Attribute attr = schema.findAttributeByOrdinal(i);
+        		validatorContext.clear();
         		if (attr.isInteger() || attr.isDouble()) {
         			StatsParameters stats = statsManager.getStatsParameters(i);
         			validatorContext.put("mean:" + i,  stats.getMean());
 					validatorContext.put("stdDev:" + i,  stats.getStdDev());
         		}
         	}
+        }
+
+        /**
+         * @param config
+         * @param statsFilePath
+         * @throws IOException
+         */
+        private void getAttributeMeds(Configuration config, String medFilePathParam, String madFilePathParam, int[] idOrdinals) 
+        	throws IOException {
+        	if (null == medStatManager) {
+        		medStatManager = new MedianStatsManager(config, medFilePathParam, madFilePathParam,  
+        			",",  idOrdinals);
+        	}
+        	validatorContext.clear();
+			validatorContext.put("medStats",  medStatManager);
         }
         
         @Override
