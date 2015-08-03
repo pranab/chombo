@@ -160,4 +160,12 @@ public class ValidatorFactory {
 		ValidatorFactory.custValidatorClasses = custValidatorClasses;
 	}
 	
+	public static boolean isCustomValidator(String validatotType) {
+		return custValidatorClasses.containsKey(validatotType);
+	}
+	
+	public static boolean isStatBasedValidator(String validatotType) {
+		return validatotType.equals(ZCORE_BASED_RANGE_VALIDATOR) || 
+				validatotType.equals(ROBUST_ZCORE_BASED_RANGE_VALIDATOR);
+	}
 }

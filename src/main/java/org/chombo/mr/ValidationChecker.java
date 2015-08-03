@@ -290,7 +290,8 @@ public class ValidationChecker extends Configured implements Tool {
             	fieldValue = items[i]; 
             	if(null != validatorList) {
             		for (Validator validator : validatorList) {
-            			if (custValidatorClasses.containsKey(validator.getTag())) {
+            			if (ValidatorFactory.isCustomValidator(validator.getTag()) || 
+            					ValidatorFactory.isStatBasedValidator(validator.getTag())) {
             				//custom validator, pass whole record
             				valid = validator.isValid(value.toString());
             			} else {

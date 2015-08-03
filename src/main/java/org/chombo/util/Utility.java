@@ -700,8 +700,30 @@ public class Utility {
     	return join(arr,  begIndex, endIndex, ",");
     }
     
+    /**
+     * @param arr
+     * @param indexes
+     * @param delim
+     * @return
+     */
+    public static <T> String join(T[] arr, int[]  indexes, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (int index  : indexes) {
+    		stBld.append(arr[index]).append(delim);
+    	}
+    	return stBld.substring(0, stBld.length() -1);
+    }
     
-	/**
+    /**
+     * @param arr
+     * @param indexes
+     * @return
+     */
+    public static <T> String join(T[] arr, int[]  indexes) {
+    	return  join(arr,  indexes, ",");
+    }
+
+    /**
 	 * @param table
 	 * @param data
 	 * @param delim

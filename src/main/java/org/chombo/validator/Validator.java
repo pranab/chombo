@@ -31,6 +31,7 @@ public abstract class Validator {
 	protected int ordinal;
 	protected Attribute attribute;
 	protected Map<String,String> configParams;
+	protected String fieldDelim = ",";
 	
 	/**
 	 * @param tag
@@ -60,6 +61,14 @@ public abstract class Validator {
 
 	public void setConfigParams(Map<String, String> configParams) {
 		this.configParams = configParams;
+	}
+
+	public String getFieldDelim() {
+		return fieldDelim;
+	}
+
+	public void setFieldDelim(String fieldDelim) {
+		this.fieldDelim = fieldDelim;
 	}
 	
 }

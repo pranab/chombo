@@ -35,6 +35,7 @@ public class MedianStatsManager {
     private Map<String, Map<Integer, Double>> keyedMedians = new HashMap<String, Map<Integer, Double>>();
     private Map<Integer, Double> medAbsDiv = new HashMap<Integer, Double>();
     private Map<String, Map<Integer, Double>> keyedMedAbsDiv = new HashMap<String, Map<Integer, Double>>();
+	private int[] idOrdinals;
 	
 	/**
 	 * @param config
@@ -48,6 +49,7 @@ public class MedianStatsManager {
 		throws IOException {
 		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
 		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
+		this.idOrdinals = idOrdinals;
 	}
 
 	/**
@@ -112,6 +114,10 @@ public class MedianStatsManager {
 	 */
 	public double getKeyedMedAbsDivergence(String key, int attribute) {
 		return keyedMedAbsDiv.get(key).get(attribute);
+	}
+
+	public int[] getIdOrdinals() {
+		return idOrdinals;
 	}
 	
 	

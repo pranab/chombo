@@ -22,6 +22,7 @@ import java.util.Map;
 import org.chombo.util.AttributeSchema;
 import org.chombo.util.MedianStatsManager;
 import org.chombo.util.NumericalAttrStatsManager;
+import org.chombo.util.Utility;
 
 /**
  * @author pranab
@@ -109,12 +110,11 @@ public class NumericalValidator {
 	public static class RobustZscoreBasedRangeValidator extends Validator {
 		private double min;
 		private double max;
+		private Map<String, Object> validatorContext;
 		
 		public RobustZscoreBasedRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
 			super(tag, ordinal, schema);
-			MedianStatsManager statMan = (MedianStatsManager)validatorContext.get("stats");
-			min = statMan.getMedian(ordinal) - attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
-			max = statMan.getMedian(ordinal) + attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+			this.validatorContext = validatorContext;
 		}
 
 		@Override
@@ -122,7 +122,18 @@ public class NumericalValidator {
 			double dblValue =  0;
 			boolean status = false;
 			try {
-				dblValue = Double.parseDouble(value);
+				MedianStatsManager statMan = (MedianStatsManager)validatorContext.get("stats");
+				String[] items = value.split(fieldDelim);
+				int[] idOrdinals = statMan.getIdOrdinals();
+				if (null != idOrdinals) {
+					String compKey = Utility.join(items, idOrdinals, fieldDelim);
+					min = statMan.getKeyedMedian(compKey, ordinal) - attribute.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
+					max = statMan.getKeyedMedian(compKey, ordinal) + attribute.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
+				} else  {
+					min = statMan.getMedian(ordinal) - attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+					max = statMan.getMedian(ordinal) + attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+				}
+				dblValue = Double.parseDouble(items[ordinal]);
 				status = dblValue >= min && dblValue <= max;
 			} catch (Exception ex) {
 			}
