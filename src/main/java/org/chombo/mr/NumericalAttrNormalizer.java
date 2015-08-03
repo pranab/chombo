@@ -37,6 +37,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
 import org.chombo.util.GenericAttributeSchema;
+import org.chombo.util.NumericalAttrStatsManager;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.StatsParameters;

@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.chombo.util.AttributeSchema;
 import org.chombo.util.MedianStatsManager;
+import org.chombo.util.NumericalAttrStatsManager;
 
 /**
  * @author pranab
@@ -84,10 +85,9 @@ public class NumericalValidator {
 		
 		public StatsBasedRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
 			super(tag, ordinal, schema);
-			double mean = (Double)validatorContext.get("mean:" + ordinal);
-			double stdDev = (Double)validatorContext.get("stdDev:" + ordinal);
-			min = mean - attribute.getMaxZscore() * stdDev;
-			max = mean + attribute.getMaxZscore() * stdDev;
+			NumericalAttrStatsManager statMan = (NumericalAttrStatsManager)validatorContext.get("stats");
+			min = statMan.getMean(ordinal) - attribute.getMaxZscore() * statMan.getStdDev(ordinal);
+			max = statMan.getMean(ordinal) + attribute.getMaxZscore() * statMan.getStdDev(ordinal);
 		}
 
 		@Override
@@ -112,7 +112,7 @@ public class NumericalValidator {
 		
 		public RobustZscoreBasedRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
 			super(tag, ordinal, schema);
-			MedianStatsManager statMan = (MedianStatsManager)validatorContext.get("stat");
+			MedianStatsManager statMan = (MedianStatsManager)validatorContext.get("stats");
 			min = statMan.getMedian(ordinal) - attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
 			max = statMan.getMedian(ordinal) + attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
 		}

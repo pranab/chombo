@@ -15,7 +15,7 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.mr;
+package org.chombo.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
-import org.chombo.util.StatsParameters;
-import org.chombo.util.Tuple;
-import org.chombo.util.Utility;
 
 /**
  * Loads numerical attribute stats from HDFS file and provides access methods

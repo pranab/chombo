@@ -40,6 +40,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.MedianStatsManager;
+import org.chombo.util.NumericalAttrStatsManager;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.StatsParameters;
@@ -99,9 +100,9 @@ public class ValidationChecker extends Configured implements Tool {
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
         private Map<String,String> custValidatorClasses = new HashMap<String,String>();
         private Map<String,String> custValidatorParams = new HashMap<String,String>();
-        private boolean statsIntialized = false;
         private MedianStatsManager medStatManager;
         private int[] idOrdinals;
+        private NumericalAttrStatsManager statsManager;
               
         
         
@@ -210,10 +211,7 @@ public class ValidationChecker extends Configured implements Tool {
     		for (String valTag :  valTags) {
     			if (valTag.equals("zscoreBasedRange")) {
     				//z score based
-    				if (!statsIntialized) {
-    					getAttributeStats(config, "stat.file.path");
-    					statsIntialized = true;
-    				}
+    				getAttributeStats(config, "stat.file.path");
     				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
     			} if (valTag.equals("robustZscoreBasedRange")) {
     				//robust z score based
@@ -239,16 +237,11 @@ public class ValidationChecker extends Configured implements Tool {
          * @throws IOException
          */
         private void getAttributeStats(Configuration config, String statsFilePath) throws IOException {
-        	NumericalAttrStatsManager statsManager = new NumericalAttrStatsManager(config, statsFilePath, ",");
-        	for (int i : schema.getAttributeOrdinals()) {
-        		Attribute attr = schema.findAttributeByOrdinal(i);
-        		validatorContext.clear();
-        		if (attr.isInteger() || attr.isDouble()) {
-        			StatsParameters stats = statsManager.getStatsParameters(i);
-        			validatorContext.put("mean:" + i,  stats.getMean());
-					validatorContext.put("stdDev:" + i,  stats.getStdDev());
-        		}
+        	if (null == statsManager ) {
+        		statsManager = new NumericalAttrStatsManager(config, statsFilePath, ",");
         	}
+        	validatorContext.clear();
+			validatorContext.put("stats",  statsManager);
         }
 
         /**
@@ -263,7 +256,7 @@ public class ValidationChecker extends Configured implements Tool {
         			",",  idOrdinals);
         	}
         	validatorContext.clear();
-			validatorContext.put("medStats",  medStatManager);
+			validatorContext.put("stats",  medStatManager);
         }
         
         @Override
