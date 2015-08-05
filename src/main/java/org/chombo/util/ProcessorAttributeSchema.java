@@ -20,11 +20,14 @@ package org.chombo.util;
 
 import java.util.List;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 /**
  * Schema related to data validation and transformation
  * @author pranab
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ProcessorAttributeSchema extends AttributeSchema<ProcessorAttribute> {
 	private List<ProcessorAttribute> attributeGenerators;
 

@@ -19,10 +19,13 @@ package org.chombo.util;
 
 import java.util.List;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 /**
  * @author pranab
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AttributeSchema<T extends BaseAttribute> {
 	protected List<T> attributes;
 

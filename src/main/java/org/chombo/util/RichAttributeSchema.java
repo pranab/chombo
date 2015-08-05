@@ -20,10 +20,13 @@ package org.chombo.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 /**
  * @author pranab
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RichAttributeSchema  extends AttributeSchema<RichAttribute> {
 
 	/**

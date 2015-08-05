@@ -58,7 +58,7 @@ case "$1" in
 ;;
 
 "validate")
-	echo "running mr ValidationChecker"
+	echo "running mr ValidationChecker for median"
 	CLASS_NAME=org.chombo.mr.ValidationChecker
 	IN_PATH=/user/pranab/dava/input
 	OUT_PATH=/user/pranab/dava/output
@@ -71,10 +71,21 @@ case "$1" in
 ;;
 
 "median")
-	echo "running mr NumericalAttrMedian"
+	echo "running mr NumericalAttrMedian for median"
 	CLASS_NAME=org.chombo.mr.NumericalAttrMedian
-	IN_PATH=/user/pranab/nume/input
-	OUT_PATH=/user/pranab/nume/output
+	IN_PATH=/user/pranab/nuam/input
+	OUT_PATH=/user/pranab/nuam/med/output
+	echo "input $IN_PATH output $OUT_PATH"
+	hadoop fs -rmr $OUT_PATH
+	echo "removed output dir"
+	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
+;;
+
+"medAvDev")
+	echo "running mr NumericalAttrMedian for median absolute divergence"
+	CLASS_NAME=org.chombo.mr.NumericalAttrMedian
+	IN_PATH=/user/pranab/nuam/input
+	OUT_PATH=/user/pranab/nuam/mad/output
 	echo "input $IN_PATH output $OUT_PATH"
 	hadoop fs -rmr $OUT_PATH
 	echo "removed output dir"

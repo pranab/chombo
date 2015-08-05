@@ -28,6 +28,7 @@ public class BaseAttribute {
 	public static final String DATA_TYPE_STRING = "string";
 	public static final String DATA_TYPE_CATEGORICAL = "categorical";
 	public static final String DATA_TYPE_INT = "int";
+	public static final String DATA_TYPE_LONG = "long";
 	public static final String DATA_TYPE_DOUBLE = "double";
 	public static final String DATA_TYPE_TEXT = "text";
 	public static final String DATA_TYPE_DATE = "date";

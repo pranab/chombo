@@ -186,7 +186,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
         	operation = config.get("op.type", "med");
-        	idOrdinals = Utility.intArrayFromString(config.get("id.ordinals"), fieldDelim);
+        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelim);
 		}
 		
 		/* (non-Javadoc)

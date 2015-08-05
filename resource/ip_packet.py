@@ -20,7 +20,7 @@ pastTime = curTime - 30 * day
 pastTime = int((pastTime / window)) * window
 nextTime = pastTime
 countDistr = [
-1,2,0,1,
+0,2,0,1,
 3,7,9,11,
 15,22,31,42,
 49,56,69,82,
