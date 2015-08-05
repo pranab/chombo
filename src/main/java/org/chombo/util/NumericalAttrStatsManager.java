@@ -35,15 +35,18 @@ import org.apache.hadoop.conf.Configuration;
  */
 public class NumericalAttrStatsManager {
 	private Map<Integer, List<Tuple>> stats = new HashMap<Integer, List<Tuple>>();
+	private Map<String, Map<Integer, List<Tuple>>> keyedStats = new HashMap<String, Map<Integer, List<Tuple>>>();
 	private static final String DEF_COND_ATTR_VAL = "0";
 	
 	/**
+	 * Stats for data
 	 * @param config
 	 * @param statsFilePath
 	 * @param delim
 	 * @throws IOException
 	 */
-	public NumericalAttrStatsManager(Configuration config, String statsFilePath, String delim) throws IOException {
+	public NumericalAttrStatsManager(Configuration config, String statsFilePath, String delim) 
+		throws IOException {
     	InputStream fs = Utility.getFileStream(config, statsFilePath);
     	BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
     	String line = null; 
@@ -71,6 +74,52 @@ public class NumericalAttrStatsManager {
     	}
 	}
 
+	/**
+	 * Stats for keyed data
+	 * @param config
+	 * @param statsFilePath
+	 * @param delim
+	 * @param idOrdinals
+	 * @throws IOException
+	 */
+	public NumericalAttrStatsManager(Configuration config, String statsFilePath, String delim, int[] idOrdinals) 
+		throws IOException {
+    	InputStream fs = Utility.getFileStream(config, statsFilePath);
+    	BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+    	String line = null; 
+    	String[] items = null;
+    	
+		//(0)attr ord (1)cond attr (2)sum (3)sum square (4)count (5)mean (6)variance (7)std dev (8)min (9)max 
+    	while((line = reader.readLine()) != null) {
+    		items = line.split(delim);
+    		Tuple tuple = new Tuple();
+    		int i = 0;
+    		String compKey = Utility.join(items, 0, idOrdinals.length);
+    		i  += idOrdinals.length;
+    		Integer attr = Integer.parseInt(items[i++]);
+    		tuple.add(Tuple.STRING, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
+    		tuple.add(Tuple.INT, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
+    		
+    		//add to map
+    		Map<Integer, List<Tuple>> stats = keyedStats.get(compKey);
+    		if (null == stats) {
+    			stats = new HashMap<Integer, List<Tuple>>();
+    			keyedStats.put(compKey, stats);
+    		}
+    		List<Tuple> statList = stats.get(attr);
+    		if (null ==  statList ) {
+    			statList = new ArrayList<Tuple>();
+    			stats.put(attr, statList );
+    		}
+    		statList.add( tuple);
+    	}
+	}
+	
 	/**
 	 * @param attr
 	 * @param condAttrVal
@@ -168,4 +217,103 @@ public class NumericalAttrStatsManager {
 		stats.setMin(getMax(attr));
 		return stats;
 	}
+	
+	/**
+	 * @param attr
+	 * @param condAttrVal
+	 * @return
+	 */
+	private Tuple getKeyedStats(String compKey, int attr, String condAttrVal) {
+		Tuple foundTuple = null;
+		Map<Integer, List<Tuple>> stats = keyedStats.get(compKey);
+		List<Tuple> statList = stats.get(attr);
+		for (Tuple tuple : statList) {
+			if (tuple.getString(0).equals(condAttrVal)) {
+				foundTuple = tuple;
+				break;
+			}
+		}
+		return foundTuple;
+	}
+
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public double getSum(String compKey,int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(1);
+	}
+
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public double getSumSq(String compKey, int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(2);
+	}
+
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public int getCount(String compKey, int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return tuple.getInt(3);
+	}
+
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public double getMean(String compKey, int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(4);
+	}
+
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public double getVariance(String compKey, int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(5);
+	}
+
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public double getStdDev(String compKey, int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(6);
+	}
+	
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public double getMin(String compKey, int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(7);
+	}
+
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public double getMax(String compKey,  int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return tuple.getDouble(8);
+	}
+
 }

@@ -43,6 +43,7 @@ import org.chombo.util.Utility;
  *
  */
 public class NumericalAttrStats  extends Configured implements Tool {
+	private static String configDelim = ",";
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -88,12 +89,14 @@ public class NumericalAttrStats  extends Configured implements Tool {
         private double sqVal;
         private int count = 1;
         private String[] items;
-        
+        private int[] idOrdinals;
+                
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
         	attributes = Utility.intArrayFromString(config.get("attr.list"),fieldDelimRegex );
         	conditionedAttr = config.getInt("conditioned.attr",-1);
+        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
        }
 
         @Override
@@ -103,7 +106,10 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	for (int attr : attributes) {
             	outKey.initialize();
             	outVal.initialize();
+            	
+            	addIdstoKey();
             	outKey.add(attr, "0");
+
             	val = Double.parseDouble(items[attr]);
             	sqVal = val * val;
             	outVal.add(val, val, val, sqVal, count);
@@ -113,13 +119,27 @@ public class NumericalAttrStats  extends Configured implements Tool {
             	if (conditionedAttr >= 0) {
                 	outKey.initialize();
                 	outVal.initialize();
+                	
+                	addIdstoKey();
                 	outKey.add(attr, items[conditionedAttr]);
+
                 	outVal.add(val, val, val, sqVal, count);
                 	context.write(outKey, outVal);
             	}
         	}
         }
          
+        /**
+         * 
+         */
+        private void addIdstoKey() {
+        	if (null != idOrdinals) {
+        		for (int ord  :  idOrdinals) {
+        			outKey.add(items[ord]);
+        		}
+        	}
+        }
+        
 	}
 
 	/**
@@ -184,6 +204,8 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		protected double max;
 		private double curMin;
 		private double curMax;
+        private int conditionedAttr;
+        private int[] idOrdinals;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -191,7 +213,9 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
-       }
+        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
+        	conditionedAttr = config.getInt("conditioned.attr",-1);
+     }
 		
     	/* (non-Javadoc)
     	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
@@ -242,9 +266,17 @@ public class NumericalAttrStats  extends Configured implements Tool {
     	 * @throws InterruptedException
     	 */
     	protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
-    		//(0)attr ord (1)cond attr (2)sum (3)sum square (4)count (5)mean (6)variance (7)std dev (8)min (9)max 
+    		//partitonIds, (0)attr ord (1)cond attr (2)sum (3)sum square (4)count (5)mean (6)variance (7)std dev (8)min (9)max 
     		stBld.delete(0, stBld.length());
-    		stBld.append(key.getInt(0)).append(fieldDelim).append(key.getString(1)).append(fieldDelim);
+    		int keyIndex = 0;
+    		if (null != idOrdinals) {
+    			for ( ; keyIndex < idOrdinals.length; ++keyIndex) {
+    				stBld.append(key.getString(keyIndex)).append(fieldDelim);
+    			}
+    		}
+    		stBld.append(key.getInt(keyIndex++)).append(fieldDelim);
+    		stBld.append(key.getString(keyIndex)).append(fieldDelim);
+    		
     		stBld.append(sum).append(fieldDelim).append(sumSq).append(fieldDelim).append(totalCount).append(fieldDelim) ;
     		stBld.append(mean).append(fieldDelim).append(variance).append(fieldDelim).append(stdDev).append(fieldDelim)  ;
     		stBld.append(min).append(fieldDelim).append(max) ;

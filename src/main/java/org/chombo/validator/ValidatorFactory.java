@@ -95,7 +95,6 @@ public class ValidatorFactory {
 				validator = new  StringValidator.LengthValidator(validatorType, ordinal, schema);
 			}
 		} else if (validatorType.equals(NOT_MISSING_VALIDATOR)) {
-			System.out.println("validator type:" + validatorType + " ordinal:" + ordinal );
 			validator = new  GenericValidator.NotMissingValidator(validatorType, ordinal, schema);
 		} else if (validatorType.equals(PATTERN_VALIDATOR)) {
 			if (attribute.isString()) {
@@ -160,10 +159,18 @@ public class ValidatorFactory {
 		ValidatorFactory.custValidatorClasses = custValidatorClasses;
 	}
 	
+	/**
+	 * @param validatotType
+	 * @return
+	 */
 	public static boolean isCustomValidator(String validatotType) {
 		return custValidatorClasses.containsKey(validatotType);
 	}
 	
+	/**
+	 * @param validatotType
+	 * @return
+	 */
 	public static boolean isStatBasedValidator(String validatotType) {
 		return validatotType.equals(ZCORE_BASED_RANGE_VALIDATOR) || 
 				validatotType.equals(ROBUST_ZCORE_BASED_RANGE_VALIDATOR);
