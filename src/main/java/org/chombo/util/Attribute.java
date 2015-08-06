@@ -19,12 +19,15 @@ package org.chombo.util;
 
 import java.util.List;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 /**
  * Base class for attribute. Used in schema definition. Initialized based on schema definition
  * JSON file
  * @author pranab
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Attribute extends BaseAttribute{
 	protected boolean partitionAttribute;
 	protected boolean id;

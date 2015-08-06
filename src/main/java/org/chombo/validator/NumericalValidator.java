@@ -127,11 +127,13 @@ public class NumericalValidator {
 				int[] idOrdinals = statMan.getIdOrdinals();
 				if (null != idOrdinals) {
 					String compKey = Utility.join(items, idOrdinals, fieldDelim);
-					min = statMan.getKeyedMedian(compKey, ordinal) - attribute.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
-					max = statMan.getKeyedMedian(compKey, ordinal) + attribute.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
+					min = statMan.getKeyedMedian(compKey, ordinal) - 
+								attribute.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
+					max = statMan.getKeyedMedian(compKey, ordinal) +
+								attribute.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
 				} else  {
-					min = statMan.getMedian(ordinal) - attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
-					max = statMan.getMedian(ordinal) + attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+						min = statMan.getMedian(ordinal) - attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+						max = statMan.getMedian(ordinal) + attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
 				}
 				dblValue = Double.parseDouble(items[ordinal]);
 				status = dblValue >= min && dblValue <= max;

@@ -36,6 +36,19 @@ public class MedianStatsManager {
     private Map<Integer, Double> medAbsDiv = new HashMap<Integer, Double>();
     private Map<String, Map<Integer, Double>> keyedMedAbsDiv = new HashMap<String, Map<Integer, Double>>();
 	private int[] idOrdinals;
+
+	/**
+	 * @param config
+	 * @param medFilePathParam
+	 * @param delim
+	 * @param idOrdinals
+	 * @throws IOException
+	 */
+	public MedianStatsManager(Configuration config, String medFilePathParam,  String delim, int[] idOrdinals) 
+			throws IOException {
+			loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
+			this.idOrdinals = idOrdinals;
+		}
 	
 	/**
 	 * @param config
@@ -48,7 +61,7 @@ public class MedianStatsManager {
 	public MedianStatsManager(Configuration config, String medFilePathParam, String madFilePathParam,  String delim, int[] idOrdinals) 
 		throws IOException {
 		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
-		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
+		loadMedianStat(config, madFilePathParam,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
 		this.idOrdinals = idOrdinals;
 	}
 

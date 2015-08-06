@@ -880,9 +880,12 @@ public class Utility {
 	 * @throws IOException
 	 */
 	public static Config getHoconConfig(Configuration conf, String pathConfig) throws IOException {
-		 InputStream is = getFileStream(conf, pathConfig);
-		 BufferedReader bufRead =new BufferedReader(new InputStreamReader(is));
-		Config config =  ConfigFactory.parseReader(bufRead);
+		Config config =  null;
+		if (null  !=  conf.get(pathConfig)) {
+			InputStream is = getFileStream(conf, pathConfig);
+			BufferedReader bufRead =new BufferedReader(new InputStreamReader(is));
+			config =  ConfigFactory.parseReader(bufRead);
+		}
 		return config;
 	}
 	

@@ -21,6 +21,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.MedianStatsManager;
 import org.chombo.util.RichAttribute;
 import org.chombo.util.RichAttributeSchema;
 import org.chombo.util.SecondarySort;
@@ -33,7 +34,8 @@ import org.chombo.util.Utility;
  *
  */
 public class NumericalAttrMedian extends Configured implements Tool {
-
+	private static final String statsDelim = ",";
+	
 	@Override
 	public int run(String[] args) throws Exception {
         Job job = new Job(getConf());
@@ -81,9 +83,9 @@ public class NumericalAttrMedian extends Configured implements Tool {
         private double val;
         private int bin;
         private String operation;
-        private Map<Integer, Double> medians = new HashMap<Integer, Double>();
-        private Map<String, Map<Integer, Double>> keyedMedians = new HashMap<String, Map<Integer, Double>>();
         private int[] idOrdinals;
+        private MedianStatsManager statsManager;
+        private double median;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -107,25 +109,9 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	operation = config.get("op.type", "med");
         	if (operation.equals("mad")) {
         		//median of deviation from median
-        		List<String> lines = Utility.getFileLines(config, "med.file.path");
-        		for (String line : lines) {
-        			String[] items = line.split(fieldDelimRegex);
-        			if (null != idOrdinals) {
-        				//with IDs
-        				String compId = Utility.join(items, 0, idOrdinals.length, fieldDelimRegex);
-        				Map<Integer, Double> medians = keyedMedians.get(compId);
-        				if (null == medians) {
-        					medians = new HashMap<Integer, Double>();
-        					keyedMedians.put(compId, medians);
-        				}
-        				medians.put(Integer.parseInt(items[idOrdinals.length]), Double.parseDouble(items[idOrdinals.length + 1]));
-        			} else {
-        				//without IDs
-        				medians.put(Integer.parseInt(items[0]), Double.parseDouble(items[1]));
-        			}
-        		}
+   				statsManager = new MedianStatsManager(config, "med.file.path",statsDelim, idOrdinals);
         	}
-        	
+	
        }
 
         @Override
@@ -140,10 +126,11 @@ public class NumericalAttrMedian extends Configured implements Tool {
             	if (operation.equals("mad")) {
             		if (null != idOrdinals) {
         				String compId = Utility.join(items, 0, idOrdinals.length, fieldDelimRegex);
-        				Map<Integer, Double> medians = keyedMedians.get(compId);
-            			val = Math.abs(val - medians.get(attributes[i]));
+        				median = statsManager.getKeyedMedian(compId, attributes[i]);
+            			val = Math.abs(val - median);
             		} else {
-            			val = Math.abs(val - medians.get(attributes[i]));
+        				median = statsManager.getMedian(attributes[i]);
+            			val = Math.abs(val - median);
             		}
             	}
             	bin = (int)(val / numericAttrs[i].getBucketWidth());

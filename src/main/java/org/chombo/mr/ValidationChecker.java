@@ -124,7 +124,7 @@ public class ValidationChecker extends Configured implements Tool {
         	ObjectMapper mapper = new ObjectMapper();
             schema = mapper.readValue(is, GenericAttributeSchema.class);
 
-            //transformer config
+            //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
             
             //custom validator
@@ -139,7 +139,7 @@ public class ValidationChecker extends Configured implements Tool {
  
             if (null != validatorConfig) {
             	//hconf based
-            	List <? extends Config> fieldValidators = validatorConfig.getConfigList("fieldValidators");
+            	List <? extends Config> fieldValidators = validatorConfig.getConfigList("field.validators");
             	for (Config fieldValidator : fieldValidators) {
             		int ord = fieldValidator.getInt("ordinal");
             		List<String> validatorTags =  fieldValidator.getStringList("validators");
@@ -163,7 +163,7 @@ public class ValidationChecker extends Configured implements Tool {
          * @param config
          */
         private void customValidatorsFromProps(Configuration config) {
-            String customValidators = config.get("customValidators");
+            String customValidators = config.get("custom.validators");
             if (null != customValidators) { 
             	String[] custItems =  customValidators.split(",");
 	            for (String  custValidatorTag :  custItems ) {
