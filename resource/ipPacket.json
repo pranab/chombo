@@ -1,0 +1,29 @@
+{
+		"name" : "IP packet",
+		"attributes" :
+		[
+			{
+				"name" : "source",
+				"ordinal" : 0,
+				"id" : true,
+				"dataType" : "string"
+			},
+			{
+				"name" : "destination",
+				"ordinal" : 1,
+				"id" : true,
+				"dataType" : "string"
+			},
+			{
+				"name" : "time",
+				"ordinal" : 2,
+				"dataType" : "long"
+			},
+			{
+				"name" : "size",
+				"ordinal" : 3,
+				"dataType" : "int",
+				"bucketWidth" : 500
+			}
+		]
+}

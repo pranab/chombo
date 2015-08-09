@@ -1,0 +1,37 @@
+This tutorial is data validation. Set of out of the box validators are used to 
+validate data.  Make necessary changes in the relevant files, 
+according to your environment.
+
+Dependent script
+================
+Checkout the project visitante. Take the script util.py from the project and placeit
+in ../lib directory with respect the directory containing store_order.py
+
+1. Create products data
+=======================
+./electr_prod.py <num_of_products> > <product_data_file>
+
+Edit the output file so that data violates validation rules for some records
+
+2. Export input to HDFS
+=======================
+hadoop fs -put <product_data_file> /user/pranab/dava/input
+
+3. Export metadata to HDFS
+==========================
+hadoop fs -put electr_prod.json /user/pranab/meta/dava
+
+4. Run validation map reduce
+============================
+./etl.sh validate
+
+5. Validation report
+====================
+It's available at the location specified through invalid.data.file.path config
+parameter.
+
+6. Configuration
+================
+Sample configuration is in dava.properties
+
+

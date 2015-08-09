@@ -83,7 +83,7 @@ public class RecencyWeightedHistogramStat extends HistogramStat {
 		 * @param count
 		 */
 		public void add(int value, int count) {
-			int index = value / binWidth;
+			int index = (int)(value / binWidth);
 			Bin bin = binMap.get(index);
 			if (null == bin) {
 				bin = new Bin(index);

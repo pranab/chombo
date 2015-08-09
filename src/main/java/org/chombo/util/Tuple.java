@@ -170,6 +170,27 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	}
 
 	/**
+	 * @param items
+	 * @param start
+	 * @param end
+	 */
+	public <T> void addFromArray(T[] items, int start, int end) {
+		for (int index = start;   index < end; ++index) {
+			add(items[index]);
+		}
+	}
+	
+	/**
+	 * @param items
+	 * @param indexes
+	 */
+	public <T> void addFromArray(T[] items, int[] indexes) {
+		for (int index  :  indexes) {
+			add(items[index]);
+		}
+	}
+	
+	/**
 	 * sets specific element
 	 * @param index
 	 * @param field
@@ -485,8 +506,18 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	 * @return
 	 */
 	public String toString(int start) {
+		return toString(start, fields.size());
+	}
+	
+	/**
+	 * to string starting at given index
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public String toString(int start, int end) {
 		StringBuilder stBld = new  StringBuilder();
-		for(int i = start; i <  fields.size() ; ++i) {
+		for(int i = start; i <  end ; ++i) {
 			if (i == start){
 				stBld.append(fields.get(i).toString());
 			} else {
@@ -495,7 +526,7 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		}		
 		return stBld.toString();
 	}
-	
+
 	/**
 	 * creates tuple based on partial list of source tuple
 	 * @param start

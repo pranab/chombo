@@ -15,10 +15,30 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.validator;
 
-public interface AttributeTransformer {
+import org.chombo.util.AttributeSchema;
 
-	public String tranform(String value);
+/**
+ * @author pranab
+ *
+ */
+public class CategoricalValidator {
 	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class MembershipValidator extends Validator {
+
+		public MembershipValidator(String tag, int ordinal, AttributeSchema schema) {
+			super(tag, ordinal, schema);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			return attribute.getCardinality().contains(value);
+		}
+	}
+
 }

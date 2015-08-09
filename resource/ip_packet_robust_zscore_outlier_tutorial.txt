@@ -1,0 +1,36 @@
+This tutorial is outlier detection with robust z score and median average deviation. 
+Network ip packet data is used as the testcase
+
+Dependent script
+================
+Checkout the project visitante. Take the script util.py from the project and placeit
+in ../lib directory with respect the directory containing store_order.py
+
+1. Create products data
+=======================
+./ip_packet.py <num_of_packets> > <packet_data_file>
+
+2. Export input to HDFS
+=======================
+hadoop fs -put <packet_data_file> /user/pranab/nuam/input
+
+3. Export metadata to HDFS
+==========================
+hadoop fs -put ip_pocket.json /user/pranab/meta/nuam
+
+4. Run mediation map reduce
+============================
+./etl.sh median
+
+5. Edit properties for median absolute divergence (mad)
+=======================================================
+op.type=mad
+med.file.path=/user/pranab/pack/med/output/part-r-00000
+
+6. Run median absolute divergence map reduce
+============================================
+./etl.sh medAvDev
+
+7. Configuration
+================
+Sample configuration is in etl.properties

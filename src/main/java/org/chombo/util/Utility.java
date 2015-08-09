@@ -24,6 +24,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,17 +40,21 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import com.amazonaws.auth.PropertiesCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 
 
 /**
@@ -279,6 +284,40 @@ public class Utility {
     
     /**
      * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static OutputStream getCreateFileOutputStream(Configuration conf, String pathConfig) throws IOException {
+        String filePath = conf.get(pathConfig);
+        FSDataOutputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.create(src, true);
+        }
+        return fs;
+    }
+
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static OutputStream getAppendFileOutputStream(Configuration conf, String pathConfig) throws IOException {
+        String filePath = conf.get(pathConfig);
+        FSDataOutputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.append(src);
+        }
+        return fs;
+    }
+
+    /**
+     * @param conf
      * @param filePathParam
      * @param fieldDelimRegex
      * @return
@@ -432,10 +471,13 @@ public class Utility {
      * @return
      */
     public static int[] intArrayFromString(String record, String delimRegex ) {
-    	String[] items = record.split(delimRegex);
-    	int[] data = new int[items.length];
-    	for (int i = 0; i < items.length; ++i) {
-    		data[i] = Integer.parseInt(items[i]);
+    	int[] data = null;
+    	if (null != record) {
+	    	String[] items = record.split(delimRegex);
+	    	data = new int[items.length];
+	    	for (int i = 0; i < items.length; ++i) {
+	    		data[i] = Integer.parseInt(items[i]);
+	    	}
     	}
     	return data;
     }
@@ -658,8 +700,30 @@ public class Utility {
     	return join(arr,  begIndex, endIndex, ",");
     }
     
+    /**
+     * @param arr
+     * @param indexes
+     * @param delim
+     * @return
+     */
+    public static <T> String join(T[] arr, int[]  indexes, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (int index  : indexes) {
+    		stBld.append(arr[index]).append(delim);
+    	}
+    	return stBld.substring(0, stBld.length() -1);
+    }
     
-	/**
+    /**
+     * @param arr
+     * @param indexes
+     * @return
+     */
+    public static <T> String join(T[] arr, int[]  indexes) {
+    	return  join(arr,  indexes, ",");
+    }
+
+    /**
 	 * @param table
 	 * @param data
 	 * @param delim
@@ -773,4 +837,73 @@ public class Utility {
    		int index = (int)(Math.random() * list.size());
 		return list.get(index);
 	}
+	
+	/**
+	 * @param record
+	 * @param numFields
+	 * @param throwEx
+	 * @return
+	 */
+	public static boolean isFieldCountValid(String[] record, int numFields, boolean failOnInvalid) {
+		boolean valid = true;
+		if (record.length != numFields) {
+			valid = false;
+			if (failOnInvalid) {
+				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + record.length);
+			}
+		}
+		return valid;
+	}
+	
+	/**
+	 * @param record
+	 * @param fieldDelem
+	 * @param numFields
+	 * @param throwEx
+	 * @return
+	 */
+	public static String[] getFields(String record, String fieldDelem, int numFields, boolean failOnInvalid) {
+		String[] fields = record.split(fieldDelem);
+		if (fields.length != numFields) {
+			if (failOnInvalid) {
+				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + fields.length);
+			}
+			fields = null;
+		}
+		return fields;
+	}
+	
+	/**
+	 * @param conf
+	 * @param pathConfig
+	 * @return Hconf config object
+	 * @throws IOException
+	 */
+	public static Config getHoconConfig(Configuration conf, String pathConfig) throws IOException {
+		Config config =  null;
+		if (null  !=  conf.get(pathConfig)) {
+			InputStream is = getFileStream(conf, pathConfig);
+			BufferedReader bufRead =new BufferedReader(new InputStreamReader(is));
+			config =  ConfigFactory.parseReader(bufRead);
+		}
+		return config;
+	}
+	
+	/**
+	 * @param conf
+	 * @param pathParam
+	 * @return
+	 * @throws IOException
+	 */
+	public static RichAttributeSchema getRichAttributeSchema(Configuration conf, String pathParam) throws IOException {
+    	String filePath = conf.get(pathParam);
+        FileSystem dfs = FileSystem.get(conf);
+        Path src = new Path(filePath);
+        FSDataInputStream fs = dfs.open(src);
+        ObjectMapper mapper = new ObjectMapper();
+        RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
+        return schema;
+		
+	}
+
 }

@@ -15,10 +15,16 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.transformer;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.chombo.util.ProcessorAttribute;
+
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigValue;
+
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
@@ -28,30 +34,38 @@ import groovy.lang.GroovyShell;
  * @author pranab
  *
  */
-public class NumericTransformer {
+public class NumericTransformer  {
 
 	/**
 	 * polynomoial expression
 	 * @author pranab
 	 *
 	 */
-	public static class LongPolynomial  implements AttributeTransformer {
+	public static class LongPolynomial  extends AttributeTransformer {
 		private long a;
 		private long b;
 		private long c;
+
+		public LongPolynomial(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			this.a = config.getInt("a");
+			this.b = config.getInt("b");
+			this.c = config.getInt("c");
+		}
 		
 		public LongPolynomial(long a, long b, long c) {
-			super();
+			super(1);
 			this.a = a;
 			this.b = b;
 			this.c = c;
 		}
 
 		@Override
-		public String tranform(String value) {
+		public String[] tranform(String value) {
 			long in = Long.parseLong(value);
 			long out = a * in * in + b * in + c;
-			return "" + out;
+			transformed[0] =  "" + out;
+			return transformed;
 		}
 	}
 	
@@ -60,23 +74,31 @@ public class NumericTransformer {
 	 * @author pranab
 	 *
 	 */
-	public static class DoublePolynomial  implements AttributeTransformer {
+	public static class DoublePolynomial  extends AttributeTransformer {
 		private double a;
 		private double b;
 		private double c;
+
+		public DoublePolynomial(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			this.a = config.getInt("a");
+			this.b = config.getInt("b");
+			this.c = config.getInt("c");
+		}
 		
 		public DoublePolynomial(double a, double b, double c) {
-			super();
+			super(1);
 			this.a = a;
 			this.b = b;
 			this.c = c;
 		}
 
 		@Override
-		public String tranform(String value) {
+		public String[] tranform(String value) {
 			double in = Double.parseDouble(value);
 			double out = a * in * in + b * in + c;
-			return "" + out;
+			transformed[0] =  "" + out;
+			return transformed;
 		}
 	}
 	
@@ -85,14 +107,22 @@ public class NumericTransformer {
 	 * @author pranab
 	 *
 	 */
-	public static abstract class Custom implements AttributeTransformer {
+	public static abstract class Custom extends AttributeTransformer {
 		private String script;
 		private Map<String, Object> params = new HashMap<String, Object>();
 		private Binding binding = new Binding();
 		
+		public Custom(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			this.script = config.getString("script");
+			for (Map.Entry<String, ConfigValue> entry : config.entrySet()) {
+				Object value = entry.getValue().unwrapped();
+				binding.setVariable(entry.getKey(), value);
+			}
+		}
 		
 		public Custom(String script, Map<String, Object> params) {
-			super();
+			super(1);
 			this.script = script;
 			this.params = params;
 			for (String name : params.keySet()) {
@@ -102,12 +132,13 @@ public class NumericTransformer {
 
 
 		@Override
-		public String tranform(String value) {
+		public String[] tranform(String value) {
 			Object in = getFieldValue(value);
 			binding.setVariable("field", in);
 			GroovyShell shell = new GroovyShell(binding);
 			Object out = shell.evaluate(script);
-			return getOutput(out);
+			transformed[0] =  getOutput(out);
+			return transformed;
 		}
 		
 		protected abstract Object getFieldValue(String value);
@@ -122,6 +153,11 @@ public class NumericTransformer {
 	 *
 	 */
 	public static class LongCustom extends Custom {
+		
+		public LongCustom(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}		
+		
 		public LongCustom(String script, Map<String, Object> params) {
 			super(script,  params);
 		}
@@ -152,6 +188,10 @@ public class NumericTransformer {
 	 *
 	 */
 	public static class DoubleCustom extends Custom {
+
+		public DoubleCustom(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}		
 		public DoubleCustom(String script, Map<String, Object> params) {
 			super(script,  params);
 		}

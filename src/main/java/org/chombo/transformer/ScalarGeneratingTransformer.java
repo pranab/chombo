@@ -15,39 +15,14 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.mr;
-
-import org.chombo.util.RichAttribute;
+package org.chombo.transformer;
 
 /**
- * Field for feature attribute and class attribute
  * @author pranab
  *
  */
-public class FeatureField extends RichAttribute implements  Comparable<FeatureField>{
-	protected boolean  feature;
-	protected int maxSplit;
-
-	public boolean isFeature() {
-		return feature;
+public abstract class ScalarGeneratingTransformer  extends AttributeTransformer  {
+	public ScalarGeneratingTransformer() {
+		transformed = new String[1];
 	}
-
-	public void setFeature(boolean feature) {
-		this.feature = feature;
-	}
-
-	public int getMaxSplit() {
-		return maxSplit;
-	}
-
-	public void setMaxSplit(int maxSplit) {
-		this.maxSplit = maxSplit;
-	}
-
-	@Override
-	public int compareTo(FeatureField that) {
-		int ret = this.ordinal < that.ordinal ? -1 : (this.ordinal == that.ordinal? 0 : 1);
-		return ret;
-	}
-
 }

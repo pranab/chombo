@@ -15,16 +15,15 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.mr;
+package org.chombo.util;
 
-import org.chombo.util.Attribute;
 
 /**
  * Derived class for attributes that require histogram
  * @author pranab
  *
  */
-public class HistogramField  extends Attribute {
+public class RichAttribute  extends Attribute {
 	protected int bucketWidth;
 	protected boolean bucketWidthDefined;
 	protected int numBuckets;
@@ -64,7 +63,7 @@ public class HistogramField  extends Attribute {
 			if (numBucketsDefined) {
 				//symmetric wrt to mean
 				if (null == bucketBoundaries) {
-					if (!meanDefined || !stdDevDefined) {
+					if (!isMeanDefined() || !isStdDevDefined()) {
 						throw new IllegalArgumentException("when bucket count and width are set, mean and std dev are required");
 					}
 					double width = bucketWidth *  stdDev / 100.0;
@@ -80,7 +79,7 @@ public class HistogramField  extends Attribute {
 			if (numBucketsDefined) {
 				//divide range by bucket count
 				if (null == bucketBoundaries) {
-					if (!minDefined || !maxDefined) {
+					if (!isMinDefined() || !isMaxDefined()) {
 						throw new IllegalArgumentException("when only bucket count is set, min and max are required");
 					}
 					double offset = min;

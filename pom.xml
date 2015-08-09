@@ -136,6 +136,12 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
 		<artifactId>groovy-all</artifactId>
 		<version>2.4.3</version>
 	</dependency>
+
+	<dependency>
+    	<groupId>com.typesafe</groupId>
+    	<artifactId>config</artifactId>
+    	<version>1.2.0</version>
+	</dependency>
        
     </dependencies>
 

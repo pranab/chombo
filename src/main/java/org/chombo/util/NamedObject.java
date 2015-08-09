@@ -15,23 +15,29 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.mr;
 
-import java.util.List;
+package org.chombo.util;
 
 /**
  * @author pranab
  *
  */
-public class HistogramSchema {
-	private List<HistogramField> fields;
+public class NamedObject {
+	protected String name;
 
-	public List<HistogramField> getFields() {
-		return fields;
-	}
-
-	public void setFields(List<HistogramField> fields) {
-		this.fields = fields;
+	public NamedObject() {
 	}
 	
+	public NamedObject(String name) {
+		super();
+		this.name = name;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
 }

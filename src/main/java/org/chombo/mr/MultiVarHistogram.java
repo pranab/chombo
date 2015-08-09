@@ -35,6 +35,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.RichAttribute;
+import org.chombo.util.RichAttributeSchema;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.chombo.util.Tuple;
@@ -82,7 +84,7 @@ public class MultiVarHistogram extends Configured implements Tool {
 		private Tuple outKey = new Tuple();
 		private IntWritable outVal = new IntWritable(1);
         private String fieldDelimRegex;
-        private HistogramSchema schema;
+        private RichAttributeSchema schema;
         private String keyCompSt;
         private Integer keyCompInt;
         private int count = 0;
@@ -97,7 +99,7 @@ public class MultiVarHistogram extends Configured implements Tool {
             Path src = new Path(filePath);
             FSDataInputStream fs = dfs.open(src);
             ObjectMapper mapper = new ObjectMapper();
-            schema = mapper.readValue(fs, HistogramSchema.class);
+            schema = mapper.readValue(fs, RichAttributeSchema.class);
             
             numFields = schema.getFields().size();
        }
@@ -112,7 +114,7 @@ public class MultiVarHistogram extends Configured implements Tool {
             }
             
             outKey.initialize();
-            for (HistogramField field : schema.getFields()) {
+            for (RichAttribute field : schema.getFields()) {
             	String	item = items[field.getOrdinal()];
             	if (field.isCategorical()){
             		keyCompSt = item;

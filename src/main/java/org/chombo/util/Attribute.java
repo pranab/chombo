@@ -19,51 +19,40 @@ package org.chombo.util;
 
 import java.util.List;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 /**
  * Base class for attribute. Used in schema definition. Initialized based on schema definition
  * JSON file
  * @author pranab
  *
  */
-public class Attribute {
-	protected String name;
-	protected int ordinal = -1;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class Attribute extends BaseAttribute{
+	protected boolean partitionAttribute;
 	protected boolean id;
 	protected boolean classAttribute;
-	protected String dataType;
 	protected List<String> cardinality;
 	protected double  min;
-	protected boolean minDefined;
 	protected double  max;
-	protected boolean maxDefined;
 	protected double mean;
-	protected boolean meanDefined;
 	protected double variance;
 	protected double stdDev;
-	protected boolean stdDevDefined;
 	protected double skew;
-	protected boolean skewDefined;
+	protected double maxZscore;
 	protected String datePattern;
 	protected boolean nullable;
 	protected String stringPattern;
-	public static final String DATA_TYPE_STRING = "string";
-	public static final String DATA_TYPE_CATEGORICAL = "categorical";
-	public static final String DATA_TYPE_INT = "int";
-	public static final String DATA_TYPE_DOUBLE = "double";
-	public static final String DATA_TYPE_TEXT = "text";
-	public static final String DATA_TYPE_DATE = "date";
+	protected String minString;
+	protected String maxString;
+	protected int length;
+	private int settings;
 	
-	public String getName() {
-		return name;
+	public boolean isPartitionAttribute() {
+		return partitionAttribute;
 	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public int getOrdinal() {
-		return ordinal;
-	}
-	public void setOrdinal(int ordinal) {
-		this.ordinal = ordinal;
+	public void setPartitionAttribute(boolean partitionAttribute) {
+		this.partitionAttribute = partitionAttribute;
 	}
 	public boolean isId() {
 		return id;
@@ -76,27 +65,26 @@ public class Attribute {
 	}
 	public void setClassAttribute(boolean classAttribute) {
 		this.classAttribute = classAttribute;
-	}
-	public String getDataType() {
-		return dataType;
-	}
-	public void setDataType(String dataType) {
-		this.dataType = dataType;
-	}
-	
+	}	
 	public double getMin() {
 		return min;
 	}
 	public void setMin(double min) {
 		this.min = min;
-		minDefined = true;
+		settings = settings | 1;
+	}
+	public double getMinLength() {
+		return min;
 	}
 	public double getMax() {
 		return max;
 	}
 	public void setMax(double max) {
 		this.max = max;
-		maxDefined = true;
+		settings = settings | 2;
+	}
+	public double getMaxLength() {
+		return max;
 	}
 	public List<String> getCardinality() {
 		return cardinality;
@@ -109,7 +97,7 @@ public class Attribute {
 	}
 	public void setMean(double mean) {
 		this.mean = mean;
-		meanDefined = true;
+		settings = settings | 4;
 	}
 	public double getVariance() {
 		return variance;
@@ -122,14 +110,20 @@ public class Attribute {
 	}
 	public void setStdDev(double stdDev) {
 		this.stdDev = stdDev;
-		stdDevDefined = true;
+		settings = settings | 8;
 	}
 	public double getSkew() {
 		return skew;
 	}
 	public void setSkew(double skew) {
 		this.skew = skew;
-		skewDefined = true;
+		settings = settings | 16;
+	}
+	public double getMaxZscore() {
+		return maxZscore;
+	}
+	public void setMaxZscore(double maxZscore) {
+		this.maxZscore = maxZscore;
 	}
 	public String getDatePattern() {
 		return datePattern;
@@ -149,36 +143,38 @@ public class Attribute {
 	public void setStringPattern(String stringPattern) {
 		this.stringPattern = stringPattern;
 	}
-	public boolean isCategorical() {
-		return dataType.equals(DATA_TYPE_CATEGORICAL);
+	public String getMinString() {
+		return minString;
 	}
-
-	public boolean isInteger() {
-		return dataType.equals(DATA_TYPE_INT );
+	public void setMinString(String minString) {
+		this.minString = minString;
 	}
-
-	public boolean isDouble() {
-		return dataType.equals(DATA_TYPE_DOUBLE);
+	public String getMaxString() {
+		return maxString;
 	}
-
-	public boolean isText() {
-		return dataType.equals(DATA_TYPE_TEXT );
+	public void setMaxString(String maxString) {
+		this.maxString = maxString;
 	}
-	
+	public int getLength() {
+		return length;
+	}
+	public void setLength(int length) {
+		this.length = length;
+	}
 	public boolean isMinDefined() {
-		return minDefined;
+		return (settings & 1) == 1;
 	}
 	public boolean isMaxDefined() {
-		return maxDefined;
+		return (settings & 2) == 2;
 	}
 	public boolean isMeanDefined() {
-		return meanDefined;
+		return (settings & 4) ==4;	
 	}
 	public boolean isStdDevDefined() {
-		return stdDevDefined;
+		return (settings & 8) == 8;	
 	}
 	public boolean isSkewDefined() {
-		return skewDefined;
+		return (settings & 16) == 16;	
 	}
 	public int cardinalityIndex(String value) {
 		return cardinality.indexOf(value);
