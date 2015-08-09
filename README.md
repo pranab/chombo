@@ -14,6 +14,7 @@ Hadoop based ETL and various utility classes for Hadoop and Storm
 * Data validation ETL with configurable rules and statistical parameters 
 * Data transformation ETL with configurable transformation rules
 * Data normalization
+* Seasonal data analysis
 * Various statistical parameter  calculation 
 * Various long term statistical parameter calculation with incremental data  
 * Bulk inset, update and delete of Hadoop data
@@ -26,6 +27,8 @@ The following blogs of mine are good source of details. These are the only sourc
 of detail documentation. Map reduce jobs in this projec are used in other projects
 including sifarish, avenir etc. Blogs related to thos projects are also relevant.
 * http://pkghosh.wordpress.com/2015/04/26/bulk-insert-update-and-delete-in-hadoop-data-lake/
+* https://pkghosh.wordpress.com/2015/06/08/data-quality-control-with-outlier-detection/
+* https://pkghosh.wordpress.com/2015/07/28/validating-big-data/
 
 ## Build
 For Hadoop 1
