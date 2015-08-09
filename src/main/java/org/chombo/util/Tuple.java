@@ -170,6 +170,27 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	}
 
 	/**
+	 * @param items
+	 * @param start
+	 * @param end
+	 */
+	public <T> void addFromArray(T[] items, int start, int end) {
+		for (int index = start;   index < end; ++index) {
+			add(items[index]);
+		}
+	}
+	
+	/**
+	 * @param items
+	 * @param indexes
+	 */
+	public <T> void addFromArray(T[] items, int[] indexes) {
+		for (int index  :  indexes) {
+			add(items[index]);
+		}
+	}
+	
+	/**
 	 * sets specific element
 	 * @param index
 	 * @param field

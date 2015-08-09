@@ -101,6 +101,7 @@ public class SeasonalAggregator  extends Configured implements Tool {
         private int cycleIndex;
         private long timeStamp;
         private String aggregatorType;
+        private long timeZoneShift;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -110,6 +111,8 @@ public class SeasonalAggregator  extends Configured implements Tool {
         	timeStampFieldOrdinal = config.getInt("time.stamp.field.ordinal", -1);
         	seasonalCycleType = config.get("seasonal.cycle.type");
         	aggregatorType = config.get("aggregator.type");
+        	int  timeZoneHours = config.getInt("time.zone.hours",  0);
+        	timeZoneShift = timeZoneHours * secInHour;
        }
 		
         @Override
@@ -118,32 +121,30 @@ public class SeasonalAggregator  extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
             
             timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
-            getCycleIndex(timeStamp);
+            getCycleIndex(timeStamp + timeZoneShift);
             
         	for (int attr : attributes) {
             	outKey.initialize();
             	outVal.initialize();
-            	addIdstoKey();
+            	if (null != idOrdinals) {
+            		outKey.addFromArray(items, idOrdinals);
+            	}
             	outKey.add(parentCycleIndex, cycleIndex, attr);
             	
             	if (aggregatorType.equals(AGGR_COUNT)) {
             		outVal.add(1);
-            	} else {
+            	} else if (aggregatorType.equals(AGGR_SUM)) {
             		outVal.add(Double.parseDouble(items[attr]));
-            	}
+            	} else {
+        			throw new IllegalArgumentException("invalid aggregation function");
+        		}
         	}
         	
         }       
         
-        private void addIdstoKey() {
-        	if (null != idOrdinals) {
-        		for (int ord  :  idOrdinals) {
-        			outKey.add(items[ord]);
-        		}
-        	}
-        }
  
         /**
+         * Calculates cycle index and parent cycle index
          * @param timeStamp
          */
         private void  getCycleIndex(long timeStamp) {
@@ -174,11 +175,17 @@ public class SeasonalAggregator  extends Configured implements Tool {
 		private double sum;
 		private String aggregatorType;
 
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
+         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	aggregatorType = config.get("aggregator.type");
         }
         
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+         */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
     		sum = 0;
@@ -194,9 +201,9 @@ public class SeasonalAggregator  extends Configured implements Tool {
     		outVal.initialize();
     		if (aggregatorType.equals(AGGR_COUNT)) {
     			outVal.add(totalCount);
-    		} else {
+    		} else if (aggregatorType.equals(AGGR_SUM)) {
     			outVal.add(sum);
-    		}
+    		} 
         	context.write(key, outVal);       	
         }
 	}
@@ -226,17 +233,18 @@ public class SeasonalAggregator  extends Configured implements Tool {
     		for (Tuple val : values) {
             	if (aggregatorType.equals(AGGR_COUNT)) {
             		totalCount += val.getInt(0);
-            	} else {
+            	} else if (aggregatorType.equals(AGGR_SUM)) {
             		sum  += val.getDouble(0);
             	}
     		}
     		
     		int keySize = key.getSize();
         	if (aggregatorType.equals(AGGR_COUNT)) {
-        		outVal.set(key.toString(0, keySize -3) +fieldDelim +  key.toString(keySize -2, keySize) + totalCount);
-        	} else {
-        		outVal.set(key.toString(0, keySize -3) +fieldDelim +  key.toString(keySize -2, keySize) + sum);
-        	}
+        		outVal.set(key.toString(0, keySize -3) + fieldDelim +  key.toString(keySize -2, keySize) + fieldDelim + totalCount);
+        	} else if (aggregatorType.equals(AGGR_SUM)) {
+        		outVal.set(key.toString(0, keySize -3) +fieldDelim +  key.toString(keySize -2, keySize) + fieldDelim + sum);
+        	} 
+        	
         	context.write(NullWritable.get(), outVal);
         }		
  	}
