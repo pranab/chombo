@@ -830,6 +830,20 @@ public class Utility {
 	}
 	
 	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 * @return
+	 */
+	public static int  assertIntConfigParam(Configuration config, String param, String msg) {
+		int  value = config.getInt(param, -1);
+		if (value == -1) {
+			throw new IllegalStateException(msg);
+		}
+		return value;
+	}
+
+	/**
 	 * @param list
 	 * @return
 	 */

@@ -39,6 +39,12 @@ import org.apache.log4j.Logger;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
+/**
+ * Counts tokens from unstructured text. Can count token along with it's position in the text record.
+ * Can create patterns out of text lines. High frequency tokens are literals. Rest are wild cards.
+ * @author pranab
+ *
+ */
 public class TokenCounter extends Configured implements Tool {
 
 	@Override
@@ -135,6 +141,7 @@ public class TokenCounter extends Configured implements Tool {
 		private String fieldDelim;
 		private Text outVal  = new Text();
 		private int count;
+		private int countMinThreshold;
 		private static final Logger LOG = Logger.getLogger(CounterReducer.class);
 
 	   	/* (non-Javadoc)
@@ -147,6 +154,7 @@ public class TokenCounter extends Configured implements Tool {
             	LOG.setLevel(Level.DEBUG);
             }
         	fieldDelim = conf.get("field.delim.out", ",");
+        	countMinThreshold = conf.getInt("count.min.threshold", -1);
 	   	}
 
 	   	/* (non-Javadoc)
@@ -159,10 +167,11 @@ public class TokenCounter extends Configured implements Tool {
         		count += value.get();
         	}
         	
-        	key.setDelim(fieldDelim);
-        	outVal.set(key.toString() + fieldDelim + count );
-   			context.write(NullWritable.get(),outVal);
-        	
+        	if (countMinThreshold > 0 && count > countMinThreshold || countMinThreshold < 0 ) {
+        		key.setDelim(fieldDelim);
+        		outVal.set(key.toString() + fieldDelim + count );
+        		context.write(NullWritable.get(),outVal);
+        	}
         }	
 	   	
 	}
