@@ -18,6 +18,9 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,6 +78,8 @@ public class PatternBasedFieldExtractor extends Configured implements Tool {
 		private Pattern pattern;
 		private Matcher matcher;
 		private StringBuilder stBld = new  StringBuilder();
+		private int dateFieldIndex;
+		private SimpleDateFormat dateFormatter;
 		
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -85,6 +90,12 @@ public class PatternBasedFieldExtractor extends Configured implements Tool {
 	    	String regEx = Utility.assertConfigParam(conf, "extractor.regex","extractor regex must be provided");
 	    	numFields =  Utility.assertIntConfigParam(conf, "num.fields", "number of groups in regex must be provided");
 			pattern = Pattern.compile(regEx);
+			
+			dateFieldIndex = conf.getInt("date.field.index", -1);
+			if (dateFieldIndex >= 0) {
+				String dateFormat = Utility.assertConfigParam(conf, "date.format","date format must be provided");
+				dateFormatter =  new SimpleDateFormat(dateFormat);
+			}
         }   
  
         /* (non-Javadoc)
@@ -101,6 +112,15 @@ public class PatternBasedFieldExtractor extends Configured implements Tool {
 				for (int i = 0; i < numFields; ++i) {
 			        String extracted = matcher.group(i+1);
 			        if(extracted != null) {
+			        	if (i == dateFieldIndex) {
+			        		//convert to epoch time
+			        		try {
+								Date date = dateFormatter.parse(extracted);
+								extracted = "" + (date.getTime() / 1000);
+							} catch (ParseException e) {
+								throw new IllegalArgumentException("ivalid date format");
+							}
+			        	}
 			        	 stBld.append(extracted).append(fieldDelim);
 			        } else {
 			        	found = false;
