@@ -917,7 +917,19 @@ public class Utility {
         ObjectMapper mapper = new ObjectMapper();
         RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
         return schema;
-		
+	}
+	
+	/**
+	 * @param config
+	 * @param params
+	 * @return
+	 */
+	public static Map<String, String> collectConfiguration(Configuration config, String... params ) {
+		Map<String, String> collectedConfig = new HashMap<String, String>();
+		for (String param : params) {
+			collectedConfig.put(param, config.get(param));
+		}
+		return collectedConfig;
 	}
 
 }

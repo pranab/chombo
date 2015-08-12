@@ -115,6 +115,30 @@ public  class ConfigUtility {
 	 * @param key
 	 * @return
 	 */
+	public static double[] getDoubleArray(Map conf,String key) {
+		double[] values = null;
+		Object obj = conf.get(key);
+		if (null != obj) {
+			if (obj instanceof String) {
+				String[] items  = ((String)obj).split(",");
+				values = new double[items.length];
+				for (int i = 0; i < items.length; ++i) {
+					values[i] = Double.parseDouble(items[i]);
+				}
+			} else {
+				throw new IllegalArgumentException("String value not found  in configuration  for " + key);
+			}
+		} else {
+			throw new IllegalArgumentException("Nothing found in configuration for " + key);
+		}
+		return values;
+	}
+
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
 	public static long getLong(Map conf,String key) {
 		long val = 0;
 		Object obj = conf.get(key);

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -74,6 +75,39 @@ public class NumericalAttrStatsManager {
     	}
 	}
 
+	/**
+	 * @param statsContent
+	 * @param delim
+	 * @throws IOException
+	 */
+	public NumericalAttrStatsManager( String statsContent, String delim) 
+			throws IOException {
+	    	String line = null; 
+	    	String[] items = null;
+	    	
+			Scanner scanner = new Scanner(statsContent);
+			while (scanner.hasNextLine()) {
+			  line = scanner.nextLine();
+	    		items = line.split(delim);
+	    		Tuple tuple = new Tuple();
+	    		Integer attr = Integer.parseInt(items[0]);
+	    		tuple.add(Tuple.STRING, items[1]);
+	    		tuple.add(Tuple.DOUBLE, items[2]);
+	    		tuple.add(Tuple.DOUBLE, items[3]);
+	    		tuple.add(Tuple.INT, items[4]);
+	    		tuple.add(Tuple.DOUBLE, items[5]);
+	    		tuple.add(Tuple.DOUBLE, items[6]);
+	    		tuple.add(Tuple.DOUBLE, items[7]);
+	    		
+	    		List<Tuple> statList = stats.get(attr);
+	    		if (null ==  statList ) {
+	    			statList = new ArrayList<Tuple>();
+	    			stats.put(attr, statList );
+	    		}
+	    		statList.add( tuple);
+			}
+		}
+	
 	/**
 	 * Stats for keyed data
 	 * @param config

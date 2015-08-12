@@ -53,6 +53,12 @@ import org.codehaus.jackson.map.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigList;
 
+/**
+ * Data validator. Multiple out of the box validators can be configured for each field. Custom validators
+ * can also be defined.
+ * @author pranab
+ *
+ */
 public class ValidationChecker extends Configured implements Tool {
 
 	@Override
