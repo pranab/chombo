@@ -171,7 +171,7 @@ public class UniqueCounter  extends Configured implements Tool {
 		/* (non-Javadoc)
     	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
     	 */
-    	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
+    	protected void reduce(IntWritable key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
         	uniqueValues.clear();
     		for (Tuple val : values) {
@@ -182,10 +182,11 @@ public class UniqueCounter  extends Configured implements Tool {
     		
     		if (outputCount) {
     			//count
-    			outVal.set("" + uniqueValues.size());
+    			outVal.set("" +  key.get() + fieldDelim + uniqueValues.size());
     		} else {
     			//actual values
 	       		stBld.delete(0, stBld.length());
+	       		stBld.append(key.get()).append(fieldDelim);
 	    		for (String uniqueValue : uniqueValues) {
 	    			stBld.append(uniqueValue).append(fieldDelim);
 	    		}    	
