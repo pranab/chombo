@@ -918,6 +918,19 @@ public class Utility {
         RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
         return schema;
 	}
+
+	/**
+	 * @param conf
+	 * @param pathParam
+	 * @return
+	 * @throws IOException
+	 */
+	public static GenericAttributeSchema getGenericAttributeSchema(Configuration conf, String pathParam) throws IOException {
+		InputStream is = Utility.getFileStream(conf, pathParam);
+		ObjectMapper mapper = new ObjectMapper();
+		GenericAttributeSchema schema = mapper.readValue(is, GenericAttributeSchema.class);
+		return schema;
+	}
 	
 	/**
 	 * @param config

@@ -17,9 +17,30 @@
 
 package org.chombo.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GenericAttributeSchema extends AttributeSchema<Attribute>{
+
+	/**
+	 * @param includeTypes
+	 * @return
+	 */
+	public List<Attribute> getQuantAttributes(String... includeTypes ) {
+		List<Attribute> filtAttributes  = new ArrayList<Attribute>() ;
+		for (Attribute attr : attributes) {
+			String type = attr.getDataType();
+			for (String includeType : includeTypes) {
+				if (includeType.equals(type) && !attr.isId() && !attr.isPartitionAttribute() ) {
+					filtAttributes.add(attr);
+					break;
+				}
+			}
+		}
+		return filtAttributes;
+	}
 
 }

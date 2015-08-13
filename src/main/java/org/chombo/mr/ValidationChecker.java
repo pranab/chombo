@@ -126,10 +126,8 @@ public class ValidationChecker extends Configured implements Tool {
         	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
  
         	//schema
-        	InputStream is = Utility.getFileStream(config,  "schema.file.path");
-        	ObjectMapper mapper = new ObjectMapper();
-            schema = mapper.readValue(is, GenericAttributeSchema.class);
-
+        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+ 
             //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
             

@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -76,5 +77,25 @@ public class AttributeSchema<T extends BaseAttribute> {
 	 */
 	public T findAttribute(int index) {
 		return attributes.get(index);
-	}	
+	}
+	
+	/**
+	 * @param includeTypes
+	 * @return
+	 */
+	public List<T> getAttributes(String... includeTypes ) {
+		List<T> filtAttributes  = new ArrayList<T>() ;
+		for (T attr : attributes) {
+			String type = attr.getDataType();
+			for (String includeType : includeTypes) {
+				if (includeType.equals(type)) {
+					filtAttributes.add(attr);
+					break;
+				}
+			}
+		}
+		return filtAttributes;
+	}
+	
+
 }
