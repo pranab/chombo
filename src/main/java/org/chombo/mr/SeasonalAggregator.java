@@ -89,8 +89,14 @@ public class SeasonalAggregator  extends Configured implements Tool {
         private int timeStampFieldOrdinal;
         private String seasonalCycleType;
         private static final String  QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
+        private static final String  QUARTER_HOUR_OF_WEEK_DAY = "quarterHourOfWeekDay";
+        private static final String  QUARTER_HOUR_OF_WEEK_END_DAY = "quarterHourOfWeekEndDay";
         private static final String  HALF_HOUR_OF_DAY = "halfHourOfDay";
+        private static final String  HALF_HOUR_OF_WEEK_DAY = "halfHourOfWeekDay";
+        private static final String  HALF_HOUR_OF_WEEK_END_DAY = "halfHourOfWeekEndDay";
         private static final String  HOUR_OF_DAY = "hourOfDay";
+        private static final String  HOUR_OF_WEEK_DAY = "hourOfWeekDay";
+        private static final String  HOUR_OF_WEEK_END_DAY = "hourOfWeekEndDay";
         private static final String  DAY_OF_WEEK  = "dayOfWeek";
         private static long secInWeek =7L * 24 * 60 * 60;
         private static long secInDay =24L * 60 * 60;
@@ -123,23 +129,25 @@ public class SeasonalAggregator  extends Configured implements Tool {
             timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
             getCycleIndex(timeStamp + timeZoneShift);
             
-        	for (int attr : attributes) {
-            	outKey.initialize();
-            	outVal.initialize();
-            	if (null != idOrdinals) {
-            		outKey.addFromArray(items, idOrdinals);
-            	}
-            	outKey.add(parentCycleIndex, cycleIndex, attr);
-            	
-            	if (aggregatorType.equals(AGGR_COUNT)) {
-            		outVal.add(1);
-            	} else if (aggregatorType.equals(AGGR_SUM)) {
-            		outVal.add(Double.parseDouble(items[attr]));
-            	} else {
-        			throw new IllegalArgumentException("invalid aggregation function");
-        		}
-        	}
-        	
+            if (cycleIndex >= 0) {
+	        	for (int attr : attributes) {
+	            	outKey.initialize();
+	            	outVal.initialize();
+	            	if (null != idOrdinals) {
+	            		outKey.addFromArray(items, idOrdinals);
+	            	}
+	            	outKey.add(parentCycleIndex, cycleIndex, attr);
+	            	
+	            	if (aggregatorType.equals(AGGR_COUNT)) {
+	            		outVal.add(1);
+	            	} else if (aggregatorType.equals(AGGR_SUM)) {
+	            		outVal.add(Double.parseDouble(items[attr]));
+	            	} else {
+	        			throw new IllegalArgumentException("invalid aggregation function");
+	        		}
+	            	context.write(outKey, outVal);
+	        	}
+            }
         }       
         
  
@@ -148,19 +156,67 @@ public class SeasonalAggregator  extends Configured implements Tool {
          * @param timeStamp
          */
         private void  getCycleIndex(long timeStamp) {
+        	long  weekDayIndex = 0;
         	if (seasonalCycleType.equals(DAY_OF_WEEK)) {
             	parentCycleIndex = timeStamp / secInWeek;
         		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
         	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
             	parentCycleIndex = timeStamp / secInDay;
         		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
-        	}  else  if (seasonalCycleType.equals(HALF_HOUR_OF_DAY)) {
+        	}  else if (seasonalCycleType.equals(HOUR_OF_WEEK_DAY)) {
+            	parentCycleIndex = timeStamp / secInDay;
+               	weekDayIndex = parentCycleIndex % 7;
+               	if (weekDayIndex < 5) {
+            		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
+             	} else {
+             		cycleIndex = -1;
+             	}
+        	}  else if (seasonalCycleType.equals(HOUR_OF_WEEK_END_DAY)) {
+            	parentCycleIndex = timeStamp / secInDay;
+                if (weekDayIndex > 4) {
+            		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
+             	} else {
+             		cycleIndex = -1;
+             	}
+        	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_DAY)) {
             	parentCycleIndex = timeStamp / secInDay;
         		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
+        	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_WEEK_DAY)) {
+            	parentCycleIndex = timeStamp / secInDay;
+            	weekDayIndex = parentCycleIndex % 7;
+            	if (weekDayIndex < 5) {
+            		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
+            	} else {
+            		cycleIndex = -1;
+            	}
+        	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_WEEK_END_DAY)) {
+            	parentCycleIndex = timeStamp / secInDay;
+            	weekDayIndex = parentCycleIndex % 7;
+            	if (weekDayIndex > 4) {
+            		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
+            	} else {
+            		cycleIndex = -1;
+            	}
         	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_DAY)) {
             	parentCycleIndex = timeStamp / secInDay;
         		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
-        	}
+        	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_WEEK_DAY)) {
+            	parentCycleIndex = timeStamp / secInDay;
+            	weekDayIndex = parentCycleIndex % 7;
+            	if (weekDayIndex < 5) {
+            		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
+            	} else {
+            		cycleIndex = -1;
+            	}
+        	}  else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_WEEK_END_DAY)) {
+            	parentCycleIndex = timeStamp / secInDay;
+            	weekDayIndex = parentCycleIndex % 7;
+            	if (weekDayIndex > 4) {
+            		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
+            	} else {
+            		cycleIndex = -1;
+            	}
+        	} 
         }
         
 	}

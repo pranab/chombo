@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -95,6 +96,55 @@ public class MedianStatsManager {
 		}
 	}
 
+	/**
+	 * @param config
+	 * @param medContent
+	 * @param madContent
+	 * @param delim
+	 * @param idOrdinals
+	 * @param statInString
+	 * @throws IOException
+	 */
+	public MedianStatsManager( String medContent, String madContent,  String delim, int[] idOrdinals) 
+			throws IOException {
+			loadMedianStatContent(medContent,  delim, idOrdinals, medians, keyedMedians);
+			loadMedianStatContent( madContent,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
+			this.idOrdinals = idOrdinals;
+	}
+
+	/**
+	 * @param config
+	 * @param statContent
+	 * @param delim
+	 * @param idOrdinals
+	 * @param stats
+	 * @param keyedStats
+	 */
+	private void loadMedianStatContent( String statContent,   String delim, int[] idOrdinals, 
+			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats) {
+    	String line = null; 
+    	String[] items = null;
+    	
+		Scanner scanner = new Scanner(statContent);
+		while (scanner.hasNextLine()) {
+			line = scanner.nextLine();
+    		items = line.split(delim);
+			if (null != idOrdinals) {
+				//with IDs
+				String compId = Utility.join(items, 0, idOrdinals.length, delim);
+				Map<Integer, Double> medians = keyedStats.get(compId);
+				if (null == medians) {
+					medians = new HashMap<Integer, Double>();
+					keyedStats.put(compId, medians);
+				}
+				medians.put(Integer.parseInt(items[idOrdinals.length]), Double.parseDouble(items[idOrdinals.length + 1]));
+			} else {
+				//without IDs
+				stats.put(Integer.parseInt(items[0]), Double.parseDouble(items[1]));
+			}
+		}		
+	}
+	
 	/**
 	 * @param attribute
 	 * @return
