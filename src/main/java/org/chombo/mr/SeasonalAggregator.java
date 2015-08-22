@@ -98,6 +98,8 @@ public class SeasonalAggregator  extends Configured implements Tool {
         private static final String  HOUR_OF_WEEK_DAY = "hourOfWeekDay";
         private static final String  HOUR_OF_WEEK_END_DAY = "hourOfWeekEndDay";
         private static final String  DAY_OF_WEEK  = "dayOfWeek";
+        private static final String  WEEK_DAY_OF_WEEK  = "weekDayOfWeek";
+        private static final String  WEEK_END_DAY_OF_WEEK  = "weekEndDayOfWeek";
         private static long secInWeek =7L * 24 * 60 * 60;
         private static long secInDay =24L * 60 * 60;
         private static long secInHour = 60L * 60;
@@ -160,6 +162,18 @@ public class SeasonalAggregator  extends Configured implements Tool {
         	if (seasonalCycleType.equals(DAY_OF_WEEK)) {
             	parentCycleIndex = timeStamp / secInWeek;
         		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+        	} else if (seasonalCycleType.equals(WEEK_DAY_OF_WEEK)) {
+            	parentCycleIndex = timeStamp / secInWeek;
+        		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+        		if (cycleIndex > 4) {
+        			cycleIndex = -1;
+        		}
+        	} else if (seasonalCycleType.equals(WEEK_END_DAY_OF_WEEK)) {
+            	parentCycleIndex = timeStamp / secInWeek;
+        		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+        		if (cycleIndex < 5) {
+        			cycleIndex = -1;
+        		}
         	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
             	parentCycleIndex = timeStamp / secInDay;
         		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
