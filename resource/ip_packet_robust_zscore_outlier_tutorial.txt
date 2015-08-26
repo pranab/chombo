@@ -31,6 +31,17 @@ med.file.path=/user/pranab/pack/med/output/part-r-00000
 ============================================
 ./etl.sh medAvDev
 
-7. Configuration
+7. Find outliers
+================
+Place JSNOn schema file in HDFS
+hadoop fs -put ipPacket.json /user/pranab/meta/nuam/
+
+Run map reduce
+./etl.sh validate
+
+The output will be in the HDFS file specified through the config param 
+invalid.data.file.path
+
+8. Configuration
 ================
 Sample configuration is in etl.properties
