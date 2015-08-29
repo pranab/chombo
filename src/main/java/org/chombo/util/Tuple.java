@@ -181,6 +181,7 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	}
 	
 	/**
+	 * Adds multiple contiguous elements of an array
 	 * @param items
 	 * @param indexes
 	 */
@@ -188,6 +189,19 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		for (int index  :  indexes) {
 			add(items[index]);
 		}
+	}
+	
+	/**
+	 * Adds multiple elements of an array
+	 * @param items
+	 * @param indexes
+	 */
+	public  <T> void addArrayElements(T[] items, int[] indexes) {
+    	if (null != indexes) {
+    		for (int i  :  indexes) {
+    			add(items[i]);
+    		}
+    	}
 	}
 	
 	/**
@@ -577,4 +591,6 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	public String[] getTupleAsArray() {
 		return subTupleAsArray(0, fields.size());
 	}
+	
+	
 }

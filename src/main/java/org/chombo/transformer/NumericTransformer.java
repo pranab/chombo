@@ -20,6 +20,7 @@ package org.chombo.transformer;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.chombo.util.BaseAttribute;
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
@@ -217,4 +218,39 @@ public class NumericTransformer  {
 		}
 	}
 	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class Discretizer  extends AttributeTransformer {
+		private double bucketWidth;
+		private String dataType;
+		
+		public Discretizer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			bucketWidth = prAttr.getBuckeWidth();
+			dataType = prAttr.getDataType();
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			int bucket = 0;
+			if (dataType.equals(BaseAttribute.DATA_TYPE_INT)) {
+				int iVal = Integer.parseInt(value);
+				bucket = (int)(iVal / bucketWidth);
+			} else if (dataType.equals(BaseAttribute.DATA_TYPE_LONG)) {
+				long  lVal = Long.parseLong(value);
+				bucket = (int)(lVal / bucketWidth);
+			} else if (dataType.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+				double  dVal = Double.parseDouble(value);
+				bucket = (int)(dVal / bucketWidth);
+			} else {
+				throw new IllegalArgumentException("only numeric data can be discretized");
+			}
+			transformed[0] = "" + bucket;;
+			return transformed;
+		}
+		
+		
+	}
 }

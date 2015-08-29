@@ -30,6 +30,8 @@ public class ProcessorAttribute extends BaseAttribute {
 	private List<String> validators;
 	private List<String> transformers;
 	private int[] targetFieldOrdinals;
+	private double buckeWidth;
+	
 	
 	public static final String NORMALIZER_ZSCORE = "zScore";
 	public static final String NORMALIZER_MIN_MAX = "minMax";
@@ -57,6 +59,12 @@ public class ProcessorAttribute extends BaseAttribute {
 	}
 	public void setTargetFieldOrdinals(int[] targetFieldOrdinals) {
 		this.targetFieldOrdinals = targetFieldOrdinals;
+	}
+	public double getBuckeWidth() {
+		return buckeWidth;
+	}
+	public void setBuckeWidth(double buckeWidth) {
+		this.buckeWidth = buckeWidth;
 	}
 	
 	
