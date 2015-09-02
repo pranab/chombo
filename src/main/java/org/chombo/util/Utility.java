@@ -822,10 +822,20 @@ public class Utility {
 	 * @param msg
 	 */
 	public static String  assertConfigParam(Configuration config, String param, String msg) {
-		String value = config.get(param);
+		return assertStringConfigParam( config,param, msg);
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 * @return
+	 */
+	public static String  assertStringConfigParam(Configuration config, String param, String msg) {
+		String  value = config.get(param);
 		if (value == null) {
 			throw new IllegalStateException(msg);
-		}
+		} 
 		return value;
 	}
 	
@@ -836,13 +846,128 @@ public class Utility {
 	 * @return
 	 */
 	public static int  assertIntConfigParam(Configuration config, String param, String msg) {
-		int  value = config.getInt(param, -1);
-		if (value == -1) {
-			throw new IllegalStateException(msg);
-		}
+		int  value = Integer.MIN_VALUE;
+	   assertStringConfigParam( config, param,  msg); 
+	   value = config.getInt(param,  Integer.MIN_VALUE);
 		return value;
 	}
 
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 * @return
+	 */
+	public static double  assertDoubleConfigParam(Configuration config, String param, String msg) {
+		double  value = Double.MIN_VALUE;
+	   String stParamValue = assertStringConfigParam( config, param,  msg); 
+	   value = Double.parseDouble(stParamValue);
+		return value;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 * @return
+	 */
+	public static boolean  assertBooleanConfigParam(Configuration config, String param, String msg) {
+		boolean value = false;
+	   	assertStringConfigParam( config, param,  msg); 
+		value = config.getBoolean(param, false);
+		return value;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static int[] assertIntArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	   	int[] data = null;
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		data = new int[items.length];
+		for (int i = 0; i < items.length; ++i) {
+			data[i] = Integer.parseInt(items[i]);
+		}
+    	return data;
+	}
+	
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static String[] assertStringArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		return  stParamValue.split(delimRegex);
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static double[] assertDoubleArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	   	double[] data = null;
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		data = new double[items.length];
+		for (int i = 0; i < items.length; ++i) {
+			data[i] = Double.parseDouble(items[i]);
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<String, Integer> assertIntMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	Map<String, Integer> data;
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		data = new HashMap<String, Integer>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(parts[0], Integer.parseInt(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<String, Double> assertDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	Map<String, Double> data;
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		data = new HashMap<String, Double>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(parts[0], Double.parseDouble(parts[1]));
+		}
+    	return data;
+	}
+	
 	/**
 	 * @param list
 	 * @return
