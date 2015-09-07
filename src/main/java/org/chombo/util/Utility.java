@@ -29,9 +29,11 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -547,7 +549,7 @@ public class Utility {
      */
     public static String extractFields(String[] items , int[] fields, String delim, boolean sortKeyFields) {
     	StringBuilder stBld = new StringBuilder();
-    	List<String> keyFields = new ArrayList();
+    	List<String> keyFields = new ArrayList<String>();
     	
     	for (int i = 0; i < fields.length; ++i) {
     		keyFields.add(items[fields[i]]);
@@ -1070,4 +1072,27 @@ public class Utility {
 		return collectedConfig;
 	}
 
+    /**
+     * @param list
+     * @param count
+     * @return
+     */
+    public static <T> List<T> selectRandomFromList(List<T> list, int count) {
+    	List<T> selList = null;
+    	if (count > list.size()) {
+    		throw new IllegalArgumentException("new list size is larget than source list size");
+    	} else if (count == list.size()) {
+    		selList  = list;
+    	} else {
+    		selList = new ArrayList<T>();
+           	Set<T> selSet = new  HashSet<T>();
+           	while (selSet.size() != count) {
+           		int index = (int)(Math.random() * list.size());
+           		selSet.add(list.get(index));
+           	}
+           	selList.addAll(selSet);	
+    	}
+    	return selList;
+    }
+    
 }
