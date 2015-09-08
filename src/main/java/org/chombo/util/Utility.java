@@ -1095,4 +1095,14 @@ public class Utility {
     	return selList;
     }
     
+    /**
+     * @param curList
+     * @return
+     */
+    public static <T>  List<T> cloneList(List<T> curList) {
+    	List<T> newList = new ArrayList<T>();
+    	newList.addAll(curList);
+    	return newList;
+    }
+    
 }
