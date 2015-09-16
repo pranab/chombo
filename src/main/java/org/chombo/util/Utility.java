@@ -619,6 +619,18 @@ public class Utility {
     }
     
     /**
+     * @param values
+     * @return
+     */
+    public static List<Integer> fromIntArrayToList( int[] values) {
+    	List<Integer> valueList  = new  ArrayList<Integer>();  
+		for (int value :  values) {
+			valueList.add(value);;
+		}
+		return valueList;
+    }
+
+    /**
      * @param list
      * @return
      */
