@@ -1158,4 +1158,24 @@ public class Utility {
     	return attributes;
     }
     
+    /**
+     * @param record
+     * @param attributes
+     * @param schema
+     * @param tuple
+     */
+    public static void intializeTuple(String[] record, int[] attributes, GenericAttributeSchema schema, Tuple tuple) {
+    	tuple.initialize();
+    	for (int attr : attributes) {
+    		String dataType = schema.findAttribute(attr).getDataType();
+    		if (dataType.equals(Attribute.DATA_TYPE_INT)) {
+    			tuple.add(Integer.parseInt(record[attr]));
+    		} else if (dataType.equals(Attribute.DATA_TYPE_LONG)) {
+    			tuple.add(Long.parseLong(record[attr]));
+    		}  else {
+    			tuple.add(record[attr]);
+    		}
+    	}
+    }
+    
 }
