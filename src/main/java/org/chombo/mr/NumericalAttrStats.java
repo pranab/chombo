@@ -106,7 +106,10 @@ public class NumericalAttrStats  extends Configured implements Tool {
             	outVal.initialize();
             	
             	addIdstoKey();
-            	outKey.add(attr, "0");
+        		outKey.add(attr);
+            	if (conditionedAttr >= 0)  {
+            		outKey.add( "0");
+            	}
 
             	val = Double.parseDouble(items[attr]);
             	sqVal = val * val;
@@ -273,8 +276,10 @@ public class NumericalAttrStats  extends Configured implements Tool {
     			}
     		}
     		stBld.append(key.getInt(keyIndex++)).append(fieldDelim);
-    		stBld.append(key.getString(keyIndex)).append(fieldDelim);
-    		
+        	if (conditionedAttr >= 0)  {
+        		stBld.append(key.getString(keyIndex)).append(fieldDelim);
+        	}    		
+        	
     		stBld.append(sum).append(fieldDelim).append(sumSq).append(fieldDelim).append(totalCount).append(fieldDelim) ;
     		stBld.append(mean).append(fieldDelim).append(variance).append(fieldDelim).append(stdDev).append(fieldDelim)  ;
     		stBld.append(min).append(fieldDelim).append(max) ;
