@@ -19,8 +19,10 @@ package org.chombo.mr;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -42,6 +44,8 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
+ * Counts occurences of specified values for specified columns. Can be used for counting
+ * missing values
  * @author pranab
  *
  */
@@ -90,7 +94,11 @@ public class ValueCounter  extends Configured implements Tool {
         private String fieldDelimRegex;
         private GenericAttributeSchema schema;
         private Map<Integer, String[]> attrValues = new HashMap<Integer, String[]>();
+        private Set<Integer> caseInsensitiveAttributeSet = new HashSet<Integer>();
         
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
          */
@@ -138,17 +146,28 @@ public class ValueCounter  extends Configured implements Tool {
        			}
     		}
     		
+    		//case insentive attributes
+    		int[] caseInsensitiveAttributes = Utility.intArrayFromString(config.get("case.insensitive.attr.list"),configDelim );
+    		if (null !=caseInsensitiveAttributes) {
+    			for (int attr :  caseInsensitiveAttributes) {
+    				caseInsensitiveAttributeSet.add(attr);
+    			}
+    		}
        }
 
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
+            boolean caseInsensitive = false;
+            boolean matched = false;
             //all attributes
             for (int attr :  attrValues.keySet()) {
             	//all matching values
+            	caseInsensitive = caseInsensitiveAttributeSet.contains(attr);
             	for (String attrValue :  attrValues.get(attr)) {
-            		if (items[attr].equals(attrValue)) {
+            		matched = caseInsensitive ? items[attr].equalsIgnoreCase(attrValue) : items[attr].equals(attrValue);
+            		if (matched) {
             			outKey.initialize();
             			outKey.add(attr, attrValue);
             			context.write(outKey, outVal);
