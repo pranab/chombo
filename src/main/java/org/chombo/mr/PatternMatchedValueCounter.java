@@ -19,10 +19,10 @@ package org.chombo.mr;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,7 +33,6 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -44,27 +43,27 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
- * Counts occurences of specified values for specified columns. Can be used for counting
- * missing values
+ * Counts occurences of  values that match specified regex patterns for specified columns. Can be used 
+ * for counting missing values.
  * @author pranab
  *
  */
-public class ValueCounter  extends Configured implements Tool {
+public class PatternMatchedValueCounter extends Configured implements Tool {
 	private static String configDelim = ",";
 
 	@Override
 	public int run(String[] args) throws Exception {
         Job job = new Job(getConf());
-        String jobName = "MR for specific  value counting for various fields ";
+        String jobName = "MR for  counting values matching specified patterns for various fields ";
         job.setJobName(jobName);
         
-        job.setJarByClass(ValueCounter.class);
+        job.setJarByClass(PatternMatchedValueCounter.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration(), "chombo");
-        job.setMapperClass(ValueCounter.CounterMapper.class);
+        job.setMapperClass(PatternMatchedValueCounter.CounterMapper.class);
         job.setReducerClass(ValueCounter.CounterReducer.class);
         job.setCombinerClass(ValueCounter.CounterCombiner.class);
         
@@ -93,8 +92,9 @@ public class ValueCounter  extends Configured implements Tool {
         private String[] items;
         private String fieldDelimRegex;
         private GenericAttributeSchema schema;
-        private Map<Integer, String[]> attrValues = new HashMap<Integer, String[]>();
-        private Set<Integer> caseInsensitiveAttributeSet = new HashSet<Integer>();
+        private Map<Integer, String[]> attrPatternTexts = new HashMap<Integer, String[]>();
+        private Map<Integer, Pattern[]> attrPatterns = new HashMap<Integer, Pattern[]>();
+        private Matcher matcher;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -131,27 +131,21 @@ public class ValueCounter  extends Configured implements Tool {
         		}
         	}
         	
-        	//attribute values
+        	//attribute value patterns
     		for (int ord : attributes ) {
     			String key = "values." + ord;
     			String values = config.get(key);
     			if (null != values) {
-    				//specified values
-    				attrValues.put(ord,  values.split(configDelim));
-    			} else {
-    				//missing values
-    				String[] valueList = new String[1];
-    				valueList[0] = "";
-       				attrValues.put(ord,  values.split(configDelim));
-       			}
-    		}
-    		
-    		//case insentive attributes
-    		int[] caseInsensitiveAttributes = Utility.intArrayFromString(config.get("case.insensitive.attr.list"),configDelim );
-    		if (null !=caseInsensitiveAttributes) {
-    			for (int attr :  caseInsensitiveAttributes) {
-    				caseInsensitiveAttributeSet.add(attr);
-    			}
+    				//specified pattern tests
+    				String[] pattrenTexts = values.split(configDelim);
+    				Pattern[] patterns = new Pattern[pattrenTexts.length];
+    				int i = 0;
+    				for (String pattrenText :  pattrenTexts) {
+    					patterns[i++] = Pattern.compile(pattrenText);
+    				}
+    				attrPatterns.put(ord,  patterns);
+    				attrPatternTexts.put(ord, pattrenTexts);
+    			} 
     		}
        }
 
@@ -159,84 +153,29 @@ public class ValueCounter  extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
-            boolean caseInsensitive = false;
-            boolean matched = false;
             //all attributes
-            for (int attr :  attrValues.keySet()) {
+            for (int attr :  attrPatterns.keySet()) {
             	//all matching values
-            	caseInsensitive = caseInsensitiveAttributeSet.contains(attr);
-            	for (String attrValue :  attrValues.get(attr)) {
-            		matched = caseInsensitive ? items[attr].equalsIgnoreCase(attrValue) : items[attr].equals(attrValue);
-            		if (matched) {
+            	int i = 0;
+            	String[] patternTexts = attrPatternTexts.get(attr);
+            	for (Pattern pattern :  attrPatterns.get(attr)) {
+            		matcher = pattern.matcher(items[attr]);
+            		if (matcher.matches()) {
             			outKey.initialize();
-            			outKey.add(attr, attrValue);
+            			outKey.add(attr, patternTexts[i]);
             			context.write(outKey, outVal);
             		}
+            		++i;
             	}
             }
         }
-        
 	}
-	
-	/**
-	 * @author pranab
-	 *
-	 */
-	public static class CounterCombiner extends Reducer<Tuple, IntWritable, Tuple, IntWritable> {
-		private IntWritable outVal = new IntWritable();
-		private int count;
-		
-        /* (non-Javadoc)
-         * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
-         */
-        protected void reduce(Tuple  key, Iterable<IntWritable> values, Context context)
-        		throws IOException, InterruptedException {
-        	count = 0;
-    		for (IntWritable val : values) {
-    			count += val.get();
-    		}
-    		outVal.set(count);
-        	context.write(key, outVal);
-        }	
-	}
-	
-	   /**
-	    * @author pranab
-	*
-	*/
-	public static class CounterReducer extends Reducer<Tuple, IntWritable, NullWritable, Text> {
-		protected Text outVal = new Text();
-		protected String fieldDelim;
-		private int count;
 
-		/* (non-Javadoc)
-		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
-		 */
-		protected void setup(Context context) throws IOException, InterruptedException {
-			Configuration config = context.getConfiguration();
-			fieldDelim = config.get("field.delim.out", ",");
- 		}
-	   	
-		/* (non-Javadoc)
-		 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
- 	 	*/
-		protected void reduce(Tuple key, Iterable<IntWritable> values, Context context)
-     	throws IOException, InterruptedException {
-			count = 0;
-			for (IntWritable val : values) {
-				count += val.get();
-			}
- 		
-			outVal.set(key.toString() + fieldDelim + count );
-			context.write(NullWritable.get(), outVal);
-		}		
-	}	
-	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		int exitCode = ToolRunner.run(new ValueCounter(), args);
+		int exitCode = ToolRunner.run(new PatternMatchedValueCounter(), args);
 		System.exit(exitCode);
 	}
 	
