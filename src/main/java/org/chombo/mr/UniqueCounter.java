@@ -99,30 +99,8 @@ public class UniqueCounter  extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-        	attributes = Utility.intArrayFromString(config.get("attr.list"),configDelim );
-    		List<Attribute> attrs = schema.getQuantAttributes(Attribute.DATA_TYPE_CATEGORICAL, Attribute.DATA_TYPE_DATE, 
-    				Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_STRING);
-        	if (null == attributes) {
-        		//use schema
-        		attributes = new int[attrs.size()];
-        		for (int i = 0; i < attrs.size(); ++i) {
-        			attributes[i] = attrs.get(i).getOrdinal();
-        		}
-        	} else {
-        		for (int ord : attributes ) {
-        			boolean found = false;
-        			for (Attribute attr : attrs) {
-        				if (attr.getOrdinal() == ord) {
-        					found = true;
-        					break;
-        				}
-        			}
-        			
-        			if (!found) {
-        				throw new IllegalArgumentException("Only quant attributes except for type double and text allowed");
-        			}
-        		}
-        	}
+            attributes = Utility.getAttributes("attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
+            		Attribute.DATA_TYPE_DATE, Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_STRING);        	
        }
         
         @Override

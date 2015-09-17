@@ -1116,5 +1116,46 @@ public class Utility {
     	newList.addAll(curList);
     	return newList;
     }
+ 
+    /**
+     * Takes user specified attributes or builds  list of attributes of right type from schema 
+     * @param attrListParam
+     * @param configDelim
+     * @param schema
+     * @param config
+     * @param includeTypes
+     * @return
+     */
+    public static int[] getAttributes(String attrListParam, String configDelim, GenericAttributeSchema schema, 
+    		Configuration config, String... includeTypes) {        	
+    	int[] attributes = intArrayFromString(config.get(attrListParam), configDelim );
+    	List<Attribute> attrsMetaData = schema != null ? schema.getQuantAttributes(includeTypes) : null;
+    	if (null == attributes) {
+    		//use schema and pick all attributes of right type
+    		attributes = new int[attrsMetaData.size()];
+    		for (int i = 0; i < attrsMetaData.size(); ++i) {
+    			attributes[i] = attrsMetaData.get(i).getOrdinal();
+    		}
+    	} else {
+    		//use user provided but verify type
+    		if (null != attrsMetaData) {
+    			//if schema is available
+	    		for (int ord : attributes ) {
+	    			boolean found = false;
+	    			for (Attribute attr : attrsMetaData) {
+	    				if (attr.getOrdinal() == ord) {
+	    					found = true;
+	    					break;
+	    				}
+	    			}
+				
+	    			if (!found) {
+	    				throw new IllegalArgumentException("Only quant attributes except for type double and text allowed");
+	    			}
+	    		}
+    		}
+    	}
+    	return attributes;
+    }
     
 }
