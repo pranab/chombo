@@ -824,6 +824,23 @@ public class Utility {
 	}
 	
 	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<String, String>> getStringPairList(String record, String fieldDelim, String subFieldDelim) {
+		List<Pair<String, String>> stringStringPairs = new ArrayList<Pair<String, String>>();
+		String[] items = record.split(fieldDelim);
+		for (String item : items) {
+			String[] subItems = item.split(subFieldDelim);
+			Pair<String, String> pair = new Pair<String, String>(subItems[0],  subItems[1]);
+			stringStringPairs.add(pair);
+		}
+		return stringStringPairs;
+	}
+	
+	/**
 	 * @return
 	 */
 	public static String generateId() {
