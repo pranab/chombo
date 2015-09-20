@@ -43,4 +43,51 @@ public class GenericAttributeSchema extends AttributeSchema<Attribute>{
 		return filtAttributes;
 	}
 
+	/**
+	 * @param attributes
+	 * @return
+	 */
+	public boolean areNumericalAttributes(int...  attributes) {
+		boolean valid = true;
+		for (int attr : attributes) {
+			Attribute attrMeta = findAttributeByOrdinal(attr);
+			if (!attrMeta.isNumerical()) {
+				valid = false;
+				break;
+			}
+		}
+		return valid;
+	}
+
+	/**
+	 * @param attributes
+	 * @return
+	 */
+	public boolean areCategoricalAttributes(int...  attributes) {
+		boolean valid = true;
+		for (int attr : attributes) {
+			Attribute attrMeta = findAttributeByOrdinal(attr);
+			if (!attrMeta.isCategorical()) {
+				valid = false;
+				break;
+			}
+		}
+		return valid;
+	}
+
+	/**
+	 * @param attributes
+	 * @return
+	 */
+	public boolean areStringAttributes(int...  attributes) {
+		boolean valid = true;
+		for (int attr : attributes) {
+			Attribute attrMeta = findAttributeByOrdinal(attr);
+			if (!attrMeta.isString()) {
+				valid = false;
+				break;
+			}
+		}
+		return valid;
+	}
 }

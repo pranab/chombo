@@ -79,6 +79,9 @@ public class Utility {
 	public static final String DEF_FIELD_DELIM = ",";
 	
 	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
+	public static String configDelim = ",";
+	public  static String configSubFieldDelim = ":";
+
     /*
     static AmazonS3 s3 = null;
  	static {
@@ -965,7 +968,7 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
-	public static Map<String, Integer> assertIntMapConfigParam(Configuration config, String param, String delimRegex, 
+	public static Map<String, Integer> assertIntStringIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
 	   	Map<String, Integer> data;
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
@@ -974,6 +977,27 @@ public class Utility {
 		for (String item :  items) {
 			String[] parts  = item.split(subFieldDelim);
 			data.put(parts[0], Integer.parseInt(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<Integer, Double> assertIntIntegerDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	Map<Integer, Double> data;
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		data = new HashMap<Integer, Double>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
 		}
     	return data;
 	}
@@ -998,7 +1022,43 @@ public class Utility {
 		}
     	return data;
 	}
+
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<String, String>> assertStringPairListConfigParam(Configuration config, String param,  
+			String fieldDelim, String subFieldDelim, String msg) {
+		String record = assertStringConfigParam(config, param, msg);
+		return  getStringPairList(record, fieldDelim, subFieldDelim); 
+	}	
+
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, String>> assertIntStringListConfigParam(Configuration config, String param,  
+			String fieldDelim, String subFieldDelim, String msg) {
+		String record = assertStringConfigParam(config, param, msg);
+		return  getIntStringList(record, fieldDelim, subFieldDelim); 
+	}	
 	
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, Integer>> assertIntPairListConfigParam(Configuration config, String param,  
+			String fieldDelim, String subFieldDelim, String msg) {
+		String record = assertStringConfigParam(config, param, msg);
+		return  getIntPairList(record, fieldDelim, subFieldDelim); 
+	}	
+
 	/**
 	 * @param list
 	 * @return
@@ -1082,9 +1142,12 @@ public class Utility {
 	 * @throws IOException
 	 */
 	public static GenericAttributeSchema getGenericAttributeSchema(Configuration conf, String pathParam) throws IOException {
+		GenericAttributeSchema schema = null;
 		InputStream is = Utility.getFileStream(conf, pathParam);
-		ObjectMapper mapper = new ObjectMapper();
-		GenericAttributeSchema schema = mapper.readValue(is, GenericAttributeSchema.class);
+		if (null != is) {
+			ObjectMapper mapper = new ObjectMapper();
+			schema = mapper.readValue(is, GenericAttributeSchema.class);
+		}
 		return schema;
 	}
 	

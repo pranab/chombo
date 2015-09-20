@@ -36,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.CategoricalHistogramStat;
+import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -86,6 +87,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         private String fieldDelimRegex;
         private int conditionedAttr;
         private String[] items;
+        private GenericAttributeSchema schema;
         private static final int ONE = 1;
         
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -93,6 +95,14 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
         	attributes = Utility.intArrayFromString(config.get("attr.list"),fieldDelimRegex );
         	conditionedAttr = config.getInt("conditioned.attr",-1);
+        	
+        	//validate attributes
+           	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+            if (null != schema) {
+           		if (!schema.areCategoricalAttributes(attributes)) {
+        			throw new IllegalArgumentException("attributes must be categorical");
+        		}
+            }
        }
 
         @Override
@@ -159,6 +169,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;
 		protected CategoricalHistogramStat histogram = new CategoricalHistogramStat();
+        private int conditionedAttr;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -166,6 +177,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
+        	conditionedAttr = config.getInt("conditioned.attr",-1);
 		}
 		
 		/* (non-Javadoc)
@@ -192,7 +204,10 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		 */
 		protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
 			stBld.delete(0, stBld.length());
-			stBld.append(key.getInt(0)).append(fieldDelim).append(key.getString(1)).append(fieldDelim);
+			stBld.append(key.getInt(0)).append(fieldDelim);
+			if (conditionedAttr != -1) {
+				stBld.append(key.getString(1)).append(fieldDelim);
+			}
 			Map<String, Double> distr = histogram.getDistribution();
 			for (String  attrValue : distr.keySet() ) {
 				stBld.append(attrValue).append(fieldDelim).append(distr.get(attrValue)).append(fieldDelim);

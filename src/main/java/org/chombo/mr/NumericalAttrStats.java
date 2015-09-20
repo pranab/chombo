@@ -32,6 +32,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.Attribute;
+import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -88,11 +90,15 @@ public class NumericalAttrStats  extends Configured implements Tool {
         private int count = 1;
         private String[] items;
         private int[] idOrdinals;
+        private GenericAttributeSchema schema;
                 
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	attributes = Utility.intArrayFromString(config.get("attr.list"),fieldDelimRegex );
+        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	attributes =  Utility.getAttributes("attr.list", configDelim,schema, config,  
+        			Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_DOUBLE);        	
+        	
         	conditionedAttr = config.getInt("conditioned.attr",-1);
         	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
        }
