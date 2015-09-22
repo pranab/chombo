@@ -100,7 +100,7 @@ public class FunctionalDependencyAnalyzer  extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-            String attrPairStr = Utility.assertStringConfigParam(config, "attr.pairs", "missing list of attribute paire");
+            String attrPairStr = Utility.assertStringConfigParam(config, "fda.attr.pairs", "missing list of attribute paire");
             attrPairs = Utility.getIntPairList(attrPairStr, configDelim, configSubFieldDelim);
        }
         

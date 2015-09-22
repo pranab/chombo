@@ -94,7 +94,7 @@ public class UniqueKeyAnalyzer extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-        	keyOrdinals = Utility.getAttributes("comp.key.ordinals", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
+        	keyOrdinals = Utility.getAttributes("uka.comp.key.ordinals", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
             		Attribute.DATA_TYPE_DATE, Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_STRING);        	
        }
         

@@ -96,11 +96,11 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-        	attributes =  Utility.getAttributes("attr.list", configDelim,schema, config,  
+        	attributes =  Utility.getAttributes("nas.attr.list", configDelim,schema, config,  
         			Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_DOUBLE);        	
         	
-        	conditionedAttr = config.getInt("conditioned.attr",-1);
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
+        	conditionedAttr = config.getInt("nas.conditioned.attr",-1);
+        	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
        }
 
         @Override
@@ -193,7 +193,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
         }		
 	}	
 	
-	   /**
+   /**
      * @author pranab
      *
      */
@@ -220,8 +220,8 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
-        	conditionedAttr = config.getInt("conditioned.attr",-1);
+        	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
+        	conditionedAttr = config.getInt("nas.conditioned.attr",-1);
      }
 		
     	/* (non-Javadoc)

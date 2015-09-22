@@ -93,8 +93,8 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
-        	attributes = Utility.intArrayFromString(config.get("attr.list"),fieldDelimRegex );
-        	conditionedAttr = config.getInt("conditioned.attr",-1);
+        	attributes = Utility.intArrayFromString(config.get("cads.attr.list"),fieldDelimRegex );
+        	conditionedAttr = config.getInt("cads.conditioned.attr",-1);
         	
         	//validate attributes
            	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
@@ -177,7 +177,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
-        	conditionedAttr = config.getInt("conditioned.attr",-1);
+        	conditionedAttr = config.getInt("cads.conditioned.attr",-1);
 		}
 		
 		/* (non-Javadoc)

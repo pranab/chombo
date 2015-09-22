@@ -95,8 +95,8 @@ public class StringAttrStats extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-            attributes = Utility.getAttributes("attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_STRING);        	
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
+            attributes = Utility.getAttributes("nas.attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_STRING);        	
+        	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
        }
 
         @Override

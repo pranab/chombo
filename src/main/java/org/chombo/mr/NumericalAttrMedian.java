@@ -91,7 +91,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	schema = Utility.getRichAttributeSchema(config, "med.schema.file.path");
-        	attributes = Utility.intArrayFromString(config.get("attr.list"), fieldDelimRegex);
+        	attributes = Utility.intArrayFromString(config.get("nam.attr.list"), fieldDelimRegex);
         	if (null == attributes) {
         		//all numeric fields
         		attributes = schema.getNumericAttributeOrdinals();
@@ -104,7 +104,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	}
 
         	//record id
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
+        	idOrdinals = Utility.intArrayFromString(config.get("nam.id.field.ordinals"), fieldDelimRegex);
         	
         	operation = config.get("op.type", "med");
         	if (operation.equals("mad")) {
