@@ -144,7 +144,9 @@ public class NumericalAttrStats  extends Configured implements Tool {
             	outKey.initialize();
             	outVal.initialize();
             	
-            	addIdstoKey();
+            	if (null != idOrdinals) {
+            		outKey.addFromArray(items, idOrdinals);
+            	}
         		outKey.add(attr);
         		
         		//seasonal analysis
@@ -156,7 +158,6 @@ public class NumericalAttrStats  extends Configured implements Tool {
                     if (cycleIndex < 0) {
                     	return;
                     }
-                    
                     outKey.add(cycleIndex);
         		}
             	
@@ -169,17 +170,6 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	}
         }
          
-        /**
-         * 
-         */
-        private void addIdstoKey() {
-        	if (null != idOrdinals) {
-        		for (int ord  :  idOrdinals) {
-        			outKey.add(items[ord]);
-        		}
-        	}
-        }
-        
 	}
 
 	/**

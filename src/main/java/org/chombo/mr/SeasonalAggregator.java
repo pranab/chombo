@@ -19,6 +19,7 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,6 +34,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.Pair;
+import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -88,28 +91,10 @@ public class SeasonalAggregator  extends Configured implements Tool {
         private int[] idOrdinals;
         private int timeStampFieldOrdinal;
         private String seasonalCycleType;
-        private static final String  QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
-        private static final String  QUARTER_HOUR_OF_WEEK_DAY = "quarterHourOfWeekDay";
-        private static final String  QUARTER_HOUR_OF_WEEK_END_DAY = "quarterHourOfWeekEndDay";
-        private static final String  HALF_HOUR_OF_DAY = "halfHourOfDay";
-        private static final String  HALF_HOUR_OF_WEEK_DAY = "halfHourOfWeekDay";
-        private static final String  HALF_HOUR_OF_WEEK_END_DAY = "halfHourOfWeekEndDay";
-        private static final String  HOUR_OF_DAY = "hourOfDay";
-        private static final String  HOUR_OF_WEEK_DAY = "hourOfWeekDay";
-        private static final String  HOUR_OF_WEEK_END_DAY = "hourOfWeekEndDay";
-        private static final String  DAY_OF_WEEK  = "dayOfWeek";
-        private static final String  WEEK_DAY_OF_WEEK  = "weekDayOfWeek";
-        private static final String  WEEK_END_DAY_OF_WEEK  = "weekEndDayOfWeek";
-        private static long secInWeek =7L * 24 * 60 * 60;
-        private static long secInDay =24L * 60 * 60;
-        private static long secInHour = 60L * 60;
-        private static long secInHalfHour = 30L * 60;
-        private static long secInQuarterHour = 15L * 60;
-        private long parentCycleIndex;
         private int cycleIndex;
         private long timeStamp;
         private String aggregatorType;
-        private long timeZoneShift;
+        private SeasonalAnalyzer seasonalAnalyzer;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -119,8 +104,21 @@ public class SeasonalAggregator  extends Configured implements Tool {
         	timeStampFieldOrdinal = config.getInt("time.stamp.field.ordinal", -1);
         	seasonalCycleType = config.get("seasonal.cycle.type");
         	aggregatorType = config.get("aggregator.type");
-        	int  timeZoneHours = config.getInt("time.zone.hours",  0);
-        	timeZoneShift = timeZoneHours * secInHour;
+        	
+    		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
+        	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
+        			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
+        		List<Pair<Integer, Integer>> hourRanges = Utility.assertIntPairListConfigParam(config, "hour.ranges", 
+        				Utility.configDelim, Utility.configSubFieldDelim, "missing hour ranges");
+        		seasonalAnalyzer.setHourRanges(hourRanges);
+        	} 
+        	
+        	int  timeZoneShiftHours = config.getInt("time.zone.shift.hours",  0);
+        	if (timeZoneShiftHours > 0) {
+        		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
+        	}
+        	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
+        	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
        }
 		
         @Override
@@ -129,16 +127,17 @@ public class SeasonalAggregator  extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
             
             timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
-            getCycleIndex(timeStamp + timeZoneShift);
+            cycleIndex = seasonalAnalyzer.getCycleIndex(timeStamp);
             
             if (cycleIndex >= 0) {
 	        	for (int attr : attributes) {
 	            	outKey.initialize();
 	            	outVal.initialize();
+	            	
 	            	if (null != idOrdinals) {
 	            		outKey.addFromArray(items, idOrdinals);
 	            	}
-	            	outKey.add(parentCycleIndex, cycleIndex, attr);
+	            	outKey.add(seasonalAnalyzer.getParentCycleIndex(), cycleIndex, attr);
 	            	
 	            	if (aggregatorType.equals(AGGR_COUNT)) {
 	            		outVal.add(1);
@@ -151,88 +150,6 @@ public class SeasonalAggregator  extends Configured implements Tool {
 	        	}
             }
         }       
-        
- 
-        /**
-         * Calculates cycle index and parent cycle index
-         * @param timeStamp
-         */
-        private void  getCycleIndex(long timeStamp) {
-        	long  weekDayIndex = 0;
-        	if (seasonalCycleType.equals(DAY_OF_WEEK)) {
-            	parentCycleIndex = timeStamp / secInWeek;
-        		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-        	} else if (seasonalCycleType.equals(WEEK_DAY_OF_WEEK)) {
-            	parentCycleIndex = timeStamp / secInWeek;
-        		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-        		if (cycleIndex > 4) {
-        			cycleIndex = -1;
-        		}
-        	} else if (seasonalCycleType.equals(WEEK_END_DAY_OF_WEEK)) {
-            	parentCycleIndex = timeStamp / secInWeek;
-        		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-        		if (cycleIndex < 5) {
-        			cycleIndex = -1;
-        		}
-        	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-        		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
-        	}  else if (seasonalCycleType.equals(HOUR_OF_WEEK_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-               	weekDayIndex = parentCycleIndex % 7;
-               	if (weekDayIndex < 5) {
-            		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
-             	} else {
-             		cycleIndex = -1;
-             	}
-        	}  else if (seasonalCycleType.equals(HOUR_OF_WEEK_END_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-                if (weekDayIndex > 4) {
-            		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
-             	} else {
-             		cycleIndex = -1;
-             	}
-        	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-        		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
-        	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_WEEK_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-            	weekDayIndex = parentCycleIndex % 7;
-            	if (weekDayIndex < 5) {
-            		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
-            	} else {
-            		cycleIndex = -1;
-            	}
-        	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_WEEK_END_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-            	weekDayIndex = parentCycleIndex % 7;
-            	if (weekDayIndex > 4) {
-            		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
-            	} else {
-            		cycleIndex = -1;
-            	}
-        	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-        		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
-        	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_WEEK_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-            	weekDayIndex = parentCycleIndex % 7;
-            	if (weekDayIndex < 5) {
-            		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
-            	} else {
-            		cycleIndex = -1;
-            	}
-        	}  else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_WEEK_END_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-            	weekDayIndex = parentCycleIndex % 7;
-            	if (weekDayIndex > 4) {
-            		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
-            	} else {
-            		cycleIndex = -1;
-            	}
-        	} 
-        }
-        
 	}
 	
 	/**
@@ -308,11 +225,10 @@ public class SeasonalAggregator  extends Configured implements Tool {
             	}
     		}
     		
-    		int keySize = key.getSize();
         	if (aggregatorType.equals(AGGR_COUNT)) {
-        		outVal.set(key.toString(0, keySize -3) + fieldDelim +  key.toString(keySize -2, keySize) + fieldDelim + totalCount);
+        		outVal.set(key.toString() + fieldDelim +  totalCount);
         	} else if (aggregatorType.equals(AGGR_SUM)) {
-        		outVal.set(key.toString(0, keySize -3) +fieldDelim +  key.toString(keySize -2, keySize) + fieldDelim + sum);
+        		outVal.set(key.toString() +fieldDelim  + sum);
         	} 
         	
         	context.write(NullWritable.get(), outVal);

@@ -203,6 +203,10 @@ public class SeasonalAnalyzer {
 	public void setTimeZoneShiftHours(long timeZoneShiftHours) {
 		this.timeZoneShiftSec = timeZoneShiftHours * secInHour ;
 	}
+
+	public long getParentCycleIndex() {
+		return parentCycleIndex;
+	}
     
     
 }
