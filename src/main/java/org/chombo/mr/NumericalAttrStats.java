@@ -18,6 +18,7 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -34,6 +35,8 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
 import org.chombo.util.GenericAttributeSchema;
+import org.chombo.util.Pair;
+import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -91,7 +94,13 @@ public class NumericalAttrStats  extends Configured implements Tool {
         private String[] items;
         private int[] idOrdinals;
         private GenericAttributeSchema schema;
-                
+        private boolean seasonalAnalysis;
+        private String seasonalCycleType;
+        private int timeStampFieldOrdinal;
+        private SeasonalAnalyzer seasonalAnalyzer;
+        private long timeStamp;
+        private int cycleIndex;
+        
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
@@ -101,38 +110,62 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	
         	conditionedAttr = config.getInt("nas.conditioned.attr",-1);
         	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
+        	
+        	//seasonal
+        	seasonalAnalysis = config.getBoolean("seasonal.analysis", false);
+        	if (seasonalAnalysis) {
+        		seasonalCycleType =  Utility.assertStringConfigParam(config,"seasonal.cycle.type", "missing seasonal cycle type parameter");
+        		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
+            	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
+            			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
+            		List<Pair<Integer, Integer>> hourRanges = Utility.assertIntPairListConfigParam(config, "hour.ranges", 
+            				Utility.configDelim, Utility.configSubFieldDelim, "missing hour ranges");
+            		seasonalAnalyzer.setHourRanges(hourRanges);
+            	} 
+            	
+            	int  timeZoneShiftHours = config.getInt("time.zone.hours",  0);
+            	if (timeZoneShiftHours > 0) {
+            		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
+            	}
+
+            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"time.stamp.field.ordinal", "missing time stamp field ordinal"); 
+            	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
+            	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
+        	}
+
        }
 
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
+            String condAttrVal = conditionedAttr >= 0 ?  items[conditionedAttr] : "$";
         	for (int attr : attributes) {
             	outKey.initialize();
             	outVal.initialize();
             	
             	addIdstoKey();
         		outKey.add(attr);
-            	if (conditionedAttr >= 0)  {
-            		outKey.add( "0");
-            	}
+        		
+        		//seasonal analysis
+        		if (seasonalAnalysis) {
+                    timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
+                    cycleIndex = seasonalAnalyzer.getCycleIndex(timeStamp);
+                    
+                    //outside seasonal time band
+                    if (cycleIndex < 0) {
+                    	return;
+                    }
+                    
+                    outKey.add(cycleIndex);
+        		}
+            	
+        		outKey.add( condAttrVal);
 
             	val = Double.parseDouble(items[attr]);
             	sqVal = val * val;
             	outVal.add(val, val, val, sqVal, count);
             	context.write(outKey, outVal);
-
-            	//conditioned on another attribute
-            	if (conditionedAttr >= 0) {
-                	outKey.initialize();
-                	outVal.initialize();
-                	
-                	addIdstoKey();
-                	outKey.add(attr, items[conditionedAttr]);
-
-                	outVal.add(val, val, val, sqVal, count);
-                	context.write(outKey, outVal);
-            	}
         	}
         }
          
@@ -273,18 +306,13 @@ public class NumericalAttrStats  extends Configured implements Tool {
     	 * @throws InterruptedException
     	 */
     	protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
-    		//partitonIds, (0)attr ord (1)cond attr (2)sum (3)sum square (4)count (5)mean (6)variance (7)std dev (8)min (9)max 
+    		//x)partitonIds, (0)attr ord (1)seasonal cycle (2)cond attr 3)sum 4)sum square 5)count 6)mean 7)variance 8)std dev 9)min 10)max 
     		stBld.delete(0, stBld.length());
-    		int keyIndex = 0;
-    		if (null != idOrdinals) {
-    			for ( ; keyIndex < idOrdinals.length; ++keyIndex) {
-    				stBld.append(key.getString(keyIndex)).append(fieldDelim);
-    			}
-    		}
-    		stBld.append(key.getInt(keyIndex++)).append(fieldDelim);
         	if (conditionedAttr >= 0)  {
-        		stBld.append(key.getString(keyIndex)).append(fieldDelim);
-        	}    		
+        		stBld.append(key.toString()).append(fieldDelim);
+        	} else {
+        		stBld.append(key.toString(0, key.getSize()-1)).append(fieldDelim);
+        	}
         	
     		stBld.append(sum).append(fieldDelim).append(sumSq).append(fieldDelim).append(totalCount).append(fieldDelim) ;
     		stBld.append(mean).append(fieldDelim).append(variance).append(fieldDelim).append(stdDev).append(fieldDelim)  ;
