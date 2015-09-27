@@ -970,10 +970,9 @@ public class Utility {
 	 */
 	public static Map<String, Integer> assertIntStringIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
-	   	Map<String, Integer> data;
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
-		data = new HashMap<String, Integer>() ;
+		Map<String, Integer>  data = new HashMap<String, Integer>() ;
 		for (String item :  items) {
 			String[] parts  = item.split(subFieldDelim);
 			data.put(parts[0], Integer.parseInt(parts[1]));
@@ -989,12 +988,31 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
-	public static Map<Integer, Double> assertIntIntegerDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
-	   	Map<Integer, Double> data;
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
-		data = new HashMap<Integer, Double>() ;
+		Map<Integer, Integer> data = new HashMap<Integer, Integer>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<Integer, Double> assertIntIntegerDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		Map<Integer, Double> data = new HashMap<Integer, Double>() ;
 		for (String item :  items) {
 			String[] parts  = item.split(subFieldDelim);
 			data.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
@@ -1012,10 +1030,9 @@ public class Utility {
 	 */
 	public static Map<String, Double> assertDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
-	   	Map<String, Double> data;
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
-		data = new HashMap<String, Double>() ;
+		Map<String, Double> data = new HashMap<String, Double>() ;
 		for (String item :  items) {
 			String[] parts  = item.split(subFieldDelim);
 			data.put(parts[0], Double.parseDouble(parts[1]));

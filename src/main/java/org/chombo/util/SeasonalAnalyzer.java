@@ -17,7 +17,7 @@
 
 package org.chombo.util;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author pranab
@@ -27,7 +27,7 @@ public class SeasonalAnalyzer {
     private long parentCycleIndex;
     private int cycleIndex;
     private String seasonalCycleType;
-    private List<Pair<Integer, Integer>> hourRanges;
+    private Map<Integer, Integer> hourRanges;
     private boolean timeStampInMili;
     private long timeZoneShiftSec;
     public  static final String QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
@@ -64,7 +64,7 @@ public class SeasonalAnalyzer {
 	 * @param hourRanges
 	 */
 	public SeasonalAnalyzer(String seasonalCycleType,
-			List<Pair<Integer, Integer>> hourRanges) {
+			Map<Integer, Integer> hourRanges) {
 		super();
 		this.seasonalCycleType = seasonalCycleType;
 		this.hourRanges = hourRanges;
@@ -158,15 +158,8 @@ public class SeasonalAnalyzer {
     		weekDayIndex = parentCycleIndex % 7;
     		if (weekDayIndex < 5) {
     			int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
-    			cycleIndex  = -1;
-    			int i = 0;
-    			for (Pair<Integer, Integer>  hourRange :  hourRanges) {
-    				if (hourCycleIndex >= hourRange.left && hourCycleIndex < hourRange.right) {
-    					cycleIndex = i;
-    					break;
-    				}
-    				++i;
-    			}
+    			Integer hourGroup = hourRanges.get(hourCycleIndex);
+    			cycleIndex = hourGroup != null ? hourGroup : -1;
     		} else {
     			cycleIndex = -1;
     		}
@@ -175,15 +168,8 @@ public class SeasonalAnalyzer {
     		weekDayIndex = parentCycleIndex % 7;
     		if (weekDayIndex >= 5) {
     			int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
-    			cycleIndex  = -1;
-    			int i = 0;
-    			for (Pair<Integer, Integer>  hourRange :  hourRanges) {
-    				if (hourCycleIndex >= hourRange.left && hourCycleIndex < hourRange.right) {
-    					cycleIndex = i;
-    					break;
-    				}
-    				++i;
-    			}
+    			Integer hourGroup = hourRanges.get(hourCycleIndex);
+    			cycleIndex = hourGroup != null ? hourGroup : -1;
     		} else {
     			cycleIndex = -1;
     		}
@@ -192,7 +178,7 @@ public class SeasonalAnalyzer {
     	return cycleIndex;
     }
 
-	public void setHourRanges(List<Pair<Integer, Integer>> hourRanges) {
+	public void setHourRanges(Map<Integer, Integer> hourRanges) {
 		this.hourRanges = hourRanges;
 	}
 
@@ -207,6 +193,5 @@ public class SeasonalAnalyzer {
 	public long getParentCycleIndex() {
 		return parentCycleIndex;
 	}
-    
     
 }

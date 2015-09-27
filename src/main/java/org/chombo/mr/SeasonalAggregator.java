@@ -19,7 +19,7 @@
 package org.chombo.mr;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -34,7 +34,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.chombo.util.Pair;
 import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -108,8 +107,8 @@ public class SeasonalAggregator  extends Configured implements Tool {
     		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
         	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
         			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
-        		List<Pair<Integer, Integer>> hourRanges = Utility.assertIntPairListConfigParam(config, "hour.ranges", 
-        				Utility.configDelim, Utility.configSubFieldDelim, "missing hour ranges");
+        		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "hour.groups", 
+        				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups");
         		seasonalAnalyzer.setHourRanges(hourRanges);
         	} 
         	
