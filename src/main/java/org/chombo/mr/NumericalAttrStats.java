@@ -138,6 +138,18 @@ public class NumericalAttrStats  extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
+
+            //seasonality cycle index
+    		if (seasonalAnalysis) {
+                timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
+                cycleIndex = seasonalAnalyzer.getCycleIndex(timeStamp);
+                
+                //outside seasonal time band
+                if (cycleIndex < 0) {
+                	return;
+                }
+    		}
+            
             String condAttrVal = conditionedAttr >= 0 ?  items[conditionedAttr] : "$";
         	for (int attr : attributes) {
             	outKey.initialize();
@@ -150,13 +162,6 @@ public class NumericalAttrStats  extends Configured implements Tool {
         		
         		//seasonal analysis
         		if (seasonalAnalysis) {
-                    timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
-                    cycleIndex = seasonalAnalyzer.getCycleIndex(timeStamp);
-                    
-                    //outside seasonal time band
-                    if (cycleIndex < 0) {
-                    	return;
-                    }
                     outKey.add(cycleIndex);
         		}
             	
