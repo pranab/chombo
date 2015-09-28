@@ -161,7 +161,6 @@ public class NumericalAttrMedian extends Configured implements Tool {
             	} else {
             		//seasonal cycle index already in data
             		int cycleIndexPos = null != idOrdinals ? 0 : idOrdinals.length;
-            		cycleIndexPos += 2;
             		cycleIndex = Integer.parseInt(items[cycleIndexPos]);
             	}
     		}            	
@@ -183,16 +182,18 @@ public class NumericalAttrMedian extends Configured implements Tool {
             	}
             	bin = (int)(val / numericAttrs[i].getBucketWidth());
             	
+        		//record partition id available
             	if (null != idOrdinals) {
-            		//record partition id available
             		outKey.addFromArray(items, idOrdinals);
             	}
-            	outKey.add(attributes[i], bin);
             	
         		//seasonal analysis
         		if (seasonalAnalysis) {
 	                outKey.add(cycleIndex);
         		}            	
+
+        		//attribute ord and bin
+        		outKey.add(attributes[i], bin);
         		
             	outVal.add(bin, val);
             	context.write(outKey, outVal);
