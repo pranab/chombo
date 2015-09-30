@@ -12,6 +12,7 @@ Hadoop based ETL and various utility classes for Hadoop and Storm
 * Data extraction ETL to extract structured record from unstructured data
 * Data extraction ETL to extract structured record from JSON data
 * Data validation ETL with configurable rules and statistical parameters 
+* Data profiling ETL with various techniques
 * Data transformation ETL with configurable transformation rules
 * Data normalization
 * Seasonal data analysis
