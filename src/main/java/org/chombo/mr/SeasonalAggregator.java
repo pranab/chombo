@@ -46,6 +46,7 @@ public class SeasonalAggregator  extends Configured implements Tool {
 	private static String configDelim = ",";
     private static final String AGGR_COUNT = "count";
     private static final String AGGR_SUM = "sum";
+    private static final String AGGR_AVG = "average";
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -98,11 +99,11 @@ public class SeasonalAggregator  extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	attributes = Utility.intArrayFromString(config.get("quant.attr.list"),fieldDelimRegex );
+        	attributes = Utility.assertIntArrayConfigParam(config, "quant.attr.list", fieldDelimRegex, "missing quant attribute list");
         	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
-        	timeStampFieldOrdinal = config.getInt("time.stamp.field.ordinal", -1);
-        	seasonalCycleType = config.get("seasonal.cycle.type");
-        	aggregatorType = config.get("aggregator.type");
+        	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"time.stamp.field.ordinal", "missing timestamp field ordinal");
+        	seasonalCycleType = Utility.assertStringConfigParam(config,"seasonal.cycle.type", "missing seasonal cycle type");
+        	aggregatorType = config.get("aggregator.type", AGGR_AVG);
         	
     		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
         	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
@@ -142,6 +143,8 @@ public class SeasonalAggregator  extends Configured implements Tool {
 	            		outVal.add(1);
 	            	} else if (aggregatorType.equals(AGGR_SUM)) {
 	            		outVal.add(Double.parseDouble(items[attr]));
+	            	} else if (aggregatorType.equals(AGGR_AVG)) {
+	            		outVal.add(1, Double.parseDouble(items[attr]));
 	            	} else {
 	        			throw new IllegalArgumentException("invalid aggregation function");
 	        		}
@@ -179,8 +182,11 @@ public class SeasonalAggregator  extends Configured implements Tool {
     		for (Tuple val : values) {
             	if (aggregatorType.equals(AGGR_COUNT)) {
             		totalCount += val.getInt(0);
-            	} else {
+            	} else if (aggregatorType.equals(AGGR_SUM)) {
             		sum  += val.getDouble(0);
+            	} else if (aggregatorType.equals(AGGR_AVG)) {
+            		totalCount += val.getInt(0);
+            		sum  += val.getDouble(1);
             	}
     		}
         
@@ -189,6 +195,8 @@ public class SeasonalAggregator  extends Configured implements Tool {
     			outVal.add(totalCount);
     		} else if (aggregatorType.equals(AGGR_SUM)) {
     			outVal.add(sum);
+    		} else if (aggregatorType.equals(AGGR_AVG)) {
+    			outVal.add(totalCount, sum);
     		} 
         	context.write(key, outVal);       	
         }
@@ -204,6 +212,7 @@ public class SeasonalAggregator  extends Configured implements Tool {
 		protected String fieldDelim;
 		protected double sum;
 		protected int totalCount;
+		private double average;
 		private String aggregatorType;
 		
 		protected void setup(Context context) throws IOException, InterruptedException {
@@ -221,6 +230,9 @@ public class SeasonalAggregator  extends Configured implements Tool {
             		totalCount += val.getInt(0);
             	} else if (aggregatorType.equals(AGGR_SUM)) {
             		sum  += val.getDouble(0);
+            	}  else if (aggregatorType.equals(AGGR_AVG)) {
+            		totalCount += val.getInt(0);
+            		sum  += val.getDouble(1);
             	}
     		}
     		
@@ -228,8 +240,10 @@ public class SeasonalAggregator  extends Configured implements Tool {
         		outVal.set(key.toString() + fieldDelim +  totalCount);
         	} else if (aggregatorType.equals(AGGR_SUM)) {
         		outVal.set(key.toString() +fieldDelim  + sum);
-        	} 
-        	
+        	} else if (aggregatorType.equals(AGGR_AVG)) {
+        		average = sum / totalCount;
+        		outVal.set(key.toString() +fieldDelim  + average);
+        	}
         	context.write(NullWritable.get(), outVal);
         }		
  	}
