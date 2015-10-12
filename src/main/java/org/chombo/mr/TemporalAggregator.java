@@ -197,7 +197,7 @@ public class TemporalAggregator  extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		int exitCode = ToolRunner.run(new SeasonalAggregator(), args);
+		int exitCode = ToolRunner.run(new SeasonalDetector(), args);
 		System.exit(exitCode);
 	}
 	
