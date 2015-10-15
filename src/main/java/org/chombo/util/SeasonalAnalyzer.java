@@ -51,6 +51,8 @@ public class SeasonalAnalyzer {
     private static long secInHalfHour = 30L * 60;
     private static long secInQuarterHour = 15L * 60;
     
+    private int logCount;
+    
     /**
      * @param seasonalCycleType
      */
@@ -80,6 +82,13 @@ public class SeasonalAnalyzer {
     		timeStamp /= 1000;
     	}
     	timeStamp += timeZoneShiftSec;
+    	
+    	/*
+    	if (logCount < 100) {
+    		System.out.println("timeStamp:" + timeStamp + " seasonalCycleType" + ":" + seasonalCycleType);
+    		++logCount;
+    	}
+    	*/
     	
     	long  weekDayIndex = 0;
     	if (seasonalCycleType.equals(DAY_OF_WEEK)) {
