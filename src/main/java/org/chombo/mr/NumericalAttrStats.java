@@ -111,24 +111,24 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
         	
         	//seasonal
-        	seasonalAnalysis = config.getBoolean("seasonal.analysis", false);
+        	seasonalAnalysis = config.getBoolean("nas.seasonal.analysis", false);
         	if (seasonalAnalysis) {
-        		seasonalCycleType =  Utility.assertStringConfigParam(config,"seasonal.cycle.type", "missing seasonal cycle type parameter");
+        		seasonalCycleType =  Utility.assertStringConfigParam(config,"nas.seasonal.cycle.type", "missing seasonal cycle type parameter");
         		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
             	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
             			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
-            		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "hour.groups", 
-            				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups");
+            		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "nas.seasonal.hour.groups", 
+            				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups", true);
             		seasonalAnalyzer.setHourRanges(hourRanges);
             	} 
             	
-            	int  timeZoneShiftHours = config.getInt("time.zone.hours",  0);
+            	int  timeZoneShiftHours = config.getInt("nas.time.zone.hours",  0);
             	if (timeZoneShiftHours > 0) {
             		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
             	}
 
-            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"time.stamp.field.ordinal", "missing time stamp field ordinal"); 
-            	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
+            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"nas.time.stamp.field.ordinal", "missing time stamp field ordinal"); 
+            	boolean timeStampInMili = config.getBoolean("nas.time.stamp.in.mili", true);
             	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
         	}
 

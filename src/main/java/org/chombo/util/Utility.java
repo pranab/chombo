@@ -990,16 +990,48 @@ public class Utility {
 	 */
 	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
+		return assertIntIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg);
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @param rangeInKey
+	 * @return
+	 */
+	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg, boolean rangeInKey) {
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
 		Map<Integer, Integer> data = new HashMap<Integer, Integer>() ;
-		for (String item :  items) {
-			String[] parts  = item.split(subFieldDelim);
-			data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+		if (rangeInKey) {
+			for (String item :  items) {
+				String[] parts  = item.split(subFieldDelim);
+				String[] rangeLimits = parts[0].split("\\-");
+				if (rangeLimits.length == 1) {
+					data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+				} else {
+					int rangeBeg = Integer.parseInt(rangeLimits[0]);
+					int rangeEnd = Integer.parseInt(rangeLimits[1]);
+					int val = Integer.parseInt(parts[1]);
+					for (int r = rangeBeg; r <= rangeEnd; ++r) {
+						data.put(r,  val);
+					}
+				}
+			}
+		} else {
+			for (String item :  items) {
+				String[] parts  = item.split(subFieldDelim);
+				data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+			}
 		}
     	return data;
 	}
 
+	
 	/**
 	 * @param config
 	 * @param param
@@ -1225,7 +1257,7 @@ public class Utility {
      */
     public static int[] getAttributes(String attrListParam, String configDelim, GenericAttributeSchema schema, 
     		Configuration config, String... includeTypes) {        	
-    	int[] attributes = intArrayFromString(config.get(attrListParam), configDelim );
+    	int[] attributes =  assertIntArrayConfigParam(config, attrListParam, configDelim, "missing attribute list");
     	List<Attribute> attrsMetaData = schema != null ? schema.getQuantAttributes(includeTypes) : null;
     	if (null == attributes) {
     		//use schema and pick all attributes of right type
@@ -1247,7 +1279,7 @@ public class Utility {
 	    			}
 				
 	    			if (!found) {
-	    				throw new IllegalArgumentException("Only quant attributes except for type double and text allowed");
+	    				throw new IllegalArgumentException("attribute not found in metada");
 	    			}
 	    		}
     		}
