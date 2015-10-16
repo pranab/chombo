@@ -1307,4 +1307,14 @@ public class Utility {
     	}
     }
     
+    /**
+     * @param val
+     * @param prec
+     * @return
+     */
+    public static String formatDouble(double val, int prec) {
+    	String formatter = "%." + prec + "f";
+    	return String.format(formatter, val);
+    }
+    
 }

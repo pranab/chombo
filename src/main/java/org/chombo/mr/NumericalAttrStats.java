@@ -240,6 +240,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		private double curMax;
         private int conditionedAttr;
         private int[] idOrdinals;
+        private int outputPrecision ;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -249,6 +250,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	fieldDelim = config.get("field.delim.out", ",");
         	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
         	conditionedAttr = config.getInt("nas.conditioned.attr",-1);
+        	outputPrecision = config.getInt("nas.output.prec", 3);
      }
 		
     	/* (non-Javadoc)
@@ -279,7 +281,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
     				max = curMax;
     			} else {
     				if (curMin < min) {
-    						min = curMin;
+    					min = curMin;
     				} else if (curMax > max) {
     					max = curMax;
     				}
@@ -308,13 +310,14 @@ public class NumericalAttrStats  extends Configured implements Tool {
         		stBld.append(key.toString(0, key.getSize()-1)).append(fieldDelim);
         	}
         	
-    		stBld.append(sum).append(fieldDelim).append(sumSq).append(fieldDelim).append(totalCount).append(fieldDelim) ;
-    		stBld.append(mean).append(fieldDelim).append(variance).append(fieldDelim).append(stdDev).append(fieldDelim)  ;
-    		stBld.append(min).append(fieldDelim).append(max) ;
+    		stBld.append(sum).append(fieldDelim).append(Utility.formatDouble(sumSq, outputPrecision)).
+    			append(fieldDelim).append(totalCount).append(fieldDelim) ;
+    		stBld.append(Utility.formatDouble(mean, outputPrecision)).append(fieldDelim).append(Utility.formatDouble(variance, outputPrecision)).
+    			append(fieldDelim).append(Utility.formatDouble(stdDev, outputPrecision)).append(fieldDelim)  ;
+    		stBld.append(Utility.formatDouble(min, outputPrecision)).append(fieldDelim).append(Utility.formatDouble(max, outputPrecision)) ;
         	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}
-    	
     }
 	
 	/**
