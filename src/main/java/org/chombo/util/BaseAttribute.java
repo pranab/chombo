@@ -59,10 +59,18 @@ public class BaseAttribute {
 		return dataType.equals(DATA_TYPE_INT );
 	}
 
+	public boolean isLong() {
+		return dataType.equals(DATA_TYPE_LONG );
+	}
+
 	public boolean isDouble() {
 		return dataType.equals(DATA_TYPE_DOUBLE);
 	}
 
+	public boolean isNumerical() {
+		return dataType.equals(DATA_TYPE_INT ) || dataType.equals(DATA_TYPE_LONG ) || dataType.equals(DATA_TYPE_DOUBLE);
+	}
+	
 	public boolean isString() {
 		return dataType.equals(DATA_TYPE_STRING );
 	}

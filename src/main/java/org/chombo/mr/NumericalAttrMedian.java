@@ -24,12 +24,13 @@ import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.MedianStatsManager;
 import org.chombo.util.RichAttribute;
 import org.chombo.util.RichAttributeSchema;
+import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
- * Calulates median and median absolute difference
+ * Calculates median and median absolute difference
  * @author pranab
  *
  */
@@ -86,12 +87,18 @@ public class NumericalAttrMedian extends Configured implements Tool {
         private int[] idOrdinals;
         private MedianStatsManager statsManager;
         private double median;
+        private boolean seasonalAnalysis;
+        private String seasonalCycleType;
+        private int timeStampFieldOrdinal;
+        private SeasonalAnalyzer seasonalAnalyzer;
+        private long timeStamp;
+        private int cycleIndex;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	schema = Utility.getRichAttributeSchema(config, "med.schema.file.path");
-        	attributes = Utility.intArrayFromString(config.get("attr.list"), fieldDelimRegex);
+        	attributes = Utility.intArrayFromString(config.get("nam.attr.list"), fieldDelimRegex);
         	if (null == attributes) {
         		//all numeric fields
         		attributes = schema.getNumericAttributeOrdinals();
@@ -104,14 +111,35 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	}
 
         	//record id
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
+        	idOrdinals = Utility.intArrayFromString(config.get("nam.id.field.ordinals"), fieldDelimRegex);
         	
         	operation = config.get("op.type", "med");
         	if (operation.equals("mad")) {
         		//median of deviation from median
    				statsManager = new MedianStatsManager(config, "med.file.path",statsDelim, idOrdinals);
         	}
-	
+        	
+        	//seasonal
+        	seasonalAnalysis = config.getBoolean("seasonal.analysis", false);
+        	if (seasonalAnalysis) {
+        		seasonalCycleType =  Utility.assertStringConfigParam(config,"seasonal.cycle.type", "missing seasonal cycle type parameter");
+        		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
+            	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
+            			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
+            		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "hour.groups", 
+            				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups");
+            		seasonalAnalyzer.setHourRanges(hourRanges);
+            	} 
+            	
+            	int  timeZoneShiftHours = config.getInt("time.zone.hours",  0);
+            	if (timeZoneShiftHours > 0) {
+            		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
+            	}
+
+            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"time.stamp.field.ordinal", "missing time stamp field ordinal"); 
+            	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
+            	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
+        	}
        }
 
         @Override
@@ -119,6 +147,25 @@ public class NumericalAttrMedian extends Configured implements Tool {
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
             
+            //seasonality
+    		if (seasonalAnalysis) {
+            	if (operation.equals("med")) {
+            		//use timestamp data
+	                timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
+	                cycleIndex = seasonalAnalyzer.getCycleIndex(timeStamp);
+	                    
+	                //outside seasonal time band
+	                if (cycleIndex < 0) {
+	                	return;
+	                }
+            	} else {
+            		//seasonal cycle index already in data
+            		int cycleIndexPos = null != idOrdinals ? 0 : idOrdinals.length;
+            		cycleIndex = Integer.parseInt(items[cycleIndexPos]);
+            	}
+    		}            	
+            
+            //all attributes
         	for (int i = 0; i < attributes.length; ++i) {
             	outKey.initialize();
             	outVal.initialize();
@@ -135,14 +182,19 @@ public class NumericalAttrMedian extends Configured implements Tool {
             	}
             	bin = (int)(val / numericAttrs[i].getBucketWidth());
             	
+        		//record partition id available
             	if (null != idOrdinals) {
-            		//record id available
-            		for (int ord  :  idOrdinals) {
-            			outKey.add(items[ord]);
-            		}
+            		outKey.addFromArray(items, idOrdinals);
             	}
-            	outKey.add(attributes[i], bin);
             	
+        		//seasonal analysis
+        		if (seasonalAnalysis) {
+	                outKey.add(cycleIndex);
+        		}            	
+
+        		//attribute ord and bin
+        		outKey.add(attributes[i], bin);
+        		
             	outVal.add(bin, val);
             	context.write(outKey, outVal);
         	}
@@ -224,15 +276,8 @@ public class NumericalAttrMedian extends Configured implements Tool {
 				}
 			}
 			
-        	if (null != idOrdinals) {
-        		//record id available
-        		for (int i = 0;  i < idOrdinals.length; ++i) {
-        			stBld.append(key.getString(i)).append(fieldDelim);
-        		}
-    			stBld.append(key.getInt(idOrdinals.length)).append(fieldDelim);
-        	} else {
-        		stBld.append(key.getInt(0)).append(fieldDelim);
-			}
+        	//everything from key except last field which is bin
+        	stBld.append(key.toString(0, key.getSize()-1));
         	
         	if (operation.equals("mad")) {
         		mad = 1.4296 * med;

@@ -12,6 +12,7 @@ Hadoop based ETL and various utility classes for Hadoop and Storm
 * Data extraction ETL to extract structured record from unstructured data
 * Data extraction ETL to extract structured record from JSON data
 * Data validation ETL with configurable rules and statistical parameters 
+* Data profiling ETL with various techniques
 * Data transformation ETL with configurable transformation rules
 * Data normalization
 * Seasonal data analysis
@@ -29,6 +30,9 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * http://pkghosh.wordpress.com/2015/04/26/bulk-insert-update-and-delete-in-hadoop-data-lake/
 * https://pkghosh.wordpress.com/2015/06/08/data-quality-control-with-outlier-detection/
 * https://pkghosh.wordpress.com/2015/07/28/validating-big-data/
+* https://pkghosh.wordpress.com/2015/09/22/profiling-big-data/
+* https://pkghosh.wordpress.com/2015/08/25/anomaly-detection-with-robust-zscore/
+
 
 ## Build
 For Hadoop 1

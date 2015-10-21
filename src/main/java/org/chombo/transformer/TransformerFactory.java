@@ -42,6 +42,7 @@ public class TransformerFactory {
 	public static final String EPOCH_TIME_GENERATOR = "epochTimeGen";
 	public static final String DATE_GENERATOR = "dateGen";
 	public static final String DATE_FORMAT_TRANSFORMER = "dateFormat";
+	public static final String NUM_DATA_DISCRETIZER = "discretizer";
 	
 	/**
 	 * @param tag
@@ -82,6 +83,8 @@ public class TransformerFactory {
 			transformer = new DateTransformer.DateGenerator(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(DATE_FORMAT_TRANSFORMER)) {
 			transformer = new DateTransformer.DateFormatTransformer(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(NUM_DATA_DISCRETIZER)) {
+			transformer = new NumericTransformer.Discretizer(prAttr, config.getConfig(transformerTag));
 		} else {
 			throw new IllegalArgumentException("invalid transformer");
 		}

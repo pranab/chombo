@@ -21,6 +21,7 @@ package org.chombo.mr;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -35,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.HistogramStat;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -85,20 +87,32 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         private String fieldDelimRegex;
         private int conditionedAttr;
         private String[] items;
-        private Map<Integer, Double> attrBinWidths = new HashMap<Integer, Double>();
+        private Map<Integer, Double> attrBinWidths;
         private double fieldVal;
         private int binIndex;
         private static final int ONE = 1;
-        
+        private GenericAttributeSchema schema;
+               
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	String[] items = config.get("attr.list").split(",");
-        	for (String item : items) {
-        		String[] parts = item.split(":");
-        		attrBinWidths.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
+        	attrBinWidths = Utility.assertIntIntegerDoubleMapConfigParam(config, "nads.attr.bucket.width.list", Utility.configDelim, 
+        			Utility.configSubFieldDelim, "missing attrubutes ordinals and bucket widths");
+        	conditionedAttr = config.getInt("nads.conditioned.attr",-1);
+        	
+        	//validate attributes
+        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	if (null != schema) {
+        		Set<Integer> attrSet = attrBinWidths.keySet();
+        		int[] attrs = new int[attrSet.size()];
+        		int i = 0;
+        		for (Integer attr : attrSet) {
+        			attrs[i++] = attr;
+        		}
+        		if (!schema.areNumericalAttributes(attrs)) {
+        			throw new IllegalArgumentException("attributes must be numerical");
+        		}
         	}
-        	conditionedAttr = config.getInt("conditioned.attr",-1);
        }
 
         @Override
@@ -177,6 +191,8 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         private int binIndex;
         private int count;
         private Map<Integer, Double> attrBinWidths = new HashMap<Integer, Double>();
+    	private int conditionedAttr;
+        private GenericAttributeSchema schema;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -185,11 +201,18 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
 			
-        	String[] items = config.get("attr.list").split(",");
+        	String[] items = config.get("nads.attr.list").split(",");
         	for (String item : items) {
         		String[] parts = item.split(":");
         		attrBinWidths.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
         	}
+        	conditionedAttr = config.getInt("nads.conditioned.attr",-1);
+
+        	//validation with schema
+           	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+            if (null != schema) {
+            	
+            }
 		}
 		
 		/* (non-Javadoc)
@@ -218,7 +241,10 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 		 */
 		protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
 			stBld.delete(0, stBld.length());
-			stBld.append(key.getInt(0)).append(fieldDelim).append(key.getString(1)).append(fieldDelim);
+			stBld.append(key.getInt(0)).append(fieldDelim);
+			if (conditionedAttr != -1) {
+				stBld.append(key.getString(1)).append(fieldDelim);
+			}
 			Map<Double, Double> distr = histogram.getDistribution();
 			for (Double  value : distr.keySet() ) {
 				stBld.append(value).append(fieldDelim).append(distr.get(value)).append(fieldDelim);

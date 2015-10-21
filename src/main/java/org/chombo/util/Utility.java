@@ -29,9 +29,11 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,6 +79,9 @@ public class Utility {
 	public static final String DEF_FIELD_DELIM = ",";
 	
 	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
+	public static String configDelim = ",";
+	public  static String configSubFieldDelim = ":";
+
     /*
     static AmazonS3 s3 = null;
  	static {
@@ -547,7 +552,7 @@ public class Utility {
      */
     public static String extractFields(String[] items , int[] fields, String delim, boolean sortKeyFields) {
     	StringBuilder stBld = new StringBuilder();
-    	List<String> keyFields = new ArrayList();
+    	List<String> keyFields = new ArrayList<String>();
     	
     	for (int i = 0; i < fields.length; ++i) {
     		keyFields.add(items[fields[i]]);
@@ -616,6 +621,18 @@ public class Utility {
 		return values;
     }
     
+    /**
+     * @param values
+     * @return
+     */
+    public static List<Integer> fromIntArrayToList( int[] values) {
+    	List<Integer> valueList  = new  ArrayList<Integer>();  
+		for (int value :  values) {
+			valueList.add(value);;
+		}
+		return valueList;
+    }
+
     /**
      * @param list
      * @return
@@ -810,6 +827,23 @@ public class Utility {
 	}
 	
 	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<String, String>> getStringPairList(String record, String fieldDelim, String subFieldDelim) {
+		List<Pair<String, String>> stringStringPairs = new ArrayList<Pair<String, String>>();
+		String[] items = record.split(fieldDelim);
+		for (String item : items) {
+			String[] subItems = item.split(subFieldDelim);
+			Pair<String, String> pair = new Pair<String, String>(subItems[0],  subItems[1]);
+			stringStringPairs.add(pair);
+		}
+		return stringStringPairs;
+	}
+	
+	/**
 	 * @return
 	 */
 	public static String generateId() {
@@ -822,13 +856,258 @@ public class Utility {
 	 * @param msg
 	 */
 	public static String  assertConfigParam(Configuration config, String param, String msg) {
-		String value = config.get(param);
+		return assertStringConfigParam( config,param, msg);
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 * @return
+	 */
+	public static String  assertStringConfigParam(Configuration config, String param, String msg) {
+		String  value = config.get(param);
 		if (value == null) {
 			throw new IllegalStateException(msg);
-		}
+		} 
 		return value;
 	}
 	
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 * @return
+	 */
+	public static int  assertIntConfigParam(Configuration config, String param, String msg) {
+		int  value = Integer.MIN_VALUE;
+	   assertStringConfigParam( config, param,  msg); 
+	   value = config.getInt(param,  Integer.MIN_VALUE);
+		return value;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 * @return
+	 */
+	public static double  assertDoubleConfigParam(Configuration config, String param, String msg) {
+		double  value = Double.MIN_VALUE;
+	   String stParamValue = assertStringConfigParam( config, param,  msg); 
+	   value = Double.parseDouble(stParamValue);
+		return value;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param msg
+	 * @return
+	 */
+	public static boolean  assertBooleanConfigParam(Configuration config, String param, String msg) {
+		boolean value = false;
+	   	assertStringConfigParam( config, param,  msg); 
+		value = config.getBoolean(param, false);
+		return value;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static int[] assertIntArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	   	int[] data = null;
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		data = new int[items.length];
+		for (int i = 0; i < items.length; ++i) {
+			data[i] = Integer.parseInt(items[i]);
+		}
+    	return data;
+	}
+	
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static String[] assertStringArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		return  stParamValue.split(delimRegex);
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static double[] assertDoubleArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	   	double[] data = null;
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		data = new double[items.length];
+		for (int i = 0; i < items.length; ++i) {
+			data[i] = Double.parseDouble(items[i]);
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<String, Integer> assertIntStringIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		Map<String, Integer>  data = new HashMap<String, Integer>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(parts[0], Integer.parseInt(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+		return assertIntIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg);
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @param rangeInKey
+	 * @return
+	 */
+	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg, boolean rangeInKey) {
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		Map<Integer, Integer> data = new HashMap<Integer, Integer>() ;
+		if (rangeInKey) {
+			for (String item :  items) {
+				String[] parts  = item.split(subFieldDelim);
+				String[] rangeLimits = parts[0].split("\\-");
+				if (rangeLimits.length == 1) {
+					data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+				} else {
+					int rangeBeg = Integer.parseInt(rangeLimits[0]);
+					int rangeEnd = Integer.parseInt(rangeLimits[1]);
+					int val = Integer.parseInt(parts[1]);
+					for (int r = rangeBeg; r <= rangeEnd; ++r) {
+						data.put(r,  val);
+					}
+				}
+			}
+		} else {
+			for (String item :  items) {
+				String[] parts  = item.split(subFieldDelim);
+				data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+			}
+		}
+    	return data;
+	}
+
+	
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<Integer, Double> assertIntIntegerDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		Map<Integer, Double> data = new HashMap<Integer, Double>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<String, Double> assertDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		Map<String, Double> data = new HashMap<String, Double>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(parts[0], Double.parseDouble(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<String, String>> assertStringPairListConfigParam(Configuration config, String param,  
+			String fieldDelim, String subFieldDelim, String msg) {
+		String record = assertStringConfigParam(config, param, msg);
+		return  getStringPairList(record, fieldDelim, subFieldDelim); 
+	}	
+
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, String>> assertIntStringListConfigParam(Configuration config, String param,  
+			String fieldDelim, String subFieldDelim, String msg) {
+		String record = assertStringConfigParam(config, param, msg);
+		return  getIntStringList(record, fieldDelim, subFieldDelim); 
+	}	
+	
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, Integer>> assertIntPairListConfigParam(Configuration config, String param,  
+			String fieldDelim, String subFieldDelim, String msg) {
+		String record = assertStringConfigParam(config, param, msg);
+		return  getIntPairList(record, fieldDelim, subFieldDelim); 
+	}	
+
 	/**
 	 * @param list
 	 * @return
@@ -903,7 +1182,139 @@ public class Utility {
         ObjectMapper mapper = new ObjectMapper();
         RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
         return schema;
-		
 	}
 
+	/**
+	 * @param conf
+	 * @param pathParam
+	 * @return
+	 * @throws IOException
+	 */
+	public static GenericAttributeSchema getGenericAttributeSchema(Configuration conf, String pathParam) throws IOException {
+		GenericAttributeSchema schema = null;
+		InputStream is = Utility.getFileStream(conf, pathParam);
+		if (null != is) {
+			ObjectMapper mapper = new ObjectMapper();
+			schema = mapper.readValue(is, GenericAttributeSchema.class);
+		}
+		return schema;
+	}
+	
+	/**
+	 * @param config
+	 * @param params
+	 * @return
+	 */
+	public static Map<String, String> collectConfiguration(Configuration config, String... params ) {
+		Map<String, String> collectedConfig = new HashMap<String, String>();
+		for (String param : params) {
+			collectedConfig.put(param, config.get(param));
+		}
+		return collectedConfig;
+	}
+
+    /**
+     * @param list
+     * @param count
+     * @return
+     */
+    public static <T> List<T> selectRandomFromList(List<T> list, int count) {
+    	List<T> selList = null;
+    	if (count > list.size()) {
+    		throw new IllegalArgumentException("new list size is larget than source list size");
+    	} else if (count == list.size()) {
+    		selList  = list;
+    	} else {
+    		selList = new ArrayList<T>();
+           	Set<T> selSet = new  HashSet<T>();
+           	while (selSet.size() != count) {
+           		int index = (int)(Math.random() * list.size());
+           		selSet.add(list.get(index));
+           	}
+           	selList.addAll(selSet);	
+    	}
+    	return selList;
+    }
+    
+    /**
+     * @param curList
+     * @return
+     */
+    public static <T>  List<T> cloneList(List<T> curList) {
+    	List<T> newList = new ArrayList<T>();
+    	newList.addAll(curList);
+    	return newList;
+    }
+ 
+    /**
+     * Takes user specified attributes or builds  list of attributes of right type from schema 
+     * @param attrListParam
+     * @param configDelim
+     * @param schema
+     * @param config
+     * @param includeTypes
+     * @return
+     */
+    public static int[] getAttributes(String attrListParam, String configDelim, GenericAttributeSchema schema, 
+    		Configuration config, String... includeTypes) {        	
+    	int[] attributes =  assertIntArrayConfigParam(config, attrListParam, configDelim, "missing attribute list");
+    	List<Attribute> attrsMetaData = schema != null ? schema.getQuantAttributes(includeTypes) : null;
+    	if (null == attributes) {
+    		//use schema and pick all attributes of right type
+    		attributes = new int[attrsMetaData.size()];
+    		for (int i = 0; i < attrsMetaData.size(); ++i) {
+    			attributes[i] = attrsMetaData.get(i).getOrdinal();
+    		}
+    	} else {
+    		//use user provided but verify type
+    		if (null != attrsMetaData) {
+    			//if schema is available
+	    		for (int ord : attributes ) {
+	    			boolean found = false;
+	    			for (Attribute attr : attrsMetaData) {
+	    				if (attr.getOrdinal() == ord) {
+	    					found = true;
+	    					break;
+	    				}
+	    			}
+				
+	    			if (!found) {
+	    				throw new IllegalArgumentException("attribute not found in metada");
+	    			}
+	    		}
+    		}
+    	}
+    	return attributes;
+    }
+    
+    /**
+     * @param record
+     * @param attributes
+     * @param schema
+     * @param tuple
+     */
+    public static void intializeTuple(String[] record, int[] attributes, GenericAttributeSchema schema, Tuple tuple) {
+    	tuple.initialize();
+    	for (int attr : attributes) {
+    		String dataType = schema.findAttribute(attr).getDataType();
+    		if (dataType.equals(Attribute.DATA_TYPE_INT)) {
+    			tuple.add(Integer.parseInt(record[attr]));
+    		} else if (dataType.equals(Attribute.DATA_TYPE_LONG)) {
+    			tuple.add(Long.parseLong(record[attr]));
+    		}  else {
+    			tuple.add(record[attr]);
+    		}
+    	}
+    }
+    
+    /**
+     * @param val
+     * @param prec
+     * @return
+     */
+    public static String formatDouble(double val, int prec) {
+    	String formatter = "%." + prec + "f";
+    	return String.format(formatter, val);
+    }
+    
 }

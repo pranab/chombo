@@ -27,6 +27,8 @@ import org.chombo.util.RichAttribute;
 public class FeatureField extends RichAttribute implements  Comparable<FeatureField>{
 	protected boolean  feature;
 	protected int maxSplit;
+	protected double  splitScanInterval;
+	protected int maxCatAttrSplitGroups;
 
 	public boolean isFeature() {
 		return feature;
@@ -42,6 +44,23 @@ public class FeatureField extends RichAttribute implements  Comparable<FeatureFi
 
 	public void setMaxSplit(int maxSplit) {
 		this.maxSplit = maxSplit;
+	}
+
+
+	public double getSplitScanInterval() {
+		return splitScanInterval;
+	}
+
+	public void setSplitScanInterval(double splitScanInterval) {
+		this.splitScanInterval = splitScanInterval;
+	}
+
+	public int getMaxCatAttrSplitGroups() {
+		return maxCatAttrSplitGroups;
+	}
+
+	public void setMaxCatAttrSplitGroups(int maxCatAttrSplitGroups) {
+		this.maxCatAttrSplitGroups = maxCatAttrSplitGroups;
 	}
 
 	@Override

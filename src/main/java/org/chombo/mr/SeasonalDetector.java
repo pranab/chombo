@@ -19,6 +19,7 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,6 +34,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -40,10 +42,11 @@ import org.chombo.util.Utility;
  * @author pranab
  *
  */
-public class SeasonalAggregator  extends Configured implements Tool {
+public class SeasonalDetector  extends Configured implements Tool {
 	private static String configDelim = ",";
     private static final String AGGR_COUNT = "count";
     private static final String AGGR_SUM = "sum";
+    private static final String AGGR_AVG = "average";
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -51,15 +54,15 @@ public class SeasonalAggregator  extends Configured implements Tool {
         String jobName = "Seasonal aggregator  for numerical attributes";
         job.setJobName(jobName);
         
-        job.setJarByClass(SeasonalAggregator.class);
+        job.setJarByClass(SeasonalDetector.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration(), "chombo");
-        job.setMapperClass(SeasonalAggregator.AggregatorMapper.class);
-        job.setReducerClass(SeasonalAggregator.AggregateReducer.class);
-        job.setCombinerClass(SeasonalAggregator.AggregateCombiner.class);
+        job.setMapperClass(SeasonalDetector.AggregatorMapper.class);
+        job.setReducerClass(SeasonalDetector.AggregateReducer.class);
+        job.setCombinerClass(SeasonalDetector.AggregateCombiner.class);
         
         job.setMapOutputKeyClass(Tuple.class);
         job.setMapOutputValueClass(Tuple.class);
@@ -67,7 +70,7 @@ public class SeasonalAggregator  extends Configured implements Tool {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
-        int numReducer = job.getConfiguration().getInt("seg.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("sed.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
 
@@ -88,31 +91,34 @@ public class SeasonalAggregator  extends Configured implements Tool {
         private int[] idOrdinals;
         private int timeStampFieldOrdinal;
         private String seasonalCycleType;
-        private static final String  QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
-        private static final String  HALF_HOUR_OF_DAY = "halfHourOfDay";
-        private static final String  HOUR_OF_DAY = "hourOfDay";
-        private static final String  DAY_OF_WEEK  = "dayOfWeek";
-        private static long secInWeek =7L * 24 * 60 * 60;
-        private static long secInDay =24L * 60 * 60;
-        private static long secInHour = 60L * 60;
-        private static long secInHalfHour = 30L * 60;
-        private static long secInQuarterHour = 15L * 60;
-        private long parentCycleIndex;
         private int cycleIndex;
         private long timeStamp;
         private String aggregatorType;
-        private long timeZoneShift;
+        private SeasonalAnalyzer seasonalAnalyzer;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	attributes = Utility.intArrayFromString(config.get("quant.attr.list"),fieldDelimRegex );
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
-        	timeStampFieldOrdinal = config.getInt("time.stamp.field.ordinal", -1);
-        	seasonalCycleType = config.get("seasonal.cycle.type");
-        	aggregatorType = config.get("aggregator.type");
-        	int  timeZoneHours = config.getInt("time.zone.hours",  0);
-        	timeZoneShift = timeZoneHours * secInHour;
+        	attributes = Utility.assertIntArrayConfigParam(config, "sed.quant.attr.list", fieldDelimRegex, "missing quant attribute list");
+        	idOrdinals = Utility.intArrayFromString(config.get("sed.id.field.ordinals"), configDelim);
+        	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"sed.time.stamp.field.ordinal", "missing timestamp field ordinal");
+        	seasonalCycleType = Utility.assertStringConfigParam(config,"sed.seasonal.cycle.type", "missing seasonal cycle type");
+        	aggregatorType = config.get("sed.aggregator.type", AGGR_AVG);
+        	
+    		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
+        	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
+        			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
+        		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "hour.groups", 
+        				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups");
+        		seasonalAnalyzer.setHourRanges(hourRanges);
+        	} 
+        	
+        	int  timeZoneShiftHours = config.getInt("time.zone.shift.hours",  0);
+        	if (timeZoneShiftHours > 0) {
+        		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
+        	}
+        	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
+        	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
        }
 		
         @Override
@@ -121,48 +127,31 @@ public class SeasonalAggregator  extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
             
             timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
-            getCycleIndex(timeStamp + timeZoneShift);
+            cycleIndex = seasonalAnalyzer.getCycleIndex(timeStamp);
             
-        	for (int attr : attributes) {
-            	outKey.initialize();
-            	outVal.initialize();
-            	if (null != idOrdinals) {
-            		outKey.addFromArray(items, idOrdinals);
-            	}
-            	outKey.add(parentCycleIndex, cycleIndex, attr);
-            	
-            	if (aggregatorType.equals(AGGR_COUNT)) {
-            		outVal.add(1);
-            	} else if (aggregatorType.equals(AGGR_SUM)) {
-            		outVal.add(Double.parseDouble(items[attr]));
-            	} else {
-        			throw new IllegalArgumentException("invalid aggregation function");
-        		}
-        	}
-        	
+            if (cycleIndex >= 0) {
+	        	for (int attr : attributes) {
+	            	outKey.initialize();
+	            	outVal.initialize();
+	            	
+	            	if (null != idOrdinals) {
+	            		outKey.addFromArray(items, idOrdinals);
+	            	}
+	            	outKey.add(seasonalAnalyzer.getParentCycleIndex(), cycleIndex, attr);
+	            	
+	            	if (aggregatorType.equals(AGGR_COUNT)) {
+	            		outVal.add(1);
+	            	} else if (aggregatorType.equals(AGGR_SUM)) {
+	            		outVal.add(Double.parseDouble(items[attr]));
+	            	} else if (aggregatorType.equals(AGGR_AVG)) {
+	            		outVal.add(1, Double.parseDouble(items[attr]));
+	            	} else {
+	        			throw new IllegalArgumentException("invalid aggregation function");
+	        		}
+	            	context.write(outKey, outVal);
+	        	}
+            }
         }       
-        
- 
-        /**
-         * Calculates cycle index and parent cycle index
-         * @param timeStamp
-         */
-        private void  getCycleIndex(long timeStamp) {
-        	if (seasonalCycleType.equals(DAY_OF_WEEK)) {
-            	parentCycleIndex = timeStamp / secInWeek;
-        		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-        	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-        		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
-        	}  else  if (seasonalCycleType.equals(HALF_HOUR_OF_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-        		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
-        	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_DAY)) {
-            	parentCycleIndex = timeStamp / secInDay;
-        		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
-        	}
-        }
-        
 	}
 	
 	/**
@@ -180,7 +169,7 @@ public class SeasonalAggregator  extends Configured implements Tool {
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	aggregatorType = config.get("aggregator.type");
+        	aggregatorType = config.get("sed.aggregator.type");
         }
         
         /* (non-Javadoc)
@@ -193,8 +182,11 @@ public class SeasonalAggregator  extends Configured implements Tool {
     		for (Tuple val : values) {
             	if (aggregatorType.equals(AGGR_COUNT)) {
             		totalCount += val.getInt(0);
-            	} else {
+            	} else if (aggregatorType.equals(AGGR_SUM)) {
             		sum  += val.getDouble(0);
+            	} else if (aggregatorType.equals(AGGR_AVG)) {
+            		totalCount += val.getInt(0);
+            		sum  += val.getDouble(1);
             	}
     		}
         
@@ -203,6 +195,8 @@ public class SeasonalAggregator  extends Configured implements Tool {
     			outVal.add(totalCount);
     		} else if (aggregatorType.equals(AGGR_SUM)) {
     			outVal.add(sum);
+    		} else if (aggregatorType.equals(AGGR_AVG)) {
+    			outVal.add(totalCount, sum);
     		} 
         	context.write(key, outVal);       	
         }
@@ -218,12 +212,13 @@ public class SeasonalAggregator  extends Configured implements Tool {
 		protected String fieldDelim;
 		protected double sum;
 		protected int totalCount;
+		private double average;
 		private String aggregatorType;
 		
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
-           	aggregatorType = config.get("aggregator.type");
+           	aggregatorType = config.get("sed.aggregator.type");
 		}
 
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
@@ -235,16 +230,20 @@ public class SeasonalAggregator  extends Configured implements Tool {
             		totalCount += val.getInt(0);
             	} else if (aggregatorType.equals(AGGR_SUM)) {
             		sum  += val.getDouble(0);
+            	}  else if (aggregatorType.equals(AGGR_AVG)) {
+            		totalCount += val.getInt(0);
+            		sum  += val.getDouble(1);
             	}
     		}
     		
-    		int keySize = key.getSize();
         	if (aggregatorType.equals(AGGR_COUNT)) {
-        		outVal.set(key.toString(0, keySize -3) + fieldDelim +  key.toString(keySize -2, keySize) + fieldDelim + totalCount);
+        		outVal.set(key.toString() + fieldDelim +  totalCount);
         	} else if (aggregatorType.equals(AGGR_SUM)) {
-        		outVal.set(key.toString(0, keySize -3) +fieldDelim +  key.toString(keySize -2, keySize) + fieldDelim + sum);
-        	} 
-        	
+        		outVal.set(key.toString() +fieldDelim  + String.format("%.3f", sum));
+        	} else if (aggregatorType.equals(AGGR_AVG)) {
+        		average = sum / totalCount;
+        		outVal.set(key.toString() +fieldDelim  + String.format("%.3f", average));
+        	}
         	context.write(NullWritable.get(), outVal);
         }		
  	}
@@ -253,7 +252,7 @@ public class SeasonalAggregator  extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		int exitCode = ToolRunner.run(new SeasonalAggregator(), args);
+		int exitCode = ToolRunner.run(new SeasonalDetector(), args);
 		System.exit(exitCode);
 	}
  

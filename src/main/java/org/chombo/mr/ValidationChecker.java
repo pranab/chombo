@@ -53,6 +53,12 @@ import org.codehaus.jackson.map.ObjectMapper;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigList;
 
+/**
+ * Data validator. Multiple out of the box validators can be configured for each field. Custom validators
+ * can also be defined.
+ * @author pranab
+ *
+ */
 public class ValidationChecker extends Configured implements Tool {
 
 	@Override
@@ -120,10 +126,8 @@ public class ValidationChecker extends Configured implements Tool {
         	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
  
         	//schema
-        	InputStream is = Utility.getFileStream(config,  "schema.file.path");
-        	ObjectMapper mapper = new ObjectMapper();
-            schema = mapper.readValue(is, GenericAttributeSchema.class);
-
+        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+ 
             //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
             
