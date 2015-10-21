@@ -44,12 +44,15 @@ public class SeasonalAnalyzer {
     public static final String  WEEK_END_DAY_OF_WEEK  = "weekEndDayOfWeek";
     public static final String  HOUR_RANGE_OF_WEEK_DAY  = "hourRangeOfWeekDay";
     public static final String  HOUR_RANGE_OF_WEEK_END_DAY  = "hourRangeOfWeekEndDay";
+    public static final String  MONTH_OF_YEAR = "monthOfYear";
     
     private static long secInWeek =7L * 24 * 60 * 60;
     private static long secInDay =24L * 60 * 60;
     private static long secInHour = 60L * 60;
     private static long secInHalfHour = 30L * 60;
     private static long secInQuarterHour = 15L * 60;
+    private static long secInYear = secInDay * 365;
+    private static int[] daysInMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     
     /**
      * @param seasonalCycleType
@@ -173,7 +176,11 @@ public class SeasonalAnalyzer {
     		} else {
     			cycleIndex = -1;
     		}
-    	} 
+    	}  else  if (seasonalCycleType.equals(MONTH_OF_YEAR)) {
+    		monthOfYearCycleIndex(timeStamp);
+    	} else {
+    		throw new IllegalArgumentException("invalid cycle type");
+    	}
     	
     	return cycleIndex;
     }
@@ -194,4 +201,26 @@ public class SeasonalAnalyzer {
 		return parentCycleIndex;
 	}
     
+	private  void  monthOfYearCycleIndex(long timeStamp) {
+		long secToYear = 0;
+		int year = 1971;
+		for (; secToYear < timeStamp; ++year) {
+			secToYear += secInYear;
+			if (year % 4 == 0) {
+				secToYear += secInDay;
+			}
+		}
+		
+		long remSec =  timeStamp - secToYear;
+		daysInMonth[1] = year % 4 == 0 ? 29 : 28; 
+		long secIntoYear = 0;
+		for (int i = 0; i < 12; ++i) {
+			secIntoYear += daysInMonth[i] + secInDay;
+			if (secIntoYear > remSec) {
+				cycleIndex = i - 1;
+				break;
+			}
+		}
+	}
+	
 }
