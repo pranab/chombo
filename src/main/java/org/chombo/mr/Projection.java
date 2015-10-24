@@ -203,6 +203,7 @@ public class Projection extends Configured implements Tool {
 		private boolean formatCompact;
 		private int averageFunctionIndex;
 		private double  stdDev;
+		private boolean useRank;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -223,6 +224,7 @@ public class Projection extends Configured implements Tool {
         	sortOrderAscending = config.getBoolean("sort.order.ascending", true);
         	limitTo = config.getInt("limit.to", -1);
         	formatCompact = config.getBoolean("format.compact", true);
+        	useRank = config.getBoolean("use.rank", false);
        }
 
 		/* (non-Javadoc)
@@ -360,7 +362,7 @@ public class Projection extends Configured implements Tool {
     	private void emitLongFormat(Tuple key, Iterable<Text> values, Context context) 
     		throws IOException, InterruptedException {
 			//actual values
-			if (sortOrderAscending) {
+ 			if (sortOrderAscending) {
 				int i = 0;
 	        	for (Text value : values){
 	        		if (i == limitTo) {
@@ -368,7 +370,13 @@ public class Projection extends Configured implements Tool {
 	        		}
 	        		stBld.delete(0, stBld.length());
 	        		stBld.append(key.getString(0));
-	    	   		stBld.append(fieldDelim).append(value);
+	        		if (useRank) {
+	        			//rank
+	        			stBld.append(fieldDelim).append(i+1);
+	        		} else {
+	        			//actual value
+	        			stBld.append(fieldDelim).append(value);
+	        		}
 	    	       	outVal.set(stBld.toString());
 	    			context.write(NullWritable.get(), outVal);
 	    	   		++i;
@@ -387,7 +395,13 @@ public class Projection extends Configured implements Tool {
 	        		}
 	        		stBld.delete(0, stBld.length());
 	        		stBld.append(key.getString(0));
-	    	   		stBld.append(fieldDelim).append(sortedValues.get(j));
+	        		if (useRank) {
+	        			//rank
+	        			stBld.append(fieldDelim).append(i+1);
+	        		} else {
+	        			//actual value
+	        			stBld.append(fieldDelim).append(sortedValues.get(j));
+	        		}
 	    	       	outVal.set(stBld.toString());
 	    			context.write(NullWritable.get(), outVal);
 	    	   		++i;
