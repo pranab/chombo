@@ -447,6 +447,15 @@ public class Utility {
      * @param recordItems
      * @param filterFieldOrdinal
      * @param tuple
+     */
+    public static void createStringTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple) {
+    	createStringTuple(recordItems, filterFieldOrdinal, tuple, true);
+    }    
+
+    /**
+     * @param recordItems
+     * @param filterFieldOrdinal
+     * @param tuple
      * @param toInclude
      */
     public static void createIntTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple, boolean toInclude) {
@@ -458,6 +467,15 @@ public class Utility {
     	}
     }    
     
+    /**
+     * @param recordItems
+     * @param filterFieldOrdinal
+     * @param tuple
+     */
+    public static void createIntTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple) {
+    	createIntTuple(recordItems, filterFieldOrdinal, tuple, true);
+    }    
+
     /** creates tuple
      * @param record coma separated  fields
      * @param tuple

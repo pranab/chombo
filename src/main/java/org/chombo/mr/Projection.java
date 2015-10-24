@@ -167,7 +167,7 @@ public class Projection extends Configured implements Tool {
         	outKey.initialize();
             if (orderByField >= 0) {
             	if (isOrderByFieldNumeric) {
-               		outKey.add(items[keyField],Integer.parseInt( items[orderByField]));
+               		outKey.add(items[keyField],Double.parseDouble( items[orderByField]));
             	} else {
             		outKey.add(items[keyField], items[orderByField]);
             	}
