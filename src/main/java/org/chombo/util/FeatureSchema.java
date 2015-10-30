@@ -15,7 +15,7 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.mr;
+package org.chombo.util;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,7 +26,8 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.chombo.util.Utility;
+import org.chombo.mr.FeatureField;
+import org.chombo.mr.FeatureFieldCollection;
 
 /**
  * Metadata based on schema JSON file. Enriched by stats data

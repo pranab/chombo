@@ -1219,6 +1219,22 @@ public class Utility {
 	}
 	
 	/**
+	 * @param conf
+	 * @param pathParam
+	 * @return
+	 * @throws IOException
+	 */
+	public static FeatureSchema getFeatureSchema(Configuration conf, String pathParam) throws IOException {
+		FeatureSchema schema = null;
+		InputStream is = Utility.getFileStream(conf, pathParam);
+		if (null != is) {
+			ObjectMapper mapper = new ObjectMapper();
+			schema = mapper.readValue(is, FeatureSchema.class);
+		}
+		return schema;
+	}
+
+	/**
 	 * @param config
 	 * @param params
 	 * @return
