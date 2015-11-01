@@ -131,7 +131,6 @@ public class Joiner extends Configured implements Tool {
 	            	} else {
 	            		Utility.createStringTuple(items, firstSetProjectedFields, outVal, true); 
 	            	}
-	            	
 	            	outVal.prepend("0");
    	    			context.getCounter("Join stats", "left set count").increment(1);
 	            } else {
