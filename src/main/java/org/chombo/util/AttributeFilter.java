@@ -15,7 +15,6 @@
  * permissions and limitations under the License.
  */
 
-
 package org.chombo.util;
 
 import java.util.ArrayList;

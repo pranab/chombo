@@ -36,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.AttributeFilter;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.TextInt;
 import org.chombo.util.Tuple;
@@ -97,6 +98,8 @@ public class Joiner extends Configured implements Tool {
 	        private boolean sortKeyFields;
 	        private int[] firstSetProjectedFields ;
 	        private int[] secondSetProjectedFields ;
+	        private AttributeFilter firstSetAttrFilter;
+	        private AttributeFilter secondSetAttrFilter;
 	        
 	        /* (non-Javadoc)
 	         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -116,36 +119,54 @@ public class Joiner extends Configured implements Tool {
 	        	
 	        	firstSetProjectedFields = Utility.intArrayFromString(config.get("first.set.projected.fields"), configDelim);
 	        	secondSetProjectedFields = Utility.intArrayFromString(config.get("second.set.projected.fields"), configDelim);
+	        	
+	        	String firstSetFilter = config.get("first.set.filter");
+	        	if (null  !=   firstSetFilter) {
+	        		firstSetAttrFilter = new AttributeFilter(firstSetFilter);
+	        	}
+	        	
+	        	String secondSetFilter = config.get("second.set.filter");
+	        	if (null  !=   secondSetFilter) {
+	        		secondSetAttrFilter = new AttributeFilter(secondSetFilter);
+	        	}
 	       }
 
 	        @Override
 	        protected void map(LongWritable key, Text value, Context context)
 	            throws IOException, InterruptedException {
 	            String[] items  =  value.toString().split(fieldDelimRegex);
+	            boolean toEmit = false;
 	            //key fields as key and remaining as value
 	            if (isFirstTypeSplit) {
-	            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut, sortKeyFields) , 0);
-	            	
-	            	if (null == firstSetProjectedFields) {
-	            		Utility.createStringTuple(items, keyFieldFirst, outVal, false); 
-	            	} else {
-	            		Utility.createStringTuple(items, firstSetProjectedFields, outVal, true); 
+	            	if (null == firstSetAttrFilter || firstSetAttrFilter.evaluate(items)) {
+		            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut, sortKeyFields) , 0);
+		            	
+		            	if (null == firstSetProjectedFields) {
+		            		Utility.createStringTuple(items, keyFieldFirst, outVal, false); 
+		            	} else {
+		            		Utility.createStringTuple(items, firstSetProjectedFields, outVal, true); 
+		            	}
+		            	outVal.prepend("0");
+	   	    			context.getCounter("Join stats", "left set count").increment(1);
+	   	    			toEmit = true;
 	            	}
-	            	outVal.prepend("0");
-   	    			context.getCounter("Join stats", "left set count").increment(1);
+   	    			
 	            } else {
-	            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut, sortKeyFields) , 1);
-
-	            	if (null == secondSetProjectedFields) {
-	            		Utility.createStringTuple(items, keyFieldSecond, outVal, false); 
-	            	} else {
-	            		Utility.createStringTuple(items, secondSetProjectedFields, outVal, true); 
-	            	}
-	            	outVal.prepend("1");
-   	    			context.getCounter("Join stats", "right set count").increment(1);
+	            	if (null == secondSetAttrFilter || secondSetAttrFilter.evaluate(items)) {
+		            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut, sortKeyFields) , 1);
+	
+		            	if (null == secondSetProjectedFields) {
+		            		Utility.createStringTuple(items, keyFieldSecond, outVal, false); 
+		            	} else {
+		            		Utility.createStringTuple(items, secondSetProjectedFields, outVal, true); 
+		            	}
+		            	outVal.prepend("1");
+	   	    			context.getCounter("Join stats", "right set count").increment(1);
+		            }
 	            }
-	            
-	    		context.write(outKey, outVal);
+	            if (toEmit) {
+	            	context.write(outKey, outVal);
+	            }
 	        }
 		}
 
