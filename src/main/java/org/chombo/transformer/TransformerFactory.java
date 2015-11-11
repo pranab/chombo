@@ -43,6 +43,10 @@ public class TransformerFactory {
 	public static final String DATE_GENERATOR = "dateGen";
 	public static final String DATE_FORMAT_TRANSFORMER = "dateFormat";
 	public static final String NUM_DATA_DISCRETIZER = "discretizer";
+	public static final String INT_ADD = "intAdd";
+	public static final String INT_SUBTRACT = "intSubtract";
+	public static final String INT_MULTIPLY = "intMultiply";
+	public static final String INT_DIVIDE = "intDivide";
 	
 	/**
 	 * @param tag
@@ -85,6 +89,14 @@ public class TransformerFactory {
 			transformer = new DateTransformer.DateFormatTransformer(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(NUM_DATA_DISCRETIZER)) {
 			transformer = new NumericTransformer.Discretizer(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(INT_ADD)) {
+			transformer = new NumericTransformer.Adder(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(INT_SUBTRACT)) {
+			transformer = new NumericTransformer.Subtracter(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(INT_MULTIPLY)) {
+			transformer = new NumericTransformer.Multiplier(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(INT_DIVIDE)) {
+			transformer = new NumericTransformer.Divider(prAttr, config.getConfig(transformerTag));
 		} else {
 			throw new IllegalArgumentException("invalid transformer");
 		}

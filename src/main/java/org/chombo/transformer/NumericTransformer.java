@@ -250,7 +250,120 @@ public class NumericTransformer  {
 			transformed[0] = "" + bucket;;
 			return transformed;
 		}
-		
-		
 	}
+
+	public static abstract class Operator  extends AttributeTransformer {
+		protected boolean isInt;
+		protected int iOperand;
+		protected double dOperand;
+		
+		public Operator(ProcessorAttribute prAttr, Config config) {
+			isInt = prAttr.isInteger();
+			if (isInt) {
+				iOperand = config.getInt("intOperand");
+			} else {
+				dOperand = config.getInt("dblOperand");
+			}
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (isInt) {
+				int iValue = Integer.parseInt(value);
+				iValue = operate(iOperand);
+				transformed[0] = "" + iValue;
+			} else {
+				double dValue = Double.parseDouble(value);
+				dValue = operate(dOperand);
+				transformed[0] = "" + dValue;
+			}
+			return transformed;
+		}
+		
+		protected abstract int operate(int value);
+
+		protected abstract double operate(double value);
+
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class Adder extends Operator {
+		public Adder(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}
+
+		@Override
+		protected int operate(int value) {
+			return value + iOperand;
+		}
+
+		@Override
+		protected double operate(double value) {
+			return value + dOperand;
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class Subtracter  extends Operator {
+		public Subtracter(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}
+
+		@Override
+		protected int operate(int value) {
+			return value - iOperand;
+		}
+
+		@Override
+		protected double operate(double value) {
+			return value - dOperand;
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class Multiplier  extends Operator {
+		public Multiplier(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}
+
+		@Override
+		protected int operate(int value) {
+			return value * iOperand;
+		}
+
+		@Override
+		protected double operate(double value) {
+			return value * dOperand;
+		}
+	}
+
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class Divider  extends Operator {
+		public Divider(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}
+
+		@Override
+		protected int operate(int value) {
+			return value / iOperand;
+		}
+
+		@Override
+		protected double operate(double value) {
+			return value / dOperand;
+		}
+	}
+	
 }
