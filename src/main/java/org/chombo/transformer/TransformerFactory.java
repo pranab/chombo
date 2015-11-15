@@ -47,6 +47,8 @@ public class TransformerFactory {
 	public static final String INT_SUBTRACT = "intSubtract";
 	public static final String INT_MULTIPLY = "intMultiply";
 	public static final String INT_DIVIDE = "intDivide";
+	public static final String CONST_GENERATOR = "constGenerator";
+	public static final String GROUP_TRANFORMER = "groupTransformer";
 	
 	/**
 	 * @param tag
@@ -97,6 +99,10 @@ public class TransformerFactory {
 			transformer = new NumericTransformer.Multiplier(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(INT_DIVIDE)) {
 			transformer = new NumericTransformer.Divider(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(CONST_GENERATOR)) {
+			transformer = new StringTransformer.ConstantGenerator(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(GROUP_TRANFORMER)) {
+			transformer = new StringTransformer.GroupTransformer(prAttr, config.getConfig(transformerTag));
 		} else {
 			throw new IllegalArgumentException("invalid transformer");
 		}

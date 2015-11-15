@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.chombo.util.BaseAttribute;
 import org.chombo.util.ProcessorAttribute;
+import org.chombo.util.Utility;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
@@ -253,9 +254,10 @@ public class NumericTransformer  {
 	}
 
 	public static abstract class Operator  extends AttributeTransformer {
-		protected boolean isInt;
+		private  boolean isInt;
 		protected int iOperand;
 		protected double dOperand;
+		private int precision;
 		
 		public Operator(ProcessorAttribute prAttr, Config config) {
 			isInt = prAttr.isInteger();
@@ -263,6 +265,7 @@ public class NumericTransformer  {
 				iOperand = config.getInt("intOperand");
 			} else {
 				dOperand = config.getInt("dblOperand");
+				precision = config.getInt("precision");
 			}
 		}
 
@@ -275,7 +278,7 @@ public class NumericTransformer  {
 			} else {
 				double dValue = Double.parseDouble(value);
 				dValue = operate(dOperand);
-				transformed[0] = "" + dValue;
+				transformed[0] =  Utility.formatDouble(dValue, precision);
 			}
 			return transformed;
 		}
