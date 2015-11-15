@@ -133,6 +133,20 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	}
 	
 	/**
+	 * @param other
+	 */
+	public void add(Tuple other) {
+		fields.addAll(other.fields);
+	}
+	
+	 /**
+	 * @param list
+	 */
+	public  <T> void add(List<T> list) {
+		 fields.addAll(list);
+	 }
+	 
+	/**
 	 * adds string serilized elements
 	 * @param type
 	 * @param field
