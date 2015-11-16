@@ -270,7 +270,9 @@ public class Transformer extends Configured implements Tool {
         			transformerList = generators;
         		}
         		
+        		//chained transformation
             	int t = 0;
+            	transformedValues = null;
             	for (AttributeTransformer trans :  transformerList) {
         			transformedValues = trans.tranform(source);
         			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
@@ -281,6 +283,18 @@ public class Transformer extends Configured implements Tool {
         			++t;
             	}
             	
+            	//no transformers or generators
+            	if (null != transformedValues) {
+            		transformedValues = new String[1];
+            		transformedValues[0] = source;
+            	}
+            	
+            	//check output size with target attribute count
+            	if (transformedValues.length != prAttr.getTargetFieldOrdinals().length) {
+            		throw new IllegalStateException("transformed output size does not match with target attribute count");
+            	}
+            	
+            	//populated target attributes
             	t = 0;
             	for (int targetOrd : prAttr.getTargetFieldOrdinals()) {
             		itemsOut[targetOrd] = transformedValues[t];

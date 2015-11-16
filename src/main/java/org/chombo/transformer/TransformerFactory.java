@@ -26,29 +26,34 @@ import com.typesafe.config.Config;
  *
  */
 public class TransformerFactory {
-	public static final String LOWER_CASE_TRANSFORMER  = "lowerCase";
-	public static final String UPPER_CASE_TRANSFORMER  = "upperCase";
-	public static final String PATTERN_BASED_TRANSFORMER  = "patternBased";
-	public static final String SEARCH_REPLACE_TRANSFORMER  = "searchReplace";
-	public static final String KEY_VALUE_TRANSFORMER  = "keyValue";
-	public static final String DEFAULT_VALUE_TRANSFORMER  = "defaultValue";
-	public static final String ANOYNMIZER_TRANSFORMER  = "anoynmizer";
-	public static final String UNIQUE_KEY_GENERATOR  = "uniqueKey";
-	public static final String TRIM_TRANSFORMER  = "trim";
-	public static final String LONG_POLYNOMIAL_TRANSFORMER  = "longPolynomial";
-	public static final String DOUBLE_POLYNOMIAL_TRANSFORMER  = "doublePolynomial";
-	public static final String LONG_CUSTOM_TRANSFORMER  = "longCustom";
-	public static final String DOUBLE_CUSTOM_TRANSFORMER  = "longCustom";
+	public static final String LOWER_CASE_TRANSFORMER  = "lowerCaseTrans";
+	public static final String UPPER_CASE_TRANSFORMER  = "upperCaseTrans";
+	public static final String PATTERN_BASED_TRANSFORMER  = "patternBasedTrans";
+	public static final String SEARCH_REPLACE_TRANSFORMER  = "searchReplaceTrans";
+	public static final String KEY_VALUE_TRANSFORMER  = "keyValueTrans";
+	public static final String DEFAULT_VALUE_TRANSFORMER  = "defaultValueTrans";
+	public static final String ANOYNMIZER_TRANSFORMER  = "anoynmizerTrans";
+	public static final String UNIQUE_KEY_GENERATOR  = "uniqueKeyGen";
+	public static final String TRIM_TRANSFORMER  = "trimTrans";
+	public static final String LONG_POLYNOMIAL_TRANSFORMER  = "longPolynomialTrans";
+	public static final String DOUBLE_POLYNOMIAL_TRANSFORMER  = "doublePolynomialTrans";
+	public static final String LONG_CUSTOM_TRANSFORMER  = "longCustomTrans";
+	public static final String DOUBLE_CUSTOM_TRANSFORMER  = "doubleCustomTrans";
 	public static final String EPOCH_TIME_GENERATOR = "epochTimeGen";
 	public static final String DATE_GENERATOR = "dateGen";
-	public static final String DATE_FORMAT_TRANSFORMER = "dateFormat";
-	public static final String NUM_DATA_DISCRETIZER = "discretizer";
-	public static final String INT_ADD = "intAdd";
-	public static final String INT_SUBTRACT = "intSubtract";
-	public static final String INT_MULTIPLY = "intMultiply";
-	public static final String INT_DIVIDE = "intDivide";
-	public static final String CONST_GENERATOR = "constGenerator";
-	public static final String GROUP_TRANFORMER = "groupTransformer";
+	public static final String DATE_FORMAT_TRANSFORMER = "dateFormatTrans";
+	public static final String NUM_DATA_DISCRETIZER = "discretizerTrans";
+	public static final String INT_ADD_TRANSFORMER = "intAddTrans";
+	public static final String INT_SUBTRACT_TRANSFORMER = "intSubtractTrans";
+	public static final String INT_MULTIPLY_TRANSFORMER = "intMultiplyTrans";
+	public static final String INT_DIVIDE_TRANSFORMER = "intDivideTrans";
+	public static final String DOUBLE_ADD_TRANSFORMER= "doubleAddTrans";
+	public static final String DOUBLE_SUBTRACT_TRANSFORMER = "doubleSubtractTrans";
+	public static final String DOUBLE_MULTIPLY_TRANSFORMER = "doubleMultiplyTrans";
+	public static final String DOUBLE_DIVIDE_TRANSFORMER = "doubleDivideTrans";
+	public static final String CONST_GENERATOR = "constGen";
+	public static final String GROUP_TRANFORMER = "groupTrans";
+	public static final String FORCED_REPLACE_TRANSFORMER  = "forcedReplaceTrans";
 	
 	/**
 	 * @param tag
@@ -91,18 +96,20 @@ public class TransformerFactory {
 			transformer = new DateTransformer.DateFormatTransformer(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(NUM_DATA_DISCRETIZER)) {
 			transformer = new NumericTransformer.Discretizer(prAttr, config.getConfig(transformerTag));
-		} else if (transformerTag.equals(INT_ADD)) {
+		} else if (transformerTag.equals(INT_ADD_TRANSFORMER) || transformerTag.equals(DOUBLE_ADD_TRANSFORMER)) {
 			transformer = new NumericTransformer.Adder(prAttr, config.getConfig(transformerTag));
-		} else if (transformerTag.equals(INT_SUBTRACT)) {
+		} else if (transformerTag.equals(INT_SUBTRACT_TRANSFORMER) || transformerTag.equals(DOUBLE_SUBTRACT_TRANSFORMER)) {
 			transformer = new NumericTransformer.Subtracter(prAttr, config.getConfig(transformerTag));
-		} else if (transformerTag.equals(INT_MULTIPLY)) {
+		} else if (transformerTag.equals(INT_MULTIPLY_TRANSFORMER) || transformerTag.equals(DOUBLE_MULTIPLY_TRANSFORMER)) {
 			transformer = new NumericTransformer.Multiplier(prAttr, config.getConfig(transformerTag));
-		} else if (transformerTag.equals(INT_DIVIDE)) {
+		} else if (transformerTag.equals(INT_DIVIDE_TRANSFORMER) || transformerTag.equals(DOUBLE_DIVIDE_TRANSFORMER)) {
 			transformer = new NumericTransformer.Divider(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(CONST_GENERATOR)) {
 			transformer = new StringTransformer.ConstantGenerator(prAttr, config.getConfig(transformerTag));
 		} else if (transformerTag.equals(GROUP_TRANFORMER)) {
 			transformer = new StringTransformer.GroupTransformer(prAttr, config.getConfig(transformerTag));
+		} else if (transformerTag.equals(FORCED_REPLACE_TRANSFORMER)) {
+			transformer = new StringTransformer.ForcedReplaceTransformer(prAttr, config.getConfig(transformerTag));
 		} else {
 			throw new IllegalArgumentException("invalid transformer");
 		}

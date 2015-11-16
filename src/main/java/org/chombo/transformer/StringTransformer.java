@@ -208,7 +208,7 @@ public class StringTransformer {
 			defaultValue  = config.getString("defaultValue");
 		}
 
-		public DefaultValueTransformer( Config config, String defaultValue) {
+		public DefaultValueTransformer( String defaultValue) {
 			super(1);
 			this.defaultValue  = defaultValue;
 		}
@@ -224,6 +224,30 @@ public class StringTransformer {
 		}
 	}	
 	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class ForcedReplaceTransformer extends AttributeTransformer {
+		private String newValue;
+		
+		public ForcedReplaceTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			newValue  = config.getString("newValue");
+		}
+
+		public ForcedReplaceTransformer( String newValue) {
+			super(1);
+			this.newValue  = newValue;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] = newValue;
+			return transformed;
+		}
+	}	
+
 	/**
 	 * @author pranab
 	 *
