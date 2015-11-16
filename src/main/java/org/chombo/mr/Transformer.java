@@ -179,11 +179,11 @@ public class Transformer extends Configured implements Tool {
          * @return
          */
         private Config getTransformerConfig(String tranformerTag, ProcessorAttribute prAttr) {
-        	Config transConfig = transformerConfig.getConfig(tranformerTag);
+        	Config transConfig = transformerConfig.getConfig("transformers." + tranformerTag);
         	Config config = null;
         	try {
         		//attribute specific config
-        		config = transConfig.getConfig("attr_" + prAttr.getOrdinal());
+        		config = transConfig.getConfig(prAttr.getName());
         	} catch ( ConfigException.Missing ex) {
         	}
         	
