@@ -45,6 +45,7 @@ import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 
 /**
  * Transforms attributes based on plugged in transformers for different attributes.
@@ -150,7 +151,7 @@ public class Transformer extends Configured implements Tool {
 	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributes()) {
 	        		fieldOrd = prAttr.getOrdinal();
 	        		for (String tranformerTag  : prAttr.getTransformers() ) {
-	        			transConfig = transformerConfig.getConfig(tranformerTag);
+	        			transConfig = getTransformerConfig(tranformerTag, prAttr);
 	        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transConfig);
 	        			registerTransformers(fieldOrd, attrTrans);
 	        		}
@@ -160,7 +161,7 @@ public class Transformer extends Configured implements Tool {
 	        	if (null != transformerSchema.getAttributeGenerators()) {
 		        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
 		        		for (String tranformerTag  : prAttr.getTransformers() ) {
-		        			transConfig = transformerConfig.getConfig(tranformerTag);
+		        			transConfig = getTransformerConfig(tranformerTag, prAttr);
 		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transConfig);
 		        			registerGenerators(attrTrans);
 		        		}
@@ -171,6 +172,23 @@ public class Transformer extends Configured implements Tool {
 	        	itemsOut = new String[transformerSchema.findDerivedAttributeCount()];
         	}
        }
+        
+        /**
+         * @param tranformerTag
+         * @param prAttr
+         * @return
+         */
+        private Config getTransformerConfig(String tranformerTag, ProcessorAttribute prAttr) {
+        	Config transConfig = transformerConfig.getConfig(tranformerTag);
+        	Config config = null;
+        	try {
+        		//attribute specific config
+        		config = transConfig.getConfig("attr_" + prAttr.getOrdinal());
+        	} catch ( ConfigException.Missing ex) {
+        	}
+        	
+        	return null != config ? config :  transConfig;
+        }
         
         /**
          * @param fieldOrd
