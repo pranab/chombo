@@ -152,7 +152,6 @@ public class Transformer extends Configured implements Tool {
 	        		fieldOrd = prAttr.getOrdinal();
 	        		if (null != prAttr.getTransformers()) {
 	        			for (String tranformerTag  : prAttr.getTransformers() ) {
-	        				//transConfig = getTransformerConfig(tranformerTag, prAttr);
 	        				attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
 	        				registerTransformers(fieldOrd, attrTrans);
 	        			}
@@ -163,7 +162,6 @@ public class Transformer extends Configured implements Tool {
 	        	if (null != transformerSchema.getAttributeGenerators()) {
 		        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
 		        		for (String tranformerTag  : prAttr.getTransformers() ) {
-		        			//transConfig = getTransformerConfig(tranformerTag, prAttr);
 		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
 		        			registerGenerators(attrTrans);
 		        		}
@@ -175,22 +173,6 @@ public class Transformer extends Configured implements Tool {
         	}
        }
         
-        /**
-         * @param tranformerTag
-         * @param prAttr
-         * @return
-         */
-        private Config getTransformerConfig(String tranformerTag, ProcessorAttribute prAttr) {
-        	Config transConfig = transformerConfig.getConfig("transformers." + tranformerTag);
-        	Config config = null;
-        	try {
-        		//attribute specific config
-        		config = transConfig.getConfig(prAttr.getName());
-        	} catch ( ConfigException.Missing ex) {
-        	}
-        	
-        	return null != config ? config :  transConfig;
-        }
         
         /**
          * @param fieldOrd

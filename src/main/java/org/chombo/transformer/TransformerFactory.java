@@ -55,6 +55,7 @@ public class TransformerFactory {
 	public static final String CONST_GENERATOR = "constGen";
 	public static final String GROUP_TRANFORMER = "groupTrans";
 	public static final String FORCED_REPLACE_TRANSFORMER  = "forcedReplaceTrans";
+	public static final String STRING_CUSTOM_TRANSFORMER  = "stringCustomTrans";
 	
 	/**
 	 * @param tag
@@ -111,6 +112,8 @@ public class TransformerFactory {
 			transformer = new StringTransformer.GroupTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(FORCED_REPLACE_TRANSFORMER)) {
 			transformer = new StringTransformer.ForcedReplaceTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(STRING_CUSTOM_TRANSFORMER)) {
+			transformer = new StringTransformer.StringCustomTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
 			throw new IllegalArgumentException("invalid transformer");
 		}

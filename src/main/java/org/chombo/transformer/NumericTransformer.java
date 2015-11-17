@@ -265,7 +265,7 @@ public class NumericTransformer  {
 			if (isInt) {
 				iOperand = config.getInt("intOperand");
 			} else {
-				dOperand = config.getInt("dblOperand");
+				dOperand = config.getDouble("dblOperand");
 				precision = config.getInt("precision");
 			}
 		}

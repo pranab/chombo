@@ -29,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.chombo.transformer.NumericTransformer.Custom;
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
@@ -384,5 +385,34 @@ public class StringTransformer {
 			return transformed;
 		}
 	}	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class StringCustomTransformer extends CustomTransformer {
+		
+		public StringCustomTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}		
+		
+		public StringCustomTransformer(String script, Map<String, Object> params) {
+			super(script,  params);
+		}
+
+		protected  Object getFieldValue(String value) {
+			return value;
+		}
+		
+		protected  String getOutput(Object out) {
+			String ret = null;
+			if (out instanceof String ) {
+				ret = "" + (String)out;
+			} else {
+				throw new IllegalArgumentException("string output expected");
+			}
+			return ret;
+		}
+	}
 	
 }
