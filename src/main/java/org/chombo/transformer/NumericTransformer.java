@@ -260,6 +260,7 @@ public class NumericTransformer  {
 		private int precision;
 		
 		public Operator(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
 			isInt = prAttr.isInteger();
 			if (isInt) {
 				iOperand = config.getInt("intOperand");
@@ -273,11 +274,11 @@ public class NumericTransformer  {
 		public String[] tranform(String value) {
 			if (isInt) {
 				int iValue = Integer.parseInt(value);
-				iValue = operate(iOperand);
+				iValue = operate(iValue);
 				transformed[0] = "" + iValue;
 			} else {
 				double dValue = Double.parseDouble(value);
-				dValue = operate(dOperand);
+				dValue = operate(dValue);
 				transformed[0] =  Utility.formatDouble(dValue, precision);
 			}
 			return transformed;

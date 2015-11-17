@@ -20,6 +20,7 @@ package org.chombo.transformer;
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 
 /**
  * @author pranab
@@ -67,53 +68,71 @@ public class TransformerFactory {
 		} else if (transformerTag.equals(UPPER_CASE_TRANSFORMER)) {
 			transformer = new StringTransformer.UpperCaseTransformer(prAttr);
 		} else if (transformerTag.equals(PATTERN_BASED_TRANSFORMER)) {
-			transformer = new StringTransformer.PatternBasedTransformer(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.PatternBasedTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(SEARCH_REPLACE_TRANSFORMER)) {
-			transformer = new StringTransformer.PatternBasedTransformer(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.PatternBasedTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(KEY_VALUE_TRANSFORMER)) {
-			transformer = new StringTransformer.KeyValueTransformer(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.KeyValueTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(DEFAULT_VALUE_TRANSFORMER)) {
-			transformer = new StringTransformer.DefaultValueTransformer(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.DefaultValueTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(ANOYNMIZER_TRANSFORMER)) {
-			transformer = new StringTransformer.AnoynmizerTransformer(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.AnoynmizerTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(UNIQUE_KEY_GENERATOR)) {
-			transformer = new StringTransformer.UniqueKeyGenerator(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.UniqueKeyGenerator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(TRIM_TRANSFORMER)) {
 			transformer = new StringTransformer.TrimTransformer(prAttr);
 		} else if (transformerTag.equals(LONG_POLYNOMIAL_TRANSFORMER)) {
-			transformer = new NumericTransformer.LongPolynomial(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.LongPolynomial(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(DOUBLE_POLYNOMIAL_TRANSFORMER)) {
-			transformer = new NumericTransformer.DoublePolynomial(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.DoublePolynomial(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(LONG_CUSTOM_TRANSFORMER)) {
-			transformer = new NumericTransformer.LongCustom(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.LongCustom(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(DOUBLE_CUSTOM_TRANSFORMER)) {
-			transformer = new NumericTransformer.DoubleCustom(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.DoubleCustom(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(EPOCH_TIME_GENERATOR)) {
 			transformer = new DateTransformer.EpochTimeGenerator(prAttr);
 		} else if (transformerTag.equals(DATE_GENERATOR)) {
-			transformer = new DateTransformer.DateGenerator(prAttr, config.getConfig(transformerTag));
+			transformer = new DateTransformer.DateGenerator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(DATE_FORMAT_TRANSFORMER)) {
-			transformer = new DateTransformer.DateFormatTransformer(prAttr, config.getConfig(transformerTag));
+			transformer = new DateTransformer.DateFormatTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(NUM_DATA_DISCRETIZER)) {
-			transformer = new NumericTransformer.Discretizer(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.Discretizer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(INT_ADD_TRANSFORMER) || transformerTag.equals(DOUBLE_ADD_TRANSFORMER)) {
-			transformer = new NumericTransformer.Adder(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.Adder(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(INT_SUBTRACT_TRANSFORMER) || transformerTag.equals(DOUBLE_SUBTRACT_TRANSFORMER)) {
-			transformer = new NumericTransformer.Subtracter(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.Subtracter(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(INT_MULTIPLY_TRANSFORMER) || transformerTag.equals(DOUBLE_MULTIPLY_TRANSFORMER)) {
-			transformer = new NumericTransformer.Multiplier(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.Multiplier(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(INT_DIVIDE_TRANSFORMER) || transformerTag.equals(DOUBLE_DIVIDE_TRANSFORMER)) {
-			transformer = new NumericTransformer.Divider(prAttr, config.getConfig(transformerTag));
+			transformer = new NumericTransformer.Divider(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(CONST_GENERATOR)) {
-			transformer = new StringTransformer.ConstantGenerator(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.ConstantGenerator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(GROUP_TRANFORMER)) {
-			transformer = new StringTransformer.GroupTransformer(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.GroupTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(FORCED_REPLACE_TRANSFORMER)) {
-			transformer = new StringTransformer.ForcedReplaceTransformer(prAttr, config.getConfig(transformerTag));
+			transformer = new StringTransformer.ForcedReplaceTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
 			throw new IllegalArgumentException("invalid transformer");
 		}
 		
 		return transformer;
 	}
+	
+    /**
+     * @param tranformerTag
+     * @param prAttr
+     * @return
+     */
+    private static Config getTransformerConfig(Config transformerConfig ,String transformerTag, ProcessorAttribute prAttr) {
+    	Config transConfig = transformerConfig.getConfig("transformers." + transformerTag);
+    	Config config = null;
+    	try {
+    		//attribute specific config
+    		config = transConfig.getConfig(prAttr.getName());
+    	} catch ( ConfigException.Missing ex) {
+    	}
+    	
+    	return null != config ? config :  transConfig;
+    }
+	
 }

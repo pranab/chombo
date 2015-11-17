@@ -23,8 +23,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-import org.apache.commons.lang.StringUtils;
 import org.chombo.util.ProcessorAttribute;
+import org.chombo.util.Utility;
 
 import com.typesafe.config.Config;
 
@@ -128,7 +128,7 @@ public class DateTransformer  {
 				sourceEpochTime = true;
 			} else  {
 				sourceDateFormat = new SimpleDateFormat(sourceDateFormatStr);
-				if (StringUtils.isNotBlank(sourceTimeZone)) {
+				if (!Utility.isBlank(sourceTimeZone)) {
 					sourceDateFormat.setTimeZone(TimeZone.getTimeZone(sourceTimeZone));
 				}
 			}
@@ -137,7 +137,7 @@ public class DateTransformer  {
 				targetEpochTime = true;
 			} else  {
 				targetDateFormat = new SimpleDateFormat(targetDateFormatStr);
-				if (StringUtils.isNotBlank(targetTimeZone)) {
+				if (!Utility.isBlank(targetTimeZone)) {
 					targetDateFormat.setTimeZone(TimeZone.getTimeZone(targetTimeZone));
 				}
 			}

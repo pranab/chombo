@@ -59,7 +59,7 @@
 		[
 			{
 				"name" : "country",
-				"ordinal" : -1,
+				"ordinal" : 8,
 				"dataType" : "string",
 				"transformers" : ["constGen"],
 				"targetFieldOrdinals" : [8]

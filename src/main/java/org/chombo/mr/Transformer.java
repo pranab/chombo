@@ -150,10 +150,12 @@ public class Transformer extends Configured implements Tool {
 	        	AttributeTransformer attrTrans;
 	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributes()) {
 	        		fieldOrd = prAttr.getOrdinal();
-	        		for (String tranformerTag  : prAttr.getTransformers() ) {
-	        			transConfig = getTransformerConfig(tranformerTag, prAttr);
-	        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transConfig);
-	        			registerTransformers(fieldOrd, attrTrans);
+	        		if (null != prAttr.getTransformers()) {
+	        			for (String tranformerTag  : prAttr.getTransformers() ) {
+	        				//transConfig = getTransformerConfig(tranformerTag, prAttr);
+	        				attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
+	        				registerTransformers(fieldOrd, attrTrans);
+	        			}
 	        		}
 	        	}
 	        	
@@ -161,8 +163,8 @@ public class Transformer extends Configured implements Tool {
 	        	if (null != transformerSchema.getAttributeGenerators()) {
 		        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
 		        		for (String tranformerTag  : prAttr.getTransformers() ) {
-		        			transConfig = getTransformerConfig(tranformerTag, prAttr);
-		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transConfig);
+		        			//transConfig = getTransformerConfig(tranformerTag, prAttr);
+		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
 		        			registerGenerators(attrTrans);
 		        		}
 		        	}
@@ -291,18 +293,20 @@ public class Transformer extends Configured implements Tool {
         		//chained transformation
             	int t = 0;
             	transformedValues = null;
-            	for (AttributeTransformer trans :  transformerList) {
-        			transformedValues = trans.tranform(source);
-        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
-        				//only last transformer is allowed to emit multiple values
-        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
-        			}
-	        		source = transformedValues[0];
-        			++t;
+            	if (null != transformerList) {
+	            	for (AttributeTransformer trans :  transformerList) {
+	        			transformedValues = trans.tranform(source);
+	        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
+	        				//only last transformer is allowed to emit multiple values
+	        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
+	        			}
+		        		source = transformedValues[0];
+	        			++t;
+	            	}
             	}
             	
             	//no transformers or generators
-            	if (null != transformedValues) {
+            	if (null  == transformedValues) {
             		transformedValues = new String[1];
             		transformedValues[0] = source;
             	}
