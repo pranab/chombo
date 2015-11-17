@@ -1,0 +1,36 @@
+This tutorial is data transformation. Set of out of the box transformers are used to 
+transform data.  Make necessary changes in the relevant files, 
+according to your environment.
+
+Dependent script
+================
+Checkout the project visitante. Take the script util.py from the project and placeit
+in ../lib directory with respect the directory containing store_order.py
+
+1. Create sales data
+=======================
+./retail_sell.py <num_of_stores> <num_of_products> <num_of_transactions> <num_of_customers> > <sale_data_file>
+
+Edit the output file so that data violates validation rules for some records
+
+2. Export input to HDFS
+=======================
+hadoop fs -put <sale_data_file> /user/pranab/rese/input
+
+3. Export metadata to HDFS
+==========================
+hadoop fs -put retailSell.json /user/pranab/meta/rese
+
+4. Export configuration to HDFS
+===============================
+hadoop fs -put retailSellTransformers.conf /user/pranab/meta/rese
+
+5. Run validation map reduce
+============================
+./etl.sh transformer
+
+6. Configuration
+================
+Sample configuration is in etl.properties
+
+
