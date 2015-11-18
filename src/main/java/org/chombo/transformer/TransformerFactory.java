@@ -57,6 +57,27 @@ public class TransformerFactory {
 	public static final String FORCED_REPLACE_TRANSFORMER  = "forcedReplaceTrans";
 	public static final String STRING_CUSTOM_TRANSFORMER  = "stringCustomTrans";
 	
+	private static CustomTransformerFactory custTransFactory;
+	
+	/**
+	 * @param customTransFactoryClass
+	 */
+	public static void initialize(String customTransFactoryClass) {
+		if (null != customTransFactoryClass) {
+			Class<?>factoryCls = null;
+			try {
+				factoryCls = Class.forName(customTransFactoryClass);
+				custTransFactory = (CustomTransformerFactory)factoryCls.newInstance();
+			} catch (ClassNotFoundException cne) {
+				throw new IllegalArgumentException("custom factory class could not be created " + cne.getMessage());
+			} catch (InstantiationException ie) {
+				throw new IllegalStateException("custom factory instance could not be created " + ie.getMessage());
+			} catch (IllegalAccessException iae) {
+				throw new IllegalStateException("custom factory instance could not be created with access issue " + iae.getMessage());
+			}
+		}
+	}
+	
 	/**
 	 * @param tag
 	 * @param config
@@ -115,7 +136,13 @@ public class TransformerFactory {
 		} else if (transformerTag.equals(STRING_CUSTOM_TRANSFORMER)) {
 			transformer = new StringTransformer.StringCustomTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
-			throw new IllegalArgumentException("invalid transformer");
+			if (null != custTransFactory) {
+				//custom transformer factory
+				transformer = custTransFactory.createTransformer(transformerTag, prAttr, config);
+			} else {
+				//invalid transformer
+				throw new IllegalArgumentException("invalid transformer");
+			}
 		}
 		
 		return transformer;
@@ -126,7 +153,7 @@ public class TransformerFactory {
      * @param prAttr
      * @return
      */
-    private static Config getTransformerConfig(Config transformerConfig ,String transformerTag, ProcessorAttribute prAttr) {
+    public static Config getTransformerConfig(Config transformerConfig ,String transformerTag, ProcessorAttribute prAttr) {
     	Config transConfig = transformerConfig.getConfig("transformers." + transformerTag);
     	Config config = null;
     	try {

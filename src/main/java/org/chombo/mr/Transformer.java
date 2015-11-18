@@ -137,10 +137,14 @@ public class Transformer extends Configured implements Tool {
         	//transformer schema
         	configDriven = config.get("transformer.schema.file.path") != null;
         	if (configDriven) {
+        		//schema
 	        	InputStream is = Utility.getFileStream(config,  "transformer.schema.file.path");
 	        	ObjectMapper mapper = new ObjectMapper();
 	        	transformerSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
 	        	transformerSchema.validateTargetAttributeMapping();
+	        	
+	        	//intialize transformer factory
+	        	TransformerFactory.initialize( config.get( "custom.trans.factory.class") );
 	        	
 	        	//transformer config
 	        	transformerConfig = Utility.getHoconConfig(config, "transformer.config.file.path");
