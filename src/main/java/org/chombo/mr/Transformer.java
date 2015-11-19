@@ -150,7 +150,6 @@ public class Transformer extends Configured implements Tool {
 	        	transformerConfig = Utility.getHoconConfig(config, "transformer.config.file.path");
 	        	
 	        	//build transformers
-	        	Config transConfig;
 	        	AttributeTransformer attrTrans;
 	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributes()) {
 	        		fieldOrd = prAttr.getOrdinal();
@@ -267,6 +266,10 @@ public class Transformer extends Configured implements Tool {
          */
         private void getTranformedAttributes(List<ProcessorAttribute> prAttrs, boolean isTransformer) {
         	for (ProcessorAttribute prAttr : prAttrs) {
+        		if (null == prAttr.getTargetFieldOrdinals()) {
+        			//field is omitted from output
+        			continue;
+        		}
         		if (isTransformer) {
         			fieldOrd = prAttr.getOrdinal();
                 	source = items[fieldOrd];
