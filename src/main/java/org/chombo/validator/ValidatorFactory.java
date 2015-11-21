@@ -49,13 +49,14 @@ public class ValidatorFactory {
 	public static final String ROBUST_ZCORE_BASED_RANGE_VALIDATOR = "robustZscoreBasedRange";
 	
 	private static Map<String,String> custValidatorClasses = new HashMap<String,String>();
+	private static Map<String,Validator> custValidators = new HashMap<String,Validator>();
 	private static CustomValidatorFactory customValidatorFactory;
 	
 	/**
 	 * @param customTransFactoryClass
 	 */
 	public static void initialize(String customValidFactoryClass) {
-		if (null != customValidatorFactory) {
+		if (null != customValidFactoryClass) {
 			Class<?>factoryCls = null;
 			try {
 				factoryCls = Class.forName(customValidFactoryClass);
@@ -184,16 +185,20 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	private static Validator  createCustomValidator(String validatorType, ProcessorAttribute prAttr,   Config validatorConfig) {
-		Validator validator = null;
-		String validatorClass = custValidatorClasses.get("custom.validator.class." + validatorType);
-		if (null != validatorClass) {
-			try {
-				//from hconf
-				Class<?> clazz = Class.forName(validatorClass);
-				Constructor<?> ctor = clazz.getConstructor(String.class, prAttr.getClass(), Config.class);
-				validator = (Validator)(ctor.newInstance(new Object[] { validatorType, prAttr, validatorConfig}));
-			} catch (Exception ex) {
-				throw new IllegalArgumentException("could not create dynamic validator object for " + validatorType + " " +  ex.getMessage());
+		Validator validator = custValidators.get(validatorType);
+		
+		if (null == validator) {
+			String validatorClass = custValidatorClasses.get("custom.validator.class." + validatorType);
+			if (null != validatorClass) {
+				try {
+					//from hconf
+					Class<?> clazz = Class.forName(validatorClass);
+					Constructor<?> ctor = clazz.getConstructor(String.class, prAttr.getClass(), Config.class);
+					validator = (Validator)(ctor.newInstance(new Object[] { validatorType, prAttr, validatorConfig}));
+					custValidators.put(validatorType, validator);
+				} catch (Exception ex) {
+					throw new IllegalArgumentException("could not create dynamic validator object for " + validatorType + " " +  ex.getMessage());
+				}
 			}
 		}
 		return validator;
