@@ -37,6 +37,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.transformer.TransformerFactory;
 import org.chombo.util.Attribute;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.MedianStatsManager;
@@ -104,7 +105,6 @@ public class ValidationChecker extends Configured implements Tool {
         private String invalidDataFilePath;
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
         private Map<String,String> custValidatorClasses = new HashMap<String,String>();
-        private Map<String,String> custValidatorParams = new HashMap<String,String>();
         private MedianStatsManager medStatManager;
         private int[] idOrdinals;
         private NumericalAttrStatsManager statsManager;
@@ -127,6 +127,9 @@ public class ValidationChecker extends Configured implements Tool {
         	//schema
         	validationSchema = Utility.getProcessingSchema(config, "validation.schema.file.path");
  
+        	//intialize transformer factory
+        	ValidatorFactory.initialize( config.get( "custom.valid.factory.class") );
+
             //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
             
@@ -145,7 +148,7 @@ public class ValidationChecker extends Configured implements Tool {
             	}
             }
             
-            //validators from schema
+            //validators from hconf
             if (!foundInPropConfig) {
             	//custom validators vonly with hconf based
            		customValidatorsFromHconf( validatorConfig);
@@ -157,31 +160,8 @@ public class ValidationChecker extends Configured implements Tool {
 	        			createValidators( config,  valTags,  prAttr.getOrdinal(), validatorConfig);
 	        		}
 	           	}
-            
             }
        }
-        
-        /**
-         * @param config
-         */
-        private void customValidatorsFromProps(Configuration config) {
-            String customValidators = config.get("custom.validators");
-            if (null != customValidators) { 
-            	String[] custItems =  customValidators.split(",");
-	            for (String  custValidatorTag :  custItems ) {
-	            	String key = "custom.validator.class" + custValidatorTag;
-	            	String custValidatorClass = config.get(key);
-	            	if (null != custValidatorClass ) {
-	            		custValidatorClasses.put(custValidatorTag, custValidatorClass);
-	            	}            
-	            }
-	            ValidatorFactory.setCustValidatorClasses(custValidatorClasses);
-	            
-	            //config params
-	            custValidatorParams = config.getValByRegex("custom.validator.param.(\\S)+");
-            }
-        }
-        
         
         /**
          * @param config

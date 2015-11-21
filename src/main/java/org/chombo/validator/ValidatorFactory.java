@@ -21,6 +21,7 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.chombo.transformer.CustomTransformerFactory;
 import org.chombo.util.Attribute;
 import org.chombo.util.AttributeSchema;
 import org.chombo.util.ProcessorAttribute;
@@ -48,7 +49,27 @@ public class ValidatorFactory {
 	public static final String ROBUST_ZCORE_BASED_RANGE_VALIDATOR = "robustZscoreBasedRange";
 	
 	private static Map<String,String> custValidatorClasses = new HashMap<String,String>();
+	private static CustomValidatorFactory customValidatorFactory;
 	
+	/**
+	 * @param customTransFactoryClass
+	 */
+	public static void initialize(String customValidFactoryClass) {
+		if (null != customValidatorFactory) {
+			Class<?>factoryCls = null;
+			try {
+				factoryCls = Class.forName(customValidFactoryClass);
+				customValidatorFactory = (CustomValidatorFactory)factoryCls.newInstance();
+			} catch (ClassNotFoundException cne) {
+				throw new IllegalArgumentException("custom validation factory class could not be created " + cne.getMessage());
+			} catch (InstantiationException ie) {
+				throw new IllegalStateException("custom validation factory instance could not be created " + ie.getMessage());
+			} catch (IllegalAccessException iae) {
+				throw new IllegalStateException("custom  validation factory instance could not be created with access issue " + iae.getMessage());
+			}
+		}
+	}
+
 	/**
 	 * @param tag
 	 * @param ordinal
@@ -139,17 +160,18 @@ public class ValidatorFactory {
 		} else if (validatorType.equals( ROBUST_ZCORE_BASED_RANGE_VALIDATOR)) {
 			validator = new  NumericalValidator.RobustZscoreBasedRangeValidator(validatorType, prAttr, validatorContext);
 		} else {
-			//custom validator
+			//custom validator with configured validator class names
 			validator = createCustomValidator(validatorType, prAttr,  valConfig);
 			
+			//custom validator class
 			if (null == validator) {
-				throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType);
+				validator = customValidatorFactory.createValidator(validatorType, prAttr,  valConfig);
 			}
-		}
-		
-		if (null == validator) {
-			throw new IllegalArgumentException(" validator and attribute data type is not compatible validator: " + 
-					validatorType + " ordinal:" + prAttr.getOrdinal() + " data type:" + prAttr.getDataType() );
+
+			if (null == validator) {
+				throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType +  " ordinal:" + 
+						prAttr.getOrdinal() + " data type:" + prAttr.getDataType());
+			}
 		}
 		
 		return validator;
@@ -163,7 +185,7 @@ public class ValidatorFactory {
 	 */
 	private static Validator  createCustomValidator(String validatorType, ProcessorAttribute prAttr,   Config validatorConfig) {
 		Validator validator = null;
-		String validatorClass = custValidatorClasses.get(validatorType);
+		String validatorClass = custValidatorClasses.get("custom.validator.class." + validatorType);
 		if (null != validatorClass) {
 			try {
 				//from hconf
