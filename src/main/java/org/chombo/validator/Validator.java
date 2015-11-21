@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.chombo.util.Attribute;
 import org.chombo.util.AttributeSchema;
+import org.chombo.util.ProcessorAttribute;
 
 /**
  * @author pranab
@@ -28,21 +29,20 @@ import org.chombo.util.AttributeSchema;
  */
 public abstract class Validator {
 	protected String tag;
-	protected int ordinal;
-	protected Attribute attribute;
+	//protected int ordinal;
+	//protected Attribute attribute;
 	protected Map<String,String> configParams;
 	protected String fieldDelim = ",";
-	
+	protected ProcessorAttribute prAttr;
 	/**
 	 * @param tag
 	 * @param ordinal
 	 * @param schema
 	 */
-	public Validator(String tag, int ordinal, AttributeSchema<Attribute> schema) {
+	public Validator(String tag, ProcessorAttribute prAttr) {
 		super();
 		this.tag = tag;
-		this.ordinal = ordinal;
-		attribute = schema.findAttributeByOrdinal(ordinal);
+		this.prAttr = prAttr;
 	}
 	
 	public abstract boolean isValid(String value);
@@ -52,7 +52,7 @@ public abstract class Validator {
 	}
 
 	public int getOrdinal() {
-		return ordinal;
+		return prAttr.getOrdinal();
 	}
 
 	public Map<String, String> getConfigParams() {

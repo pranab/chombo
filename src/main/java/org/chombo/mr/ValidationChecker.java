@@ -96,7 +96,7 @@ public class ValidationChecker extends Configured implements Tool {
         private String fieldDelimOut;
 		private StringBuilder stBld = new  StringBuilder();
         private String[] items;
-        private GenericAttributeSchema schema;
+        //private GenericAttributeSchema schema;
         private Map<Integer, List<Validator>> validators = new HashMap<Integer, List<Validator>>();
         private List<InvalidData> invalidDataList = new ArrayList<InvalidData>();
         private boolean filterInvalidRecords;
@@ -109,7 +109,7 @@ public class ValidationChecker extends Configured implements Tool {
         private MedianStatsManager medStatManager;
         private int[] idOrdinals;
         private NumericalAttrStatsManager statsManager;
-              
+        private ProcessorAttributeSchema validationSchema;      
         
         
         /* (non-Javadoc)
@@ -126,7 +126,8 @@ public class ValidationChecker extends Configured implements Tool {
         	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
  
         	//schema
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	//schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	validationSchema = Utility.getProcessingSchema(config, "validation.schema.file.path");
  
             //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
@@ -139,7 +140,7 @@ public class ValidationChecker extends Configured implements Tool {
         	}
 
             //build validator objects
-            int[] ordinals  = schema.getAttributeOrdinals();
+            int[] ordinals  = validationSchema.getAttributeOrdinals();
  
             if (null != validatorConfig) {
             	//hconf based
@@ -212,18 +213,19 @@ public class ValidationChecker extends Configured implements Tool {
         		throws IOException {
         	//create all validator for  a field
     		List<Validator> validatorList = new ArrayList<Validator>();  
+			ProcessorAttribute prAttr = validationSchema.findAttributeByOrdinal(ord);
     		for (String valTag :  valTags) {
     			if (valTag.equals("zscoreBasedRange")) {
     				//z score based
     				getAttributeStats(config, "stat.file.path");
-    				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
+    				validatorList.add(ValidatorFactory.create(valTag, prAttr, validatorContext));
     			} if (valTag.equals("robustZscoreBasedRange")) {
     				//robust z score based
     				getAttributeMeds(config, "med.stat.file.path", "mad.stat.file.path", idOrdinals);
-    				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
+    				validatorList.add(ValidatorFactory.create(valTag, prAttr,validatorContext));
     			} else {
     				//normal
-    				Validator validator = ValidatorFactory.create(valTag, ord, schema);
+    				Validator validator = ValidatorFactory.create(valTag, prAttr);
     				validatorList.add(validator);
     				
     				//set config for custom balidators

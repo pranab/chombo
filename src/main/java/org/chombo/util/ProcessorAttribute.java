@@ -25,7 +25,7 @@ import java.util.List;
  * @author pranab
  *
  */
-public class ProcessorAttribute extends BaseAttribute {
+public class ProcessorAttribute extends Attribute {
 	private String normalizerStrategy;
 	private List<String> validators;
 	private List<String> transformers;

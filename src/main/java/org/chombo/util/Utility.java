@@ -1235,6 +1235,19 @@ public class Utility {
 	}
 
 	/**
+	 * @param conf
+	 * @param pathParam
+	 * @return
+	 * @throws IOException
+	 */
+	public static ProcessorAttributeSchema getProcessingSchema(Configuration conf, String pathParam) throws IOException {
+		InputStream is = Utility.getFileStream(conf,  pathParam);
+		ObjectMapper mapper = new ObjectMapper();
+		ProcessorAttributeSchema processingSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+		return processingSchema;
+	}
+	
+	/**
 	 * @param config
 	 * @param params
 	 * @return

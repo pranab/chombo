@@ -17,7 +17,7 @@
 
 package org.chombo.validator;
 
-import org.chombo.util.AttributeSchema;
+import org.chombo.util.ProcessorAttribute;
 
 /**
  * @author pranab
@@ -31,8 +31,8 @@ public class GenericValidator {
 	 */
 	public static class NotMissingValidator extends Validator {
 		
-		public NotMissingValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public NotMissingValidator(String tag,ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
@@ -47,8 +47,8 @@ public class GenericValidator {
 	 */
 	public static class EnsureIntValidator extends Validator {
 		
-		public EnsureIntValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public EnsureIntValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
@@ -69,8 +69,8 @@ public class GenericValidator {
 	 */
 	public static class EnsureLongValidator extends Validator {
 		
-		public EnsureLongValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public EnsureLongValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
@@ -91,8 +91,8 @@ public class GenericValidator {
 	 */
 	public static class EnsureDoubleValidator extends Validator {
 		
-		public EnsureDoubleValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public EnsureDoubleValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override

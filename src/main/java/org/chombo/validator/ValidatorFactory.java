@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.chombo.util.Attribute;
 import org.chombo.util.AttributeSchema;
+import org.chombo.util.ProcessorAttribute;
 
 /**
  * @author pranab
@@ -51,8 +52,8 @@ public class ValidatorFactory {
 	 * @param schema
 	 * @return
 	 */
-	public static Validator create(String validatorType, int ordinal, AttributeSchema<Attribute> schema) {
-		return create(validatorType, ordinal, schema, null);
+	public static Validator create(String validatorType, ProcessorAttribute prAttr) {
+		return create(validatorType,   prAttr, null);
 	}
 	
 	/**
@@ -61,62 +62,62 @@ public class ValidatorFactory {
 	 * @param schema
 	 * @return
 	 */
-	public static Validator create(String validatorType, int ordinal, AttributeSchema<Attribute> schema, 
+	public static Validator create(String validatorType,  ProcessorAttribute prAttr, 
 			Map<String, Object> validatorContext) {
 		Validator validator = null;
-		Attribute attribute = schema.findAttributeByOrdinal(ordinal);
+		//Attribute attribute = schema.findAttributeByOrdinal(ordinal);
 		
 		if (validatorType.equals(MIN_VALIDATOR)) {
-			if (attribute.isInteger()) {
-				validator = new  NumericalValidator.IntMinValidator(validatorType, ordinal, schema);
-			} else if (attribute.isDouble()) {
-				validator = new  NumericalValidator.DoubleMinValidator(validatorType, ordinal, schema);
-			} else if (attribute.isString()) {
-				validator = new  StringValidator.MinValidator(validatorType, ordinal, schema);
+			if (prAttr.isInteger()) {
+				validator = new  NumericalValidator.IntMinValidator(validatorType,  prAttr);
+			} else if (prAttr.isDouble()) {
+				validator = new  NumericalValidator.DoubleMinValidator(validatorType, prAttr);
+			} else if (prAttr.isString()) {
+				validator = new  StringValidator.MinValidator(validatorType, prAttr);
 			}
 		} else if (validatorType.equals(MAX_VALIDATOR)) {
-			if (attribute.isInteger()) {
-				validator = new  NumericalValidator.IntMaxValidator(validatorType, ordinal, schema);
-			} else if (attribute.isDouble()) {
-				validator = new  NumericalValidator.DoubleMaxValidator(validatorType, ordinal, schema);
-			} else if (attribute.isString()) {
-				validator = new  StringValidator.MaxValidator(validatorType, ordinal, schema);
+			if (prAttr.isInteger()) {
+				validator = new  NumericalValidator.IntMaxValidator(validatorType, prAttr);
+			} else if (prAttr.isDouble()) {
+				validator = new  NumericalValidator.DoubleMaxValidator(validatorType, prAttr);
+			} else if (prAttr.isString()) {
+				validator = new  StringValidator.MaxValidator(validatorType, prAttr);
 			}
 		} else if (validatorType.equals(MIN_LENGTH_VALIDATOR)) {
-			if (attribute.isString()) {
-				validator = new  StringValidator.MinLengthValidator(validatorType, ordinal, schema);
+			if (prAttr.isString()) {
+				validator = new  StringValidator.MinLengthValidator(validatorType, prAttr);
 			}
 		} else if (validatorType.equals(MAX_LENGTH_VALIDATOR)) {
-			if (attribute.isString()) {
-				validator = new  StringValidator.MaxLengthValidator(validatorType, ordinal, schema);
+			if (prAttr.isString()) {
+				validator = new  StringValidator.MaxLengthValidator(validatorType, prAttr);
 			}
 		} else if (validatorType.equals(EXACT_LENGTH_VALIDATOR)) {
-			if (attribute.isString()) {
-				validator = new  StringValidator.LengthValidator(validatorType, ordinal, schema);
+			if (prAttr.isString()) {
+				validator = new  StringValidator.LengthValidator(validatorType, prAttr);
 			}
 		} else if (validatorType.equals(NOT_MISSING_VALIDATOR)) {
-			validator = new  GenericValidator.NotMissingValidator(validatorType, ordinal, schema);
+			validator = new  GenericValidator.NotMissingValidator(validatorType, prAttr);
 		} else if (validatorType.equals(PATTERN_VALIDATOR)) {
-			if (attribute.isString()) {
-				validator = new  StringValidator.PatternValidator(validatorType, ordinal, schema);
+			if (prAttr.isString()) {
+				validator = new  StringValidator.PatternValidator(validatorType, prAttr);
 			}
 		} else if (validatorType.equals(MEMEBERSHIP_VALIDATOR)) {
-			if (attribute.isCategorical()) {
-				validator = new CategoricalValidator.MembershipValidator(validatorType, ordinal, schema);
+			if (prAttr.isCategorical()) {
+				validator = new CategoricalValidator.MembershipValidator(validatorType, prAttr);
 			}
 		} else if (validatorType.equals(ENSURE_INT_VALIDATOR)) {
-				validator = new GenericValidator.EnsureIntValidator(validatorType, ordinal, schema);
+				validator = new GenericValidator.EnsureIntValidator(validatorType, prAttr);
 		} else if (validatorType.equals(ENSURE_LONG_VALIDATOR)) {
-			validator = new GenericValidator.EnsureLongValidator(validatorType, ordinal, schema);
+			validator = new GenericValidator.EnsureLongValidator(validatorType, prAttr);
 		} else if (validatorType.equals(ENSURE_DOUBLE_VALIDATOR)) {
-			validator = new GenericValidator.EnsureDoubleValidator(validatorType, ordinal, schema);
+			validator = new GenericValidator.EnsureDoubleValidator(validatorType, prAttr);
 		} else if (validatorType.equals( ZCORE_BASED_RANGE_VALIDATOR)) {
-				validator = new  NumericalValidator.StatsBasedRangeValidator(validatorType, ordinal, schema, validatorContext);
+				validator = new  NumericalValidator.StatsBasedRangeValidator(validatorType, prAttr, validatorContext);
 		} else if (validatorType.equals( ROBUST_ZCORE_BASED_RANGE_VALIDATOR)) {
-			validator = new  NumericalValidator.RobustZscoreBasedRangeValidator(validatorType, ordinal, schema, validatorContext);
+			validator = new  NumericalValidator.RobustZscoreBasedRangeValidator(validatorType, prAttr, validatorContext);
 		} else {
 			//custor validator
-			validator = createCustomValidator(validatorType, ordinal,  schema);
+			validator = createCustomValidator(validatorType, prAttr);
 			
 			if (null == validator) {
 				throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType);
@@ -125,7 +126,7 @@ public class ValidatorFactory {
 		
 		if (null == validator) {
 			throw new IllegalArgumentException(" validator and attribute data type is not compatible validator: " + 
-					validatorType + " ordinal:" + ordinal + " data type:" + attribute.getDataType() );
+					validatorType + " ordinal:" + prAttr.getOrdinal() + " data type:" + prAttr.getDataType() );
 		}
 		
 		return validator;
@@ -137,14 +138,14 @@ public class ValidatorFactory {
 	 * @param schema
 	 * @return
 	 */
-	private static Validator  createCustomValidator(String validatorType, int ordinal, AttributeSchema<Attribute> schema) {
+	private static Validator  createCustomValidator(String validatorType, ProcessorAttribute prAttr) {
 		Validator validator = null;
 		String validatorClass = custValidatorClasses.get(validatorType);
 		if (null != validatorClass) {
 			try {
 				Class<?> clazz = Class.forName(validatorClass);
-				Constructor<?> ctor = clazz.getConstructor(String.class, Integer.class, schema.getClass());
-				validator = (Validator)(ctor.newInstance(new Object[] { validatorType, ordinal, schema }));
+				Constructor<?> ctor = clazz.getConstructor(String.class, prAttr.getClass());
+				validator = (Validator)(ctor.newInstance(new Object[] { validatorType, prAttr}));
 			} catch (Exception ex) {
 				throw new IllegalArgumentException("could not create dynamic validator object for " + validatorType + " " +  ex.getMessage());
 			}

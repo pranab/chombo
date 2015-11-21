@@ -17,7 +17,7 @@
 
 package org.chombo.validator;
 
-import org.chombo.util.AttributeSchema;
+import org.chombo.util.ProcessorAttribute;
 
 /**
  * @author pranab
@@ -31,13 +31,13 @@ public class CategoricalValidator {
 	 */
 	public static class MembershipValidator extends Validator {
 
-		public MembershipValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public MembershipValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			return attribute.getCardinality().contains(value);
+			return prAttr.getCardinality().contains(value);
 		}
 	}
 
