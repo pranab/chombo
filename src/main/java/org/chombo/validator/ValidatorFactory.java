@@ -25,6 +25,9 @@ import org.chombo.util.Attribute;
 import org.chombo.util.AttributeSchema;
 import org.chombo.util.ProcessorAttribute;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
+
 /**
  * @author pranab
  *
@@ -53,7 +56,7 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	public static Validator create(String validatorType, ProcessorAttribute prAttr) {
-		return create(validatorType,   prAttr, null);
+		return create(validatorType,   prAttr, null, null);
 	}
 	
 	/**
@@ -62,10 +65,30 @@ public class ValidatorFactory {
 	 * @param schema
 	 * @return
 	 */
+	public static Validator create(String validatorType, ProcessorAttribute prAttr, Map<String, Object> validatorContext) {
+		return create(validatorType,   prAttr, validatorContext, null);
+	}
+
+	/**
+	 * @param tag
+	 * @param ordinal
+	 * @param schema
+	 * @return
+	 */
+	public static Validator create(String validatorType, ProcessorAttribute prAttr, Config validatorConfig) {
+		return create(validatorType,   prAttr, null, validatorConfig);
+	}
+
+	/**
+	 * @param tag
+	 * @param ordinal
+	 * @param schema
+	 * @return
+	 */
 	public static Validator create(String validatorType,  ProcessorAttribute prAttr, 
-			Map<String, Object> validatorContext) {
+			Map<String, Object> validatorContext, Config validatorConfig) {
 		Validator validator = null;
-		//Attribute attribute = schema.findAttributeByOrdinal(ordinal);
+		Config valConfig =  getValidatorConfig(validatorConfig ,validatorType, prAttr);
 		
 		if (validatorType.equals(MIN_VALIDATOR)) {
 			if (prAttr.isInteger()) {
@@ -116,8 +139,8 @@ public class ValidatorFactory {
 		} else if (validatorType.equals( ROBUST_ZCORE_BASED_RANGE_VALIDATOR)) {
 			validator = new  NumericalValidator.RobustZscoreBasedRangeValidator(validatorType, prAttr, validatorContext);
 		} else {
-			//custor validator
-			validator = createCustomValidator(validatorType, prAttr);
+			//custom validator
+			validator = createCustomValidator(validatorType, prAttr,  valConfig);
 			
 			if (null == validator) {
 				throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType);
@@ -138,20 +161,39 @@ public class ValidatorFactory {
 	 * @param schema
 	 * @return
 	 */
-	private static Validator  createCustomValidator(String validatorType, ProcessorAttribute prAttr) {
+	private static Validator  createCustomValidator(String validatorType, ProcessorAttribute prAttr,   Config validatorConfig) {
 		Validator validator = null;
 		String validatorClass = custValidatorClasses.get(validatorType);
 		if (null != validatorClass) {
 			try {
+				//from hconf
 				Class<?> clazz = Class.forName(validatorClass);
-				Constructor<?> ctor = clazz.getConstructor(String.class, prAttr.getClass());
-				validator = (Validator)(ctor.newInstance(new Object[] { validatorType, prAttr}));
+				Constructor<?> ctor = clazz.getConstructor(String.class, prAttr.getClass(), Config.class);
+				validator = (Validator)(ctor.newInstance(new Object[] { validatorType, prAttr, validatorConfig}));
 			} catch (Exception ex) {
 				throw new IllegalArgumentException("could not create dynamic validator object for " + validatorType + " " +  ex.getMessage());
 			}
 		}
 		return validator;
 	}
+	
+	   /**
+     * @param tranformerTag
+     * @param prAttr
+     * @return
+     */
+    public static Config getValidatorConfig(Config transformerConfig ,String validatorTag, ProcessorAttribute prAttr) {
+    	Config valConfig = transformerConfig.getConfig("validators." + validatorTag);
+    	Config config = null;
+    	try {
+    		//attribute specific config
+    		config = null != valConfig ?  valConfig.getConfig(prAttr.getName()) : null;
+    	} catch ( ConfigException.Missing ex) {
+    	}
+    	
+    	return null != config ? config :  valConfig;
+    }
+	
 	
 	/**
 	 * @param custValidatorClasses

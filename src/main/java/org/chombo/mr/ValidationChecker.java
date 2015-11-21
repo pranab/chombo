@@ -96,7 +96,6 @@ public class ValidationChecker extends Configured implements Tool {
         private String fieldDelimOut;
 		private StringBuilder stBld = new  StringBuilder();
         private String[] items;
-        //private GenericAttributeSchema schema;
         private Map<Integer, List<Validator>> validators = new HashMap<Integer, List<Validator>>();
         private List<InvalidData> invalidDataList = new ArrayList<InvalidData>();
         private boolean filterInvalidRecords;
@@ -126,41 +125,39 @@ public class ValidationChecker extends Configured implements Tool {
         	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
  
         	//schema
-        	//schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
         	validationSchema = Utility.getProcessingSchema(config, "validation.schema.file.path");
  
             //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
             
-            //custom validator
-        	if (null == validatorConfig)  {
-        		customValidatorsFromProps(config);
-        	} else {
-        		customValidatorsFromHconf( validatorConfig);
-        	}
-
             //build validator objects
             int[] ordinals  = validationSchema.getAttributeOrdinals();
- 
-            if (null != validatorConfig) {
-            	//hconf based
-            	List <? extends Config> fieldValidators = validatorConfig.getConfigList("field.validators");
-            	for (Config fieldValidator : fieldValidators) {
-            		int ord = fieldValidator.getInt("ordinal");
-            		List<String> validatorTags =  fieldValidator.getStringList("validators");
-            		String[] valTags = validatorTags.toArray(new String[validatorTags.size()]);
-            		createValidators( config,  valTags,  ord );
+
+            //validators from try prop file configuration
+            boolean foundInPropConfig = false;
+            for (int ord : ordinals ) {
+            	String key = "validator." + ord;
+            	String validatorString = config.get(key);
+            	if (null != validatorString ) {
+            		String[] valTags = validatorString.split(fieldDelimOut);
+            		createValidators( config,  valTags,  ord, null );
+            		foundInPropConfig = true;
             	}
-            } else {           
-            	//prop  configuration based
-	            for (int ord : ordinals ) {
-	            	String key = "validator." + ord;
-	            	String validatorString = config.get(key);
-	            	if (null != validatorString ) {
-	            		String[] valTags = validatorString.split(fieldDelimOut);
-	            		createValidators( config,  valTags,  ord );
-	            	}
-	            }
+            }
+            
+            //validators from schema
+            if (!foundInPropConfig) {
+            	//custom validators vonly with hconf based
+           		customValidatorsFromHconf( validatorConfig);
+           	 
+           		for (ProcessorAttribute prAttr : validationSchema.getAttributes()) {
+	        		List<String> validatorTags =  prAttr.getValidators();
+	        		if (null != validatorTags) {
+	        			String[] valTags = validatorTags.toArray(new String[validatorTags.size()]);
+	        			createValidators( config,  valTags,  prAttr.getOrdinal(), validatorConfig);
+	        		}
+	           	}
+            
             }
        }
         
@@ -172,7 +169,7 @@ public class ValidationChecker extends Configured implements Tool {
             if (null != customValidators) { 
             	String[] custItems =  customValidators.split(",");
 	            for (String  custValidatorTag :  custItems ) {
-	            	String key = "custom.validator." + custValidatorTag +".class";
+	            	String key = "custom.validator.class" + custValidatorTag;
 	            	String custValidatorClass = config.get(key);
 	            	if (null != custValidatorClass ) {
 	            		custValidatorClasses.put(custValidatorTag, custValidatorClass);
@@ -181,7 +178,7 @@ public class ValidationChecker extends Configured implements Tool {
 	            ValidatorFactory.setCustValidatorClasses(custValidatorClasses);
 	            
 	            //config params
-	            custValidatorParams = config.getValByRegex("custom.validator(\\S)+");
+	            custValidatorParams = config.getValByRegex("custom.validator.param.(\\S)+");
             }
         }
         
@@ -190,14 +187,10 @@ public class ValidationChecker extends Configured implements Tool {
          * @param config
          */
         private void customValidatorsFromHconf( Config validatorConfig) {
-        	List <? extends Config> customvalidators = validatorConfig.getConfigList("customvalidators");
+        	List <? extends Config> customvalidators = validatorConfig.getConfigList("validators.customValidators");
         	for (Config custValidator : customvalidators ) {
         		String tag = custValidator.getString("tag");
-        		custValidatorClasses.put("custom.validator." + tag + ".class",  custValidator.getString("class"));
-        		List <? extends Config> params = custValidator.getConfigList("params");
-        		for (Config param : params) {
-        			custValidatorParams.put("custom.validator." + tag + "." + param.getString("name"), param.getString("value"));
-        		}
+        		custValidatorClasses.put("custom.validator.class." + tag,  custValidator.getString("class"));
         	}
         }
         
@@ -209,7 +202,7 @@ public class ValidationChecker extends Configured implements Tool {
          * @param validatorList
          * @throws IOException
          */
-        private void createValidators( Configuration config, String[] valTags,   int ord ) 
+        private void createValidators( Configuration config, String[] valTags,   int ord, Config validatorConfig ) 
         		throws IOException {
         	//create all validator for  a field
     		List<Validator> validatorList = new ArrayList<Validator>();  
@@ -225,13 +218,8 @@ public class ValidationChecker extends Configured implements Tool {
     				validatorList.add(ValidatorFactory.create(valTag, prAttr,validatorContext));
     			} else {
     				//normal
-    				Validator validator = ValidatorFactory.create(valTag, prAttr);
+    				Validator validator = ValidatorFactory.create(valTag, prAttr,  validatorConfig);
     				validatorList.add(validator);
-    				
-    				//set config for custom balidators
-    				if (custValidatorClasses.containsKey(valTag)) {
-    					validator.setConfigParams(custValidatorParams);
-    				}
     			}
     		}
     		validators.put(ord, validatorList);
