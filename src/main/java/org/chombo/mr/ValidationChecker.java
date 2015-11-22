@@ -104,7 +104,6 @@ public class ValidationChecker extends Configured implements Tool {
         private boolean valid;
         private String invalidDataFilePath;
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
-        private Map<String,String> custValidatorClasses = new HashMap<String,String>();
         private MedianStatsManager medStatManager;
         private int[] idOrdinals;
         private NumericalAttrStatsManager statsManager;
@@ -127,13 +126,13 @@ public class ValidationChecker extends Configured implements Tool {
         	//schema
         	validationSchema = Utility.getProcessingSchema(config, "validation.schema.file.path");
  
-        	//intialize transformer factory
-        	ValidatorFactory.initialize( config.get( "custom.valid.factory.class") );
-
             //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
             
-            //build validator objects
+        	//intialize transformer factory
+        	ValidatorFactory.initialize( config.get( "custom.valid.factory.class"), validatorConfig );
+
+        	//build validator objects
             int[] ordinals  = validationSchema.getAttributeOrdinals();
 
             //validators from try prop file configuration
@@ -150,9 +149,6 @@ public class ValidationChecker extends Configured implements Tool {
             
             //validators from hconf
             if (!foundInPropConfig) {
-            	//custom validators vonly with hconf based
-           		customValidatorsFromHconf( validatorConfig);
-           	 
            		for (ProcessorAttribute prAttr : validationSchema.getAttributes()) {
 	        		List<String> validatorTags =  prAttr.getValidators();
 	        		if (null != validatorTags) {
@@ -162,17 +158,6 @@ public class ValidationChecker extends Configured implements Tool {
 	           	}
             }
        }
-        
-        /**
-         * @param config
-         */
-        private void customValidatorsFromHconf( Config validatorConfig) {
-        	List <? extends Config> customvalidators = validatorConfig.getConfigList("validators.customValidators");
-        	for (Config custValidator : customvalidators ) {
-        		String tag = custValidator.getString("tag");
-        		custValidatorClasses.put("custom.validator.class." + tag,  custValidator.getString("class"));
-        	}
-        }
         
         /**
          * @param config

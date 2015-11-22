@@ -86,10 +86,12 @@ public class TransformerFactory {
 		}
 		
 		//custom transformer classes
-		if (null != transConfig) {
-			List <? extends Config> customTransConfigs = transConfig.getConfigList("validators.customTransformers");
-			for (Config custTransConfig : customTransConfigs ) {
-				custTransformerClasses.put("custom.validator.class." + custTransConfig.getString("tag"), custTransConfig.getString("class"));
+		if (null == custTransFactory && null != transConfig) {
+			List <? extends Config> customTransConfigs = transConfig.getConfigList("transformers.customTransformers");
+			if (null != customTransConfigs) {
+				for (Config custTransConfig : customTransConfigs ) {
+					custTransformerClasses.put("custom.transformer.class." + custTransConfig.getString("tag"), custTransConfig.getString("class"));
+				}
 			}
 		}
 	}
@@ -201,7 +203,6 @@ public class TransformerFactory {
 			String transformerClass = custTransformerClasses.get("custom.transformer.class." + transformerTag);
 			if (null != transformerClass) {
 				try {
-					//from hconf
 					Class<?> clazz = Class.forName(transformerClass);
 					Constructor<?> ctor = clazz.getConstructor(String.class, prAttr.getClass(), Config.class);
 					transformer = (AttributeTransformer)(ctor.newInstance(new Object[] { transformerTag, prAttr, transConfig}));

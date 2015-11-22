@@ -19,11 +19,9 @@ package org.chombo.validator;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import org.chombo.transformer.CustomTransformerFactory;
-import org.chombo.util.Attribute;
-import org.chombo.util.AttributeSchema;
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
@@ -53,9 +51,10 @@ public class ValidatorFactory {
 	private static CustomValidatorFactory customValidatorFactory;
 	
 	/**
-	 * @param customTransFactoryClass
+	 * @param customValidFactoryClass
+	 * @param validatorConfig
 	 */
-	public static void initialize(String customValidFactoryClass) {
+	public static void initialize(String customValidFactoryClass, Config validatorConfig) {
 		if (null != customValidFactoryClass) {
 			Class<?>factoryCls = null;
 			try {
@@ -69,6 +68,17 @@ public class ValidatorFactory {
 				throw new IllegalStateException("custom  validation factory instance could not be created with access issue " + iae.getMessage());
 			}
 		}
+		
+		//custom validaor classes
+		if (null == customValidatorFactory && null != validatorConfig) {
+			List <? extends Config> customValidConfigs = validatorConfig.getConfigList("validators.customValidators");
+			if (null != customValidConfigs) {
+				for (Config customValidConfig : customValidConfigs ) {
+					custValidatorClasses.put("custom.validator.class." + customValidConfig.getString("tag"), customValidConfig.getString("class"));
+				}
+			}
+		}
+		
 	}
 
 	/**
@@ -102,9 +112,10 @@ public class ValidatorFactory {
 	}
 
 	/**
-	 * @param tag
-	 * @param ordinal
-	 * @param schema
+	 * @param validatorType
+	 * @param prAttr
+	 * @param validatorContext
+	 * @param validatorConfig
 	 * @return
 	 */
 	public static Validator create(String validatorType,  ProcessorAttribute prAttr, 
@@ -180,8 +191,8 @@ public class ValidatorFactory {
 
 	/**
 	 * @param validatorType
-	 * @param ordinal
-	 * @param schema
+	 * @param prAttr
+	 * @param validatorConfig
 	 * @return
 	 */
 	private static Validator  createCustomValidator(String validatorType, ProcessorAttribute prAttr,   Config validatorConfig) {
@@ -191,7 +202,6 @@ public class ValidatorFactory {
 			String validatorClass = custValidatorClasses.get("custom.validator.class." + validatorType);
 			if (null != validatorClass) {
 				try {
-					//from hconf
 					Class<?> clazz = Class.forName(validatorClass);
 					Constructor<?> ctor = clazz.getConstructor(String.class, prAttr.getClass(), Config.class);
 					validator = (Validator)(ctor.newInstance(new Object[] { validatorType, prAttr, validatorConfig}));
@@ -204,8 +214,9 @@ public class ValidatorFactory {
 		return validator;
 	}
 	
-	   /**
-     * @param tranformerTag
+    /**
+     * @param transformerConfig
+     * @param validatorTag
      * @param prAttr
      * @return
      */
@@ -220,14 +231,6 @@ public class ValidatorFactory {
     	
     	return null != config ? config :  valConfig;
     }
-	
-	
-	/**
-	 * @param custValidatorClasses
-	 */
-	public static void setCustValidatorClasses(Map<String, String> custValidatorClasses) {
-		ValidatorFactory.custValidatorClasses = custValidatorClasses;
-	}
 	
 	/**
 	 * @param validatotType
