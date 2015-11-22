@@ -87,8 +87,8 @@ public class TransformerFactory {
 		
 		//custom transformer classes
 		if (null == custTransFactory && null != transConfig) {
-			List <? extends Config> customTransConfigs = transConfig.getConfigList("transformers.customTransformers");
-			if (null != customTransConfigs) {
+			if (transConfig.hasPath("transformers.customTransformers")) {
+				List <? extends Config> customTransConfigs = transConfig.getConfigList("transformers.customTransformers");
 				for (Config custTransConfig : customTransConfigs ) {
 					custTransformerClasses.put("custom.transformer.class." + custTransConfig.getString("tag"), custTransConfig.getString("class"));
 				}

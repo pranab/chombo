@@ -71,8 +71,8 @@ public class ValidatorFactory {
 		
 		//custom validaor classes
 		if (null == customValidatorFactory && null != validatorConfig) {
-			List <? extends Config> customValidConfigs = validatorConfig.getConfigList("validators.customValidators");
-			if (null != customValidConfigs) {
+			if (validatorConfig.hasPath("validators.customValidators")) {
+				List <? extends Config> customValidConfigs = validatorConfig.getConfigList("validators.customValidators");
 				for (Config customValidConfig : customValidConfigs ) {
 					custValidatorClasses.put("custom.validator.class." + customValidConfig.getString("tag"), customValidConfig.getString("class"));
 				}
