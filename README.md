@@ -34,6 +34,7 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * https://pkghosh.wordpress.com/2015/09/22/profiling-big-data/
 * https://pkghosh.wordpress.com/2015/08/25/anomaly-detection-with-robust-zscore/
 * https://pkghosh.wordpress.com/2015/10/22/operational-analytics-with-seasonal-data/
+* https://pkghosh.wordpress.com/2015/11/17/transforming-big-data/
 
 
 ## Build
