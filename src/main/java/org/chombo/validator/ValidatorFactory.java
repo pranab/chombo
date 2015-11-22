@@ -164,8 +164,8 @@ public class ValidatorFactory {
 			//custom validator with configured validator class names
 			validator = createCustomValidator(validatorType, prAttr,  valConfig);
 			
-			//custom validator class
-			if (null == validator) {
+			//custom validator factory
+			if (null == validator && null != customValidatorFactory) {
 				validator = customValidatorFactory.createValidator(validatorType, prAttr,  valConfig);
 			}
 

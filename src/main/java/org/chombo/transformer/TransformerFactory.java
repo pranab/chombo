@@ -17,6 +17,11 @@
 
 package org.chombo.transformer;
 
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
@@ -57,12 +62,15 @@ public class TransformerFactory {
 	public static final String FORCED_REPLACE_TRANSFORMER  = "forcedReplaceTrans";
 	public static final String STRING_CUSTOM_TRANSFORMER  = "stringCustomTrans";
 	
+	private static Map<String,String> custTransformerClasses = new HashMap<String,String>();
+	private static Map<String,AttributeTransformer> custTransformers = new HashMap<String,AttributeTransformer>();
 	private static CustomTransformerFactory custTransFactory;
 	
 	/**
 	 * @param customTransFactoryClass
+	 * @param transConfig
 	 */
-	public static void initialize(String customTransFactoryClass) {
+	public static void initialize(String customTransFactoryClass, Config transConfig) {
 		if (null != customTransFactoryClass) {
 			Class<?>factoryCls = null;
 			try {
@@ -74,6 +82,14 @@ public class TransformerFactory {
 				throw new IllegalStateException("custom factory instance could not be created " + ie.getMessage());
 			} catch (IllegalAccessException iae) {
 				throw new IllegalStateException("custom factory instance could not be created with access issue " + iae.getMessage());
+			}
+		}
+		
+		//custom transformer classes
+		if (null != transConfig) {
+			List <? extends Config> customTransConfigs = transConfig.getConfigList("validators.customTransformers");
+			for (Config custTransConfig : customTransConfigs ) {
+				custTransformerClasses.put("custom.validator.class." + custTransConfig.getString("tag"), custTransConfig.getString("class"));
 			}
 		}
 	}
@@ -136,12 +152,19 @@ public class TransformerFactory {
 		} else if (transformerTag.equals(STRING_CUSTOM_TRANSFORMER)) {
 			transformer = new StringTransformer.StringCustomTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
-			if (null != custTransFactory) {
+			//custom transformer with configured transformer class names
+			transformer = createCustomTransformer(transformerTag, prAttr,  config);
+			
+			//transformer factory
+			if (null == transformer && null != custTransFactory) {
 				//custom transformer factory
 				transformer = custTransFactory.createTransformer(transformerTag, prAttr, config);
-			} else {
-				//invalid transformer
-				throw new IllegalArgumentException("invalid transformer");
+			} 
+			
+			//invalid transformer tag
+			if (null == transformer) {
+				throw new IllegalArgumentException("invalid transformer tag: " + transformerTag +  " ordinal:" + 
+						prAttr.getOrdinal() + " data type:" + prAttr.getDataType());
 			}
 		}
 		
@@ -165,4 +188,29 @@ public class TransformerFactory {
     	return null != config ? config :  transConfig;
     }
 	
+	/**
+	 * @param transformerTag
+	 * @param prAttr
+	 * @param validatorConfig
+	 * @return
+	 */
+	private static AttributeTransformer  createCustomTransformer(String transformerTag, ProcessorAttribute prAttr,   Config transConfig) {
+		AttributeTransformer transformer = custTransformers.get(transformerTag);
+		
+		if (null == transformer) {
+			String transformerClass = custTransformerClasses.get("custom.transformer.class." + transformerTag);
+			if (null != transformerClass) {
+				try {
+					//from hconf
+					Class<?> clazz = Class.forName(transformerClass);
+					Constructor<?> ctor = clazz.getConstructor(String.class, prAttr.getClass(), Config.class);
+					transformer = (AttributeTransformer)(ctor.newInstance(new Object[] { transformerTag, prAttr, transConfig}));
+					custTransformers.put(transformerTag, transformer);
+				} catch (Exception ex) {
+					throw new IllegalArgumentException("could not create dynamic validator object for " + transformerTag + " " +  ex.getMessage());
+				}
+			}
+		}
+		return transformer;
+	}
 }
