@@ -17,11 +17,14 @@
 
 package org.chombo.util;
 
+import java.io.Serializable;
+
 /**
  * @author pranab
  *
  */
-public class BaseAttribute {
+public class BaseAttribute  implements Serializable {
+	private static final long serialVersionUID = 7639336747752713872L;
 	protected String name;
 	protected int ordinal = -1;
 	protected String dataType;

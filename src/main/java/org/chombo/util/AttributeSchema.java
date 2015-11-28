@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,8 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
  *
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AttributeSchema<T extends BaseAttribute> {
+public class AttributeSchema<T extends BaseAttribute>  implements Serializable {
+	private static final long serialVersionUID = -6568183248952599026L;
 	protected List<T> attributes;
 
 	public List<T> getAttributes() {

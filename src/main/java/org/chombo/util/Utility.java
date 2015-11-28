@@ -293,6 +293,23 @@ public class Utility {
      * @return
      * @throws IOException
      */
+    public static InputStream getFileStream(String filePath) throws IOException {
+    	Configuration conf = new Configuration();
+        FSDataInputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.open(src);
+        }
+        return fs;
+    }
+ 
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
     public static OutputStream getCreateFileOutputStream(Configuration conf, String pathConfig) throws IOException {
         String filePath = conf.get(pathConfig);
         FSDataOutputStream fs = null;
@@ -1187,6 +1204,21 @@ public class Utility {
 	}
 	
 	/**
+	 * @param filePath
+	 * @return
+	 * @throws IOException
+	 */
+	public static Config getHoconConfig(String filePath) throws IOException {
+		Config config =  null;
+		if (null  !=  filePath) {
+			InputStream is = getFileStream(filePath);
+			BufferedReader bufRead =new BufferedReader(new InputStreamReader(is));
+			config =  ConfigFactory.parseReader(bufRead);
+		}
+		return config;
+	}
+
+	/**
 	 * @param conf
 	 * @param pathParam
 	 * @return
@@ -1247,6 +1279,18 @@ public class Utility {
 		return processingSchema;
 	}
 	
+	/**
+	 * @param filePath
+	 * @return
+	 * @throws IOException
+	 */
+	public static ProcessorAttributeSchema getProcessingSchema( String filePath) throws IOException {
+		InputStream is = Utility.getFileStream(filePath);
+		ObjectMapper mapper = new ObjectMapper();
+		ProcessorAttributeSchema processingSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+		return processingSchema;
+	}
+
 	/**
 	 * @param config
 	 * @param params

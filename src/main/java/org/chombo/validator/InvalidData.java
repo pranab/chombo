@@ -18,12 +18,18 @@
 
 package org.chombo.validator;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InvalidData {
+/**
+ * @author pranab
+ *
+ */
+public class InvalidData implements Serializable {
+	private static final long serialVersionUID = -1431597725642210827L;
 	private String record;
 	private Map<Integer, List<String>> invalidFields  = new HashMap<Integer, List<String>>();
 	

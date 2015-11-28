@@ -17,6 +17,7 @@
 
 package org.chombo.validator;
 
+import java.io.Serializable;
 import java.util.Map;
 
 import org.chombo.util.Attribute;
@@ -27,10 +28,9 @@ import org.chombo.util.ProcessorAttribute;
  * @author pranab
  *
  */
-public abstract class Validator {
+public abstract class Validator  implements Serializable {
+	private static final long serialVersionUID = -4336547628640729070L;
 	protected String tag;
-	//protected int ordinal;
-	//protected Attribute attribute;
 	protected Map<String,String> configParams;
 	protected String fieldDelim = ",";
 	protected ProcessorAttribute prAttr;

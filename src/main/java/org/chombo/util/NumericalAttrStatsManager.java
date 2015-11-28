@@ -46,9 +46,32 @@ public class NumericalAttrStatsManager {
 	 * @param delim
 	 * @throws IOException
 	 */
-	public NumericalAttrStatsManager(Configuration config, String statsFilePath, String delim) 
+	public NumericalAttrStatsManager(Configuration config, String statsFilePathParam, String delim) 
 		throws IOException {
-    	InputStream fs = Utility.getFileStream(config, statsFilePath);
+    	InputStream fs = Utility.getFileStream(config, statsFilePathParam);
+    	initialize(fs, delim);
+
+	}
+
+	/**
+	 * @param statsFilePath
+	 * @param delim
+	 * @param fromFilePath
+	 * @throws IOException
+	 */
+	public NumericalAttrStatsManager(String statsFilePath, String delim, boolean fromFilePath) 
+			throws IOException {
+	    	InputStream fs = Utility.getFileStream(statsFilePath);
+	    	initialize(fs, delim);
+		}
+
+	/**
+	 * @param fs
+	 * @param delim
+	 * @throws NumberFormatException
+	 * @throws IOException
+	 */
+	private void initialize(InputStream fs, String delim) throws NumberFormatException, IOException {
     	BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
     	String line = null; 
     	String[] items = null;
@@ -74,7 +97,7 @@ public class NumericalAttrStatsManager {
     		statList.add( tuple);
     	}
 	}
-
+	
 	/**
 	 * @param statsContent
 	 * @param delim
