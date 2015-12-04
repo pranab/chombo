@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,6 +31,8 @@ public class SeasonalAnalyzer {
     private Map<Integer, Integer> hourRanges;
     private boolean timeStampInMili;
     private long timeZoneShiftSec;
+    private List<Pair<Integer, Integer>> timeRanges;
+    
     public  static final String QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
     public static final String  QUARTER_HOUR_OF_WEEK_DAY = "quarterHourOfWeekDay";
     public static final String  QUARTER_HOUR_OF_WEEK_END_DAY = "quarterHourOfWeekEndDay";
@@ -45,6 +48,7 @@ public class SeasonalAnalyzer {
     public static final String  HOUR_RANGE_OF_WEEK_DAY  = "hourRangeOfWeekDay";
     public static final String  HOUR_RANGE_OF_WEEK_END_DAY  = "hourRangeOfWeekEndDay";
     public static final String  MONTH_OF_YEAR = "monthOfYear";
+    public static final String  ANY_TIME_RANGE = "anyTimeRange";
     
     private static long secInWeek =7L * 24 * 60 * 60;
     private static long secInDay =24L * 60 * 60;
@@ -70,6 +74,8 @@ public class SeasonalAnalyzer {
 			Map<Integer, Integer> hourRanges) {
 		super();
 		this.seasonalCycleType = seasonalCycleType;
+		
+		//key:hour value:hour group
 		this.hourRanges = hourRanges;
 	}
 
@@ -178,6 +184,16 @@ public class SeasonalAnalyzer {
     		}
     	}  else  if (seasonalCycleType.equals(MONTH_OF_YEAR)) {
     		monthOfYearCycleIndex(timeStamp);
+    	} else  if (seasonalCycleType.equals(ANY_TIME_RANGE)) {
+    		cycleIndex = -1;
+    		int indx = 0;
+    		for (Pair<Integer, Integer> timeRange :  timeRanges) {
+    			if (timeStamp >= timeRange.getLeft() && timeStamp <= timeRange.getRight()) {
+    				cycleIndex = indx;
+    				break;
+    			}
+    			++indx;
+    		}
     	} else {
     		throw new IllegalArgumentException("invalid cycle type");
     	}
@@ -187,6 +203,10 @@ public class SeasonalAnalyzer {
 
 	public void setHourRanges(Map<Integer, Integer> hourRanges) {
 		this.hourRanges = hourRanges;
+	}
+
+	public void setTimeRanges(List<Pair<Integer, Integer>> timeRanges) {
+		this.timeRanges = timeRanges;
 	}
 
 	public void setTimeStampInMili(boolean timeStampInMili) {

@@ -381,6 +381,24 @@ public class Utility {
     }
 
     /**
+     * @param filePath
+     * @return
+     * @throws IOException
+     */
+    public static List<String> getFileLines(String filePath) throws IOException {
+    	List<String> lines = new ArrayList<String>();
+    	InputStream fs = getFileStream(filePath);
+    	if (null != fs) {
+    		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+    		String line = null; 
+    		while((line = reader.readLine()) != null) {
+    			lines.add(line);
+    		}
+    	}
+    	return lines;
+    }
+
+    /**
      * @param text
      * @param analyzer
      * @return
@@ -1025,7 +1043,7 @@ public class Utility {
 	 */
 	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
-		return assertIntIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg);
+		return assertIntIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg, true);
 	}
 
 	/**
@@ -1053,6 +1071,7 @@ public class Utility {
 					int rangeEnd = Integer.parseInt(rangeLimits[1]);
 					int val = Integer.parseInt(parts[1]);
 					for (int r = rangeBeg; r <= rangeEnd; ++r) {
+						//key:hour value:hour group
 						data.put(r,  val);
 					}
 				}
