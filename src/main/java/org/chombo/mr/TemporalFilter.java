@@ -35,7 +35,6 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Pair;
 import org.chombo.util.SeasonalAnalyzer;
-import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
@@ -73,8 +72,6 @@ public class TemporalFilter   extends Configured implements Tool {
 	 *
 	 */
 	public static class FilterMapper extends Mapper<LongWritable, Text, NullWritable, Text> {
-		private Tuple outKey = new Tuple();
-		private Tuple outVal = new Tuple();
         private String fieldDelimRegex;
         private String[] items;
         private int timeStampFieldOrdinal;
@@ -83,34 +80,37 @@ public class TemporalFilter   extends Configured implements Tool {
         private long timeStamp;
         private SeasonalAnalyzer seasonalAnalyzer;
         
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"sed.time.stamp.field.ordinal", "missing timestamp field ordinal");
-        	seasonalCycleType = Utility.assertStringConfigParam(config,"sed.seasonal.cycle.type", "missing seasonal cycle type");
+        	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"tef.time.stamp.field.ordinal", "missing timestamp field ordinal");
+        	seasonalCycleType = Utility.assertStringConfigParam(config,"tef.seasonal.cycle.type", "missing seasonal cycle type");
         	
     		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
     		
     		//additional configuration
         	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
         			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
-        		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "hour.groups", 
+        		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "tef.hour.groups", 
         				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups");
         		seasonalAnalyzer.setHourRanges(hourRanges);
         	} else if (seasonalCycleType.equals(SeasonalAnalyzer.ANY_TIME_RANGE)) {
-        		List<Pair<Integer, Integer>>timeRanges =  Utility. assertIntPairListConfigParam(config, "time.range",  
+        		List<Pair<Integer, Integer>>timeRanges =  Utility. assertIntPairListConfigParam(config, "tef.time.range",  
         				Utility.configDelim, Utility.configSubFieldDelim, "missing time range");
         		seasonalAnalyzer.setTimeRanges(timeRanges);
         	}
         	
         	//time zone adjustment
-        	int  timeZoneShiftHours = config.getInt("time.zone.shift.hours",  0);
+        	int  timeZoneShiftHours = config.getInt("tef.time.zone.shift.hours",  0);
         	if (timeZoneShiftHours > 0) {
         		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
         	}
         	
         	//timestamp unit
-        	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
+        	boolean timeStampInMili = config.getBoolean("tef.time.stamp.in.mili", true);
         	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
        }
 

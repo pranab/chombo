@@ -1357,6 +1357,41 @@ public class Utility {
     }
  
     /**
+     * @param list
+     * @param subList
+     * @return
+     */
+    public static <T> List<T> listDifference(List<T> list, List<T> subList) {
+    	List<T> diff = new ArrayList<T>();
+    	for (T item : list) {
+    		if (!subList.contains(item)) {
+    			diff.add(item);
+    		}
+    	}
+    	return diff;
+    }
+    
+    /**
+     * generates sub lists of varying size from a list
+     * @param list
+     * @param subList
+     * @return
+     */
+    public static <T> void  generateSublists(List<T> list, List<T> subList, int lastIndex, 
+    	List<List<T>> biggerSubLists, int maxSubListSize) {
+    	for (int i = lastIndex + 1; i < list.size(); ++i) {
+    			List<T> biggerSubList = new ArrayList<T>();
+    			biggerSubList.addAll(subList);
+    			biggerSubList.add(list.get(i));
+    			biggerSubLists.add(biggerSubList);
+    			if (biggerSubList.size() < maxSubListSize) {
+    				//recurse
+    				generateSublists(list, biggerSubList, i, biggerSubLists, maxSubListSize);
+    			}
+    	}    	
+    }
+    
+    /**
      * Takes user specified attributes or builds  list of attributes of right type from schema 
      * @param attrListParam
      * @param configDelim
