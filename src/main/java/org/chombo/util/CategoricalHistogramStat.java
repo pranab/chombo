@@ -90,6 +90,20 @@ public class CategoricalHistogramStat {
 	/**
 	 * @return
 	 */
+	public double getGiniIndex() {
+		double giniIndex = 0;
+		getDistribution();
+		for (String attrValue : histogram.keySet()) {
+			double distrVal = histogram.get(attrValue);
+			giniIndex += distrVal * distrVal;
+		}
+		giniIndex = 1.0 - giniIndex;
+		return giniIndex;
+	}
+
+	/**
+	 * @return
+	 */
 	public String getMode() {
 		String mode = null;
 		int maxCount = 0;

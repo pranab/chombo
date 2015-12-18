@@ -606,5 +606,17 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return subTupleAsArray(0, fields.size());
 	}
 	
+	/**
+	 * removes duplicates and maintains same order
+	 */
+	public void removeDuplicates() {
+		List<Object> uniqueFields = new ArrayList<Object>();
+		for (Object value : fields) {
+			if (!uniqueFields.contains(value)) {
+				uniqueFields.add(value);
+			}
+		}
+		fields = uniqueFields;
+	}
 	
 }

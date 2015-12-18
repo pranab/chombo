@@ -1370,6 +1370,25 @@ public class Utility {
     	}
     	return diff;
     }
+
+    /**
+     * @param list
+     * @param maxSubListSize
+     * @return
+     */
+    public static <T> List<List<T>>  generateSublists(List<T> list,   int maxSubListSize) {
+    	 List<List<T>> subLists = new ArrayList<List<T>>();
+    	 
+    	 //for each  item  in list generate sublists up to max length
+    	 for (int i = 0; i < list.size();  ++i) {
+    		 List<T> subList = new ArrayList<T>();
+    		 subList.add(list.get(i));
+    		 subLists.add(subList);
+    		 generateSublists(list, subList, i, subLists, maxSubListSize);
+    	 }
+    	 return subLists;
+    }   
+    
     
     /**
      * generates sub lists of varying size from a list
@@ -1378,15 +1397,15 @@ public class Utility {
      * @return
      */
     public static <T> void  generateSublists(List<T> list, List<T> subList, int lastIndex, 
-    	List<List<T>> biggerSubLists, int maxSubListSize) {
+    	List<List<T>> subLists, int maxSubListSize) {
     	for (int i = lastIndex + 1; i < list.size(); ++i) {
     			List<T> biggerSubList = new ArrayList<T>();
     			biggerSubList.addAll(subList);
     			biggerSubList.add(list.get(i));
-    			biggerSubLists.add(biggerSubList);
+    			subLists.add(biggerSubList);
     			if (biggerSubList.size() < maxSubListSize) {
     				//recurse
-    				generateSublists(list, biggerSubList, i, biggerSubLists, maxSubListSize);
+    				generateSublists(list, biggerSubList, i, subLists, maxSubListSize);
     			}
     	}    	
     }
