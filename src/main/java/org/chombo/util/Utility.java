@@ -1481,4 +1481,24 @@ public class Utility {
     	return String.format(formatter, val);
     }
     
+    /**
+     * @param text
+     * @return
+     * @throws IOException
+     */
+    public static  String analyze(String text, Analyzer analyzer) throws IOException {
+        TokenStream stream = analyzer.tokenStream("contents", new StringReader(text));
+        StringBuilder stBld = new StringBuilder();
+
+        stream.reset();
+        CharTermAttribute termAttribute = (CharTermAttribute)stream.getAttribute(CharTermAttribute.class);
+        while (stream.incrementToken()) {
+    		String token = termAttribute.toString();
+    		stBld.append(token).append(" ");
+    	} 
+    	stream.end();
+    	stream.close();
+    	return stBld.toString();
+    }
+    
 }
