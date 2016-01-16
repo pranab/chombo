@@ -293,6 +293,23 @@ public class Utility {
      * @return
      * @throws IOException
      */
+    public static InputStream getFileStream(String filePath) throws IOException {
+    	Configuration conf = new Configuration();
+        FSDataInputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.open(src);
+        }
+        return fs;
+    }
+ 
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
     public static OutputStream getCreateFileOutputStream(Configuration conf, String pathConfig) throws IOException {
         String filePath = conf.get(pathConfig);
         FSDataOutputStream fs = null;
@@ -353,6 +370,24 @@ public class Utility {
     public static List<String> getFileLines(Configuration conf, String filePathParam) throws IOException {
     	List<String> lines = new ArrayList<String>();
     	InputStream fs = getFileStream(conf, filePathParam);
+    	if (null != fs) {
+    		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+    		String line = null; 
+    		while((line = reader.readLine()) != null) {
+    			lines.add(line);
+    		}
+    	}
+    	return lines;
+    }
+
+    /**
+     * @param filePath
+     * @return
+     * @throws IOException
+     */
+    public static List<String> getFileLines(String filePath) throws IOException {
+    	List<String> lines = new ArrayList<String>();
+    	InputStream fs = getFileStream(filePath);
     	if (null != fs) {
     		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
     		String line = null; 
@@ -447,6 +482,15 @@ public class Utility {
      * @param recordItems
      * @param filterFieldOrdinal
      * @param tuple
+     */
+    public static void createStringTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple) {
+    	createStringTuple(recordItems, filterFieldOrdinal, tuple, true);
+    }    
+
+    /**
+     * @param recordItems
+     * @param filterFieldOrdinal
+     * @param tuple
      * @param toInclude
      */
     public static void createIntTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple, boolean toInclude) {
@@ -458,6 +502,15 @@ public class Utility {
     	}
     }    
     
+    /**
+     * @param recordItems
+     * @param filterFieldOrdinal
+     * @param tuple
+     */
+    public static void createIntTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple) {
+    	createIntTuple(recordItems, filterFieldOrdinal, tuple, true);
+    }    
+
     /** creates tuple
      * @param record coma separated  fields
      * @param tuple
@@ -990,7 +1043,7 @@ public class Utility {
 	 */
 	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
-		return assertIntIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg);
+		return assertIntIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg, true);
 	}
 
 	/**
@@ -1018,6 +1071,7 @@ public class Utility {
 					int rangeEnd = Integer.parseInt(rangeLimits[1]);
 					int val = Integer.parseInt(parts[1]);
 					for (int r = rangeBeg; r <= rangeEnd; ++r) {
+						//key:hour value:hour group
 						data.put(r,  val);
 					}
 				}
@@ -1169,6 +1223,21 @@ public class Utility {
 	}
 	
 	/**
+	 * @param filePath
+	 * @return
+	 * @throws IOException
+	 */
+	public static Config getHoconConfig(String filePath) throws IOException {
+		Config config =  null;
+		if (null  !=  filePath) {
+			InputStream is = getFileStream(filePath);
+			BufferedReader bufRead =new BufferedReader(new InputStreamReader(is));
+			config =  ConfigFactory.parseReader(bufRead);
+		}
+		return config;
+	}
+
+	/**
 	 * @param conf
 	 * @param pathParam
 	 * @return
@@ -1200,6 +1269,47 @@ public class Utility {
 		return schema;
 	}
 	
+	/**
+	 * @param conf
+	 * @param pathParam
+	 * @return
+	 * @throws IOException
+	 */
+	public static FeatureSchema getFeatureSchema(Configuration conf, String pathParam) throws IOException {
+		FeatureSchema schema = null;
+		InputStream is = Utility.getFileStream(conf, pathParam);
+		if (null != is) {
+			ObjectMapper mapper = new ObjectMapper();
+			schema = mapper.readValue(is, FeatureSchema.class);
+		}
+		return schema;
+	}
+
+	/**
+	 * @param conf
+	 * @param pathParam
+	 * @return
+	 * @throws IOException
+	 */
+	public static ProcessorAttributeSchema getProcessingSchema(Configuration conf, String pathParam) throws IOException {
+		InputStream is = Utility.getFileStream(conf,  pathParam);
+		ObjectMapper mapper = new ObjectMapper();
+		ProcessorAttributeSchema processingSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+		return processingSchema;
+	}
+	
+	/**
+	 * @param filePath
+	 * @return
+	 * @throws IOException
+	 */
+	public static ProcessorAttributeSchema getProcessingSchema( String filePath) throws IOException {
+		InputStream is = Utility.getFileStream(filePath);
+		ObjectMapper mapper = new ObjectMapper();
+		ProcessorAttributeSchema processingSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+		return processingSchema;
+	}
+
 	/**
 	 * @param config
 	 * @param params
@@ -1246,6 +1356,60 @@ public class Utility {
     	return newList;
     }
  
+    /**
+     * @param list
+     * @param subList
+     * @return
+     */
+    public static <T> List<T> listDifference(List<T> list, List<T> subList) {
+    	List<T> diff = new ArrayList<T>();
+    	for (T item : list) {
+    		if (!subList.contains(item)) {
+    			diff.add(item);
+    		}
+    	}
+    	return diff;
+    }
+
+    /**
+     * @param list
+     * @param maxSubListSize
+     * @return
+     */
+    public static <T> List<List<T>>  generateSublists(List<T> list,   int maxSubListSize) {
+    	 List<List<T>> subLists = new ArrayList<List<T>>();
+    	 
+    	 //for each  item  in list generate sublists up to max length
+    	 for (int i = 0; i < list.size();  ++i) {
+    		 List<T> subList = new ArrayList<T>();
+    		 subList.add(list.get(i));
+    		 subLists.add(subList);
+    		 generateSublists(list, subList, i, subLists, maxSubListSize);
+    	 }
+    	 return subLists;
+    }   
+    
+    
+    /**
+     * generates sub lists of varying size from a list
+     * @param list
+     * @param subList
+     * @return
+     */
+    public static <T> void  generateSublists(List<T> list, List<T> subList, int lastIndex, 
+    	List<List<T>> subLists, int maxSubListSize) {
+    	for (int i = lastIndex + 1; i < list.size(); ++i) {
+    			List<T> biggerSubList = new ArrayList<T>();
+    			biggerSubList.addAll(subList);
+    			biggerSubList.add(list.get(i));
+    			subLists.add(biggerSubList);
+    			if (biggerSubList.size() < maxSubListSize) {
+    				//recurse
+    				generateSublists(list, biggerSubList, i, subLists, maxSubListSize);
+    			}
+    	}    	
+    }
+    
     /**
      * Takes user specified attributes or builds  list of attributes of right type from schema 
      * @param attrListParam
@@ -1315,6 +1479,26 @@ public class Utility {
     public static String formatDouble(double val, int prec) {
     	String formatter = "%." + prec + "f";
     	return String.format(formatter, val);
+    }
+    
+    /**
+     * @param text
+     * @return
+     * @throws IOException
+     */
+    public static  String analyze(String text, Analyzer analyzer) throws IOException {
+        TokenStream stream = analyzer.tokenStream("contents", new StringReader(text));
+        StringBuilder stBld = new StringBuilder();
+
+        stream.reset();
+        CharTermAttribute termAttribute = (CharTermAttribute)stream.getAttribute(CharTermAttribute.class);
+        while (stream.incrementToken()) {
+    		String token = termAttribute.toString();
+    		stBld.append(token).append(" ");
+    	} 
+    	stream.end();
+    	stream.close();
+    	return stBld.toString();
     }
     
 }

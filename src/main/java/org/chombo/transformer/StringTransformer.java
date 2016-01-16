@@ -18,15 +18,22 @@
 
 package org.chombo.transformer;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.chombo.transformer.NumericTransformer.Custom;
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigValue;
 
 /**
  * @author pranab
@@ -202,7 +209,7 @@ public class StringTransformer {
 			defaultValue  = config.getString("defaultValue");
 		}
 
-		public DefaultValueTransformer( Config config, String defaultValue) {
+		public DefaultValueTransformer( String defaultValue) {
 			super(1);
 			this.defaultValue  = defaultValue;
 		}
@@ -218,6 +225,30 @@ public class StringTransformer {
 		}
 	}	
 	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class ForcedReplaceTransformer extends AttributeTransformer {
+		private String newValue;
+		
+		public ForcedReplaceTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			newValue  = config.getString("newValue");
+		}
+
+		public ForcedReplaceTransformer( String newValue) {
+			super(1);
+			this.newValue  = newValue;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] = newValue;
+			return transformed;
+		}
+	}	
+
 	/**
 	 * @author pranab
 	 *
@@ -268,7 +299,6 @@ public class StringTransformer {
 			}
 			return transformed;
 		}
-		
 	}
 	
 	/**
@@ -292,5 +322,97 @@ public class StringTransformer {
 		}
 	}	
 	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class ConstantGenerator extends AttributeTransformer {
+		private String constValue;
+		
+		public ConstantGenerator(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			constValue  = config.getString("constValue");
+		}
+
+		public ConstantGenerator( String constValue) {
+			super(1);
+			this.constValue  = constValue;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] = constValue;
+			return transformed;
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class GroupTransformer extends AttributeTransformer {
+		private Map<String, List<String>> groupValues = new HashMap<String, List<String>>();
+		
+		public GroupTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			
+			Set<Entry<String, ConfigValue>>   entries = config.entrySet();
+			for (Entry<String, ConfigValue> entry : entries) {
+				String[] values = entry.getValue().unwrapped().toString().split(",");
+				groupValues.put(entry.getKey(), Arrays.asList(values));
+			}
+		}
+
+		public GroupTransformer( Map<String, List<String>> groupValues ) {
+			super(2);
+			this.groupValues  = groupValues;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] = value;
+			String group = null;
+			for (String key : groupValues.keySet()) {
+				if (groupValues.get(key).contains(value)) {
+					group = key;
+					break;
+				}
+			}
+			if (null == group) {
+				throw new IllegalArgumentException("no group found");
+			}
+			transformed[1] = group;
+			return transformed;
+		}
+	}	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class StringCustomTransformer extends CustomTransformer {
+		
+		public StringCustomTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr, config);
+		}		
+		
+		public StringCustomTransformer(String script, Map<String, Object> params) {
+			super(script,  params);
+		}
+
+		protected  Object getFieldValue(String value) {
+			return value;
+		}
+		
+		protected  String getOutput(Object out) {
+			String ret = null;
+			if (out instanceof String ) {
+				ret = "" + (String)out;
+			} else {
+				throw new IllegalArgumentException("string output expected");
+			}
+			return ret;
+		}
+	}
 	
 }

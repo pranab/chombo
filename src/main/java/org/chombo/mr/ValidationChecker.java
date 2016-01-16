@@ -37,6 +37,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.transformer.TransformerFactory;
 import org.chombo.util.Attribute;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.MedianStatsManager;
@@ -96,7 +97,6 @@ public class ValidationChecker extends Configured implements Tool {
         private String fieldDelimOut;
 		private StringBuilder stBld = new  StringBuilder();
         private String[] items;
-        private GenericAttributeSchema schema;
         private Map<Integer, List<Validator>> validators = new HashMap<Integer, List<Validator>>();
         private List<InvalidData> invalidDataList = new ArrayList<InvalidData>();
         private boolean filterInvalidRecords;
@@ -104,12 +104,10 @@ public class ValidationChecker extends Configured implements Tool {
         private boolean valid;
         private String invalidDataFilePath;
         private Map<String, Object> validatorContext = new HashMap<String, Object>(); 
-        private Map<String,String> custValidatorClasses = new HashMap<String,String>();
-        private Map<String,String> custValidatorParams = new HashMap<String,String>();
         private MedianStatsManager medStatManager;
         private int[] idOrdinals;
         private NumericalAttrStatsManager statsManager;
-              
+        private ProcessorAttributeSchema validationSchema;      
         
         
         /* (non-Javadoc)
@@ -126,79 +124,40 @@ public class ValidationChecker extends Configured implements Tool {
         	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
  
         	//schema
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	validationSchema = Utility.getProcessingSchema(config, "validation.schema.file.path");
  
             //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
             
-            //custom validator
-        	if (null == validatorConfig)  {
-        		customValidatorsFromProps(config);
-        	} else {
-        		customValidatorsFromHconf( validatorConfig);
-        	}
+        	//intialize transformer factory
+        	ValidatorFactory.initialize( config.get( "custom.valid.factory.class"), validatorConfig );
 
-            //build validator objects
-            int[] ordinals  = schema.getAttributeOrdinals();
- 
-            if (null != validatorConfig) {
-            	//hconf based
-            	List <? extends Config> fieldValidators = validatorConfig.getConfigList("field.validators");
-            	for (Config fieldValidator : fieldValidators) {
-            		int ord = fieldValidator.getInt("ordinal");
-            		List<String> validatorTags =  fieldValidator.getStringList("validators");
-            		String[] valTags = validatorTags.toArray(new String[validatorTags.size()]);
-            		createValidators( config,  valTags,  ord );
+        	//build validator objects
+            int[] ordinals  = validationSchema.getAttributeOrdinals();
+
+            //validators from try prop file configuration
+            boolean foundInPropConfig = false;
+            for (int ord : ordinals ) {
+            	String key = "validator." + ord;
+            	String validatorString = config.get(key);
+            	if (null != validatorString ) {
+            		String[] valTags = validatorString.split(fieldDelimOut);
+            		createValidators( config,  valTags,  ord, null );
+            		foundInPropConfig = true;
             	}
-            } else {           
-            	//prop  configuration based
-	            for (int ord : ordinals ) {
-	            	String key = "validator." + ord;
-	            	String validatorString = config.get(key);
-	            	if (null != validatorString ) {
-	            		String[] valTags = validatorString.split(fieldDelimOut);
-	            		createValidators( config,  valTags,  ord );
-	            	}
-	            }
+            }
+            
+            //validators from hconf
+            if (!foundInPropConfig) {
+           		for (ProcessorAttribute prAttr : validationSchema.getAttributes()) {
+	        		List<String> validatorTags =  prAttr.getValidators();
+	        		if (null != validatorTags) {
+	        			String[] valTags = validatorTags.toArray(new String[validatorTags.size()]);
+	        			createValidators( config,  valTags,  prAttr.getOrdinal(), validatorConfig);
+	        		}
+	           	}
             }
        }
-        
-        /**
-         * @param config
-         */
-        private void customValidatorsFromProps(Configuration config) {
-            String customValidators = config.get("custom.validators");
-            if (null != customValidators) { 
-            	String[] custItems =  customValidators.split(",");
-	            for (String  custValidatorTag :  custItems ) {
-	            	String key = "custom.validator." + custValidatorTag +".class";
-	            	String custValidatorClass = config.get(key);
-	            	if (null != custValidatorClass ) {
-	            		custValidatorClasses.put(custValidatorTag, custValidatorClass);
-	            	}            
-	            }
-	            ValidatorFactory.setCustValidatorClasses(custValidatorClasses);
-	            
-	            //config params
-	            custValidatorParams = config.getValByRegex("custom.validator(\\S)+");
-            }
-        }
-        
-        
-        /**
-         * @param config
-         */
-        private void customValidatorsFromHconf( Config validatorConfig) {
-        	List <? extends Config> customvalidators = validatorConfig.getConfigList("customvalidators");
-        	for (Config custValidator : customvalidators ) {
-        		String tag = custValidator.getString("tag");
-        		custValidatorClasses.put("custom.validator." + tag + ".class",  custValidator.getString("class"));
-        		List <? extends Config> params = custValidator.getConfigList("params");
-        		for (Config param : params) {
-        			custValidatorParams.put("custom.validator." + tag + "." + param.getString("name"), param.getString("value"));
-        		}
-        	}
-        }
         
         /**
          * @param config
@@ -208,28 +167,24 @@ public class ValidationChecker extends Configured implements Tool {
          * @param validatorList
          * @throws IOException
          */
-        private void createValidators( Configuration config, String[] valTags,   int ord ) 
+        private void createValidators( Configuration config, String[] valTags,   int ord, Config validatorConfig ) 
         		throws IOException {
         	//create all validator for  a field
     		List<Validator> validatorList = new ArrayList<Validator>();  
+			ProcessorAttribute prAttr = validationSchema.findAttributeByOrdinal(ord);
     		for (String valTag :  valTags) {
     			if (valTag.equals("zscoreBasedRange")) {
     				//z score based
     				getAttributeStats(config, "stat.file.path");
-    				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
+    				validatorList.add(ValidatorFactory.create(valTag, prAttr, validatorContext));
     			} if (valTag.equals("robustZscoreBasedRange")) {
     				//robust z score based
     				getAttributeMeds(config, "med.stat.file.path", "mad.stat.file.path", idOrdinals);
-    				validatorList.add(ValidatorFactory.create(valTag, ord, schema,validatorContext));
+    				validatorList.add(ValidatorFactory.create(valTag, prAttr,validatorContext));
     			} else {
     				//normal
-    				Validator validator = ValidatorFactory.create(valTag, ord, schema);
+    				Validator validator = ValidatorFactory.create(valTag, prAttr,  validatorConfig);
     				validatorList.add(validator);
-    				
-    				//set config for custom balidators
-    				if (custValidatorClasses.containsKey(valTag)) {
-    					validator.setConfigParams(custValidatorParams);
-    				}
     			}
     		}
     		validators.put(ord, validatorList);

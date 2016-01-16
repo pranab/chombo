@@ -106,17 +106,22 @@ public class SeasonalDetector  extends Configured implements Tool {
         	aggregatorType = config.get("sed.aggregator.type", AGGR_AVG);
         	
     		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
+
+    		//additional configuration
         	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
         			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
         		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "hour.groups", 
-        				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups");
+        				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups", true);
         		seasonalAnalyzer.setHourRanges(hourRanges);
         	} 
         	
+        	//time zone adjustment
         	int  timeZoneShiftHours = config.getInt("time.zone.shift.hours",  0);
         	if (timeZoneShiftHours > 0) {
         		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
         	}
+        	
+        	//timestamp unit
         	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
         	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
        }

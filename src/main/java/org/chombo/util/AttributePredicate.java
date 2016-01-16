@@ -15,30 +15,30 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.validator;
-
-import org.chombo.util.ProcessorAttribute;
+package org.chombo.util;
 
 /**
  * @author pranab
  *
  */
-public class CategoricalValidator {
+public abstract class AttributePredicate {
+	protected int attribute;
+	protected String operator;
+	protected final String GREATER_THAN = "gt";
+	protected final String LESS_THAN = "lt";
+	protected final String EQUAL_TO = "eq";
+	
+	public AttributePredicate(int attribute, String operator) {
+		super();
+		this.attribute = attribute;
+		this.operator = operator;
+	}
 	
 	/**
-	 * @author pranab
-	 *
+	 * evaluates predicate 
+	 * @param record
+	 * @return
 	 */
-	public static class MembershipValidator extends Validator {
-
-		public MembershipValidator(String tag, ProcessorAttribute prAttr) {
-			super(tag,  prAttr);
-		}
-
-		@Override
-		public boolean isValid(String value) {
-			return prAttr.getCardinality().contains(value);
-		}
-	}
-
+	public abstract boolean evaluate(String[] record);
+	
 }

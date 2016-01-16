@@ -54,7 +54,9 @@ public class ProcessorAttributeSchema extends AttributeSchema<ProcessorAttribute
 		
 		//derived attributes from transformers
 		for (ProcessorAttribute attr :  attributes) {
-			count += attr.getTargetFieldOrdinals().length;
+			if (null != attr.getTargetFieldOrdinals()) { 
+				count += attr.getTargetFieldOrdinals().length;
+			}
 		}
 
 		//generated attributes
@@ -106,12 +108,14 @@ public class ProcessorAttributeSchema extends AttributeSchema<ProcessorAttribute
 	private void validateTargetAttributeMappingHelper(List<ProcessorAttribute> attributes, int[] targetOrdinals ) {
 		for (ProcessorAttribute attr :  attributes) {
 			int[] targets = attr.getTargetFieldOrdinals();
-			for (int i = 0; i < targets.length; ++i) {
-				int targetOrd = targets[i];
-				if (targetOrdinals[targetOrd] == -1) {
-					targetOrdinals[targetOrd] = targetOrd;
-				} else {
-					throw new  IllegalArgumentException("multiple mapping for target field ordinal");
+			if (null != targets) {
+				for (int i = 0; i < targets.length; ++i) {
+					int targetOrd = targets[i];
+					if (targetOrdinals[targetOrd] == -1) {
+						targetOrdinals[targetOrd] = targetOrd;
+					} else {
+						throw new  IllegalArgumentException("multiple mapping for target field ordinal");
+					}
 				}
 			}
 		}

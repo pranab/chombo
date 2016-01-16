@@ -15,30 +15,24 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.validator;
+package org.chombo.transformer;
 
 import org.chombo.util.ProcessorAttribute;
+
+import com.typesafe.config.Config;
 
 /**
  * @author pranab
  *
  */
-public class CategoricalValidator {
+public interface CustomTransformerFactory {
 	
 	/**
-	 * @author pranab
-	 *
+	 * @param transformerTag
+	 * @param prAttr
+	 * @param config
+	 * @return
 	 */
-	public static class MembershipValidator extends Validator {
-
-		public MembershipValidator(String tag, ProcessorAttribute prAttr) {
-			super(tag,  prAttr);
-		}
-
-		@Override
-		public boolean isValid(String value) {
-			return prAttr.getCardinality().contains(value);
-		}
-	}
+	public  AttributeTransformer createTransformer(String transformerTag,  ProcessorAttribute prAttr, Config config);
 
 }

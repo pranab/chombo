@@ -212,7 +212,8 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 			for (String  attrValue : distr.keySet() ) {
 				stBld.append(attrValue).append(fieldDelim).append(distr.get(attrValue)).append(fieldDelim);
 			}
-			stBld.append(histogram.getEntropy()) ;
+			stBld.append(histogram.getEntropy()).append(fieldDelim) ;
+			stBld.append(histogram.getGiniIndex()) ;
 			stBld.append(fieldDelim).append(histogram.getMode()) ;
 			outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);

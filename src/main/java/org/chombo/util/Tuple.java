@@ -133,6 +133,20 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	}
 	
 	/**
+	 * @param other
+	 */
+	public void add(Tuple other) {
+		fields.addAll(other.fields);
+	}
+	
+	 /**
+	 * @param list
+	 */
+	public  <T> void add(List<T> list) {
+		 fields.addAll(list);
+	 }
+	 
+	/**
 	 * adds string serilized elements
 	 * @param type
 	 * @param field
@@ -592,5 +606,17 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		return subTupleAsArray(0, fields.size());
 	}
 	
+	/**
+	 * removes duplicates and maintains same order
+	 */
+	public void removeDuplicates() {
+		List<Object> uniqueFields = new ArrayList<Object>();
+		for (Object value : fields) {
+			if (!uniqueFields.contains(value)) {
+				uniqueFields.add(value);
+			}
+		}
+		fields = uniqueFields;
+	}
 	
 }

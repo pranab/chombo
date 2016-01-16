@@ -1,0 +1,69 @@
+{
+		"attributes" :
+		[
+			{
+				"name" : "xactionID",
+				"ordinal" : 0,
+				"dataType" : "string",
+				"targetFieldOrdinals" : [0]
+			},
+			{
+				"name" : "custID",
+				"ordinal" : 1,
+				"dataType" : "string",
+				"transformers" : ["anoynmizerTrans"],
+				"targetFieldOrdinals" : [1]
+			},
+			{
+				"name" : "storeID",
+				"ordinal" : 2,
+				"dataType" : "string",
+				"targetFieldOrdinals" : [2]
+			},
+			{
+				"name" : "dateTime",
+				"ordinal" : 3,
+				"dataType" : "string",
+				"transformers" : ["dateFormatTrans"],
+				"targetFieldOrdinals" : [3]
+			},
+			{
+				"name" : "prodID",
+				"ordinal" : 4,
+				"dataType" : "string",
+				"targetFieldOrdinals" : [4]
+			},
+			{
+				"name" : "quantity",
+				"ordinal" : 5,
+				"dataType" : "int",
+				"targetFieldOrdinals" : [5]
+			},
+			{
+				"name" : "amount",
+				"ordinal" : 6,
+				"dataType" : "double",
+				"transformers" : ["doubleMultiplyTrans"],
+				"targetFieldOrdinals" : [6]
+			},
+			{
+				"name" : "currency",
+				"ordinal" : 7,
+				"dataType" : "string",
+				"transformers" : ["forcedReplaceTrans"],
+				"targetFieldOrdinals" : [7]
+			}
+		],
+		
+		"attributeGenerators" :
+		[
+			{
+				"name" : "country",
+				"ordinal" : 8,
+				"dataType" : "string",
+				"transformers" : ["constGen"],
+				"targetFieldOrdinals" : [8]
+			}
+		]
+
+}

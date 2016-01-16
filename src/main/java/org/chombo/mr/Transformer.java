@@ -45,6 +45,7 @@ import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 
 /**
  * Transforms attributes based on plugged in transformers for different attributes.
@@ -68,6 +69,7 @@ public class Transformer extends Configured implements Tool {
         job.setMapperClass(Transformer.TransformerMapper.class);
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
+        job.setNumReduceTasks(0);
         
         int status =  job.waitForCompletion(true) ? 0 : 1;
         return status;
@@ -135,23 +137,25 @@ public class Transformer extends Configured implements Tool {
         	//transformer schema
         	configDriven = config.get("transformer.schema.file.path") != null;
         	if (configDriven) {
-	        	InputStream is = Utility.getFileStream(config,  "transformer.schema.file.path");
-	        	ObjectMapper mapper = new ObjectMapper();
-	        	transformerSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+        		//schema
+	        	transformerSchema = Utility.getProcessingSchema(config, "transformer.schema.file.path");
 	        	transformerSchema.validateTargetAttributeMapping();
 	        	
 	        	//transformer config
 	        	transformerConfig = Utility.getHoconConfig(config, "transformer.config.file.path");
 	        	
+	        	//intialize transformer factory
+	        	TransformerFactory.initialize( config.get( "custom.trans.factory.class"), transformerConfig);
+
 	        	//build transformers
-	        	Config transConfig;
 	        	AttributeTransformer attrTrans;
 	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributes()) {
 	        		fieldOrd = prAttr.getOrdinal();
-	        		for (String tranformerTag  : prAttr.getTransformers() ) {
-	        			transConfig = transformerConfig.getConfig(tranformerTag);
-	        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transConfig);
-	        			registerTransformers(fieldOrd, attrTrans);
+	        		if (null != prAttr.getTransformers()) {
+	        			for (String tranformerTag  : prAttr.getTransformers() ) {
+	        				attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
+	        				registerTransformers(fieldOrd, attrTrans);
+	        			}
 	        		}
 	        	}
 	        	
@@ -159,8 +163,7 @@ public class Transformer extends Configured implements Tool {
 	        	if (null != transformerSchema.getAttributeGenerators()) {
 		        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
 		        		for (String tranformerTag  : prAttr.getTransformers() ) {
-		        			transConfig = transformerConfig.getConfig(tranformerTag);
-		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transConfig);
+		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
 		        			registerGenerators(attrTrans);
 		        		}
 		        	}
@@ -170,6 +173,7 @@ public class Transformer extends Configured implements Tool {
 	        	itemsOut = new String[transformerSchema.findDerivedAttributeCount()];
         	}
        }
+        
         
         /**
          * @param fieldOrd
@@ -260,6 +264,10 @@ public class Transformer extends Configured implements Tool {
          */
         private void getTranformedAttributes(List<ProcessorAttribute> prAttrs, boolean isTransformer) {
         	for (ProcessorAttribute prAttr : prAttrs) {
+        		if (null == prAttr.getTargetFieldOrdinals()) {
+        			//field is omitted from output
+        			continue;
+        		}
         		if (isTransformer) {
         			fieldOrd = prAttr.getOrdinal();
                 	source = items[fieldOrd];
@@ -269,17 +277,33 @@ public class Transformer extends Configured implements Tool {
         			transformerList = generators;
         		}
         		
+        		//chained transformation
             	int t = 0;
-            	for (AttributeTransformer trans :  transformerList) {
-        			transformedValues = trans.tranform(source);
-        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
-        				//only last transformer is allowed to emit multiple values
-        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
-        			}
-	        		source = transformedValues[0];
-        			++t;
+            	transformedValues = null;
+            	if (null != transformerList) {
+	            	for (AttributeTransformer trans :  transformerList) {
+	        			transformedValues = trans.tranform(source);
+	        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
+	        				//only last transformer is allowed to emit multiple values
+	        				throw new  IllegalStateException("for cascaded transformeronly last transformer is allowed to emit multiple values");
+	        			}
+		        		source = transformedValues[0];
+	        			++t;
+	            	}
             	}
             	
+            	//no transformers or generators
+            	if (null  == transformedValues) {
+            		transformedValues = new String[1];
+            		transformedValues[0] = source;
+            	}
+            	
+            	//check output size with target attribute count
+            	if (transformedValues.length != prAttr.getTargetFieldOrdinals().length) {
+            		throw new IllegalStateException("transformed output size does not match with target attribute count");
+            	}
+            	
+            	//populated target attributes
             	t = 0;
             	for (int targetOrd : prAttr.getTargetFieldOrdinals()) {
             		itemsOut[targetOrd] = transformedValues[t];

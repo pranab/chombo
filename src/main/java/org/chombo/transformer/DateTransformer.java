@@ -21,8 +21,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.chombo.util.ProcessorAttribute;
+import org.chombo.util.Utility;
 
 import com.typesafe.config.Config;
 
@@ -91,30 +93,73 @@ public class DateTransformer  {
 	public static class DateFormatTransformer extends AttributeTransformer {
 		private SimpleDateFormat sourceDateFormat;
 		private SimpleDateFormat targetDateFormat;
+		private boolean sourceEpochTime;
+		private boolean targetEpochTime;
 		
 		/**
 		 * @param prAttr
+		 * @param config
 		 */
 		public DateFormatTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
-			intialize(config.getString("sourceDateFormat"), config.getString("targetDateFormat"));
+			intialize(config.getString("sourceDateFormat"), config.getString("sourceTimeZone"), config.getString("targetDateFormat"), 
+					config.getString("targetTimeZone"));
 		}
 		
-		public DateFormatTransformer(String sourceDateFormat, String targetDateFormat) {
+		/**
+		 * @param sourceDateFormat
+		 * @param sourceTimeZone
+		 * @param targetDateFormat
+		 * @param targetTimeZone
+		 */
+		public DateFormatTransformer(String sourceDateFormat, String sourceTimeZone, String targetDateFormat, String targetTimeZone) {
 			super(1);
-			intialize(sourceDateFormat, targetDateFormat);
+			intialize(sourceDateFormat,  sourceTimeZone, targetDateFormat,  targetTimeZone);
 		}
 
-		private void intialize(String sourceDateFormatStr, String targetDateFormatStr) {
-			sourceDateFormat = new SimpleDateFormat(sourceDateFormatStr);
-			targetDateFormat = new SimpleDateFormat(targetDateFormatStr);
+		/**
+		 * @param sourceDateFormatStr
+		 * @param sourceTimeZone
+		 * @param targetDateFormatStr
+		 * @param targetTimeZone
+		 */
+		private void intialize(String sourceDateFormatStr, String sourceTimeZone, String targetDateFormatStr, String targetTimeZone) {
+			if (sourceDateFormatStr.equals("epochTime")) {
+				sourceEpochTime = true;
+			} else  {
+				sourceDateFormat = new SimpleDateFormat(sourceDateFormatStr);
+				if (!Utility.isBlank(sourceTimeZone)) {
+					sourceDateFormat.setTimeZone(TimeZone.getTimeZone(sourceTimeZone));
+				}
+			}
+
+			if (targetDateFormatStr.equals("epochTime")) {
+				targetEpochTime = true;
+			} else  {
+				targetDateFormat = new SimpleDateFormat(targetDateFormatStr);
+				if (!Utility.isBlank(targetTimeZone)) {
+					targetDateFormat.setTimeZone(TimeZone.getTimeZone(targetTimeZone));
+				}
+			}
 		}
 
 		@Override
 		public String[] tranform(String value) {
 			try {
-				Date date = sourceDateFormat.parse(value);
-				transformed[0] = targetDateFormat.format(date);
+				Date date = null;
+				if (null != sourceDateFormat) {
+					//date format
+					date = sourceDateFormat.parse(value);
+				} else {
+					//epoch time
+					date = new Date(Long.parseLong(value));
+				}
+				
+				if (null != targetDateFormat) {
+					transformed[0] = targetDateFormat.format(date);
+				} else {
+					transformed[0] =  "" + date.getTime();
+				}
 			} catch (ParseException ex) {
 				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
 			}

@@ -19,26 +19,16 @@ package org.chombo.validator;
 
 import org.chombo.util.ProcessorAttribute;
 
-/**
- * @author pranab
- *
- */
-public class CategoricalValidator {
-	
+import com.typesafe.config.Config;
+
+public interface CustomValidatorFactory {
+
 	/**
-	 * @author pranab
-	 *
+	 * @param validatorType
+	 * @param prAttr
+	 * @param validatorConfig
+	 * @return
 	 */
-	public static class MembershipValidator extends Validator {
-
-		public MembershipValidator(String tag, ProcessorAttribute prAttr) {
-			super(tag,  prAttr);
-		}
-
-		@Override
-		public boolean isValid(String value) {
-			return prAttr.getCardinality().contains(value);
-		}
-	}
+	public  Validator createValidator(String validatorType, ProcessorAttribute prAttr, Config validatorConfig);
 
 }

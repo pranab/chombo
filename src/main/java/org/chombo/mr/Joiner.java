@@ -36,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.AttributeFilter;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.TextInt;
 import org.chombo.util.Tuple;
@@ -47,6 +48,7 @@ import org.chombo.util.Utility;
  *
  */
 public class Joiner extends Configured implements Tool {
+		private static String configDelim = ",";
 
 		@Override
 		public int run(String[] args) throws Exception {
@@ -94,41 +96,77 @@ public class Joiner extends Configured implements Tool {
 	        private String fieldDelimOut;
 	        private boolean isFirstTypeSplit;
 	        private boolean sortKeyFields;
+	        private int[] firstSetProjectedFields ;
+	        private int[] secondSetProjectedFields ;
+	        private AttributeFilter firstSetAttrFilter;
+	        private AttributeFilter secondSetAttrFilter;
 	        
 	        /* (non-Javadoc)
 	         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
 	         */
 	        protected void setup(Context context) throws IOException, InterruptedException {
-	        	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", ",");
-	        	fieldDelimOut = context.getConfiguration().get("field.delim", ",");
-	        	String firstTypePrefix = context.getConfiguration().get("first.type.prefix", "first");
+	        	Configuration config = context.getConfiguration();
+	        	fieldDelimRegex = config.get("field.delim.regex", ",");
+	        	fieldDelimOut = config.get("field.delim", ",");
+	        	String firstTypePrefix = config.get("first.type.prefix", "first");
 	        	isFirstTypeSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(firstTypePrefix);
-	        	keyFieldFirst = Utility.intArrayFromString(context.getConfiguration().get("key.field.first"), fieldDelimRegex ); 
-	        	keyFieldSecond = Utility.intArrayFromString(context.getConfiguration().get("key.field.second"), fieldDelimRegex ); 
+	        	keyFieldFirst = Utility.intArrayFromString(config.get("key.field.first"), fieldDelimRegex ); 
+	        	keyFieldSecond = Utility.intArrayFromString(config.get("key.field.second"), fieldDelimRegex ); 
 	        	if (keyFieldFirst.length != keyFieldSecond.length) {
 	        		throw new IllegalStateException("composite key sizes are not equal");
 	        	}
 	        	sortKeyFields = context.getConfiguration().getBoolean("sort.key.fields", false);
+	        	
+	        	firstSetProjectedFields = Utility.intArrayFromString(config.get("first.set.projected.fields"), configDelim);
+	        	secondSetProjectedFields = Utility.intArrayFromString(config.get("second.set.projected.fields"), configDelim);
+	        	
+	        	String firstSetFilter = config.get("first.set.filter");
+	        	if (null  !=   firstSetFilter) {
+	        		firstSetAttrFilter = new AttributeFilter(firstSetFilter);
+	        	}
+	        	
+	        	String secondSetFilter = config.get("second.set.filter");
+	        	if (null  !=   secondSetFilter) {
+	        		secondSetAttrFilter = new AttributeFilter(secondSetFilter);
+	        	}
 	       }
 
 	        @Override
 	        protected void map(LongWritable key, Text value, Context context)
 	            throws IOException, InterruptedException {
 	            String[] items  =  value.toString().split(fieldDelimRegex);
+	            boolean toEmit = false;
 	            //key fields as key and remaining as value
 	            if (isFirstTypeSplit) {
-	            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut, sortKeyFields) , 0);
-	            	Utility.createTuple(items, keyFieldFirst, outVal);
-	            	outVal.prepend("0");
-   	    			//context.getCounter("Join stats", "left set count").increment(1);
+	            	if (null == firstSetAttrFilter || firstSetAttrFilter.evaluate(items)) {
+		            	outKey.set(Utility.extractFields(items , keyFieldFirst, fieldDelimOut, sortKeyFields) , 0);
+		            	
+		            	if (null == firstSetProjectedFields) {
+		            		Utility.createStringTuple(items, keyFieldFirst, outVal, false); 
+		            	} else {
+		            		Utility.createStringTuple(items, firstSetProjectedFields, outVal, true); 
+		            	}
+		            	outVal.prepend("0");
+	   	    			//context.getCounter("Join stats", "left set count").increment(1);
+	   	    			toEmit = true;
+	            	}
+   	    			
 	            } else {
-	            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut, sortKeyFields) , 1);
-	            	Utility.createTuple(items, keyFieldSecond, outVal);
-	            	outVal.prepend("1");
-   	    			//context.getCounter("Join stats", "right set count").increment(1);
+	            	if (null == secondSetAttrFilter || secondSetAttrFilter.evaluate(items)) {
+		            	outKey.set(Utility.extractFields(items , keyFieldSecond, fieldDelimOut, sortKeyFields) , 1);
+	
+		            	if (null == secondSetProjectedFields) {
+		            		Utility.createStringTuple(items, keyFieldSecond, outVal, false); 
+		            	} else {
+		            		Utility.createStringTuple(items, secondSetProjectedFields, outVal, true); 
+		            	}
+		            	outVal.prepend("1");
+	   	    			//context.getCounter("Join stats", "right set count").increment(1);
+		            }
 	            }
-	            
-	    		context.write(outKey, outVal);
+	            if (toEmit) {
+	            	context.write(outKey, outVal);
+	            }
 	        }
 		}
 
@@ -194,13 +232,13 @@ public class Joiner extends Configured implements Tool {
 	        			secondType = value;
 	        			++secondSetCount;
  	        			for (Tuple firstType :  fistTypeList) {
- 	        				setOutValue(key,  firstType);
+ 	        				setOutValue(key,  firstType, secondType);
 	    	 				context.write(NullWritable.get(), outVal);
 	        			}
  	        			
  	        			//if first set empty use default, basically right outer join 
  	        			if (fistTypeList.isEmpty() && null != firstTypeDefaultValue) {
-	        				setOutValue(key,  firstTypeDefaultValue);
+	        				setOutValue(key,  firstTypeDefaultValue, secondType);
 	    	 				context.write(NullWritable.get(), outVal);
 		   	    			//context.getCounter("Join stats", "Right outer  join").increment(1);
  	        			}
@@ -211,7 +249,7 @@ public class Joiner extends Configured implements Tool {
 	        	if (secondSetCount == 0 && null != secondTypeDefaultValue)  {
 	        		secondType = secondTypeDefaultValue;
 	        			for (Tuple firstType :  fistTypeList) {
- 	        				setOutValue(key,  firstType);
+ 	        				setOutValue(key,  firstType, secondType);
 	    	 				context.write(NullWritable.get(), outVal);
 		   	    			//context.getCounter("Join stats", "Left outer  join").increment(1);
 	        			}
@@ -222,14 +260,18 @@ public class Joiner extends Configured implements Tool {
 	         * @param key
 	         * @param firstType
 	         */
-	        private void setOutValue(TextInt key, Tuple firstType) {
+	        private void setOutValue(TextInt key, Tuple firstType, Tuple secondType) {
 				stBld.delete(0, stBld.length());
 				
 				if (outputKeyAtBeg) {
 					stBld.append(key.getFirst()).append(fieldDelimOut);
 				}
 				if (outputFirstType) {
-					stBld.append(firstType.toString(1)).append(fieldDelimOut);
+					if (outputSecondType) {
+						stBld.append(firstType.toString(1)).append(fieldDelimOut);
+					} else {
+						stBld.append(firstType.toString(1));
+					}
 				}
 				if (outputSecondType) {
 					stBld.append(secondType.toString(1));

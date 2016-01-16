@@ -1,0 +1,39 @@
+This tutorial is about seasonality analysis We will be using CPU usage in servers
+in a data center. 
+
+The statistics are calculated based on seasons detected in the data. Such statistics
+is useful in many ways.
+
+Please make necessary changes in path etc depending on your environment in etl.sh
+ 
+Dependent script
+================
+Checkout the project visitante. Take the script util.py from the project and placeit
+in ../lib directory with respect the directory containing store_order.py
+
+Generate Input Data
+===================
+./cpu_usage.py <num_days_in_past> <sampling_interval> > <input_file_name>
+
+where
+num_days_in_past = num of days in to past from current data over which data is generated e.g. 20
+sampling_interval = sampling interval in sec e.g. 15
+input_file_name = input file name
+
+Copy input to HDFS
+==================
+hadoop fs -put <input_file_name> /user/pranab/seas/input/
+
+Detect seasonality
+==================
+./etl.sh seasonalityDetector
+
+Statistics for seasonal data
+============================
+./etl.sh numAttrStats
+
+Configuration
+=============
+Please refer to etl.properties. Make changes as necessary.
+
+

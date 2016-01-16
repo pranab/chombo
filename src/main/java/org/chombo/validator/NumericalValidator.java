@@ -22,6 +22,7 @@ import java.util.Map;
 import org.chombo.util.AttributeSchema;
 import org.chombo.util.MedianStatsManager;
 import org.chombo.util.NumericalAttrStatsManager;
+import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.Utility;
 
 /**
@@ -36,8 +37,8 @@ public class NumericalValidator {
 	 */
 	public static class IntMinValidator extends Validator {
 
-		public IntMinValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public IntMinValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
@@ -46,7 +47,7 @@ public class NumericalValidator {
 			boolean status = false;
 			try {
 				intValue = Integer.parseInt(value);
-				status = intValue >= attribute.getMin();
+				status = intValue >= prAttr.getMin();
 			} catch (Exception ex) {
 			}
 			return status;
@@ -59,8 +60,8 @@ public class NumericalValidator {
 	 */
 	public static class IntMaxValidator extends Validator {
 
-		public IntMaxValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public IntMaxValidator(String tag,  ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
@@ -69,7 +70,7 @@ public class NumericalValidator {
 			boolean status = false;
 			try {
 				intValue = Integer.parseInt(value);
-				status = intValue <= attribute.getMax();
+				status = intValue <= prAttr.getMax();
 			} catch (Exception ex) {
 			}
 			return status;
@@ -84,11 +85,12 @@ public class NumericalValidator {
 		private double min;
 		private double max;
 		
-		public StatsBasedRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
-			super(tag, ordinal, schema);
+		public StatsBasedRangeValidator(String tag,  ProcessorAttribute prAttr, Map<String, Object> validatorContext) {
+			super(tag,   prAttr);
+			int ordinal = prAttr.getOrdinal();
 			NumericalAttrStatsManager statMan = (NumericalAttrStatsManager)validatorContext.get("stats");
-			min = statMan.getMean(ordinal) - attribute.getMaxZscore() * statMan.getStdDev(ordinal);
-			max = statMan.getMean(ordinal) + attribute.getMaxZscore() * statMan.getStdDev(ordinal);
+			min = statMan.getMean(ordinal) - prAttr.getMaxZscore() * statMan.getStdDev(ordinal);
+			max = statMan.getMean(ordinal) + prAttr.getMaxZscore() * statMan.getStdDev(ordinal);
 		}
 
 		@Override
@@ -112,8 +114,8 @@ public class NumericalValidator {
 		private double max;
 		private Map<String, Object> validatorContext;
 		
-		public RobustZscoreBasedRangeValidator(String tag, int ordinal, AttributeSchema schema, Map<String, Object> validatorContext) {
-			super(tag, ordinal, schema);
+		public RobustZscoreBasedRangeValidator(String tag, ProcessorAttribute prAttr, Map<String, Object> validatorContext) {
+			super(tag,  prAttr);
 			this.validatorContext = validatorContext;
 		}
 
@@ -125,15 +127,16 @@ public class NumericalValidator {
 				MedianStatsManager statMan = (MedianStatsManager)validatorContext.get("stats");
 				String[] items = value.split(fieldDelim);
 				int[] idOrdinals = statMan.getIdOrdinals();
+				int ordinal = prAttr.getOrdinal();
 				if (null != idOrdinals) {
 					String compKey = Utility.join(items, idOrdinals, fieldDelim);
 					min = statMan.getKeyedMedian(compKey, ordinal) - 
-								attribute.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
+								prAttr.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
 					max = statMan.getKeyedMedian(compKey, ordinal) +
-								attribute.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
+								prAttr.getMaxZscore() * statMan.getKeyedMedAbsDivergence(compKey, ordinal);
 				} else  {
-						min = statMan.getMedian(ordinal) - attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
-						max = statMan.getMedian(ordinal) + attribute.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+						min = statMan.getMedian(ordinal) - prAttr.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
+						max = statMan.getMedian(ordinal) + prAttr.getMaxZscore() * statMan.getMedAbsDivergence(ordinal);
 				}
 				dblValue = Double.parseDouble(items[ordinal]);
 				status = dblValue >= min && dblValue <= max;
@@ -149,8 +152,8 @@ public class NumericalValidator {
 	 */
 	public static class DoubleMinValidator extends Validator {
 
-		public DoubleMinValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public DoubleMinValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
@@ -159,7 +162,7 @@ public class NumericalValidator {
 			boolean status = false;
 			try {
 				dblValue = Double.parseDouble(value);
-				status = dblValue >= attribute.getMin();
+				status = dblValue >= prAttr.getMin();
 			} catch (Exception ex) {
 			}
 			return status;
@@ -172,8 +175,8 @@ public class NumericalValidator {
 	 */
 	public static class DoubleMaxValidator extends Validator {
 
-		public DoubleMaxValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public DoubleMaxValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
@@ -182,7 +185,7 @@ public class NumericalValidator {
 			boolean status = false;
 			try {
 				dblValue = Double.parseDouble(value);
-				status = dblValue <= attribute.getMax();
+				status = dblValue <= prAttr.getMax();
 			} catch (Exception ex) {
 			}
 			return status;

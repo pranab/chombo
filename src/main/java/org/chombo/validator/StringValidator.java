@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.chombo.util.AttributeSchema;
+import org.chombo.util.ProcessorAttribute;
 
 /**
  * @author pranab
@@ -34,13 +35,13 @@ public class StringValidator {
 	 */
 	public static class MinLengthValidator extends Validator {
 
-		public MinLengthValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public MinLengthValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			return value.length() >= attribute.getMinLength();
+			return value.length() >= prAttr.getMinLength();
 		}
 	}
 
@@ -50,13 +51,13 @@ public class StringValidator {
 	 */
 	public static class MaxLengthValidator extends Validator {
 
-		public MaxLengthValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public MaxLengthValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			return value.length() <= attribute.getMaxLength();
+			return value.length() <= prAttr.getMaxLength();
 		}
 	}
 
@@ -66,13 +67,13 @@ public class StringValidator {
 	 */
 	public static class LengthValidator extends Validator {
 
-		public LengthValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public LengthValidator(String tag,ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			return value.length() == attribute.getLength();
+			return value.length() == prAttr.getLength();
 		}
 	}
 	
@@ -82,13 +83,13 @@ public class StringValidator {
 	 */
 	public static class MinValidator extends Validator {
 
-		public MinValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public MinValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			return value.compareTo(attribute.getMinString()) >= 0;
+			return value.compareTo(prAttr.getMinString()) >= 0;
 		}
 	}
 
@@ -98,13 +99,13 @@ public class StringValidator {
 	 */
 	public static class MaxValidator extends Validator {
 
-		public MaxValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public MaxValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			return value.compareTo(attribute.getMaxString()) <= 0;
+			return value.compareTo(prAttr.getMaxString()) <= 0;
 		}
 	}
 	
@@ -115,14 +116,14 @@ public class StringValidator {
 	public static class PatternValidator extends Validator {
 		private Pattern pattern;
 		
-		public PatternValidator(String tag, int ordinal, AttributeSchema schema) {
-			super(tag, ordinal, schema);
+		public PatternValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
 		}
 
 		@Override
 		public boolean isValid(String value) {
 			if (null == pattern) {
-				pattern = Pattern.compile(attribute.getStringPattern());
+				pattern = Pattern.compile(prAttr.getStringPattern());
 			}
 			Matcher matcher = pattern.matcher(value);
 			return matcher.matches();

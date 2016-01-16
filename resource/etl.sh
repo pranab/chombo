@@ -295,6 +295,17 @@ case "$1" in
 	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
 ;;
 
+"transformer")
+	echo "running mr Transformer for data transformation"
+	CLASS_NAME=org.chombo.mr.Transformer
+	IN_PATH=/user/pranab/rese/input
+	OUT_PATH=/user/pranab/rese/output
+	echo "input $IN_PATH output $OUT_PATH"
+	hadoop fs -rmr $OUT_PATH
+	echo "removed output dir"
+	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
+;;
+
 *) 
 	echo "unknown operation $1"
 	;;
