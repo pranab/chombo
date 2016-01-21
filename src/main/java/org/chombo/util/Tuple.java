@@ -483,7 +483,9 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	 */
 	public int hashCodeBase() {
 		Tuple subThis = new Tuple(fields.subList(0,fields.size()-1));
-		return subThis.hashCode();
+		int hashCode =  subThis.hashCode();
+		hashCode = hashCode < 0 ? -hashCode : hashCode;
+		return hashCode;
 	}
 	
 	/**
