@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,6 +83,8 @@ public class Utility {
 	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
 	public static String configDelim = ",";
 	public  static String configSubFieldDelim = ":";
+	
+	public static long MILISEC_PER_HOUR = 60L * 1000 * 1000;
 
     /*
     static AmazonS3 s3 = null;
@@ -691,12 +695,18 @@ public class Utility {
      * @return
      */
     public static <T> String join(List<T> list, String delim) {
-    	StringBuilder stBld = new StringBuilder();
-    	for (T obj : list) {
-    		stBld.append(obj).append(delim);
+    	String joined = null;
+    	if (list.size() == 1) {
+    		joined = list.get(0).toString();
+    	} else {
+	    	StringBuilder stBld = new StringBuilder();
+	    	for (T obj : list) {
+	    		stBld.append(obj).append(delim);
+	    	}
+	    	
+	    	joined =  stBld.substring(0, stBld.length() -1);
     	}
-    	
-    	return stBld.substring(0, stBld.length() -1);
+    	return joined;
     }
   
     /**
@@ -1482,6 +1492,7 @@ public class Utility {
     }
     
     /**
+     * Analyzes text and return analyzed text
      * @param text
      * @return
      * @throws IOException
@@ -1499,6 +1510,37 @@ public class Utility {
     	stream.end();
     	stream.close();
     	return stBld.toString();
+    }
+    /**
+     * @param dateTimeStamp
+     * @param isEpochTime
+     * @param dateFormat
+     * @return
+     * @throws ParseException
+     */
+    public static long getEpochTime(String dateTimeStamp, boolean isEpochTime, SimpleDateFormat dateFormat) throws ParseException {
+    	return getEpochTime(dateTimeStamp, isEpochTime, dateFormat,0);
+    }
+    
+    /**
+     * @param dateTimeStamp
+     * @param isEpochTime
+     * @param dateFormat
+     * @param timeZoneShiftHour
+     * @return
+     * @throws ParseException
+     */
+    public static long getEpochTime(String dateTimeStamp, boolean isEpochTime, SimpleDateFormat dateFormat, 
+    	int timeZoneShiftHour) throws ParseException {
+    	long epochTime = 0;
+    	if (isEpochTime) {
+    		epochTime = Long.parseLong(dateTimeStamp);
+    	} else {
+    		epochTime = dateFormat.parse(dateTimeStamp).getTime();
+        	epochTime += timeZoneShiftHour * MILISEC_PER_HOUR;
+    	}
+    	
+    	return epochTime;
     }
     
 }
