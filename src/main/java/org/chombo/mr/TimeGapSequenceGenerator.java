@@ -94,6 +94,7 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         private boolean isEpochTime;
         private SimpleDateFormat dateFormat;
         private int timeZoneShiftHours;
+        private boolean includeRawDateTimeField;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -111,6 +112,7 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
                 dateFormat = new SimpleDateFormat(dateFormatStr);
                 timeZoneShiftHours = config.getInt("tgs.time.zone.shift.hours", 0);
         	}
+        	includeRawDateTimeField = config.getBoolean("tgs.include.raw.date.time.field", false);
         } 
         
         /* (non-Javadoc)
@@ -128,6 +130,9 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         		outKey.add(timeStamp);
 
         		outVal.add(timeStamp);
+        		if (includeRawDateTimeField) {
+        			outVal.add(items[timeStampFieldOrdinal]);
+        		}
         		outKey.addFromArray(items, attributes);
 
             	context.write(outKey, outVal);
