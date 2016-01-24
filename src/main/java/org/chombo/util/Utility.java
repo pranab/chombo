@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -328,6 +329,20 @@ public class Utility {
     /**
      * @param conf
      * @param pathConfig
+     * @param data
+     * @throws IOException
+     */
+    public static void writeToFile(Configuration conf, String pathConfig, String data) throws IOException {
+        OutputStream os = Utility.getCreateFileOutputStream(conf, pathConfig);
+        PrintWriter writer = new PrintWriter(os);
+		writer.write(data);
+		writer.close();
+		os.close();
+    }
+
+    /**
+     * @param conf
+     * @param pathConfig
      * @return
      * @throws IOException
      */
@@ -342,6 +357,20 @@ public class Utility {
         return fs;
     }
 
+    /**
+     * @param conf
+     * @param pathConfig
+     * @param data
+     * @throws IOException
+     */
+    public static void appendToFile(Configuration conf, String pathConfig, String data) throws IOException {
+        OutputStream os = Utility.getAppendFileOutputStream(conf, pathConfig);
+        PrintWriter writer = new PrintWriter(os);
+		writer.write(data);
+		writer.close();
+		os.close();
+    }
+    
     /**
      * @param conf
      * @param filePathParam
