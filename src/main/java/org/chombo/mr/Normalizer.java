@@ -76,12 +76,16 @@ public class Normalizer extends Configured implements Tool {
         return status;
 	}
 
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static class NormalizerMapper extends Mapper<LongWritable, Text, Tuple, Tuple> {
 		private Tuple outKey = new Tuple();
 		private Tuple outVal = new Tuple();
         private String fieldDelimRegex;
         private String[] items;
-        private List<Pair<Integer, Integer>> filedScales;
+        private List<Pair<Integer, Integer>> fieldScales;
         private static final int ID_ORD = 0;
         private static final String STATS_KEY = "stats";
         private Map<Integer, Stats> fieldStats = new HashMap<Integer, Stats>();
@@ -94,21 +98,22 @@ public class Normalizer extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	
-        	String fieldScalesStr = config.get("field.weights");
-        	filedScales = Utility.getIntPairList(fieldScalesStr, ",", ":");
-        	for (Pair<Integer, Integer> fieldScale : filedScales) {
+        	fieldScales = Utility.assertIntPairListConfigParam(config, "field.weights", fieldDelimRegex, ":", 
+        			"missing numeric field scales");
+        	for (Pair<Integer, Integer> fieldScale : fieldScales) {
         		fieldStats.put(fieldScale.getLeft(), new Stats());
         	}
         }
         
         @Override
         protected void cleanup(Context context) throws IOException, InterruptedException {
+        	//reduce will the stats first and then the data rows
             outKey.initialize();
             outKey.add(0, STATS_KEY);
         	for (int ord : fieldStats.keySet()) {
         		outVal.initialize();
         		outVal.add(ord);
-        		fieldStats.get(ord).toTuple(outVal);
+        		fieldStats.get(ord).process().toTuple(outVal);
     			context.write(outKey, outVal);
         	}
         }
@@ -129,13 +134,10 @@ public class Normalizer extends Configured implements Tool {
             	stats = fieldStats.get(fieldOrd);
             	if (null != stats) {
             		//numeric
-            		fieldVal = Integer.parseInt(items[fieldOrd]);
-            		stats.add(fieldVal);
-            		outVal.add(fieldVal);
-            	} else {
-            		//other
-            		outVal.add(items[fieldOrd]);
-            	}
+            		stats.add(Double.parseDouble(items[fieldOrd]));
+            	} 
+            	outVal.add(items[fieldOrd]);
+            	
             }
 			context.write(outKey, outVal);
         }
@@ -148,7 +150,8 @@ public class Normalizer extends Configured implements Tool {
     public static class NormalizerReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
 		private Text outVal = new Text();
 		private String fieldDelim;
-        private List<Pair<Integer, Integer>> filedScales;
+        private List<Pair<Integer, Integer>> fieldScales;
+        private Map<Integer, String> fieldTypes;
         private String normalizingStrategy;
         private float outlierTruncationLevel;
         private Map<Integer, Stats> fieldStats = new HashMap<Integer, Stats>();
@@ -156,7 +159,8 @@ public class Normalizer extends Configured implements Tool {
         private Stats stats;
         private int scale;
         private boolean excluded;
-        private int normalizedValue;
+        private double normalizedValue;
+        private int precision;
 		private StringBuilder stBld = new StringBuilder();
 		
         @Override
@@ -164,11 +168,18 @@ public class Normalizer extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
         	
-        	String fieldScalesStr = config.get("field.weights");
-        	filedScales = Utility.getIntPairList(fieldScalesStr, ",", ":");        	
+        	//filed scales
+        	fieldScales = Utility.assertIntPairListConfigParam(config, "field.weights", fieldDelim, ":", 
+        			"missing numeric field scales");
+
+        	//field types
+        	fieldTypes = Utility.assertIntegerStringMapConfigParam(config, "field.types", fieldDelim, ":", 
+        			"missing numeric field types");
+        	precision = config.getInt("floating.precision", 3);
+        	
         	normalizingStrategy = config.get("normalizing.strategy", "minmax");
         	outlierTruncationLevel = config.getFloat("outlier.truncation.level", (float)-1.0);
-        	for (Pair<Integer, Integer> fieldScale : filedScales) {
+        	for (Pair<Integer, Integer> fieldScale : fieldScales) {
         		stats = new Stats();
         		stats.scale = fieldScale.getRight();
         		fieldStats.put(fieldScale.getLeft(), stats);
@@ -181,32 +192,38 @@ public class Normalizer extends Configured implements Tool {
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
     		if (key.getInt(0) == 0) {
+    			//aggregate stats
 	        	for (Tuple value : values){
 	        		fieldOrd = value.getInt(0);
 	        		stats = new Stats();
 	        		stats.fromTuple(value);
 	        		fieldStats.get(fieldOrd).aggregate(stats);
 	        	}
+	        	
+	        	//process stats
 	        	for (int ord : fieldStats.keySet()) {
 	        		fieldStats.get(ord).process();
 	        	}
     		} else {
+    			//records
         		stBld.delete(0, stBld.length());
 	        	for (Tuple value : values){
+	        		excluded = false;
 	        		for (int i = 0; i < value.getSize(); ++i) {
 	        			excluded = false;
 	        			stBld.append(key.getString(1));
 	        			stats= fieldStats.get(i);
 	        			if (null != stats) {
 	        				//numeric
-	        				normalize(value.getInt(i), stats);
+	        				normalize(Double.parseDouble(value.getString(i)), stats);
 	        				if (excluded) {
 	        					break;
 	        				} else {
 	        					//other
-	        					stBld.append(fieldDelim).append(normalizedValue);
+	        					stBld.append(fieldDelim).append(formattedTypedValue(i));
 	        				}
 	        			} else {
+        					//other types
         					stBld.append(fieldDelim).append(value.get(i));
 	        			}
 	        		}
@@ -225,11 +242,11 @@ public class Normalizer extends Configured implements Tool {
     	 * @param scale
     	 * @return
     	 */
-    	private void normalize(int value, Stats stats) {
+    	private void normalize(double value, Stats stats) {
     		normalizedValue = 0;
     		if (normalizingStrategy.equals("minmax")) {
-    			normalizedValue = ((value - stats.min) * scale) / stats.range;
-    		} else {
+    			normalizedValue = ((value - stats.min) * stats.scale) / stats.range;
+    		} else if (normalizingStrategy.equals("zscore")) {
     			double temp = (value - stats.mean) / stats.stdDev;
     			if (outlierTruncationLevel > 0) {
     				if (Math.abs(temp) > outlierTruncationLevel) {
@@ -239,8 +256,29 @@ public class Normalizer extends Configured implements Tool {
     					temp /= outlierTruncationLevel;
     				}
     			}
-    			normalizedValue = (int)(temp * stats.scale / 2);
+    			normalizedValue = temp * stats.scale / 2;
+    		} else {
+    			throw new IllegalStateException("invalid normalization strategy");
     		}
+    	}
+    	
+    	/**
+    	 * @param ord
+    	 * @return
+    	 */
+    	private String formattedTypedValue(int ord) {
+    		String value = null;
+    		if (fieldTypes.get(0).equals("int")) {
+    			int iValue = (int)normalizedValue;
+    			value = "" + iValue;
+    		} else if (fieldTypes.get(0).equals("long")) {
+    			long lValue = (long)normalizedValue;
+    			value = "" + lValue;
+    		} else if (fieldTypes.get(0).equals("double")) {
+    			value = Utility.formatDouble(normalizedValue, precision);
+    		}
+    		
+    		return value;
     	}
     }
     
@@ -250,16 +288,19 @@ public class Normalizer extends Configured implements Tool {
      */
     private static class Stats {
     	private int count = 0;
-    	private int min = Integer.MAX_VALUE;
-    	private int max = Integer.MIN_VALUE;
-    	private long sum = 0;
-    	private long sqSum = 0;
-    	private int mean;
-    	private int range;
+    	private double min = Double.MAX_VALUE;
+    	private double max = Double.MIN_VALUE;
+    	private double sum = 0;
+    	private double sqSum = 0;
+    	private double mean;
+    	private double range;
     	private double stdDev;
     	private int scale;
     	
-    	private void add(int val) {
+    	/**
+    	 * @param val
+    	 */
+    	private void add(double val) {
     		++count;
     		if (val < min) {
     			min = val;
@@ -271,10 +312,16 @@ public class Normalizer extends Configured implements Tool {
     		sqSum += val * val;
     	}
     	
+    	/**
+    	 * @param tuple
+    	 */
     	private void toTuple(Tuple tuple) {
     		tuple.add(count, min, max, sum, sqSum);
     	}
 
+    	/**
+    	 * @param tuple
+    	 */
     	private void fromTuple(Tuple tuple) {
     		count = tuple.getInt(1);
     		min = tuple.getInt(2);
@@ -283,6 +330,9 @@ public class Normalizer extends Configured implements Tool {
     		sqSum = tuple.getLong(5);
     	}
     	
+    	/**
+    	 * @param that
+    	 */
     	private void aggregate(Stats that) {
     		count += that.count;
     		if (that.min < min) {
@@ -295,11 +345,15 @@ public class Normalizer extends Configured implements Tool {
     		sqSum += that.sqSum;
     	}
     	
-    	private void process() {
-    		mean = (int)(sum / count);
+    	/**
+    	 * @return
+    	 */
+    	private Stats process() {
+    		mean = sum / count;
     		range = max - min;
-    		double temp = (double)sqSum / count - (double)mean * mean;
+    		double temp = sqSum / count - mean * mean;
     		stdDev = Math.sqrt(temp);
+    		return this;
     	}
     }
 

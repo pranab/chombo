@@ -110,7 +110,7 @@ public class SeasonalDetector  extends Configured implements Tool {
     		//additional configuration
         	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
         			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
-        		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "hour.groups", 
+        		Map<Integer, Integer>  hourRanges = Utility. assertIntegerIntegerMapConfigParam(config, "hour.groups", 
         				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups", true);
         		seasonalAnalyzer.setHourRanges(hourRanges);
         	} 

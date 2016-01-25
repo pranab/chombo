@@ -973,8 +973,8 @@ public class Utility {
 	 */
 	public static int  assertIntConfigParam(Configuration config, String param, String msg) {
 		int  value = Integer.MIN_VALUE;
-	   assertStringConfigParam( config, param,  msg); 
-	   value = config.getInt(param,  Integer.MIN_VALUE);
+		assertStringConfigParam( config, param,  msg); 
+		value = config.getInt(param,  Integer.MIN_VALUE);
 		return value;
 	}
 
@@ -986,8 +986,8 @@ public class Utility {
 	 */
 	public static double  assertDoubleConfigParam(Configuration config, String param, String msg) {
 		double  value = Double.MIN_VALUE;
-	   String stParamValue = assertStringConfigParam( config, param,  msg); 
-	   value = Double.parseDouble(stParamValue);
+		String stParamValue = assertStringConfigParam(config, param,  msg); 
+		value = Double.parseDouble(stParamValue);
 		return value;
 	}
 
@@ -999,7 +999,7 @@ public class Utility {
 	 */
 	public static boolean  assertBooleanConfigParam(Configuration config, String param, String msg) {
 		boolean value = false;
-	   	assertStringConfigParam( config, param,  msg); 
+	   	assertStringConfigParam(config, param,  msg); 
 		value = config.getBoolean(param, false);
 		return value;
 	}
@@ -1060,7 +1060,7 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
-	public static Map<String, Integer> assertIntStringIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
+	public static Map<String, Integer> assertStringIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
@@ -1082,7 +1082,7 @@ public class Utility {
 	 */
 	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
-		return assertIntIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg, true);
+		return assertIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg, true);
 	}
 
 	/**
@@ -1094,7 +1094,7 @@ public class Utility {
 	 * @param rangeInKey
 	 * @return
 	 */
-	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
+	public static Map<Integer, Integer> assertIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg, boolean rangeInKey) {
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
@@ -1133,7 +1133,7 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
-	public static Map<Integer, Double> assertIntIntegerDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+	public static Map<Integer, Double> assertIntegerDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
@@ -1141,6 +1141,26 @@ public class Utility {
 		for (String item :  items) {
 			String[] parts  = item.split(subFieldDelim);
 			data.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<Integer, String> assertIntegerStringMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	String stParamValue =  assertStringConfigParam(config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		Map<Integer, String> data = new HashMap<Integer, String>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(Integer.parseInt(parts[0]), parts[1]);
 		}
     	return data;
 	}

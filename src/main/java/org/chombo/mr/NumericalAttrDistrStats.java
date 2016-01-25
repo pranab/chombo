@@ -96,7 +96,7 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	attrBinWidths = Utility.assertIntIntegerDoubleMapConfigParam(config, "nads.attr.bucket.width.list", Utility.configDelim, 
+        	attrBinWidths = Utility.assertIntegerDoubleMapConfigParam(config, "nads.attr.bucket.width.list", Utility.configDelim, 
         			Utility.configSubFieldDelim, "missing attrubutes ordinals and bucket widths");
         	conditionedAttr = config.getInt("nads.conditioned.attr",-1);
         	
