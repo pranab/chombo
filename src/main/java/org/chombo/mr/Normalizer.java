@@ -157,7 +157,6 @@ public class Normalizer extends Configured implements Tool {
         private Map<Integer, Stats> fieldStats = new HashMap<Integer, Stats>();
         private int fieldOrd;
         private Stats stats;
-        private int scale;
         private boolean excluded;
         private double normalizedValue;
         private int precision;
@@ -219,12 +218,11 @@ public class Normalizer extends Configured implements Tool {
 	        				if (excluded) {
 	        					break;
 	        				} else {
-	        					//other
 	        					stBld.append(fieldDelim).append(formattedTypedValue(i));
 	        				}
 	        			} else {
         					//other types
-        					stBld.append(fieldDelim).append(value.get(i));
+        					stBld.append(fieldDelim).append(value.getString(i));
 	        			}
 	        		}
 	        		
@@ -268,14 +266,16 @@ public class Normalizer extends Configured implements Tool {
     	 */
     	private String formattedTypedValue(int ord) {
     		String value = null;
-    		if (fieldTypes.get(0).equals("int")) {
+    		if (fieldTypes.get(ord).equals("int")) {
     			int iValue = (int)normalizedValue;
     			value = "" + iValue;
-    		} else if (fieldTypes.get(0).equals("long")) {
+    		} else if (fieldTypes.get(ord).equals("long")) {
     			long lValue = (long)normalizedValue;
     			value = "" + lValue;
-    		} else if (fieldTypes.get(0).equals("double")) {
+    		} else if (fieldTypes.get(ord).equals("double")) {
     			value = Utility.formatDouble(normalizedValue, precision);
+    		} else {
+    			throw new IllegalStateException("invalid numeric data types");
     		}
     		
     		return value;
