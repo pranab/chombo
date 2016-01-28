@@ -109,7 +109,6 @@ public class WeightedAverage extends Configured implements Tool {
         private int[] invertedFields;
         private int fieldValue;
         private int  scale;
-        // private static final int ID_FLD_ORDINAL = 0;
 		private RedisCache redisCache;
         private Map<Integer, Integer> fieldMaxValues =  new HashMap<Integer, Integer>();
         private boolean singleTennant;
@@ -118,6 +117,8 @@ public class WeightedAverage extends Configured implements Tool {
         private int secondaryKey;
         private int[] keyFields;
         private Integer maxValue;
+        private boolean scalingNeeded;
+        private boolean maxValueFromcache;
         private static final Logger LOG = Logger.getLogger(WeightedAverage.AverageMapper.class);
        
         /* (non-Javadoc)
@@ -157,27 +158,40 @@ public class WeightedAverage extends Configured implements Tool {
         		suppressingFields = Utility.intArrayFromString(suppressingFieldsStr);
         	}
             
-        	//field max values from cache
-        	String fieldMaxValuesCacheKey = config.get("field.max.values.cache.key");
-        	List<Pair<Integer, String>> filedMaxValueKeys = Utility.getIntStringList(fieldMaxValuesCacheKey, ",", ":");
-    		String redisHost = config.get("redis.server.host", "localhost");
-    		int redisPort = config.getInt("redis.server.port",  6379);
-    		String defaultOrgId = config.get("default.org.id");
-   			singleTennant = false;
-   		    if (!StringUtils.isBlank(defaultOrgId)) {
-    			//default org
-    			singleTennant = true;
-    			String cacheName = "si-" + defaultOrgId;
-    	   		redisCache = new   RedisCache( redisHost, redisPort, cacheName);
-    	   		for (Pair<Integer, String> pair : filedMaxValueKeys) {
-    	   			int maxValue = redisCache.getIntMax(pair.getRight());
-    	   			fieldMaxValues.put(pair.getLeft(), maxValue);
-    	   			LOG.debug("field:" + pair.getLeft() + " max value:" + maxValue);
-    	   		}
-    	   	} else {
-    	   		//multi organization
+        	//scaling 
+        	scalingNeeded = config.getBoolean("scaling.needed", false);
+        	
+        	if (scalingNeeded) {
+            	maxValueFromcache = config.getBoolean("max.value.from.cache", false);
+            	if (maxValueFromcache) {
+            		//field max values from cache
+            		String fieldMaxValuesCacheKey = config.get("field.max.values.cache.key");
+            		List<Pair<Integer, String>> filedMaxValueKeys = Utility.getIntStringList(fieldMaxValuesCacheKey, ",", ":");
+            		String redisHost = config.get("redis.server.host", "localhost");
+            		int redisPort = config.getInt("redis.server.port",  6379);
+            		String defaultOrgId = config.get("default.org.id");
+            		singleTennant = false;
+            		if (!StringUtils.isBlank(defaultOrgId)) {
+            			//default org
+            			singleTennant = true;
+            			String cacheName = "si-" + defaultOrgId;
+            			redisCache = new   RedisCache( redisHost, redisPort, cacheName);
+            			for (Pair<Integer, String> pair : filedMaxValueKeys) {
+            				int maxValue = redisCache.getIntMax(pair.getRight());
+            				fieldMaxValues.put(pair.getLeft(), maxValue);
+            				LOG.debug("field:" + pair.getLeft() + " max value:" + maxValue);
+            			}
+            		} else {
+            			//multi organization
     	   		
-    	   	}
+            		}
+            	} else {
+            		//from configuration
+            		singleTennant = true;
+            		fieldMaxValues = Utility.assertIntegerIntegerMapConfigParam(config, "attribute.max.values", Utility.configDelim, 
+            				Utility.configSubFieldDelim, "missing max values for scaling", false);
+            	}
+        	}
        }
  
         /* (non-Javadoc)
@@ -199,20 +213,23 @@ public class WeightedAverage extends Configured implements Tool {
             	}
             	
             	//scale field value
-            	if (singleTennant) {
-            		maxValue = fieldMaxValues.get(fieldOrd);
-            		if (null != maxValue) {
-            			fieldValue =  (fieldValue * scale) / maxValue;
-            		}
-            	} else {
-            		
+            	if (scalingNeeded) {
+	            	if (singleTennant) {
+	            		maxValue = fieldMaxValues.get(fieldOrd);
+	            		if (null != maxValue) {
+	            			fieldValue =  (fieldValue * scale) / maxValue;
+	            		}
+	            	} else {
+	            		
+	            	}
             	}
             	
             	//invert
             	if (null != invertedFields && ArrayUtils.contains(invertedFields, fieldOrd)) {
             		fieldValue = scale - fieldValue;
             	}
-            	sum += fieldValue *   pair.getRight();
+            	
+            	sum += fieldValue *  pair.getRight();
             }
             weightedValue = sum / totalWt;
             
