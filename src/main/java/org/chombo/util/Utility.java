@@ -1541,6 +1541,26 @@ public class Utility {
     }
     
     /**
+     * @param val
+     * @param size
+     * @return
+     */
+    public static String formatInt(int val, int size) {
+    	String formatter = "%0" + size + "d";
+    	return String.format(formatter, val);
+    }
+
+    /**
+     * @param val
+     * @param size
+     * @return
+     */
+    public static String formatLong(long val, int size) {
+    	String formatter = "%0" + size + "d";
+    	return String.format(formatter, val);
+    }
+
+    /**
      * Analyzes text and return analyzed text
      * @param text
      * @return
@@ -1590,6 +1610,23 @@ public class Utility {
     	}
     	
     	return epochTime;
+    }
+    
+    /**
+     * @param config
+     * @param fieldDelimParam
+     * @param defFieldDelimParam
+     * @param defFieldDelim
+     * @return
+     */
+    public static String getFieldDelimiter(Configuration config, String fieldDelimParam, 
+    		String defFieldDelimParam, String defFieldDelim) {
+    	String fieldDelim = config.get(fieldDelimParam);
+    	if (null == fieldDelim) {
+    		//get default
+    		fieldDelim = config.get(defFieldDelimParam, defFieldDelim);
+    	}
+    	return fieldDelim;
     }
     
 }
