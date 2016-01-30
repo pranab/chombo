@@ -90,6 +90,7 @@ public class UniqueCounter  extends Configured implements Tool {
         private GenericAttributeSchema schema;
         private boolean enforceSchema;
         private int[] partIdOrdinals;
+        private int[] idOrdinals;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -108,6 +109,7 @@ public class UniqueCounter  extends Configured implements Tool {
         	}
         	
         	partIdOrdinals = Utility.intArrayFromString(config.get("unc.part.id.field.ordinals"));
+        	idOrdinals = Utility.intArrayFromString(config.get("unc.id.field.ordinals"));
        }
         
         @Override
@@ -121,7 +123,9 @@ public class UniqueCounter  extends Configured implements Tool {
 	        	}
             } else {
             	//variable number of columns
-            	for (int i = partIdOrdinals.length; i < items.length; ++i) {
+            	int skipCount = null != partIdOrdinals ? partIdOrdinals.length : 0;
+            	skipCount += null != idOrdinals ? idOrdinals.length : 0;
+            	for (int i = skipCount; i < items.length; ++i) {
 	        		emit(i, context);
             	}
             }
@@ -163,7 +167,7 @@ public class UniqueCounter  extends Configured implements Tool {
         	dupRemover.initialize();
         	outVal.initialize();
     		for (Tuple val : values) {
-    			for (int i =0; i < val.getSize(); ++i) {
+    			for (int i = 0; i < val.getSize(); ++i) {
     				dupRemover.add(val.getString(i));
     			}
     		}
@@ -175,11 +179,11 @@ public class UniqueCounter  extends Configured implements Tool {
         }	
 	}
 
-	   /**
-  * @author pranab
-  *
-  */
- public static class CounterReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
+	/**
+	* @author pranab
+  	*
+  	*/
+	public static class CounterReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
  		protected Text outVal = new Text();
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;
@@ -230,6 +234,5 @@ public class UniqueCounter  extends Configured implements Tool {
 		int exitCode = ToolRunner.run(new UniqueCounter(), args);
 		System.exit(exitCode);
 	}
-
  
 }
