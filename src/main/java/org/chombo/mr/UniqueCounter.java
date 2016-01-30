@@ -19,13 +19,10 @@
 package org.chombo.mr;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -37,12 +34,13 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
+import org.chombo.util.DuplicateRemover;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
- * Counts unique values for fields except for double and text type
+ * Counts unique values or cardinality for fields except for double and text type
  * @author pranab
  *
  */
@@ -65,7 +63,7 @@ public class UniqueCounter  extends Configured implements Tool {
         job.setReducerClass(UniqueCounter.CounterReducer.class);
         job.setCombinerClass(UniqueCounter.CounterCombiner.class);
         
-        job.setMapOutputKeyClass(IntWritable.class);
+        job.setMapOutputKeyClass(Tuple.class);
         job.setMapOutputValueClass(Tuple.class);
 
         job.setOutputKeyClass(NullWritable.class);
@@ -83,35 +81,69 @@ public class UniqueCounter  extends Configured implements Tool {
 	 * @author pranab
 	 *
 	 */
-	public static class CounterMapper extends Mapper<LongWritable, Text, IntWritable, Tuple> {
-		private IntWritable outKey = new IntWritable();
+	public static class CounterMapper extends Mapper<LongWritable, Text, Tuple, Tuple> {
+		private Tuple outKey = new Tuple();
 		private Tuple outVal = new Tuple();
 		private int[]  attributes;
         private String[] items;
         private String fieldDelimRegex;
         private GenericAttributeSchema schema;
+        private boolean enforceSchema;
+        private int[] partIdOrdinals;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-            attributes = Utility.getAttributes("unc.attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
-            		Attribute.DATA_TYPE_DATE, Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_STRING);        	
+        	fieldDelimRegex = Utility.getFieldDelimiter(config, "unc.field.delim.regex", "field.delim.regex", ",");
+        	enforceSchema = config.getBoolean("unc.enforce.schema", true);
+        	
+        	if (enforceSchema) {
+        		schema = Utility.getGenericAttributeSchema(config,  "unc.schema.file.path");
+        		attributes = Utility.getAttributes("unc.attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
+            		Attribute.DATA_TYPE_DATE, Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_STRING);  
+        	} else {
+        		attributes =  Utility.intArrayFromString(config.get("unc.attr.list"));
+        	}
+        	
+        	partIdOrdinals = Utility.intArrayFromString(config.get("unc.part.id.field.ordinals"));
        }
         
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
-        	for (int attr : attributes) {
-        		outVal.initialize();
-        		outKey.set(attr);
-        		outVal.add(items[attr]);
-            	context.write(outKey, outVal);
+            if (null != attributes) {
+            	//fixed number of columns
+	        	for (int attr : attributes) {
+	        		emit(attr, context);
+	        	}
+            } else {
+            	//variable number of columns
+            	for (int i = partIdOrdinals.length; i < items.length; ++i) {
+	        		emit(i, context);
+            	}
+            }
+        }
+        
+        /**
+         * @param attr
+         * @param context
+         * @throws IOException
+         * @throws InterruptedException
+         */
+        private void emit(int attr, Context context) throws IOException, InterruptedException {
+    		outKey.initialize();
+    		outVal.initialize();
+    		
+        	if (null != partIdOrdinals) {
+        		outKey.addFromArray(items, partIdOrdinals);
         	}
+    		outKey.add(attr);
+    		
+    		outVal.add(items[attr]);
+        	context.write(outKey, outVal);
         }
 	}
 	
@@ -119,24 +151,24 @@ public class UniqueCounter  extends Configured implements Tool {
 	 * @author pranab
 	 *
 	 */
-	public static class CounterCombiner extends Reducer<IntWritable, Tuple, IntWritable, Tuple> {
+	public static class CounterCombiner extends Reducer<Tuple, Tuple, Tuple, Tuple> {
 		private Tuple outVal = new Tuple();
-		private Set<String> uniqueValues = new HashSet<String>();
+		private DuplicateRemover<String> dupRemover = new DuplicateRemover<String>(); 
 		
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
          */
-        protected void reduce(IntWritable  key, Iterable<Tuple> values, Context context)
+        protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
-        	uniqueValues.clear();
+        	dupRemover.initialize();
         	outVal.initialize();
     		for (Tuple val : values) {
     			for (int i =0; i < val.getSize(); ++i) {
-    				uniqueValues.add(val.getString(i));
+    				dupRemover.add(val.getString(i));
     			}
     		}
     		
-    		for (String uniqueValue : uniqueValues) {
+    		for (String uniqueValue : dupRemover.getData()) {
     			outVal.add(uniqueValue);
     		}
         	context.write(key, outVal);
@@ -147,11 +179,11 @@ public class UniqueCounter  extends Configured implements Tool {
   * @author pranab
   *
   */
- public static class CounterReducer extends Reducer<IntWritable, Tuple, NullWritable, Text> {
+ public static class CounterReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
  		protected Text outVal = new Text();
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;
-		private Set<String> uniqueValues = new HashSet<String>();
+		private DuplicateRemover<String> dupRemover = new DuplicateRemover<String>(); 
 		private boolean outputCount;
 
 		/* (non-Javadoc)
@@ -160,29 +192,29 @@ public class UniqueCounter  extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
-        	outputCount = config.getBoolean("output.count", true);
+        	outputCount = config.getBoolean("unc.output.count", true);
 		}
 	   	
 		/* (non-Javadoc)
     	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
     	 */
-    	protected void reduce(IntWritable key, Iterable<Tuple> values, Context context)
+    	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
-        	uniqueValues.clear();
+    		dupRemover.initialize();
     		for (Tuple val : values) {
-    			for (int i =0; i < val.getSize(); ++i) {
-    				uniqueValues.add(val.getString(i));
+    			for (int i = 0; i < val.getSize(); ++i) {
+    				dupRemover.add(val.getString(i));
     			}
     		}
     		
        		stBld.delete(0, stBld.length());
     		if (outputCount) {
     			//count
-	       		stBld.append(key.get()).append(fieldDelim).append(uniqueValues.size()).append(fieldDelim);
+	       		stBld.append(key.toString()).append(fieldDelim).append(dupRemover.getSize()).append(fieldDelim);
     		} else {
     			//actual values
-	       		stBld.append(key.get()).append(fieldDelim);
-	    		for (String uniqueValue : uniqueValues) {
+	       		stBld.append(key.toString()).append(fieldDelim);
+	    		for (String uniqueValue : dupRemover.getData()) {
 	    			stBld.append(uniqueValue).append(fieldDelim);
 	    		}    	
     		}
