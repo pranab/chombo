@@ -621,28 +621,26 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	 * @param end
 	 * @return
 	 */
-	public <T> List<T> subTupleAsList(int start, int end) {
-		List<T> list = new ArrayList<T>();
+	public <T> void subTupleAsList(int start, int end, List<T> list) {
 		for (int i = start; i < end; ++i) {
 			list.add((T)get(i));
 		}
-		return list;
 	}
 	
 	/**
 	 * @param start
 	 * @return
 	 */
-	public <T> List<T> subTupleAsList(int start) {
-		return subTupleAsList(start, fields.size());
+	public <T> void subTupleAsList(int start, List<T> list) {
+		subTupleAsList(start, fields.size(), list);
 	}
 	
 	/**
 	 * @param start
 	 * @return
 	 */
-	public <T> List<T> tupleAsList() {
-		return subTupleAsList(0, fields.size());
+	public <T> void tupleAsList(List<T> list) {
+		subTupleAsList(0, fields.size(), list);
 	}
 
 	/**
