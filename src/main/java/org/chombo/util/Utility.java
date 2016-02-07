@@ -86,6 +86,8 @@ public class Utility {
 	public  static String configSubFieldDelim = ":";
 	
 	public static long MILISEC_PER_HOUR = 60L * 1000 * 1000;
+	public static long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
+	public static long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
 
     /*
     static AmazonS3 s3 = null;
