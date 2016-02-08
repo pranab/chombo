@@ -134,7 +134,7 @@ public class WeightedAverage extends Configured implements Tool {
 
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	sortOrderAscending = config.getBoolean("wea.sort.order.ascending", true);
-        	scale = config.getInt("field.scale", 100);
+        	scale = config.getInt("wea.field.scale", 100);
         	keyFields = Utility.intArrayFromString(config.get("wea.key.fields"));
         	groupByField = config.getInt("wea.group.by.field", -1);
 	   		LOG.debug("keyFields:" + keyFields + " groupByField:" + groupByField);
@@ -237,19 +237,19 @@ public class WeightedAverage extends Configured implements Tool {
             
             //key
             outKey.initialize();
-            secondaryKey  = sortOrderAscending ? weightedValue  :  scale  - weightedValue;
+            secondaryKey  = sortOrderAscending ? weightedValue  :  Double.MAX_VALUE  - weightedValue;
             if (groupByField >= 0) {
+            	//secondary sorting by weight
             	outKey.add(items[groupByField], secondaryKey);
             } else {
+            	//primary  sorting by weight
             	outKey.add(secondaryKey);
             }
             
             //value
             outVal.initialize();
             if (null != keyFields) {
-            	for (int keyField : keyFields) {
-            		outVal.add(items[keyField]);
-            	}
+        		outKey.addFromArray(items, keyFields);
             }
             outVal.add( weightedValue);
 			context.write(outKey, outVal);
@@ -262,19 +262,29 @@ public class WeightedAverage extends Configured implements Tool {
      */
     public static class AverageReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
 		private Text outVal = new Text();
+		private String fieldDelim;
 		private boolean outputAsFloat;
 		private int precision;
 		private double weightedValue;
+		private int keyFieldsLength;
+        private int groupByField;
+        private boolean outputGroupByField;
+		private StringBuilder stBld = new StringBuilder();
+
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
+        	fieldDelim = config.get("field.delim.out", ",");
+        	keyFieldsLength = Utility.intArrayFromString(config.get("wea.key.fields")).length;
 			outputAsFloat = config.getBoolean("wea.output.as.float", true);
 			if (outputAsFloat) {
 				precision = config.getInt("wea.output.precision", 3);
 			}
+        	groupByField = config.getInt("wea.group.by.field", -1);
+        	outputGroupByField = config.getBoolean("wea.output.group.by.field", false);
 		}
 		
     	/* (non-Javadoc)
@@ -283,12 +293,19 @@ public class WeightedAverage extends Configured implements Tool {
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
         	for (Tuple value : values){
-        		weightedValue = Double.parseDouble(value.toString());
-        		if (outputAsFloat) {
-            		outVal.set(Utility.formatDouble(weightedValue, 3));
-        		} else {
-            		outVal.set("" + (long)weightedValue);
+        		stBld.delete(0, stBld.length());
+        		
+        		if (outputGroupByField && groupByField >= 0) {
+               		stBld.append(key.getString(0)).append(fieldDelim);
         		}
+        		stBld.append(value.toString(0, keyFieldsLength));
+        		weightedValue = Double.parseDouble(value.getString(keyFieldsLength));
+        		if (outputAsFloat) {
+        			stBld.append(fieldDelim).append(Utility.formatDouble(weightedValue, precision));
+        		} else {
+        			stBld.append(fieldDelim).append("" + (long)weightedValue);
+        		}
+        		outVal.set(stBld.toString());
  				context.write(NullWritable.get(), outVal);
         	}    		
     	}

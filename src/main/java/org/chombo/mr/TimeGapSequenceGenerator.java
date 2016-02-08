@@ -127,13 +127,13 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
             	outKey.initialize();
             	outVal.initialize();
         		outKey.addFromArray(items, idOrdinals);
-        		outKey.add(timeStamp);
+        		outKey.append(timeStamp);
 
         		outVal.add(timeStamp);
         		if (includeRawDateTimeField) {
-        			outVal.add(items[timeStampFieldOrdinal]);
+        			outVal.append(items[timeStampFieldOrdinal]);
         		}
-        		outKey.addFromArray(items, attributes);
+        		outVal.addFromArray(items, attributes);
 
             	context.write(outKey, outVal);
 			} catch (ParseException ex) {

@@ -98,7 +98,7 @@ public class Normalizer extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	
-        	numAttributes = Utility.assertIntArrayConfigParam(config, "num.attributes", fieldDelimRegex, 
+        	numAttributes = Utility.assertIntArrayConfigParam(config, "nor.num.attribute.ordinals", fieldDelimRegex, 
         			"missing numerical attribute ordinals");
         	getAttributeProperties(numAttributes,attributeProperties, config);
         	
@@ -171,13 +171,13 @@ public class Normalizer extends Configured implements Tool {
         	fieldDelim = config.get("field.delim.out", ",");
         	
         	//attribute properties
-        	numAttributes = Utility.assertIntArrayConfigParam(config, "num.attributes", Utility.configDelim, 
+        	numAttributes = Utility.assertIntArrayConfigParam(config, "nor.num.attribute.ordinals", Utility.configDelim, 
         			"missing numerical attribute ordinals");
         	getAttributeProperties(numAttributes,attributeProperties, config);
         	
-        	precision = config.getInt("floating.precision", 3);
-        	normalizingStrategy = config.get("normalizing.strategy", "minmax");
-        	outlierTruncationLevel = config.getFloat("outlier.truncation.level", (float)-1.0);
+        	precision = config.getInt("nor.floating.precision", 3);
+        	normalizingStrategy = config.get("nor.normalizing.strategy", "minmax");
+        	outlierTruncationLevel = config.getFloat("nor.outlier.truncation.level", (float)-1.0);
         	for (int ord : attributeProperties.keySet()) {
         		Triplet<String, Integer, String> attrProp = attributeProperties.get(ord);
         		stats = new Stats();
@@ -301,7 +301,7 @@ public class Normalizer extends Configured implements Tool {
     private static void getAttributeProperties(int[] numAttributes, 
     		Map<Integer, Triplet<String, Integer, String>> attributeProperties, Configuration config) {
     	for (int i : numAttributes) {
-    		String key = "attribute.prop." + i;
+    		String key = "nor.attribute.prop." + i;
     		String value = config.get(key);
     		if (null == value) {
     			throw new IllegalStateException("missing attribute properties");
@@ -309,8 +309,10 @@ public class Normalizer extends Configured implements Tool {
     		String[] parts = value.split(Utility.configDelim);
     		Triplet<String, Integer, String> attributeProp = null;
     		if (parts.length == 2) {
+    			//data type, scale
     			attributeProp = new Triplet<String, Integer, String>(parts[0], Integer.parseInt(parts[1]), "none");
     		} else if (parts.length == 3) {
+    			//data type, scale, transformer
     			attributeProp = new Triplet<String, Integer, String>(parts[0], Integer.parseInt(parts[1]), parts[2]);
     		} else {
     			throw new IllegalStateException("invalid attribute properties format");
