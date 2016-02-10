@@ -49,6 +49,7 @@ public class TransformerFactory {
 	public static final String DATE_GENERATOR = "dateGen";
 	public static final String DATE_FORMAT_TRANSFORMER = "dateFormatTrans";
 	public static final String NUM_DATA_DISCRETIZER = "discretizerTrans";
+	public static final String NUM_BINARY_TRANSFORMER  = "binaryTrans";
 	public static final String INT_ADD_TRANSFORMER = "intAddTrans";
 	public static final String INT_SUBTRACT_TRANSFORMER = "intSubtractTrans";
 	public static final String INT_MULTIPLY_TRANSFORMER = "intMultiplyTrans";
@@ -137,6 +138,8 @@ public class TransformerFactory {
 			transformer = new DateTransformer.DateFormatTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(NUM_DATA_DISCRETIZER)) {
 			transformer = new NumericTransformer.Discretizer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(NUM_BINARY_TRANSFORMER)) {
+			transformer = new NumericTransformer.BinaryCreator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(INT_ADD_TRANSFORMER) || transformerTag.equals(DOUBLE_ADD_TRANSFORMER)) {
 			transformer = new NumericTransformer.Adder(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(INT_SUBTRACT_TRANSFORMER) || transformerTag.equals(DOUBLE_SUBTRACT_TRANSFORMER)) {
