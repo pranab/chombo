@@ -88,6 +88,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         private int conditionedAttr;
         private String[] items;
         private GenericAttributeSchema schema;
+        private int[] partIdOrdinals;
         private static final int ONE = 1;
         
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -95,6 +96,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
         	attributes = Utility.intArrayFromString(config.get("cads.attr.list"),fieldDelimRegex );
         	conditionedAttr = config.getInt("cads.conditioned.attr",-1);
+        	partIdOrdinals = Utility.intArrayFromString(config.get("cads.id.field.ordinals"),  Utility.configDelim);
         	
         	//validate attributes
            	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
@@ -112,18 +114,15 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         	for (int attr : attributes) {
             	outKey.initialize();
             	outVal.initialize();
-            	outKey.add(attr, "0");
+                String condAttrVal = conditionedAttr >= 0 ?  items[conditionedAttr] : "$";
+
+            	if (null != partIdOrdinals) {
+            		outKey.addFromArray(items, partIdOrdinals);
+            	}
+            	outKey.add(attr, condAttrVal);
+            	
             	outVal.add(items[attr], ONE);
             	context.write(outKey, outVal);
-
-            	//conditioned on another attribute
-            	if (conditionedAttr >= 0) {
-                	outKey.initialize();
-                	outVal.initialize();
-                	outKey.add(attr, items[conditionedAttr]);
-                	outVal.add(items[attr], ONE);
-                	context.write(outKey, outVal);
-            	}
         	}
         }
  	}
@@ -170,6 +169,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		protected String fieldDelim;
 		protected CategoricalHistogramStat histogram = new CategoricalHistogramStat();
         private int conditionedAttr;
+        private int[] partIdOrdinals;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -178,6 +178,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
         	conditionedAttr = config.getInt("cads.conditioned.attr",-1);
+        	partIdOrdinals = Utility.intArrayFromString(config.get("cads.id.field.ordinals"),  Utility.configDelim);
 		}
 		
 		/* (non-Javadoc)
@@ -204,10 +205,23 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		 */
 		protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
 			stBld.delete(0, stBld.length());
-			stBld.append(key.getInt(0)).append(fieldDelim);
-			if (conditionedAttr != -1) {
-				stBld.append(key.getString(1)).append(fieldDelim);
+			int i = 0;
+			
+			//partition id
+			if (null != partIdOrdinals) {
+				stBld.append(key.toString(i, partIdOrdinals.length));
+				i += partIdOrdinals.length;
 			}
+			
+			//attr ordinal
+			stBld.append(key.getInt(i)).append(fieldDelim);
+			++i;
+			
+			//conditional attr
+			if (conditionedAttr != -1) {
+				stBld.append(key.getString(i)).append(fieldDelim);
+			}
+			
 			Map<String, Double> distr = histogram.getDistribution();
 			for (String  attrValue : distr.keySet() ) {
 				stBld.append(attrValue).append(fieldDelim).append(distr.get(attrValue)).append(fieldDelim);
