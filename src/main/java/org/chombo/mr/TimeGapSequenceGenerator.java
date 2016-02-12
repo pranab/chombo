@@ -101,7 +101,7 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	fieldDelimRegex = Utility.getFieldDelimiter(config, "tgs.field.delim.regex", "field.delim.regex", ",");
         	attributes = Utility.assertIntArrayConfigParam(config, "tgs.quant.attr.list", fieldDelimRegex, "missing quant attribute list");
         	idOrdinals = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), configDelim);
         	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"tgs.time.stamp.field.ordinal", "missing timestamp field ordinal");
