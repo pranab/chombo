@@ -34,6 +34,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.chombo.util.Triplet;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -45,6 +47,7 @@ import org.chombo.util.Utility;
  *
  */
 public class Normalizer extends Configured implements Tool {
+    private static final Logger LOG = Logger.getLogger(Normalizer.class);
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -96,7 +99,7 @@ public class Normalizer extends Configured implements Tool {
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	fieldDelimRegex = Utility.getFieldDelimiter(config, "nor.field.delim.regex", "field.delim.regex", ",");
         	
         	numAttributes = Utility.assertIntArrayConfigParam(config, "nor.num.attribute.ordinals", fieldDelimRegex, 
         			"missing numerical attribute ordinals");
@@ -163,12 +166,16 @@ public class Normalizer extends Configured implements Tool {
         private boolean excluded;
         private double normalizedValue;
         private int precision;
+        private int ordinal;
 		private StringBuilder stBld = new StringBuilder();
 		
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelim = config.get("field.delim.out", ",");
+            if (config.getBoolean("debug.on", false)) {
+            	LOG.setLevel(Level.DEBUG);
+            }
+            fieldDelim = config.get("field.delim.out", ",");
         	
         	//attribute properties
         	numAttributes = Utility.assertIntArrayConfigParam(config, "nor.num.attribute.ordinals", Utility.configDelim, 
@@ -203,24 +210,27 @@ public class Normalizer extends Configured implements Tool {
 	        	
 	        	//process stats
 	        	for (int ord : fieldStats.keySet()) {
-	        		fieldStats.get(ord).process();
+	        		Stats stats = fieldStats.get(ord);
+	        		stats.process();
+	        		//System.out.println("ord:" + ord + " min:" + stats.min + " max:" + stats.max);
 	        	}
     		} else {
     			//records
-        		stBld.delete(0, stBld.length());
 	        	for (Tuple value : values){
+	        		stBld.delete(0, stBld.length());
+        			stBld.append(key.getString(1));
 	        		excluded = false;
 	        		for (int i = 0; i < value.getSize(); ++i) {
 	        			excluded = false;
-	        			stBld.append(key.getString(1));
-	        			stats= fieldStats.get(i);
+	        			ordinal = i + 1;
+	        			stats= fieldStats.get(ordinal);
 	        			if (null != stats) {
 	        				//numeric
 	        				normalize(Double.parseDouble(value.getString(i)), stats);
 	        				if (excluded) {
 	        					break;
 	        				} else {
-	        					stBld.append(fieldDelim).append(formattedTypedValue(i));
+	        					stBld.append(fieldDelim).append(formattedTypedValue(ordinal));
 	        				}
 	        			} else {
         					//other types
@@ -345,7 +355,7 @@ public class Normalizer extends Configured implements Tool {
     		if (val < min) {
     			min = val;
     		}
-    		if (max > val) {
+    		if (val > max) {
     			max = val;
     		}
     		sum += val;
@@ -364,10 +374,10 @@ public class Normalizer extends Configured implements Tool {
     	 */
     	private void fromTuple(Tuple tuple) {
     		count = tuple.getInt(1);
-    		min = tuple.getInt(2);
-    		max = tuple.getInt(3);
-    		sum = tuple.getLong(4);
-    		sqSum = tuple.getLong(5);
+    		min = tuple.getDouble(2);
+    		max = tuple.getDouble(3);
+    		sum = tuple.getDouble(4);
+    		sqSum = tuple.getDouble(5);
     	}
     	
     	/**
