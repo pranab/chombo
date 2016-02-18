@@ -78,7 +78,7 @@ public class WeightedAverage extends Configured implements Tool {
   
         Utility.setConfiguration(job.getConfiguration());
         
-        if (job.getConfiguration().getInt("group.by.field",  -1) >=  0) {
+        if (job.getConfiguration().getInt("wea.group.by.field",  -1) >=  0) {
         	//group by
 	        job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
 	        job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
@@ -115,7 +115,7 @@ public class WeightedAverage extends Configured implements Tool {
         private boolean singleTennant;
         private int fieldOrd;
         private int[] suppressingFields;
-        private double secondaryKey;
+        private long secondaryKey;
         private int[] keyFields;
         private Integer maxValue;
         private boolean scalingNeeded;
@@ -237,7 +237,8 @@ public class WeightedAverage extends Configured implements Tool {
             
             //key
             outKey.initialize();
-            secondaryKey  = sortOrderAscending ? weightedValue  :  Double.MAX_VALUE  - weightedValue;
+            long wtVal = (long)(weightedValue * 1000);
+            secondaryKey  = sortOrderAscending ? wtVal  :  Long.MAX_VALUE  -  wtVal;
             if (groupByField >= 0) {
             	//secondary sorting by weight
             	outKey.add(items[groupByField], secondaryKey);
