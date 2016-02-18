@@ -132,7 +132,7 @@ public class WeightedAverage extends Configured implements Tool {
              	System.out.println("turned debug on");
             }
 
-        	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	fieldDelimRegex = Utility.getFieldDelimiter(config, "wea.field.delim.regex", "field.delim.regex", ",");
         	sortOrderAscending = config.getBoolean("wea.sort.order.ascending", true);
         	scale = config.getInt("wea.field.scale", 100);
         	keyFields = Utility.intArrayFromString(config.get("wea.key.fields"));
@@ -249,7 +249,7 @@ public class WeightedAverage extends Configured implements Tool {
             //value
             outVal.initialize();
             if (null != keyFields) {
-        		outKey.addFromArray(items, keyFields);
+            	outVal.addFromArray(items, keyFields);
             }
             outVal.add( weightedValue);
 			context.write(outKey, outVal);
@@ -299,7 +299,7 @@ public class WeightedAverage extends Configured implements Tool {
                		stBld.append(key.getString(0)).append(fieldDelim);
         		}
         		stBld.append(value.toString(0, keyFieldsLength));
-        		weightedValue = Double.parseDouble(value.getString(keyFieldsLength));
+        		weightedValue = value.getDouble(keyFieldsLength);
         		if (outputAsFloat) {
         			stBld.append(fieldDelim).append(Utility.formatDouble(weightedValue, precision));
         		} else {
