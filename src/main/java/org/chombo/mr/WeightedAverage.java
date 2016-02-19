@@ -234,6 +234,7 @@ public class WeightedAverage extends Configured implements Tool {
             	sum += fieldValue *  pair.getRight();
             }
             weightedValue = sum / totalWt;
+            weightedValue = weightedValue < 0 ? 0 : weightedValue;
             
             //key
             outKey.initialize();
