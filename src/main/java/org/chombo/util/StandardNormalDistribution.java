@@ -22,7 +22,9 @@ package org.chombo.util;
  * @author pranab
  *
  */
-public class StandardNormalDistribution {
+public class StandardNormalDistribution implements ProbabilityDistribution {
+	private double mean;
+	private double stdDev;
 	private double[] distr = 
 		{0.5000, 0.5398, 0.5793, 0.6179, 0.6554, 0.6915, 0.7257, 0.7580, 0.7881, 0.8159, 0.8413, 0.8643,
 		 0.8849, 0.9032, 0.9192, 0.9332, 0.9452, 0.9554, 0.9641, 0.9713, 0.9773, 0.9821, 0.9861, 0.9893,
@@ -30,10 +32,22 @@ public class StandardNormalDistribution {
 	private double step = 0.1;
 	
 	/**
-	 * @param arg
-	 * @return
+	 * @param mean
+	 * @param stdDev
+	 */
+	public StandardNormalDistribution(double mean, double stdDev) {
+		super();
+		this.mean = mean;
+		this.stdDev = stdDev;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.chombo.util.ProbabilityDistribution#getDistr(double)
 	 */
 	public double getDistr(double ord) {
+		//normalize
+		ord = (ord - mean) / stdDev;
+		
 		double di = -1.0;
 		double ordReqd = ord < 0 ? -ord : ord;
 		double ordStep = 0;
