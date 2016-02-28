@@ -102,7 +102,7 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = Utility.getFieldDelimiter(config, "tgs.field.delim.regex", "field.delim.regex", ",");
-        	attributes = Utility.assertIntArrayConfigParam(config, "tgs.quant.attr.list", fieldDelimRegex, "missing quant attribute list");
+        	attributes = Utility.intArrayFromString(config.get("tgs.quant.attr.list"), configDelim);
         	idOrdinals = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), configDelim);
         	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"tgs.time.stamp.field.ordinal", "missing timestamp field ordinal");
         
@@ -133,7 +133,10 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         		if (includeRawDateTimeField) {
         			outVal.append(items[timeStampFieldOrdinal]);
         		}
-        		outVal.addFromArray(items, attributes);
+        		
+        		if (null != attributes) {
+        			outVal.addFromArray(items, attributes);
+        		}
 
             	context.write(outKey, outVal);
 			} catch (ParseException ex) {
@@ -154,8 +157,6 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
 		private int numIDFields;
 		private int numAttributes;
 		private long timeGap;
-		private static final long MS_PER_HOUR = 60L * 1000 * 1000;
-		private static final long MS_PER_DAY = MS_PER_HOUR * 24;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -165,9 +166,8 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
 			fieldDelim = config.get("field.delim.out", ",");
         	timeGapUnit = config.get("tgs.time.gap.unit");
         	numIDFields = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), configDelim).length;
-        	numAttributes = Utility.assertIntArrayConfigParam(config, "tgs.quant.attr.list", configDelim, 
-        			"missing quant attribute list").length;
-
+        	int[] attributes = Utility.intArrayFromString(config.get("tgs.quant.attr.list"), configDelim);
+        	numAttributes = null != attributes ? attributes.length : 0;
 		}
 
         /* (non-Javadoc)
@@ -177,28 +177,28 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         		throws IOException, InterruptedException {
     		long lastTimeStamp = -1;
     		for (Tuple val : values) {
-        		stBld.delete(0, stBld.length());
-        		for (int i = 0; i < numIDFields; ++i) {
-        			stBld.append(key.getString(i)).append(fieldDelim);
-        		}
     			if (lastTimeStamp > 0) {
-    				timeGap = val.getLong(0) - lastTimeStamp;
+            		stBld.delete(0, stBld.length());
+            		for (int i = 0; i < numIDFields; ++i) {
+            			stBld.append(key.getString(i)).append(fieldDelim);
+            		}
+
+            		timeGap = val.getLong(0) - lastTimeStamp;
     				if (timeGapUnit.equals("hour")) {
-    					timeGap /= MS_PER_HOUR;
+    					timeGap /= Utility.MILISEC_PER_HOUR;
     				} else if (timeGapUnit.equals("day")) {
-    					timeGap /= MS_PER_DAY;
+    					timeGap /= Utility.MILISEC_PER_DAY;
     				}
-    				stBld.append(timeGap);
+    				stBld.append(timeGap).append(fieldDelim);
+            		for (int i = 0; i < numAttributes; ++i) {
+            			stBld.append(val.getString(i+1)).append(fieldDelim);
+            		}
+        			stBld.deleteCharAt(stBld.length() -1);
+                	outVal.set(stBld.toString());
+        			context.write(NullWritable.get(), outVal);
     			}
-    			stBld.append(fieldDelim);
     			lastTimeStamp = val.getLong(0);
     			
-        		for (int i = 0; i < numAttributes; ++i) {
-        			stBld.append(val.getString(i+1)).append(fieldDelim);
-        		}
-    			stBld.deleteCharAt(stBld.length() -1);
-            	outVal.set(stBld.toString());
-    			context.write(NullWritable.get(), outVal);
     		}
         }
 	}
