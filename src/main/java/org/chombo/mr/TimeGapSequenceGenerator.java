@@ -44,7 +44,7 @@ import org.chombo.util.Utility;
  *
  */
 public class TimeGapSequenceGenerator extends Configured implements Tool {
-	private static String configDelim = ",";
+	//private static String configDelim = ",";
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -102,8 +102,8 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = Utility.getFieldDelimiter(config, "tgs.field.delim.regex", "field.delim.regex", ",");
-        	attributes = Utility.intArrayFromString(config.get("tgs.quant.attr.list"), configDelim);
-        	idOrdinals = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), configDelim);
+        	attributes = Utility.intArrayFromString(config.get("tgs.quant.attr.list"), Utility.configDelim);
+        	idOrdinals = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), Utility.configDelim);
         	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"tgs.time.stamp.field.ordinal", "missing timestamp field ordinal");
         
         	isEpochTime = config.getBoolean("tgs.is.epoch.time", false);
@@ -165,8 +165,8 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
         	timeGapUnit = config.get("tgs.time.gap.unit");
-        	numIDFields = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), configDelim).length;
-        	int[] attributes = Utility.intArrayFromString(config.get("tgs.quant.attr.list"), configDelim);
+        	numIDFields = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), Utility.configDelim).length;
+        	int[] attributes = Utility.intArrayFromString(config.get("tgs.quant.attr.list"), Utility.configDelim);
         	numAttributes = null != attributes ? attributes.length : 0;
 		}
 

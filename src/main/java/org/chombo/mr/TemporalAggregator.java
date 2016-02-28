@@ -166,12 +166,12 @@ public class TemporalAggregator  extends Configured implements Tool {
 		private String aggregatorType;
 		
 		protected void setup(Context context) throws IOException, InterruptedException {
-     	Configuration config = context.getConfiguration();
-     	fieldDelim = config.get("field.delim.out", ",");
+			Configuration config = context.getConfiguration();
+			fieldDelim = config.get("field.delim.out", ",");
         	aggregatorType = config.get("aggregator.type");
 		}
 
-     protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
+		protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
      		throws IOException, InterruptedException {
  			sum = 0;
  			totalCount = 0;

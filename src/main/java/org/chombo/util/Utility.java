@@ -1482,10 +1482,13 @@ public class Utility {
      */
     public static int[] getAttributes(String attrListParam, String configDelim, GenericAttributeSchema schema, 
     		Configuration config, String... includeTypes) {        	
-    	int[] attributes =  assertIntArrayConfigParam(config, attrListParam, configDelim, "missing attribute list");
+    	int[] attributes = Utility.intArrayFromString(config.get(attrListParam), configDelim);
     	List<Attribute> attrsMetaData = schema != null ? schema.getQuantAttributes(includeTypes) : null;
     	if (null == attributes) {
     		//use schema and pick all attributes of right type
+    		if (null == attrsMetaData) {
+    			throw new IllegalStateException("Neither attribute ordinal list ot schema available");
+    		}
     		attributes = new int[attrsMetaData.size()];
     		for (int i = 0; i < attrsMetaData.size(); ++i) {
     			attributes[i] = attrsMetaData.get(i).getOrdinal();
