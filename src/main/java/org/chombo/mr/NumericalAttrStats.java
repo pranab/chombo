@@ -304,11 +304,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
     	protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
     		//x)partitonIds, (0)attr ord (1)seasonal cycle (2)cond attr 3)sum 4)sum square 5)count 6)mean 7)variance 8)std dev 9)min 10)max 
     		stBld.delete(0, stBld.length());
-        	if (conditionedAttr >= 0)  {
-        		stBld.append(key.toString()).append(fieldDelim);
-        	} else {
-        		stBld.append(key.toString(0, key.getSize()-1)).append(fieldDelim);
-        	}
+        	stBld.append(key.toString()).append(fieldDelim);
         	
     		stBld.append(sum).append(fieldDelim).append(Utility.formatDouble(sumSq, outputPrecision)).
     			append(fieldDelim).append(totalCount).append(fieldDelim) ;

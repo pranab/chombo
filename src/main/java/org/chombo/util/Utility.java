@@ -1634,4 +1634,19 @@ public class Utility {
     	return fieldDelim;
     }
     
+    /**
+     * @param epochTime
+     * @param timeUnit
+     * @return
+     */
+    public static long convertTimeUnit(long epochTime, String timeUnit) {
+    	long modTime = epochTime;
+		if (timeUnit.equals("hour")) {
+			modTime /= MILISEC_PER_HOUR;
+		} else if (timeUnit.equals("day")) {
+			modTime /= MILISEC_PER_DAY;
+		}
+    	return modTime;
+    }
+   
 }
