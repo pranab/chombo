@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
+import org.chombo.util.AttributeZscoreFilter;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Tuple;
@@ -99,7 +100,12 @@ public class NumericalAttrStats  extends Configured implements Tool {
         private SeasonalAnalyzer seasonalAnalyzer;
         private long timeStamp;
         private int cycleIndex;
+        private AttributeZscoreFilter attrZscoreFilter;
         
+        
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
@@ -127,11 +133,20 @@ public class NumericalAttrStats  extends Configured implements Tool {
             		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
             	}
 
-            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"nas.time.stamp.field.ordinal", "missing time stamp field ordinal"); 
+            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"nas.time.stamp.field.ordinal", 
+            			"missing time stamp field ordinal"); 
             	boolean timeStampInMili = config.getBoolean("nas.time.stamp.in.mili", true);
             	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
         	}
 
+        	//score filter
+        	boolean filterOutlier = config.getBoolean("nas.filter.outlier", false);
+        	if (filterOutlier) {
+        		String fieldDelim = config.get("field.delim.out", ",");
+        		Map<Integer, Double> attrZscores = Utility.assertIntegerDoubleMapConfigParam(config, "nas.attr.zscore", 
+        				Utility.configDelim, Utility.configSubFieldDelim, "attribute max zscore missing");
+        		attrZscoreFilter = new AttributeZscoreFilter(attrZscores, config, "nas.stats.file.path", fieldDelim);
+        	}
        }
 
         @Override
@@ -165,15 +180,17 @@ public class NumericalAttrStats  extends Configured implements Tool {
                     outKey.add(cycleIndex);
         		}
             	
-        		outKey.add( condAttrVal);
+        		outKey.add(condAttrVal);
 
             	val = Double.parseDouble(items[attr]);
-            	sqVal = val * val;
-            	outVal.add(val, val, val, sqVal, count);
-            	context.write(outKey, outVal);
+            	if (null == attrZscoreFilter || attrZscoreFilter.isWithinBound(attr, val))  {
+            		//emit if filter is not set or value is within zscore bounds 
+                	sqVal = val * val;
+                	outVal.add(val, val, val, sqVal, count);
+                	context.write(outKey, outVal);
+            	}
         	}
         }
-         
 	}
 
 	/**
@@ -190,6 +207,9 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		private double curMin;
 		private double curMax;
 		
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+         */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
     		sum = 0;
