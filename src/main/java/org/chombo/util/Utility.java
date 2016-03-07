@@ -1648,5 +1648,22 @@ public class Utility {
 		}
     	return modTime;
     }
+    
+    /**
+     * @param thisVector
+     * @param thatVector
+     * @return
+     */
+    public static double dotProduct(double[] thisVector, double[] thatVector) {
+    	double product = 0;
+    	if (thisVector.length != thatVector.length) {
+    		throw new IllegalArgumentException("mismatched size for vector dot product");
+    	}
+    	
+    	for (int i = 0; i < thisVector.length; ++i) {
+    		product += thisVector[i] * thatVector[i];
+    	}
+    	return product;
+    }
    
 }

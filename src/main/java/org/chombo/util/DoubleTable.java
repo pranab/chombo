@@ -20,6 +20,10 @@ package org.chombo.util;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+/**
+ * @author pranab
+ *
+ */
 public class DoubleTable {
 	protected double[][] table;
 	protected int numRow;
@@ -109,6 +113,36 @@ public class DoubleTable {
 		return table[row];
 	}
 	
+	/**
+	 * @param rowNum
+	 * @param row
+	 */
+	public void getRow(int rowNum, double[] row) {
+		for (int c = 0; c < numCol; ++c) {
+			row[c] = table[rowNum][c];
+		}
+	}
+
+	/**
+	 * @param colNum
+	 * @return
+	 */
+	public double[] getColumn(int colNum) {
+		double[] column = new double[numRow];
+		getColumn(colNum, column);
+		return column;
+	}
+	
+	/**
+	 * @param rowNum
+	 * @param row
+	 */
+	public void getColumn(int colNum, double[] column) {
+		for (int r = 0; r < numRow; ++r) {
+			column[r] = table[r][colNum];
+		}
+	}
+
 	/**
 	 * @param row
 	 * @param col
