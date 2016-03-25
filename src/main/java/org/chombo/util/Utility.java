@@ -104,6 +104,7 @@ public class Utility {
     
 	
     /**
+     * sets configuration
      * @param conf
      * @throws Exception
      */
@@ -122,6 +123,7 @@ public class Utility {
     }
 
     /**
+     * sets configuration and defaults to project name based config file
      * @param conf
      * @param project
      * @throws Exception
@@ -227,6 +229,22 @@ public class Utility {
         return true;
 	}	
 	
+    /**
+     * sets configuration and defaults to project name based config file
+     * @param conf
+     * @param project
+     * @param filterByGroup
+     * @throws Exception
+     */
+    public static void setConfiguration(Configuration conf, String project, boolean filterByGroup) throws Exception{
+    	if (filterByGroup) {
+    		ConfigurationLoader configLoader = new ConfigurationLoader(conf, project);
+    		configLoader.set();
+    	} else {
+    		setConfiguration(conf, project);
+    	}
+    }
+    
     /**
      * @param vec
      * @param val

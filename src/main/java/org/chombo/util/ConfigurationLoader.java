@@ -206,6 +206,7 @@ public class ConfigurationLoader {
 	private void setFilteredConfiguration(List<String> lines) {
 		Map<String, Pair<String, Integer>> multiVersionConfig = new HashMap<String, Pair<String, Integer>>();
 		
+		System.out.println("configuration settings:");
         for (String line : lines) {
         	if (!line.isEmpty() && !line.startsWith("#")) {
         		String[] items = line.split("=");
@@ -220,6 +221,7 @@ public class ConfigurationLoader {
         			//global config
         			String keySt = items[0].substring(globalKeyPrefixLen + 1);
     	            conf.set(keySt, valSt);
+    	            System.out.println(keySt + "\\t" + valSt);
         		} else if (shouldInclude(items[0])) {
         			//specific config group
         			String keySt = items[0];
@@ -243,7 +245,9 @@ public class ConfigurationLoader {
         
         //set config with right version
         for (String key : multiVersionConfig.keySet()) {
-            conf.set(key, multiVersionConfig.get(key).getLeft());
+        	String val = multiVersionConfig.get(key).getLeft();
+            conf.set(key, val);
+            System.out.println(key + "\\t" + val);
         }
 	}
 	
