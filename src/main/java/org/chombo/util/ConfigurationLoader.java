@@ -54,10 +54,12 @@ import com.amazonaws.services.s3.model.S3Object;
 public class ConfigurationLoader {
 	private Configuration conf;
 	private String project;
-	private String keyPrefix;
+	private List<String> groups = new ArrayList<String>();
 	private int version;
 	
 	private final String CONF_FILE_PROP_NAME = "conf.path";
+	private final String CONF_GROUP = "conf.group";
+	
 	private final String FS_DEF_CONFIG_DIR = "/var/mawazo/";
 	private final String HDFS_DEF_CONFIG_DIR = "/var/mawazo/";
 	private final String HDFS_PREFIX = "hdfs:";
@@ -74,28 +76,31 @@ public class ConfigurationLoader {
      * @param project
      * @param keyPrefix
      */
-    public ConfigurationLoader(Configuration conf, String project,
-			String keyPrefix) {
+    public ConfigurationLoader(Configuration conf, String project) {
 		super();
 		this.conf = conf;
 		this.project = project;
-		this.keyPrefix = keyPrefix;
+		
+		String confGroup = conf.get(CONF_GROUP);
+		if (null == confGroup) {
+			throw new IllegalStateException("configuration group not provided");
+		}
+		
+		if (confGroup.contains(Utility.configDelim)) {
+			//multiple groups and/or higher version
+			String[] items = confGroup.split(Utility.configDelim);
+			
+			//group names and end with version
+			for (int i = 0; i < items.length - 1; ++i) {
+				groups.add(items[i]);
+			}
+			version = Integer.parseInt(items[items.length - 1]);
+		} else {
+			//only one group with default version of 0
+			groups.add(confGroup);
+		}
 	}
 	
-    /**
-     * @param conf
-     * @param project
-     * @param keyPrefix
-     * @param groupIndex
-     */
-    public ConfigurationLoader(Configuration conf, String project,
-			String keyPrefix, int version) {
-		super();
-		this.conf = conf;
-		this.project = project;
-		this.keyPrefix = keyPrefix;
-		this.version = version;
-	}
 
 	/**
      * @param conf
@@ -215,13 +220,12 @@ public class ConfigurationLoader {
         			//global config
         			String keySt = items[0].substring(globalKeyPrefixLen + 1);
     	            conf.set(keySt, valSt);
-        		} else if (items[0].startsWith(keyPrefix)) {
+        		} else if (shouldInclude(items[0])) {
         			//specific config group
         			String keySt = items[0];
         			Pair<String, Integer> versionedVal = multiVersionConfig.get(keySt);
         			if (null == versionedVal) {
-        				versionedVal = new Pair<String, Integer>(valSt, 0);
-        				multiVersionConfig.put(keySt, versionedVal);
+        				versionedVal = new Pair<String, Integer>(valSt, -1);
         			}
         			
         			//keep replacing until we have reached the right version
@@ -232,10 +236,31 @@ public class ConfigurationLoader {
         	}
         }
         
+        //nothing found
+        if (multiVersionConfig.isEmpty()) {
+        	throw new IllegalStateException("no configuration parameter found for groups " + groups);
+        }
+        
         //set config with right version
         for (String key : multiVersionConfig.keySet()) {
             conf.set(key, multiVersionConfig.get(key).getLeft());
         }
+	}
+	
+	/**
+	 * @param key
+	 * @return
+	 */
+	private boolean shouldInclude(String key) {
+		boolean include = false;
+		for (String group : groups) {
+			if (key.startsWith(group)) {
+				include = true;
+				break;
+			}
+		}
+		
+		return include;
 	}
 	
 	/**
