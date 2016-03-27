@@ -59,7 +59,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-        Utility.setConfiguration(job.getConfiguration(), "chombo");
+        Utility.setConfiguration(job.getConfiguration(), "chombo", true);
         job.setMapperClass(NumericalAttrStats.StatsMapper.class);
         job.setReducerClass(NumericalAttrStats.StatsReducer.class);
         job.setCombinerClass(NumericalAttrStats.StatsCombiner.class);
@@ -109,7 +109,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	schema = Utility.getGenericAttributeSchema(config,  "nas.schema.file.path");
         	attributes =  Utility.getAttributes("nas.attr.list", configDelim,schema, config,  
         			Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_DOUBLE);        	
         	
@@ -119,7 +119,8 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	//seasonal
         	seasonalAnalysis = config.getBoolean("nas.seasonal.analysis", false);
         	if (seasonalAnalysis) {
-        		seasonalCycleType =  Utility.assertStringConfigParam(config,"nas.seasonal.cycle.type", "missing seasonal cycle type parameter");
+        		seasonalCycleType =  Utility.assertStringConfigParam(config,"nas.seasonal.cycle.type", 
+        				"missing seasonal cycle type parameter");
         		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
             	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
             			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {

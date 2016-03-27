@@ -57,7 +57,7 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-        Utility.setConfiguration(job.getConfiguration(), "chombo");
+        Utility.setConfiguration(job.getConfiguration(), "chombo", true);
         job.setMapperClass(TimeGapSequenceGenerator.TimeGapMapper.class);
         job.setReducerClass(TimeGapSequenceGenerator.TimeGapReducer.class);
         

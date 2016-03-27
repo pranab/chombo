@@ -135,17 +135,17 @@ public class Transformer extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim", ",");
         	
         	//transformer schema
-        	configDriven = config.get("transformer.schema.file.path") != null;
+        	configDriven = config.get("tra.transformer.schema.file.path") != null;
         	if (configDriven) {
         		//schema
-	        	transformerSchema = Utility.getProcessingSchema(config, "transformer.schema.file.path");
+	        	transformerSchema = Utility.getProcessingSchema(config, "tra.transformer.schema.file.path");
 	        	transformerSchema.validateTargetAttributeMapping();
 	        	
 	        	//transformer config
-	        	transformerConfig = Utility.getHoconConfig(config, "transformer.config.file.path");
+	        	transformerConfig = Utility.getHoconConfig(config, "tra.transformer.config.file.path");
 	        	
 	        	//intialize transformer factory
-	        	TransformerFactory.initialize( config.get( "custom.trans.factory.class"), transformerConfig);
+	        	TransformerFactory.initialize( config.get( "tra.custom.trans.factory.class"), transformerConfig);
 
 	        	//build transformers
 	        	AttributeTransformer attrTrans;

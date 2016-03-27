@@ -94,7 +94,7 @@ public class StringAttrStats extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	schema = Utility.getGenericAttributeSchema(config,  "sas.schema.file.path");
             attributes = Utility.getAttributes("sas.attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_STRING);        	
         	idOrdinals = Utility.intArrayFromString(config.get("sas.id.field.ordinals"), configDelim);
        }

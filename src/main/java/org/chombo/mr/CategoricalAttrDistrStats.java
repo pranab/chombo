@@ -100,7 +100,7 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         	partIdOrdinals = Utility.intArrayFromString(config.get("cads.id.field.ordinals"),  Utility.configDelim);
         	
         	//validate attributes
-           	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+           	schema = Utility.getGenericAttributeSchema(config,  "cads.schema.file.path");
             if (null != schema) {
            		if (!schema.areCategoricalAttributes(attributes)) {
         			throw new IllegalArgumentException("attributes must be categorical");

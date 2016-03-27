@@ -79,7 +79,7 @@ public class Projection extends Configured implements Tool {
             job.setNumReduceTasks(numReducer);
             
             //order by
-        	boolean doOrderBy = job.getConfiguration().getInt("orderBy.field", -1) >= 0;
+        	boolean doOrderBy = job.getConfiguration().getInt("pro.orderBy.field", -1) >= 0;
         	if (doOrderBy) {
                 job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
                 job.setPartitionerClass(SecondarySort.TupleTextPartitioner.class);
@@ -110,10 +110,10 @@ public class Projection extends Configured implements Tool {
 
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	keyField = config.getInt("key.field", 0);
+        	keyField = config.getInt("pro.key.field", 0);
         	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
         	fieldDelimOut = config.get("field.delim", ",");
-        	projectionFields = Utility.intArrayFromString(config.get("projection.field"),fieldDelimRegex );
+        	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
        }
         
         @Override
@@ -146,15 +146,15 @@ public class Projection extends Configured implements Tool {
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	String operation = config.get("projection.operation",  "project");
+        	String operation = config.get("pro.projection.operation",  "project");
         	groupBy = operation.startsWith("grouping");
         	
-        	keyField = config.getInt("key.field", 0);
+        	keyField = config.getInt("pro.key.field", 0);
         	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
         	fieldDelimOut = config.get("field.delim.out", ",");
-        	projectionFields = Utility.intArrayFromString(config.get("projection.field"),fieldDelimRegex );
-        	orderByField = config.getInt("orderBy.field", -1);
-        	isOrderByFieldNumeric = config.getBoolean("orderBy.filed.numeric", false);
+        	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
+        	orderByField = config.getInt("pro.orderBy.field", -1);
+        	isOrderByFieldNumeric = config.getBoolean("pro.orderBy.filed.numeric", false);
        }
 
         /* (non-Javadoc)
@@ -211,20 +211,20 @@ public class Projection extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", "[]");
-        	if (!StringUtils.isBlank(config.get("agrregate.fumctions"))) {
-        		aggrFunctions = config.get("agrregate.fumctions").split(fieldDelim);
+        	if (!StringUtils.isBlank(config.get("pro.agrregate.fumctions"))) {
+        		aggrFunctions = config.get("pro.agrregate.fumctions").split(fieldDelim);
         		aggrFunctionValues = new int[aggrFunctions.length];
         		aggrFunctionValuesMax = new int[aggrFunctions.length];
         		for (int i = 0; i < aggrFunctionValuesMax.length;  ++i) {
         			aggrFunctionValuesMax[i] = Integer.MIN_VALUE;
         		}
-				aggregateValueKeyPrefix = config.get("aggregate.value.key.prefix");
+				aggregateValueKeyPrefix = config.get("pro.aggregate.value.key.prefix");
 	        	redisCache = RedisCache.createRedisCache(config, "ch");
         	}
-        	sortOrderAscending = config.getBoolean("sort.order.ascending", true);
-        	limitTo = config.getInt("limit.to", -1);
-        	formatCompact = config.getBoolean("format.compact", true);
-        	useRank = config.getBoolean("use.rank", false);
+        	sortOrderAscending = config.getBoolean("pro.sort.order.ascending", true);
+        	limitTo = config.getInt("pro.limit.to", -1);
+        	formatCompact = config.getBoolean("pro.format.compact", true);
+        	useRank = config.getBoolean("pro.use.rank", false);
        }
 
 		/* (non-Javadoc)
