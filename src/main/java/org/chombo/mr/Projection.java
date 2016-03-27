@@ -111,7 +111,7 @@ public class Projection extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	keyField = config.getInt("pro.key.field", 0);
-        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim", ",");
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
        }
@@ -150,7 +150,7 @@ public class Projection extends Configured implements Tool {
         	groupBy = operation.startsWith("grouping");
         	
         	keyField = config.getInt("pro.key.field", 0);
-        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim.out", ",");
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
         	orderByField = config.getInt("pro.orderBy.field", -1);

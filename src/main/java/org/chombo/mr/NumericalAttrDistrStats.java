@@ -101,7 +101,7 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         	conditionedAttr = config.getInt("nads.conditioned.attr",-1);
         	
         	//validate attributes
-        	schema = Utility.getGenericAttributeSchema(config,  "nads.schema.file.path");
+        	schema = Utility.getGenericAttributeSchema(config, "nads.schema.file.path");
         	if (null != schema) {
         		Set<Integer> attrSet = attrBinWidths.keySet();
         		int[] attrs = new int[attrSet.size()];
@@ -209,7 +209,7 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         	conditionedAttr = config.getInt("nads.conditioned.attr",-1);
 
         	//validation with schema
-           	schema = Utility.getGenericAttributeSchema(config,  "nads.schema.file.path");
+           	schema = Utility.getGenericAttributeSchema(config, "nads.schema.file.path");
             if (null != schema) {
             	
             }

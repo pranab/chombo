@@ -39,6 +39,8 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
+ * Determines uniqueness of key. If multiple records found with same key, such records are output
+ * along with ocurence count of corresponding values
  * @author pranab
  *
  */

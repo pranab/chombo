@@ -99,10 +99,13 @@ public class SeasonalDetector  extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	attributes = Utility.assertIntArrayConfigParam(config, "sed.quant.attr.list", fieldDelimRegex, "missing quant attribute list");
+        	attributes = Utility.assertIntArrayConfigParam(config, "sed.quant.attr.list", fieldDelimRegex, 
+        			"missing quant attribute list");
         	idOrdinals = Utility.intArrayFromString(config.get("sed.id.field.ordinals"), configDelim);
-        	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"sed.time.stamp.field.ordinal", "missing timestamp field ordinal");
-        	seasonalCycleType = Utility.assertStringConfigParam(config,"sed.seasonal.cycle.type", "missing seasonal cycle type");
+        	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"sed.time.stamp.field.ordinal", 
+        			"missing timestamp field ordinal");
+        	seasonalCycleType = Utility.assertStringConfigParam(config,"sed.seasonal.cycle.type", 
+        			"missing seasonal cycle type");
         	aggregatorType = config.get("sed.aggregator.type", AGGR_AVG);
         	
     		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
@@ -110,19 +113,19 @@ public class SeasonalDetector  extends Configured implements Tool {
     		//additional configuration
         	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
         			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
-        		Map<Integer, Integer>  hourRanges = Utility. assertIntegerIntegerMapConfigParam(config, "hour.groups", 
+        		Map<Integer, Integer>  hourRanges = Utility. assertIntegerIntegerMapConfigParam(config, "sed.hour.groups", 
         				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups", true);
         		seasonalAnalyzer.setHourRanges(hourRanges);
         	} 
         	
         	//time zone adjustment
-        	int  timeZoneShiftHours = config.getInt("time.zone.shift.hours",  0);
+        	int  timeZoneShiftHours = config.getInt("sed.time.zone.shift.hours",  0);
         	if (timeZoneShiftHours > 0) {
         		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
         	}
         	
         	//timestamp unit
-        	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
+        	boolean timeStampInMili = config.getBoolean("sed.time.stamp.in.mili", true);
         	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
        }
 		

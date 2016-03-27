@@ -40,7 +40,8 @@ import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 
 /**
- * Generates flat record with delemeter separated fields from unstructured
+ * Generates flat record with delemeter separated fields from unstructured data which
+ * could be multi line
  * @author pranab
  *
  */
@@ -90,11 +91,11 @@ public class FlatRecordExtractor extends Configured implements Tool {
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("raw.field.delim.regex");
+        	fieldDelimRegex = config.get("fre.raw.field.delim.regex");
         	fieldDelimOut = config.get("field.delim", ",");
         	
         	//schema
-        	InputStream is = Utility.getFileStream(config,  "raw.schema.file.path");
+        	InputStream is = Utility.getFileStream(config, "fre.raw.schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
         	rawSchema = mapper.readValue(is, RawAttributeSchema.class);
         	
@@ -105,7 +106,7 @@ public class FlatRecordExtractor extends Configured implements Tool {
         	}
         	
         	//field extractor
-        	boolean failOnInvalid = config.getBoolean("fail.on.invalid", true);
+        	boolean failOnInvalid = config.getBoolean("fre.fail.on.invalid", true);
         	fieldExtractor = new UnstructuredFieldExtractor(rawSchema, failOnInvalid);
         	
         	//record type

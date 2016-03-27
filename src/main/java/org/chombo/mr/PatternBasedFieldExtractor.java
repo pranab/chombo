@@ -87,11 +87,11 @@ public class PatternBasedFieldExtractor extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration conf = context.getConfiguration();
 	    	fieldDelim = conf.get("field.delim.out", ",");
-	    	String regEx = Utility.assertConfigParam(conf, "extractor.regex","extractor regex must be provided");
-	    	numFields =  Utility.assertIntConfigParam(conf, "num.fields", "number of groups in regex must be provided");
+	    	String regEx = Utility.assertConfigParam(conf, "pbfe.extractor.regex","extractor regex must be provided");
+	    	numFields =  Utility.assertIntConfigParam(conf, "pbfe.num.fields", "number of groups in regex must be provided");
 			pattern = Pattern.compile(regEx);
 			
-			dateFieldIndex = conf.getInt("date.field.index", -1);
+			dateFieldIndex = conf.getInt("pbfe.date.field.index", -1);
 			if (dateFieldIndex >= 0) {
 				String dateFormat = Utility.assertConfigParam(conf, "date.format","date format must be provided");
 				dateFormatter =  new SimpleDateFormat(dateFormat);

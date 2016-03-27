@@ -96,12 +96,12 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim", ",");
         	
         	//schema
-        	InputStream is = Utility.getFileStream(config,  "schema.file.path");
+        	InputStream is = Utility.getFileStream(config, "nan.schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
         	schema = mapper.readValue(is, GenericAttributeSchema.class);
             
             //stats data
-            String statsFilePath = config.get("stats.file.path");
+            String statsFilePath = config.get("nan.stats.file.path");
             if (null == statsFilePath) {
             	throw new IllegalArgumentException("stats file path missing");
             }
@@ -116,19 +116,19 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
             }
             
             //scaling data
-            scale = config.getInt("attr.scale", -1);
+            scale = config.getInt("nan.attr.scale", -1);
             
             //decimal formatting
-            int decPrecision = config.getInt("dec.precision", 3); 
+            int decPrecision = config.getInt("nan.dec.precision", 3); 
             decFormat = "%." + decPrecision + "f";
             
             //outlier truncation level
-            outlierTruncationLevel = config.getFloat("outlier.truncation.level", (float)-1.0);
+            outlierTruncationLevel = config.getFloat("nan.outlier.truncation.level", (float)-1.0);
 
         	//data cleanser schema
-            String cleanserSchemPath = config.get("cleanser.schema.file.path");
+            String cleanserSchemPath = config.get("nan.cleanser.schema.file.path");
             if (null != cleanserSchemPath) {
-            	is = Utility.getFileStream(config,  "cleanser.schema.file.path");
+            	is = Utility.getFileStream(config, "nan.cleanser.schema.file.path");
             	mapper = new ObjectMapper();
             	cleanserSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
             	for (int i : cleanserSchema.getAttributeOrdinals()) {
@@ -139,7 +139,7 @@ public class NumericalAttrNormalizer extends Configured implements Tool {
             	}
             	
             } else {
-            	String[] items = config.get("attr.normalizer.list").split(",");
+            	String[] items = config.get("nan.attr.normalizer.list").split(",");
             	for (String item : items) {
             		String[] parts = item.split(":");
             		normalizers.put(Integer.parseInt(parts[0]), parts[1]);
