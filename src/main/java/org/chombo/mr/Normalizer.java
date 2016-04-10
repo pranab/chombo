@@ -19,7 +19,6 @@ package org.chombo.mr;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
@@ -35,7 +34,9 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.chombo.util.Pair;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.chombo.util.Triplet;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -46,6 +47,7 @@ import org.chombo.util.Utility;
  *
  */
 public class Normalizer extends Configured implements Tool {
+    private static final Logger LOG = Logger.getLogger(Normalizer.class);
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -76,33 +78,41 @@ public class Normalizer extends Configured implements Tool {
         return status;
 	}
 
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static class NormalizerMapper extends Mapper<LongWritable, Text, Tuple, Tuple> {
 		private Tuple outKey = new Tuple();
 		private Tuple outVal = new Tuple();
         private String fieldDelimRegex;
         private String[] items;
-        private List<Pair<Integer, Integer>> filedScales;
+        private int[] numAttributes;
+        private Map<Integer, Triplet<String, Integer, String>> attributeProperties = 
+        		new HashMap<Integer, Triplet<String, Integer, String>>();
         private static final int ID_ORD = 0;
         private static final String STATS_KEY = "stats";
         private Map<Integer, Stats> fieldStats = new HashMap<Integer, Stats>();
         private int fieldOrd;
-        private int fieldVal;
         private Stats stats;
         
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	fieldDelimRegex = Utility.getFieldDelimiter(config, "nor.field.delim.regex", "field.delim.regex", ",");
         	
-        	String fieldScalesStr = config.get("field.weights");
-        	filedScales = Utility.getIntPairList(fieldScalesStr, ",", ":");
-        	for (Pair<Integer, Integer> fieldScale : filedScales) {
-        		fieldStats.put(fieldScale.getLeft(), new Stats());
+        	numAttributes = Utility.assertIntArrayConfigParam(config, "nor.num.attribute.ordinals", fieldDelimRegex, 
+        			"missing numerical attribute ordinals");
+        	getAttributeProperties(numAttributes,attributeProperties, config);
+        	
+        	for (int ord : attributeProperties.keySet()) {
+        		fieldStats.put(ord, new Stats());
         	}
         }
         
         @Override
         protected void cleanup(Context context) throws IOException, InterruptedException {
+        	//reduce will the stats first and then the data rows
             outKey.initialize();
             outKey.add(0, STATS_KEY);
         	for (int ord : fieldStats.keySet()) {
@@ -129,13 +139,10 @@ public class Normalizer extends Configured implements Tool {
             	stats = fieldStats.get(fieldOrd);
             	if (null != stats) {
             		//numeric
-            		fieldVal = Integer.parseInt(items[fieldOrd]);
-            		stats.add(fieldVal);
-            		outVal.add(fieldVal);
-            	} else {
-            		//other
-            		outVal.add(items[fieldOrd]);
-            	}
+            		stats.add(Double.parseDouble(items[fieldOrd]));
+            	} 
+            	outVal.add(items[fieldOrd]);
+            	
             }
 			context.write(outKey, outVal);
         }
@@ -148,30 +155,42 @@ public class Normalizer extends Configured implements Tool {
     public static class NormalizerReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
 		private Text outVal = new Text();
 		private String fieldDelim;
-        private List<Pair<Integer, Integer>> filedScales;
+        private int[] numAttributes;
+        private Map<Integer, Triplet<String, Integer, String>> attributeProperties = 
+        		new HashMap<Integer, Triplet<String, Integer, String>>();
         private String normalizingStrategy;
         private float outlierTruncationLevel;
         private Map<Integer, Stats> fieldStats = new HashMap<Integer, Stats>();
         private int fieldOrd;
         private Stats stats;
-        private int scale;
         private boolean excluded;
-        private int normalizedValue;
+        private double normalizedValue;
+        private int precision;
+        private int ordinal;
 		private StringBuilder stBld = new StringBuilder();
 		
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelim = config.get("field.delim.out", ",");
+            if (config.getBoolean("debug.on", false)) {
+            	LOG.setLevel(Level.DEBUG);
+            }
+            fieldDelim = config.get("field.delim.out", ",");
         	
-        	String fieldScalesStr = config.get("field.weights");
-        	filedScales = Utility.getIntPairList(fieldScalesStr, ",", ":");        	
-        	normalizingStrategy = config.get("normalizing.strategy", "minmax");
-        	outlierTruncationLevel = config.getFloat("outlier.truncation.level", (float)-1.0);
-        	for (Pair<Integer, Integer> fieldScale : filedScales) {
+        	//attribute properties
+        	numAttributes = Utility.assertIntArrayConfigParam(config, "nor.num.attribute.ordinals", Utility.configDelim, 
+        			"missing numerical attribute ordinals");
+        	getAttributeProperties(numAttributes,attributeProperties, config);
+        	
+        	precision = config.getInt("nor.floating.precision", 3);
+        	normalizingStrategy = config.get("nor.normalizing.strategy", "minmax");
+        	outlierTruncationLevel = config.getFloat("nor.outlier.truncation.level", (float)-1.0);
+        	for (int ord : attributeProperties.keySet()) {
+        		Triplet<String, Integer, String> attrProp = attributeProperties.get(ord);
         		stats = new Stats();
-        		stats.scale = fieldScale.getRight();
-        		fieldStats.put(fieldScale.getLeft(), stats);
+        		stats.scale = attrProp.getCenter();
+        		stats.transformer = attrProp.getRight();
+        		fieldStats.put(ord, stats);
         	}
         }
         
@@ -181,33 +200,41 @@ public class Normalizer extends Configured implements Tool {
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
     		if (key.getInt(0) == 0) {
+    			//aggregate stats
 	        	for (Tuple value : values){
 	        		fieldOrd = value.getInt(0);
 	        		stats = new Stats();
 	        		stats.fromTuple(value);
 	        		fieldStats.get(fieldOrd).aggregate(stats);
 	        	}
+	        	
+	        	//process stats
 	        	for (int ord : fieldStats.keySet()) {
-	        		fieldStats.get(ord).process();
+	        		Stats stats = fieldStats.get(ord);
+	        		stats.process();
+	        		//System.out.println("ord:" + ord + " min:" + stats.min + " max:" + stats.max);
 	        	}
     		} else {
-        		stBld.delete(0, stBld.length());
+    			//records
 	        	for (Tuple value : values){
+	        		stBld.delete(0, stBld.length());
+        			stBld.append(key.getString(1));
+	        		excluded = false;
 	        		for (int i = 0; i < value.getSize(); ++i) {
 	        			excluded = false;
-	        			stBld.append(key.getString(1));
-	        			stats= fieldStats.get(i);
+	        			ordinal = i + 1;
+	        			stats= fieldStats.get(ordinal);
 	        			if (null != stats) {
 	        				//numeric
-	        				normalize(value.getInt(i), stats);
+	        				normalize(Double.parseDouble(value.getString(i)), stats);
 	        				if (excluded) {
 	        					break;
 	        				} else {
-	        					//other
-	        					stBld.append(fieldDelim).append(normalizedValue);
+	        					stBld.append(fieldDelim).append(formattedTypedValue(ordinal));
 	        				}
 	        			} else {
-        					stBld.append(fieldDelim).append(value.get(i));
+        					//other types
+        					stBld.append(fieldDelim).append(value.getString(i));
 	        			}
 	        		}
 	        		
@@ -225,11 +252,18 @@ public class Normalizer extends Configured implements Tool {
     	 * @param scale
     	 * @return
     	 */
-    	private void normalize(int value, Stats stats) {
+    	private void normalize(double value, Stats stats) {
+    		//transform
+    		value = stats.transform(value);
+    		
+    		//normalize
     		normalizedValue = 0;
     		if (normalizingStrategy.equals("minmax")) {
-    			normalizedValue = ((value - stats.min) * scale) / stats.range;
-    		} else {
+    			normalizedValue = ((value - stats.min) * stats.scale) / stats.range;
+    		} else if (normalizingStrategy.equals("zscore")) {
+    			if (stats.gotTransformer()) {
+    				throw new IllegalStateException("can not apply zscore normalizer when data is transformed");
+    			}
     			double temp = (value - stats.mean) / stats.stdDev;
     			if (outlierTruncationLevel > 0) {
     				if (Math.abs(temp) > outlierTruncationLevel) {
@@ -239,8 +273,61 @@ public class Normalizer extends Configured implements Tool {
     					temp /= outlierTruncationLevel;
     				}
     			}
-    			normalizedValue = (int)(temp * stats.scale / 2);
+    			normalizedValue = temp * stats.scale / 2;
+    		} else {
+    			throw new IllegalStateException("invalid normalization strategy");
     		}
+    	}
+    	
+    	/**
+    	 * @param ord
+    	 * @return
+    	 */
+    	private String formattedTypedValue(int ord) {
+    		String value = null;
+    		Triplet<String, Integer, String> attrProp = attributeProperties.get(ord);
+    		String dataType = attrProp.getLeft();
+    		if (dataType.equals("int")) {
+    			int iValue = (int)normalizedValue;
+    			value = "" + iValue;
+    		} else if (dataType.equals("long")) {
+    			long lValue = (long)normalizedValue;
+    			value = "" + lValue;
+    		} else if (dataType.equals("double")) {
+    			value = Utility.formatDouble(normalizedValue, precision);
+    		} else {
+    			throw new IllegalStateException("invalid numeric data types");
+    		}
+    		
+    		return value;
+    	}
+    }
+    
+    /**
+     * @param numAttributes
+     * @param attributeProperties
+     * @param config
+     */
+    private static void getAttributeProperties(int[] numAttributes, 
+    		Map<Integer, Triplet<String, Integer, String>> attributeProperties, Configuration config) {
+    	for (int i : numAttributes) {
+    		String key = "nor.attribute.prop." + i;
+    		String value = config.get(key);
+    		if (null == value) {
+    			throw new IllegalStateException("missing attribute properties");
+    		}
+    		String[] parts = value.split(Utility.configDelim);
+    		Triplet<String, Integer, String> attributeProp = null;
+    		if (parts.length == 2) {
+    			//data type, scale
+    			attributeProp = new Triplet<String, Integer, String>(parts[0], Integer.parseInt(parts[1]), "none");
+    		} else if (parts.length == 3) {
+    			//data type, scale, transformer
+    			attributeProp = new Triplet<String, Integer, String>(parts[0], Integer.parseInt(parts[1]), parts[2]);
+    		} else {
+    			throw new IllegalStateException("invalid attribute properties format");
+    		}
+    		attributeProperties.put(i, attributeProp);
     	}
     }
     
@@ -250,39 +337,52 @@ public class Normalizer extends Configured implements Tool {
      */
     private static class Stats {
     	private int count = 0;
-    	private int min = Integer.MAX_VALUE;
-    	private int max = Integer.MIN_VALUE;
-    	private long sum = 0;
-    	private long sqSum = 0;
-    	private int mean;
-    	private int range;
+    	private double min = Double.MAX_VALUE;
+    	private double max = Double.MIN_VALUE;
+    	private double sum = 0;
+    	private double sqSum = 0;
+    	private double mean;
+    	private double range;
     	private double stdDev;
     	private int scale;
+    	private String transformer;
     	
-    	private void add(int val) {
+    	/**
+    	 * @param val
+    	 */
+    	private void add(double val) {
     		++count;
     		if (val < min) {
     			min = val;
     		}
-    		if (max > val) {
+    		if (val > max) {
     			max = val;
     		}
     		sum += val;
     		sqSum += val * val;
     	}
     	
+    	/**
+    	 * @param tuple
+    	 */
     	private void toTuple(Tuple tuple) {
     		tuple.add(count, min, max, sum, sqSum);
     	}
 
+    	/**
+    	 * @param tuple
+    	 */
     	private void fromTuple(Tuple tuple) {
     		count = tuple.getInt(1);
-    		min = tuple.getInt(2);
-    		max = tuple.getInt(3);
-    		sum = tuple.getLong(4);
-    		sqSum = tuple.getLong(5);
+    		min = tuple.getDouble(2);
+    		max = tuple.getDouble(3);
+    		sum = tuple.getDouble(4);
+    		sqSum = tuple.getDouble(5);
     	}
     	
+    	/**
+    	 * @param that
+    	 */
     	private void aggregate(Stats that) {
     		count += that.count;
     		if (that.min < min) {
@@ -295,11 +395,49 @@ public class Normalizer extends Configured implements Tool {
     		sqSum += that.sqSum;
     	}
     	
-    	private void process() {
-    		mean = (int)(sum / count);
+    	/**
+    	 * @return
+    	 */
+    	private Stats process() {
+    		mean = sum / count;
     		range = max - min;
-    		double temp = (double)sqSum / count - (double)mean * mean;
+    		double temp = sqSum / count - mean * mean;
     		stdDev = Math.sqrt(temp);
+    		
+    		if (transformer.equals("multiplicativeInverse")) {
+    			//update min max and range
+    			double tempMin = min;
+    			min = 1.0 / max;
+    			max = 1.0 / tempMin;
+    			range = max - min;
+    		}
+    		
+    		return this;
+    	}
+    	
+    	/**
+    	 * @param value
+    	 * @return
+    	 */
+    	private double transform(double value) {
+    		double newValue = 0;
+    		if (transformer.equals("additiveInverse")) {
+    			newValue = max - value;
+    		} else if (transformer.equals("multiplicativeInverse")) {
+    			newValue = 1.0 / value;
+    		} else if (transformer.equals("none")) {
+    			newValue = value;
+    		} else {
+    			throw new IllegalStateException("invalid data transformer");
+    		}
+    		return newValue;
+    	}
+    	
+    	/**
+    	 * @return
+    	 */
+    	private boolean gotTransformer() {
+    		return !transformer.equals("none");
     	}
     }
 

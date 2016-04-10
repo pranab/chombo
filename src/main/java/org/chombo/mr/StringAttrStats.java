@@ -94,9 +94,9 @@ public class StringAttrStats extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-            attributes = Utility.getAttributes("nas.attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_STRING);        	
-        	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
+        	schema = Utility.getGenericAttributeSchema(config,  "sas.schema.file.path");
+            attributes = Utility.getAttributes("sas.attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_STRING);        	
+        	idOrdinals = Utility.intArrayFromString(config.get("sas.id.field.ordinals"), configDelim);
        }
 
         @Override
@@ -107,7 +107,9 @@ public class StringAttrStats extends Configured implements Tool {
             	outKey.initialize();
             	outVal.initialize();
             	
-            	addIdstoKey();
+            	if (null != idOrdinals) {
+            		outKey.addFromArray(items, idOrdinals);
+            	}
             	outKey.add(attr);
             	
             	val = items[attr].length();
@@ -116,18 +118,6 @@ public class StringAttrStats extends Configured implements Tool {
             	context.write(outKey, outVal);
         	}
         }
-         
-        /**
-         * 
-         */
-        private void addIdstoKey() {
-        	if (null != idOrdinals) {
-        		for (int ord  :  idOrdinals) {
-        			outKey.add(items[ord]);
-        		}
-        	}
-        }
-        
 	}
 	
 	

@@ -31,6 +31,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -88,16 +89,18 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         private int conditionedAttr;
         private String[] items;
         private GenericAttributeSchema schema;
+        private int[] partIdOrdinals;
         private static final int ONE = 1;
         
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
-        	attributes = Utility.intArrayFromString(config.get("cads.attr.list"),fieldDelimRegex );
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	attributes = Utility.assertIntArrayConfigParam(config, "cads.attr.list", Utility.configDelim, "missing attribute ordinals");
         	conditionedAttr = config.getInt("cads.conditioned.attr",-1);
+        	partIdOrdinals = Utility.intArrayFromString(config.get("cads.id.field.ordinals"),  Utility.configDelim);
         	
         	//validate attributes
-           	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+           	schema = Utility.getGenericAttributeSchema(config,  "cads.schema.file.path");
             if (null != schema) {
            		if (!schema.areCategoricalAttributes(attributes)) {
         			throw new IllegalArgumentException("attributes must be categorical");
@@ -112,18 +115,15 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
         	for (int attr : attributes) {
             	outKey.initialize();
             	outVal.initialize();
-            	outKey.add(attr, "0");
+                String condAttrVal = conditionedAttr >= 0 ?  items[conditionedAttr] : "$";
+
+            	if (null != partIdOrdinals) {
+            		outKey.addFromArray(items, partIdOrdinals);
+            	}
+            	outKey.add(attr, condAttrVal);
+            	
             	outVal.add(items[attr], ONE);
             	context.write(outKey, outVal);
-
-            	//conditioned on another attribute
-            	if (conditionedAttr >= 0) {
-                	outKey.initialize();
-                	outVal.initialize();
-                	outKey.add(attr, items[conditionedAttr]);
-                	outVal.add(items[attr], ONE);
-                	context.write(outKey, outVal);
-            	}
         	}
         }
  	}
@@ -169,16 +169,50 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;
 		protected CategoricalHistogramStat histogram = new CategoricalHistogramStat();
+		private int[]  attributes;
         private int conditionedAttr;
-
+        private int[] partIdOrdinals;
+        private boolean outputGlobalStats;
+        private boolean shouldOutputGlobalStats;
+        private Map<Integer, CategoricalHistogramStat> globalHistogram;
+        private CategoricalHistogramStat attrHistogram;
+        
+        
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
+        	attributes = Utility.assertIntArrayConfigParam(config, "cads.attr.list", Utility.configDelim, "missing attribute ordinals");
         	conditionedAttr = config.getInt("cads.conditioned.attr",-1);
+        	partIdOrdinals = Utility.intArrayFromString(config.get("cads.id.field.ordinals"),  Utility.configDelim);
+        	
+        	outputGlobalStats = config.getBoolean("cads.output.global.stats", false);
+        	shouldOutputGlobalStats = null != partIdOrdinals && outputGlobalStats;
+        	if (shouldOutputGlobalStats ) {
+        		globalHistogram = new HashMap<Integer, CategoricalHistogramStat>();
+        		for (int attr :  attributes) {
+        			globalHistogram.put(attr,  new CategoricalHistogramStat());
+        		}
+        	}
 		}
+		
+		/* (non-Javadoc)
+		 * @see org.apache.hadoop.mapreduce.Reducer#cleanup(org.apache.hadoop.mapreduce.Reducer.Context)
+		 */
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			if (shouldOutputGlobalStats) {
+        		for (int attr :  attributes) {
+        			stBld.delete(0, stBld.length());
+        			stBld.append("*").append(fieldDelim);
+    				attrHistogram = globalHistogram.get(attr);
+    				hstogramToString(attrHistogram, stBld);
+    				outVal.set(stBld.toString());
+    				context.write(NullWritable.get(), outVal);
+        		}				
+			}
+		}		
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
@@ -186,11 +220,20 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
      	throws IOException, InterruptedException {
 			histogram.intialize();
+			if (shouldOutputGlobalStats ) {
+				int attr = key.getInt(partIdOrdinals.length);
+				attrHistogram = globalHistogram.get(attr);
+			}
 			for (Tuple val : values) {
 				for (int i = 0; i < val.getSize(); i += 2) {
 					String attrVal = val.getString(i);
 					Integer attrValCount = val.getInt(i + 1);
 					histogram.add(attrVal, attrValCount);
+					
+					//global stats
+					if (shouldOutputGlobalStats ) {
+						attrHistogram.add(attrVal, attrValCount);
+					}
 				}
 			}
 			emitOutput( key,  context);
@@ -204,10 +247,32 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 		 */
 		protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
 			stBld.delete(0, stBld.length());
-			stBld.append(key.getInt(0)).append(fieldDelim);
-			if (conditionedAttr != -1) {
-				stBld.append(key.getString(1)).append(fieldDelim);
+			int i = 0;
+			
+			//partition id
+			if (null != partIdOrdinals) {
+				stBld.append(key.toString(i, partIdOrdinals.length));
+				i += partIdOrdinals.length;
 			}
+			
+			//attr ordinal
+			stBld.append(key.getInt(i)).append(fieldDelim);
+			++i;
+			
+			//conditional attr
+			if (conditionedAttr != -1) {
+				stBld.append(key.getString(i)).append(fieldDelim);
+			}
+			
+			hstogramToString(histogram, stBld);
+			outVal.set(stBld.toString());
+			context.write(NullWritable.get(), outVal);
+		}
+		
+		/**
+		 * @param histogram
+		 */
+		private void hstogramToString(CategoricalHistogramStat histogram, StringBuilder stBld) {
 			Map<String, Double> distr = histogram.getDistribution();
 			for (String  attrValue : distr.keySet() ) {
 				stBld.append(attrValue).append(fieldDelim).append(distr.get(attrValue)).append(fieldDelim);
@@ -215,8 +280,6 @@ public class CategoricalAttrDistrStats  extends Configured implements Tool {
 			stBld.append(histogram.getEntropy()).append(fieldDelim) ;
 			stBld.append(histogram.getGiniIndex()) ;
 			stBld.append(fieldDelim).append(histogram.getMode()) ;
-			outVal.set(stBld.toString());
-			context.write(NullWritable.get(), outVal);
 		}
 	}
 

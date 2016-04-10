@@ -34,6 +34,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -77,7 +78,7 @@ public class WeightedAverage extends Configured implements Tool {
   
         Utility.setConfiguration(job.getConfiguration());
         
-        if (job.getConfiguration().getInt("group.by.field",  -1) >=  0) {
+        if (job.getConfiguration().getInt("wea.group.by.field",  -1) >=  0) {
         	//group by
 	        job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
 	        job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
@@ -103,21 +104,22 @@ public class WeightedAverage extends Configured implements Tool {
         private int groupByField;
         private String[] items;
         private List<Pair<Integer, Integer>> filedWeights;
-        private int weightedValue;
-        private int sum;
+        private double weightedValue;
+        private double sum;
         private int totalWt = 0;
         private int[] invertedFields;
-        private int fieldValue;
+        private double fieldValue;
         private int  scale;
-        // private static final int ID_FLD_ORDINAL = 0;
 		private RedisCache redisCache;
         private Map<Integer, Integer> fieldMaxValues =  new HashMap<Integer, Integer>();
         private boolean singleTennant;
         private int fieldOrd;
         private int[] suppressingFields;
-        private int secondaryKey;
+        private long secondaryKey;
         private int[] keyFields;
         private Integer maxValue;
+        private boolean scalingNeeded;
+        private boolean maxValueFromcache;
         private static final Logger LOG = Logger.getLogger(WeightedAverage.AverageMapper.class);
        
         /* (non-Javadoc)
@@ -130,15 +132,15 @@ public class WeightedAverage extends Configured implements Tool {
              	System.out.println("turned debug on");
             }
 
-        	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	sortOrderAscending = config.getBoolean("sort.order.ascending", true);
-        	scale = config.getInt("field.scale", 100);
-        	keyFields = Utility.intArrayFromString(config.get("key.fields"));
-        	groupByField = config.getInt("group.by.field", -1);
+        	fieldDelimRegex = Utility.getFieldDelimiter(config, "wea.field.delim.regex", "field.delim.regex", ",");
+        	sortOrderAscending = config.getBoolean("wea.sort.order.ascending", true);
+        	scale = config.getInt("wea.field.scale", 100);
+        	keyFields = Utility.intArrayFromString(config.get("wea.key.fields"));
+        	groupByField = config.getInt("wea.group.by.field", -1);
 	   		LOG.debug("keyFields:" + keyFields + " groupByField:" + groupByField);
 	   		        	
         	//field weights
-        	String fieldWeightsStr = config.get("field.weights");
+        	String fieldWeightsStr = config.get("wea.field.weights");
         	filedWeights = Utility.getIntPairList(fieldWeightsStr, ",", ":");
             for (Pair<Integer, Integer> pair : filedWeights) {
             	totalWt  += pair.getRight();
@@ -146,38 +148,51 @@ public class WeightedAverage extends Configured implements Tool {
             }
             
             //inverted fields
-        	String invertedFieldsStr = config.get("inverted.fields");
+        	String invertedFieldsStr = config.get("wea.inverted.fields");
         	if (!Utility.isBlank(invertedFieldsStr)) {
             	invertedFields = Utility.intArrayFromString(invertedFieldsStr);
         	}
         	
         	//suppressing fields
-        	String suppressingFieldsStr = config.get("suppressing.fields");
+        	String suppressingFieldsStr = config.get("wea.suppressing.fields");
         	if (!Utility.isBlank(suppressingFieldsStr)) {
         		suppressingFields = Utility.intArrayFromString(suppressingFieldsStr);
         	}
             
-        	//field max values from cache
-        	String fieldMaxValuesCacheKey = config.get("field.max.values.cache.key");
-        	List<Pair<Integer, String>> filedMaxValueKeys = Utility.getIntStringList(fieldMaxValuesCacheKey, ",", ":");
-    		String redisHost = config.get("redis.server.host", "localhost");
-    		int redisPort = config.getInt("redis.server.port",  6379);
-    		String defaultOrgId = config.get("default.org.id");
-   			singleTennant = false;
-   		    if (!StringUtils.isBlank(defaultOrgId)) {
-    			//default org
-    			singleTennant = true;
-    			String cacheName = "si-" + defaultOrgId;
-    	   		redisCache = new   RedisCache( redisHost, redisPort, cacheName);
-    	   		for (Pair<Integer, String> pair : filedMaxValueKeys) {
-    	   			int maxValue = redisCache.getIntMax(pair.getRight());
-    	   			fieldMaxValues.put(pair.getLeft(), maxValue);
-    	   			LOG.debug("field:" + pair.getLeft() + " max value:" + maxValue);
-    	   		}
-    	   	} else {
-    	   		//multi organization
+        	//scaling 
+        	scalingNeeded = config.getBoolean("wea.scaling.needed", false);
+        	
+        	if (scalingNeeded) {
+            	maxValueFromcache = config.getBoolean("wea.max.value.from.cache", false);
+            	if (maxValueFromcache) {
+            		//field max values from cache
+            		String fieldMaxValuesCacheKey = config.get("wea.field.max.values.cache.key");
+            		List<Pair<Integer, String>> filedMaxValueKeys = Utility.getIntStringList(fieldMaxValuesCacheKey, ",", ":");
+            		String redisHost = config.get("wea.redis.server.host", "localhost");
+            		int redisPort = config.getInt("wea.redis.server.port",  6379);
+            		String defaultOrgId = config.get("wea.default.org.id");
+            		singleTennant = false;
+            		if (!StringUtils.isBlank(defaultOrgId)) {
+            			//default org
+            			singleTennant = true;
+            			String cacheName = "si-" + defaultOrgId;
+            			redisCache = new   RedisCache( redisHost, redisPort, cacheName);
+            			for (Pair<Integer, String> pair : filedMaxValueKeys) {
+            				int maxValue = redisCache.getIntMax(pair.getRight());
+            				fieldMaxValues.put(pair.getLeft(), maxValue);
+            				LOG.debug("field:" + pair.getLeft() + " max value:" + maxValue);
+            			}
+            		} else {
+            			//multi organization
     	   		
-    	   	}
+            		}
+            	} else {
+            		//from configuration
+            		singleTennant = true;
+            		fieldMaxValues = Utility.assertIntegerIntegerMapConfigParam(config, "wea.attribute.max.values", 
+            				Utility.configDelim, Utility.configSubFieldDelim, "missing max values for scaling", false);
+            	}
+        	}
        }
  
         /* (non-Javadoc)
@@ -190,50 +205,57 @@ public class WeightedAverage extends Configured implements Tool {
             sum = 0;
             for (Pair<Integer, Integer> pair : filedWeights) {
             	fieldOrd = pair.getLeft();
-            	fieldValue = Integer.parseInt(items[fieldOrd]);
+            	fieldValue = Double.parseDouble(items[fieldOrd]);
             	
             	//if suppressing field and value is 0 then skip  the record
-            	if (null != suppressingFields && ArrayUtils.contains(suppressingFields, fieldOrd) && fieldValue == 0 ) {
+            	if (null != suppressingFields && ArrayUtils.contains(suppressingFields, fieldOrd) && 
+            			items[fieldOrd].equals("0") ) {
         			//context.getCounter("Record stat", "Suppressed").increment(1);
         			return;
             	}
             	
-            	//scale field value
-            	if (singleTennant) {
-            		maxValue = fieldMaxValues.get(fieldOrd);
-            		if (null != maxValue) {
-            			fieldValue =  (fieldValue * scale) / maxValue;
-            		}
-            	} else {
-            		
+            	//scale field value if needed
+            	if (scalingNeeded) {
+	            	if (singleTennant) {
+	            		maxValue = fieldMaxValues.get(fieldOrd);
+	            		if (null != maxValue) {
+	            			fieldValue =  (fieldValue * scale) / maxValue;
+	            		}
+	            	} else {
+	            		
+	            	}
             	}
             	
-            	//invert
+            	//invert if needed
             	if (null != invertedFields && ArrayUtils.contains(invertedFields, fieldOrd)) {
             		fieldValue = scale - fieldValue;
             	}
-            	sum += fieldValue *   pair.getRight();
+            	
+            	sum += fieldValue *  pair.getRight();
             }
             weightedValue = sum / totalWt;
+            weightedValue = weightedValue < 0 ? 0 : weightedValue;
             
             //key
             outKey.initialize();
-            secondaryKey  = sortOrderAscending ? weightedValue  :  scale  - weightedValue;
+            long wtVal = (long)(weightedValue * 1000);
+            secondaryKey  = sortOrderAscending ? wtVal  :  Long.MAX_VALUE  -  wtVal;
             if (groupByField >= 0) {
+            	//secondary sorting by weight
             	outKey.add(items[groupByField], secondaryKey);
             } else {
+            	//primary  sorting by weight
             	outKey.add(secondaryKey);
             }
             
             //value
             outVal.initialize();
-            for (int keyField : keyFields) {
-            	outVal.add(items[keyField]);
+            if (null != keyFields) {
+            	outVal.addFromArray(items, keyFields);
             }
             outVal.add( weightedValue);
 			context.write(outKey, outVal);
-        }
-        
+        }        
 	}	
 	
     /**
@@ -242,14 +264,50 @@ public class WeightedAverage extends Configured implements Tool {
      */
     public static class AverageReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
 		private Text outVal = new Text();
-    	
+		private String fieldDelim;
+		private boolean outputAsFloat;
+		private int precision;
+		private double weightedValue;
+		private int keyFieldsLength;
+        private int groupByField;
+        private boolean outputGroupByField;
+		private StringBuilder stBld = new StringBuilder();
+
+
+		/* (non-Javadoc)
+		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
+		 */
+		protected void setup(Context context) throws IOException, InterruptedException {
+			Configuration config = context.getConfiguration();
+        	fieldDelim = config.get("field.delim.out", ",");
+        	keyFieldsLength = Utility.intArrayFromString(config.get("wea.key.fields")).length;
+			outputAsFloat = config.getBoolean("wea.output.as.float", true);
+			if (outputAsFloat) {
+				precision = config.getInt("wea.output.precision", 3);
+			}
+        	groupByField = config.getInt("wea.group.by.field", -1);
+        	outputGroupByField = config.getBoolean("wea.output.group.by.field", false);
+		}
+		
     	/* (non-Javadoc)
     	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
         	for (Tuple value : values){
-        		outVal.set(value.toString());
+        		stBld.delete(0, stBld.length());
+        		
+        		if (outputGroupByField && groupByField >= 0) {
+               		stBld.append(key.getString(0)).append(fieldDelim);
+        		}
+        		stBld.append(value.toString(0, keyFieldsLength));
+        		weightedValue = value.getDouble(keyFieldsLength);
+        		if (outputAsFloat) {
+        			stBld.append(fieldDelim).append(Utility.formatDouble(weightedValue, precision));
+        		} else {
+        			stBld.append(fieldDelim).append("" + (long)weightedValue);
+        		}
+        		outVal.set(stBld.toString());
  				context.write(NullWritable.get(), outVal);
         	}    		
     	}

@@ -68,7 +68,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
         job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
 
         Utility.setConfiguration(job.getConfiguration());
-        int numReducer = job.getConfiguration().getInt("rsb.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("rsbm.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
         
@@ -101,11 +101,11 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-    		opCodeFieldOrdinal = config.getInt("op.code.field.ordinal", -1);
+    		opCodeFieldOrdinal = config.getInt("rsbm.op.code.field.ordinal", -1);
     		String spliFileName = ((FileSplit)context.getInputSplit()).getPath().getName();
-    		deleteOpCode = config.get("deleted.op.code", "D");
+    		deleteOpCode = config.get("rsbm.deleted.op.code", "D");
   			if ( opCodeFieldOrdinal <  0 ) {
-            	String deletedRecFilePrefix = config.get("deleted.record.file.prefix");
+            	String deletedRecFilePrefix = config.get("rsbm.deleted.record.file.prefix");
             	if (null == deletedRecFilePrefix) {
         			throw new IllegalArgumentException(
         					"deleted data should either be in files with with configured prefix in file name or op code field ordinal value should be provided ");
@@ -115,8 +115,8 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
             	}
     		}
 
-  			temporalOrderingFieldFieldOrdinal = config.getInt("temporal.ordering.field.ordinal", -1);
-        	isTemporalOrderingFieldNumeric = config.getBoolean("temporal.ordering.field.numeric", true);
+  			temporalOrderingFieldFieldOrdinal = config.getInt("rsbm.temporal.ordering.field.ordinal", -1);
+        	isTemporalOrderingFieldNumeric = config.getBoolean("rsbm.temporal.ordering.field.numeric", true);
         	
         	if (temporalOrderingFieldFieldOrdinal == -1) {
         		//get temporal sequence from file name
@@ -124,7 +124,7 @@ public class RecordSetBulkMutator  extends Configured implements Tool{
         		splitSequence = Long.parseLong(items[items.length-1]);
         	}
         	
-        	idFieldOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"));
+        	idFieldOrdinals = Utility.intArrayFromString(config.get("rsbm.id.field.ordinals"));
         }
 
         /* (non-Javadoc)

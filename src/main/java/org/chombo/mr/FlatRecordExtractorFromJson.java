@@ -88,14 +88,14 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim", ",");
         	
         	//schema
-        	InputStream is = Utility.getFileStream(config,  "raw.schema.file.path");
+        	InputStream is = Utility.getFileStream(config,  "frej.raw.schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
         	rawSchema = mapper.readValue(is, RawAttributeSchema.class);
         	
         	//output
         	itemsOut = new String[rawSchema.getJsonPaths().size()];
         	
-        	boolean failOnInvalid = config.getBoolean("fail.on.invalid", true);
+        	boolean failOnInvalid = config.getBoolean("frej.fail.on.invalid", true);
         	fieldExtractor = new JsonFieldExtractor(failOnInvalid);
         	
         	//record type

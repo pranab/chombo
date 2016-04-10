@@ -108,24 +108,24 @@ public class Joiner extends Configured implements Tool {
 	        	Configuration config = context.getConfiguration();
 	        	fieldDelimRegex = config.get("field.delim.regex", ",");
 	        	fieldDelimOut = config.get("field.delim", ",");
-	        	String firstTypePrefix = config.get("first.type.prefix", "first");
+	        	String firstTypePrefix = config.get("joi.first.type.prefix", "first");
 	        	isFirstTypeSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(firstTypePrefix);
-	        	keyFieldFirst = Utility.intArrayFromString(config.get("key.field.first"), fieldDelimRegex ); 
-	        	keyFieldSecond = Utility.intArrayFromString(config.get("key.field.second"), fieldDelimRegex ); 
+	        	keyFieldFirst = Utility.intArrayFromString(config.get("joi.key.field.first"), fieldDelimRegex ); 
+	        	keyFieldSecond = Utility.intArrayFromString(config.get("joi.key.field.second"), fieldDelimRegex ); 
 	        	if (keyFieldFirst.length != keyFieldSecond.length) {
 	        		throw new IllegalStateException("composite key sizes are not equal");
 	        	}
-	        	sortKeyFields = context.getConfiguration().getBoolean("sort.key.fields", false);
+	        	sortKeyFields = context.getConfiguration().getBoolean("joi.sort.key.fields", false);
 	        	
-	        	firstSetProjectedFields = Utility.intArrayFromString(config.get("first.set.projected.fields"), configDelim);
-	        	secondSetProjectedFields = Utility.intArrayFromString(config.get("second.set.projected.fields"), configDelim);
+	        	firstSetProjectedFields = Utility.intArrayFromString(config.get("joi.first.set.projected.fields"), configDelim);
+	        	secondSetProjectedFields = Utility.intArrayFromString(config.get("joi.second.set.projected.fields"), configDelim);
 	        	
-	        	String firstSetFilter = config.get("first.set.filter");
+	        	String firstSetFilter = config.get("joi.first.set.filter");
 	        	if (null  !=   firstSetFilter) {
 	        		firstSetAttrFilter = new AttributeFilter(firstSetFilter);
 	        	}
 	        	
-	        	String secondSetFilter = config.get("second.set.filter");
+	        	String secondSetFilter = config.get("joi.second.set.filter");
 	        	if (null  !=   secondSetFilter) {
 	        		secondSetAttrFilter = new AttributeFilter(secondSetFilter);
 	        	}
@@ -197,20 +197,20 @@ public class Joiner extends Configured implements Tool {
 	        	Configuration config = context.getConfiguration();
 	        	fieldDelimRegex = config.get("field.delim.regex", ",");
 	        	fieldDelimOut = config.get("field.delim", ",");
-	        	keyFieldFirst = Utility.intArrayFromString(context.getConfiguration().get("key.field.first"), fieldDelimRegex ); 
-	        	keyFieldSecond = Utility.intArrayFromString(context.getConfiguration().get("key.field.second"), fieldDelimRegex ); 
-	        	outputKeyAtBeg = config.getBoolean("output.key.at.begin",true);
-	        	outputFirstType = config.getBoolean("output.first.type",true);
-	        	outputSecondType = config.getBoolean("output.second.type",true);
+	        	keyFieldFirst = Utility.intArrayFromString(context.getConfiguration().get("joi.key.field.first"), fieldDelimRegex ); 
+	        	keyFieldSecond = Utility.intArrayFromString(context.getConfiguration().get("joi.key.field.second"), fieldDelimRegex ); 
+	        	outputKeyAtBeg = config.getBoolean("joi.output.key.at.begin",true);
+	        	outputFirstType = config.getBoolean("joi.output.first.type",true);
+	        	outputSecondType = config.getBoolean("joi.output.second.type",true);
 
-	        	String firstTypeDefaultValueSt = config.get("first.set.default.value");
+	        	String firstTypeDefaultValueSt = config.get("joi.first.set.default.value");
 	        	if(!StringUtils.isBlank(firstTypeDefaultValueSt)) {
 	        		firstTypeDefaultValue = new  Tuple();
 	        		Utility.createTuple(firstTypeDefaultValueSt, firstTypeDefaultValue);
 	        		firstTypeDefaultValue.prepend("0");
 	        	}
 	        	
-	        	String secondTypeDefaultValueSt = config.get("second.set.default.value");
+	        	String secondTypeDefaultValueSt = config.get("joi.second.set.default.value");
 	        	if(!StringUtils.isBlank(secondTypeDefaultValueSt)) {
 	        		secondTypeDefaultValue = new  Tuple();
 	        		Utility.createTuple(secondTypeDefaultValueSt, secondTypeDefaultValue);

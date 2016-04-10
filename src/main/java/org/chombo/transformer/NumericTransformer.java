@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.chombo.util.BaseAttribute;
+import org.chombo.util.BinaryCategoryCreator;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.Utility;
 
@@ -253,6 +254,37 @@ public class NumericTransformer  {
 		}
 	}
 
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class BinaryCreator  extends AttributeTransformer {
+		private BinaryCategoryCreator binaryCategoryCreator;
+		private String dataType;
+		
+		public BinaryCreator(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			dataType = prAttr.getDataType();
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			String token = null;
+			if (dataType.equals(BaseAttribute.DATA_TYPE_INT) || dataType.equals(BaseAttribute.DATA_TYPE_LONG)) {
+				long  lVal = Long.parseLong(value);
+				token = binaryCategoryCreator.findToken(lVal);
+			}  else {
+				throw new IllegalArgumentException("only numeric integer data can be discretized");
+			}
+			transformed[0] = token;
+			return transformed;
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static abstract class Operator  extends AttributeTransformer {
 		private  boolean isInt;
 		protected int iOperand;

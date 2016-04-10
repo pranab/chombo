@@ -68,7 +68,7 @@ public class RankAggregator extends Configured implements Tool {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
-        int numReducer = job.getConfiguration().getInt("rag.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("raa.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
 
@@ -94,8 +94,8 @@ public class RankAggregator extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	idOrdinals = Utility.assertIntArrayConfigParam(config, "rag.id.field.ordinals", configDelim, "missing id field ordinals");
-           	rankOrdinal = Utility.assertIntConfigParam(config, "rank.attr.ordinal", "missing rank attribute ordinal");
+        	idOrdinals = Utility.assertIntArrayConfigParam(config, "raa.id.field.ordinals", configDelim, "missing id field ordinals");
+           	rankOrdinal = Utility.assertIntConfigParam(config, "raa.rank.attr.ordinal", "missing rank attribute ordinal");
         }        
         
         @Override
@@ -131,8 +131,8 @@ public class RankAggregator extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
-        	aggregationStrategy = config.get("rank.agg.strategy", AGGR_PROD);
-        	outputPrecision = config.getInt("rag.output.prec", 3);
+        	aggregationStrategy = config.get("raa.rank.agg.strategy", AGGR_PROD);
+        	outputPrecision = config.getInt("raa.output.prec", 3);
 		}
 		
 	   	/* (non-Javadoc)

@@ -74,7 +74,7 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
         job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
         job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
 
-        int numReducer = job.getConfiguration().getInt("obd.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("obdv.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
 
@@ -100,13 +100,15 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	String value = Utility.assertConfigParam( config, "quantity.attr.ordinals", "quantity field ordinals must be provided");
+        	String value = Utility.assertConfigParam( config, "obdv.quantity.attr.ordinals", 
+        			"quantity field ordinals must be provided");
         	quantityAttrOrdinals = Utility.intArrayFromString(value);
     		
-        	String incrFilePrefix = Utility.assertConfigParam( config, "incremental.file.prefix", "Incremental file prefix needs to be specified");
+        	String incrFilePrefix = Utility.assertConfigParam( config, "obdv.incremental.file.prefix", 
+        			"Incremental file prefix needs to be specified");
         	isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
         	
-        	value = Utility.assertConfigParam( config, "id.field.ordinals", "ID field ordinals must be provided");
+        	value = Utility.assertConfigParam( config, "obdv.id.field.ordinals", "ID field ordinals must be provided");
         	idFieldOrdinals = Utility.intArrayFromString(value);
        }
  
@@ -189,10 +191,10 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
              	LOG.setLevel(Level.DEBUG);
             }
 			fieldDelim = config.get("field.delim.out", ",");
-			quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
-			maxZscore = config.getFloat("max.zscore", (float)-1.0);
+			quantityAttrOrdinals = Utility.intArrayFromString(config.get("obdv.quantity.attr.ordinals"));
+			maxZscore = config.getFloat("obdv.max.zscore", (float)-1.0);
 			if (maxZscore  <  0) {
-				double chebyshevIneqalityProb  =  config.getFloat("min.chebyshev.ineqality.prob", (float)-1.0);
+				double chebyshevIneqalityProb  =  config.getFloat("obdv.min.chebyshev.ineqality.prob", (float)-1.0);
 				if (chebyshevIneqalityProb < 0) {
 					throw new IllegalArgumentException("Either z score or chebyshev inequality probability must be provided");
 				}
@@ -200,8 +202,8 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 			}
 			stdDevMult = maxZscore > 0 ? maxZscore  : chebyshevStdDevMult;
 
-			outputType = config.get("output.type", "invalid");
-			minCountForStat = config.getInt("min.count.for.stat", 2);
+			outputType = config.get("obdv.output.type", "invalid");
+			minCountForStat = config.getInt("obdv.min.count.for.stat", 2);
 		}
 		
  	/* (non-Javadoc)

@@ -117,20 +117,20 @@ public class ValidationChecker extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim", ",");
-        	filterInvalidRecords = config.getBoolean("filter.invalid.records", true);
-        	invalidDataFilePath = config.get("invalid.data.file.path");
+        	filterInvalidRecords = config.getBoolean("vac.filter.invalid.records", true);
+        	invalidDataFilePath = config.get("vac.invalid.data.file.path");
 
            	//record id
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelimRegex);
+        	idOrdinals = Utility.intArrayFromString(config.get("vac.id.field.ordinals"), fieldDelimRegex);
  
         	//schema
-        	validationSchema = Utility.getProcessingSchema(config, "validation.schema.file.path");
+        	validationSchema = Utility.getProcessingSchema(config, "vac.validation.schema.file.path");
  
             //validator config
-            Config validatorConfig = Utility.getHoconConfig(config, "validator.config.file.path");
+            Config validatorConfig = Utility.getHoconConfig(config, "vac.validator.config.file.path");
             
         	//intialize transformer factory
-        	ValidatorFactory.initialize( config.get( "custom.valid.factory.class"), validatorConfig );
+        	ValidatorFactory.initialize( config.get( "vac.custom.valid.factory.class"), validatorConfig );
 
         	//build validator objects
             int[] ordinals  = validationSchema.getAttributeOrdinals();
@@ -138,7 +138,7 @@ public class ValidationChecker extends Configured implements Tool {
             //validators from try prop file configuration
             boolean foundInPropConfig = false;
             for (int ord : ordinals ) {
-            	String key = "validator." + ord;
+            	String key = "vac.validator." + ord;
             	String validatorString = config.get(key);
             	if (null != validatorString ) {
             		String[] valTags = validatorString.split(fieldDelimOut);
@@ -175,11 +175,11 @@ public class ValidationChecker extends Configured implements Tool {
     		for (String valTag :  valTags) {
     			if (valTag.equals("zscoreBasedRange")) {
     				//z score based
-    				getAttributeStats(config, "stat.file.path");
+    				getAttributeStats(config, "vac.stat.file.path");
     				validatorList.add(ValidatorFactory.create(valTag, prAttr, validatorContext));
     			} if (valTag.equals("robustZscoreBasedRange")) {
     				//robust z score based
-    				getAttributeMeds(config, "med.stat.file.path", "mad.stat.file.path", idOrdinals);
+    				getAttributeMeds(config, "vac.med.stat.file.path", "vac.mad.stat.file.path", idOrdinals);
     				validatorList.add(ValidatorFactory.create(valTag, prAttr,validatorContext));
     			} else {
     				//normal
@@ -223,7 +223,7 @@ public class ValidationChecker extends Configured implements Tool {
 				InterruptedException {
 			super.cleanup(context);
         	Configuration config = context.getConfiguration();
-            OutputStream os = Utility.getAppendFileOutputStream(config, "invalid.data.file.path");
+            OutputStream os = Utility.getAppendFileOutputStream(config, "vac.invalid.data.file.path");
 			
             for (InvalidData invalidData : invalidDataList ) {
             	byte[] data = invalidData.toString().getBytes();

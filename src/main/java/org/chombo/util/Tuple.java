@@ -121,6 +121,14 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	public void append(Object field) {
 		fields.add( field);
 	}
+	
+	/**
+	 * @param field
+	 * @param index
+	 */
+	public void insert(Object field, int index) {
+		fields.add(index, field);
+	}
 
 	/**
 	 * @param types
@@ -483,7 +491,9 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	 */
 	public int hashCodeBase() {
 		Tuple subThis = new Tuple(fields.subList(0,fields.size()-1));
-		return subThis.hashCode();
+		int hashCode =  subThis.hashCode();
+		hashCode = hashCode < 0 ? -hashCode : hashCode;
+		return hashCode;
 	}
 	
 	/**
@@ -605,7 +615,34 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	public String[] getTupleAsArray() {
 		return subTupleAsArray(0, fields.size());
 	}
+
+	/**
+	 * @param start
+	 * @param end
+	 * @return
+	 */
+	public <T> void subTupleAsList(int start, int end, List<T> list) {
+		for (int i = start; i < end; ++i) {
+			list.add((T)get(i));
+		}
+	}
 	
+	/**
+	 * @param start
+	 * @return
+	 */
+	public <T> void subTupleAsList(int start, List<T> list) {
+		subTupleAsList(start, fields.size(), list);
+	}
+	
+	/**
+	 * @param start
+	 * @return
+	 */
+	public <T> void tupleAsList(List<T> list) {
+		subTupleAsList(0, fields.size(), list);
+	}
+
 	/**
 	 * removes duplicates and maintains same order
 	 */

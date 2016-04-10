@@ -95,9 +95,9 @@ public class RecordSetModifier  extends Configured implements Tool{
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	String recordIdentifierFilePrefix = config.get("record.identifier.file.prefix", "recid");
+        	String recordIdentifierFilePrefix = config.get("rsm.record.identifier.file.prefix", "recid");
         	isRecIdFileSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(recordIdentifierFilePrefix);
-        	idFieldOrdinal = config.getInt("id.field.ordinal", -1);
+        	idFieldOrdinal = config.getInt("rsm.id.field.ordinal", -1);
         }
 
         /* (non-Javadoc)
@@ -140,7 +140,7 @@ public class RecordSetModifier  extends Configured implements Tool{
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim", ",");
-           	toBeExcuded = config.getBoolean("exclude.rec", true);
+           	toBeExcuded = config.getBoolean("rsm.exclude.rec", true);
         }
    	
         /* (non-Javadoc)

@@ -99,7 +99,7 @@ public class FunctionalDependencyAnalyzer  extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	schema = Utility.getGenericAttributeSchema(config,  "fda.schema.file.path");
             String attrPairStr = Utility.assertStringConfigParam(config, "fda.attr.pairs", "missing list of attribute paire");
             attrPairs = Utility.getIntPairList(attrPairStr, configDelim, configSubFieldDelim);
        }

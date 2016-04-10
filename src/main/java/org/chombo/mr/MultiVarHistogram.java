@@ -92,9 +92,9 @@ public class MultiVarHistogram extends Configured implements Tool {
         
         protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration conf = context.getConfiguration();
-        	fieldDelimRegex = conf.get("field.delim.regex", "\\[\\]");
+        	fieldDelimRegex = conf.get("field.delim.regex", ",");
             
-        	String filePath = conf.get("histogram.schema.file.path");
+        	String filePath = conf.get("mvh.histogram.schema.file.path");
             FileSystem dfs = FileSystem.get(conf);
             Path src = new Path(filePath);
             FSDataInputStream fs = dfs.open(src);
@@ -144,8 +144,9 @@ public class MultiVarHistogram extends Configured implements Tool {
 
         protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration conf = context.getConfiguration();
-        	fieldDelim = conf.get("field.delim", "[]");
+        	fieldDelim = conf.get("field.delim", ",");
         }    	
+        
     	protected void reduce(Tuple key, Iterable<IntWritable> values, Context context)
         	throws IOException, InterruptedException {
            	//System.out.println( "Reducer key size: " + key.getSize());

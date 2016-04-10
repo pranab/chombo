@@ -31,6 +31,7 @@ public class ProcessorAttribute extends Attribute {
 	private List<String> transformers;
 	private int[] targetFieldOrdinals;
 	private double buckeWidth;
+	private BinaryCategoryCreator binaryCategoryCreator;
 	
 	
 	public static final String NORMALIZER_ZSCORE = "zScore";
@@ -65,6 +66,12 @@ public class ProcessorAttribute extends Attribute {
 	}
 	public void setBuckeWidth(double buckeWidth) {
 		this.buckeWidth = buckeWidth;
+	}
+	public BinaryCategoryCreator getBinaryCategoryCreator() {
+		return binaryCategoryCreator;
+	}
+	public void setBinaryCategoryCreator(BinaryCategoryCreator binaryCategoryCreator) {
+		this.binaryCategoryCreator = binaryCategoryCreator;
 	}
 	
 	

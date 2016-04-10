@@ -73,7 +73,7 @@ public class PatternMatchedValueCounter extends Configured implements Tool {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
-        int numReducer = job.getConfiguration().getInt("pmc.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("pmvc.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
 
@@ -105,13 +105,13 @@ public class PatternMatchedValueCounter extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-            attributes = Utility.getAttributes("pmc.attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
+        	schema = Utility.getGenericAttributeSchema(config,  "pmvc.schema.file.path");
+            attributes = Utility.getAttributes("pmvc..attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
             		Attribute.DATA_TYPE_DATE, Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_STRING);        	
        	
         	//attribute value patterns
     		for (int ord : attributes ) {
-    			String key = "patterns." + ord;
+    			String key = "pmvc.patterns." + ord;
     			String values = config.get(key);
     			if (null != values) {
     				//specified pattern tests

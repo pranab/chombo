@@ -74,7 +74,7 @@ public class ValueCounter  extends Configured implements Tool {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
-        int numReducer = job.getConfiguration().getInt("vac.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("vlc.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
 
@@ -99,19 +99,16 @@ public class ValueCounter  extends Configured implements Tool {
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
          */
-        /* (non-Javadoc)
-         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
-         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
-            attributes = Utility.getAttributes("vac.attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
+        	schema = Utility.getGenericAttributeSchema(config,  "vlc.schema.file.path");
+            attributes = Utility.getAttributes("vlc..attr.list", configDelim,  schema, config,  Attribute.DATA_TYPE_CATEGORICAL, 
             		Attribute.DATA_TYPE_DATE, Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_STRING);        	
 
         	//attribute values
     		for (int ord : attributes ) {
-    			String key = "values." + ord;
+    			String key = "vlc.values." + ord;
     			String values = config.get(key);
     			if (null != values) {
     				//specified values
@@ -125,7 +122,7 @@ public class ValueCounter  extends Configured implements Tool {
     		}
     		
     		//case insentive attributes
-    		int[] caseInsensitiveAttributes = Utility.intArrayFromString(config.get("case.insensitive.attr.list"),configDelim );
+    		int[] caseInsensitiveAttributes = Utility.intArrayFromString(config.get("vlc.case.insensitive.attr.list"),configDelim );
     		if (null !=caseInsensitiveAttributes) {
     			for (int attr :  caseInsensitiveAttributes) {
     				caseInsensitiveAttributeSet.add(attr);

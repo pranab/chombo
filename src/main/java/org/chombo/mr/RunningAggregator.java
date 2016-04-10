@@ -102,18 +102,20 @@ public class RunningAggregator  extends Configured implements Tool {
             }
 
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	String value = Utility.assertConfigParam( config, "quantity.attr.ordinals", "quantity field ordinals must be provided");
+        	String value = Utility.assertConfigParam( config, "rug.quantity.attr.ordinals", 
+        			"quantity field ordinals must be provided");
         	quantityAttrOrdinals = Utility.intArrayFromString(value);
         	
-        	String aggrFilePrefix = config.get("aggregate.file.prefix", "");
+        	String aggrFilePrefix = config.get("rug.aggregate.file.prefix", "");
         	if (!aggrFilePrefix.isEmpty()) {
         		isAggrFileSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(aggrFilePrefix);
         	} else {
-            	String incrFilePrefix =Utility.assertConfigParam( config, "incremental.file.prefix", "Incremental file prefix needs to be specified");
+            	String incrFilePrefix =Utility.assertConfigParam(config, "rug.incremental.file.prefix", 
+            			"Incremental file prefix needs to be specified");
             	isAggrFileSplit = !((FileSplit)context.getInputSplit()).getPath().getName().startsWith(incrFilePrefix);
         	}
         	
-        	value = Utility.assertConfigParam( config, "id.field.ordinals", "ID field ordinals must be provided");
+        	value = Utility.assertConfigParam( config, "rug.id.field.ordinals", "ID field ordinals must be provided");
         	idFieldOrdinals = Utility.intArrayFromString(value);
        }
  
@@ -179,8 +181,8 @@ public class RunningAggregator  extends Configured implements Tool {
              	LOG.setLevel(Level.DEBUG);
             }
         	fieldDelim = config.get("field.delim.out", ",");
-        	quantityAttrOrdinals = Utility.intArrayFromString(config.get("quantity.attr.ordinals"));
-        	handleMissingIncremental = config.getBoolean("handle.missing.incremental",  false);
+        	quantityAttrOrdinals = Utility.intArrayFromString(config.get("rug.quantity.attr.ordinals"));
+        	handleMissingIncremental = config.getBoolean("rug.handle.missing.incremental",  false);
        }
 		
     	/* (non-Javadoc)

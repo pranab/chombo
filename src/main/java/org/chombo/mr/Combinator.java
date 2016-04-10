@@ -75,12 +75,12 @@ public class Combinator extends Configured implements Tool {
         
         
         protected void setup(Context context) throws IOException, InterruptedException {
-        	keyField = context.getConfiguration().getInt("key.field", 0);
+        	keyField = context.getConfiguration().getInt("com.key.field", 0);
         	keyFields = new int[1];
         	keyFields[0] = keyField;
         	fieldDelimRegex = context.getConfiguration().get("field.delim.regex", "\\[\\]");
         	fieldDelimOut = context.getConfiguration().get("field.delim", ",");
-        	outputKeyAtBeg = context.getConfiguration().getBoolean("output.key.at.begin",true);
+        	outputKeyAtBeg = context.getConfiguration().getBoolean("com.output.key.at.begin",true);
        }
 
         @Override

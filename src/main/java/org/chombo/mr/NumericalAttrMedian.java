@@ -97,7 +97,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getRichAttributeSchema(config, "med.schema.file.path");
+        	schema = Utility.getRichAttributeSchema(config, "nam.med.schema.file.path");
         	attributes = Utility.intArrayFromString(config.get("nam.attr.list"), fieldDelimRegex);
         	if (null == attributes) {
         		//all numeric fields
@@ -113,31 +113,33 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	//record id
         	idOrdinals = Utility.intArrayFromString(config.get("nam.id.field.ordinals"), fieldDelimRegex);
         	
-        	operation = config.get("op.type", "med");
+        	operation = config.get("nam.op.type", "med");
         	if (operation.equals("mad")) {
         		//median of deviation from median
-   				statsManager = new MedianStatsManager(config, "med.file.path",statsDelim, idOrdinals);
+   				statsManager = new MedianStatsManager(config, "nam.med.file.path",statsDelim, idOrdinals);
         	}
         	
         	//seasonal
-        	seasonalAnalysis = config.getBoolean("seasonal.analysis", false);
+        	seasonalAnalysis = config.getBoolean("nam.seasonal.analysis", false);
         	if (seasonalAnalysis) {
-        		seasonalCycleType =  Utility.assertStringConfigParam(config,"seasonal.cycle.type", "missing seasonal cycle type parameter");
+        		seasonalCycleType =  Utility.assertStringConfigParam(config,"nam.seasonal.cycle.type", 
+        				"missing seasonal cycle type parameter");
         		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
             	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
             			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
-            		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "hour.groups", 
+            		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "nam.hour.groups", 
             				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups");
             		seasonalAnalyzer.setHourRanges(hourRanges);
             	} 
             	
-            	int  timeZoneShiftHours = config.getInt("time.zone.hours",  0);
+            	int  timeZoneShiftHours = config.getInt("nam.time.zone.hours",  0);
             	if (timeZoneShiftHours > 0) {
             		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
             	}
 
-            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"time.stamp.field.ordinal", "missing time stamp field ordinal"); 
-            	boolean timeStampInMili = config.getBoolean("time.stamp.in.mili", true);
+            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"nam.time.stamp.field.ordinal", 
+            			"missing time stamp field ordinal"); 
+            	boolean timeStampInMili = config.getBoolean("nam.time.stamp.in.mili", true);
             	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
         	}
        }
@@ -224,8 +226,8 @@ public class NumericalAttrMedian extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
-        	operation = config.get("op.type", "med");
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), fieldDelim);
+        	operation = config.get("nam.op.type", "med");
+        	idOrdinals = Utility.intArrayFromString(config.get("nam.id.field.ordinals"), fieldDelim);
 		}
 		
 		/* (non-Javadoc)

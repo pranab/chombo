@@ -25,7 +25,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.StringReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -81,6 +84,10 @@ public class Utility {
 	private static Pattern s3pattern = Pattern.compile("s3n:/+([^/]+)/+(.*)");
 	public static String configDelim = ",";
 	public  static String configSubFieldDelim = ":";
+	
+	public static long MILISEC_PER_HOUR = 60L * 1000 * 1000;
+	public static long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
+	public static long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
 
     /*
     static AmazonS3 s3 = null;
@@ -97,6 +104,7 @@ public class Utility {
     
 	
     /**
+     * sets configuration
      * @param conf
      * @throws Exception
      */
@@ -115,6 +123,7 @@ public class Utility {
     }
 
     /**
+     * sets configuration and defaults to project name based config file
      * @param conf
      * @param project
      * @throws Exception
@@ -221,6 +230,22 @@ public class Utility {
 	}	
 	
     /**
+     * sets configuration and defaults to project name based config file
+     * @param conf
+     * @param project
+     * @param filterByGroup
+     * @throws Exception
+     */
+    public static void setConfiguration(Configuration conf, String project, boolean filterByGroup) throws Exception{
+    	if (filterByGroup) {
+    		ConfigurationLoader configLoader = new ConfigurationLoader(conf, project);
+    		configLoader.set();
+    	} else {
+    		setConfiguration(conf, project);
+    	}
+    }
+    
+    /**
      * @param vec
      * @param val
      */
@@ -324,6 +349,20 @@ public class Utility {
     /**
      * @param conf
      * @param pathConfig
+     * @param data
+     * @throws IOException
+     */
+    public static void writeToFile(Configuration conf, String pathConfig, String data) throws IOException {
+        OutputStream os = Utility.getCreateFileOutputStream(conf, pathConfig);
+        PrintWriter writer = new PrintWriter(os);
+		writer.write(data);
+		writer.close();
+		os.close();
+    }
+
+    /**
+     * @param conf
+     * @param pathConfig
      * @return
      * @throws IOException
      */
@@ -338,6 +377,20 @@ public class Utility {
         return fs;
     }
 
+    /**
+     * @param conf
+     * @param pathConfig
+     * @param data
+     * @throws IOException
+     */
+    public static void appendToFile(Configuration conf, String pathConfig, String data) throws IOException {
+        OutputStream os = Utility.getAppendFileOutputStream(conf, pathConfig);
+        PrintWriter writer = new PrintWriter(os);
+		writer.write(data);
+		writer.close();
+		os.close();
+    }
+    
     /**
      * @param conf
      * @param filePathParam
@@ -691,12 +744,18 @@ public class Utility {
      * @return
      */
     public static <T> String join(List<T> list, String delim) {
-    	StringBuilder stBld = new StringBuilder();
-    	for (T obj : list) {
-    		stBld.append(obj).append(delim);
+    	String joined = null;
+    	if (list.size() == 1) {
+    		joined = list.get(0).toString();
+    	} else {
+	    	StringBuilder stBld = new StringBuilder();
+	    	for (T obj : list) {
+	    		stBld.append(obj).append(delim);
+	    	}
+	    	
+	    	joined =  stBld.substring(0, stBld.length() -1);
     	}
-    	
-    	return stBld.substring(0, stBld.length() -1);
+    	return joined;
     }
   
     /**
@@ -934,8 +993,8 @@ public class Utility {
 	 */
 	public static int  assertIntConfigParam(Configuration config, String param, String msg) {
 		int  value = Integer.MIN_VALUE;
-	   assertStringConfigParam( config, param,  msg); 
-	   value = config.getInt(param,  Integer.MIN_VALUE);
+		assertStringConfigParam( config, param,  msg); 
+		value = config.getInt(param,  Integer.MIN_VALUE);
 		return value;
 	}
 
@@ -947,8 +1006,8 @@ public class Utility {
 	 */
 	public static double  assertDoubleConfigParam(Configuration config, String param, String msg) {
 		double  value = Double.MIN_VALUE;
-	   String stParamValue = assertStringConfigParam( config, param,  msg); 
-	   value = Double.parseDouble(stParamValue);
+		String stParamValue = assertStringConfigParam(config, param,  msg); 
+		value = Double.parseDouble(stParamValue);
 		return value;
 	}
 
@@ -960,7 +1019,7 @@ public class Utility {
 	 */
 	public static boolean  assertBooleanConfigParam(Configuration config, String param, String msg) {
 		boolean value = false;
-	   	assertStringConfigParam( config, param,  msg); 
+	   	assertStringConfigParam(config, param,  msg); 
 		value = config.getBoolean(param, false);
 		return value;
 	}
@@ -1021,7 +1080,7 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
-	public static Map<String, Integer> assertIntStringIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
+	public static Map<String, Integer> assertStringIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
@@ -1043,7 +1102,7 @@ public class Utility {
 	 */
 	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
-		return assertIntIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg, true);
+		return assertIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg, true);
 	}
 
 	/**
@@ -1055,7 +1114,7 @@ public class Utility {
 	 * @param rangeInKey
 	 * @return
 	 */
-	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
+	public static Map<Integer, Integer> assertIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg, boolean rangeInKey) {
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
@@ -1094,7 +1153,7 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
-	public static Map<Integer, Double> assertIntIntegerDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+	public static Map<Integer, Double> assertIntegerDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
 		String[] items = stParamValue.split(delimRegex);
@@ -1102,6 +1161,26 @@ public class Utility {
 		for (String item :  items) {
 			String[] parts  = item.split(subFieldDelim);
 			data.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
+	public static Map<Integer, String> assertIntegerStringMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	String stParamValue =  assertStringConfigParam(config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		Map<Integer, String> data = new HashMap<Integer, String>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(Integer.parseInt(parts[0]), parts[1]);
 		}
     	return data;
 	}
@@ -1421,10 +1500,13 @@ public class Utility {
      */
     public static int[] getAttributes(String attrListParam, String configDelim, GenericAttributeSchema schema, 
     		Configuration config, String... includeTypes) {        	
-    	int[] attributes =  assertIntArrayConfigParam(config, attrListParam, configDelim, "missing attribute list");
+    	int[] attributes = Utility.intArrayFromString(config.get(attrListParam), configDelim);
     	List<Attribute> attrsMetaData = schema != null ? schema.getQuantAttributes(includeTypes) : null;
     	if (null == attributes) {
     		//use schema and pick all attributes of right type
+    		if (null == attrsMetaData) {
+    			throw new IllegalStateException("Neither attribute ordinal list ot schema available");
+    		}
     		attributes = new int[attrsMetaData.size()];
     		for (int i = 0; i < attrsMetaData.size(); ++i) {
     			attributes[i] = attrsMetaData.get(i).getOrdinal();
@@ -1482,6 +1564,27 @@ public class Utility {
     }
     
     /**
+     * @param val
+     * @param size
+     * @return
+     */
+    public static String formatInt(int val, int size) {
+    	String formatter = "%0" + size + "d";
+    	return String.format(formatter, val);
+    }
+
+    /**
+     * @param val
+     * @param size
+     * @return
+     */
+    public static String formatLong(long val, int size) {
+    	String formatter = "%0" + size + "d";
+    	return String.format(formatter, val);
+    }
+
+    /**
+     * Analyzes text and return analyzed text
      * @param text
      * @return
      * @throws IOException
@@ -1500,5 +1603,85 @@ public class Utility {
     	stream.close();
     	return stBld.toString();
     }
+    /**
+     * @param dateTimeStamp
+     * @param isEpochTime
+     * @param dateFormat
+     * @return
+     * @throws ParseException
+     */
+    public static long getEpochTime(String dateTimeStamp, boolean isEpochTime, SimpleDateFormat dateFormat) throws ParseException {
+    	return getEpochTime(dateTimeStamp, isEpochTime, dateFormat,0);
+    }
     
+    /**
+     * @param dateTimeStamp
+     * @param isEpochTime
+     * @param dateFormat
+     * @param timeZoneShiftHour
+     * @return
+     * @throws ParseException
+     */
+    public static long getEpochTime(String dateTimeStamp, boolean isEpochTime, SimpleDateFormat dateFormat, 
+    	int timeZoneShiftHour) throws ParseException {
+    	long epochTime = 0;
+    	if (isEpochTime) {
+    		epochTime = Long.parseLong(dateTimeStamp);
+    	} else {
+    		epochTime = dateFormat.parse(dateTimeStamp).getTime();
+        	epochTime += timeZoneShiftHour * MILISEC_PER_HOUR;
+    	}
+    	
+    	return epochTime;
+    }
+    
+    /**
+     * @param config
+     * @param fieldDelimParam
+     * @param defFieldDelimParam
+     * @param defFieldDelim
+     * @return
+     */
+    public static String getFieldDelimiter(Configuration config, String fieldDelimParam, 
+    		String defFieldDelimParam, String defFieldDelim) {
+    	String fieldDelim = config.get(fieldDelimParam);
+    	if (null == fieldDelim) {
+    		//get default
+    		fieldDelim = config.get(defFieldDelimParam, defFieldDelim);
+    	}
+    	return fieldDelim;
+    }
+    
+    /**
+     * @param epochTime
+     * @param timeUnit
+     * @return
+     */
+    public static long convertTimeUnit(long epochTime, String timeUnit) {
+    	long modTime = epochTime;
+		if (timeUnit.equals("hour")) {
+			modTime /= MILISEC_PER_HOUR;
+		} else if (timeUnit.equals("day")) {
+			modTime /= MILISEC_PER_DAY;
+		}
+    	return modTime;
+    }
+    
+    /**
+     * @param thisVector
+     * @param thatVector
+     * @return
+     */
+    public static double dotProduct(double[] thisVector, double[] thatVector) {
+    	double product = 0;
+    	if (thisVector.length != thatVector.length) {
+    		throw new IllegalArgumentException("mismatched size for vector dot product");
+    	}
+    	
+    	for (int i = 0; i < thisVector.length; ++i) {
+    		product += thisVector[i] * thatVector[i];
+    	}
+    	return product;
+    }
+   
 }

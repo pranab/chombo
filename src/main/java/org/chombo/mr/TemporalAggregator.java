@@ -75,12 +75,12 @@ public class TemporalAggregator  extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	attributes = Utility.intArrayFromString(config.get("quant.attr.list"),fieldDelimRegex );
-        	idOrdinals = Utility.intArrayFromString(config.get("id.field.ordinals"), configDelim);
-        	timeStampFieldOrdinal = config.getInt("time.stamp.field.ordinal", -1);
-        	cycleLengthSec = (long)(Double.parseDouble(config.get("seasonal.cycle.length.hour")) *  secInHour);
-        	aggregatorType = config.get("aggregator.type");
-        	int  timeZoneHours = config.getInt("time.zone.hours",  0);
+        	attributes = Utility.intArrayFromString(config.get("tag.quant.attr.list"),fieldDelimRegex );
+        	idOrdinals = Utility.intArrayFromString(config.get("tag.id.field.ordinals"), configDelim);
+        	timeStampFieldOrdinal = config.getInt("tag.time.stamp.field.ordinal", -1);
+        	cycleLengthSec = (long)(Double.parseDouble(config.get("tag.seasonal.cycle.length.hour")) *  secInHour);
+        	aggregatorType = config.get("tag.aggregator.type");
+        	int  timeZoneHours = config.getInt("tag.time.zone.hours",  0);
         	timeZoneShift = timeZoneHours * secInHour;
        }
 		
@@ -126,7 +126,7 @@ public class TemporalAggregator  extends Configured implements Tool {
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	aggregatorType = config.get("aggregator.type");
+        	aggregatorType = config.get("tag.aggregator.type");
         }
         
         /* (non-Javadoc)
@@ -166,12 +166,12 @@ public class TemporalAggregator  extends Configured implements Tool {
 		private String aggregatorType;
 		
 		protected void setup(Context context) throws IOException, InterruptedException {
-     	Configuration config = context.getConfiguration();
-     	fieldDelim = config.get("field.delim.out", ",");
-        	aggregatorType = config.get("aggregator.type");
+			Configuration config = context.getConfiguration();
+			fieldDelim = config.get("field.delim.out", ",");
+        	aggregatorType = config.get("tag.aggregator.type");
 		}
 
-     protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
+		protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
      		throws IOException, InterruptedException {
  			sum = 0;
  			totalCount = 0;

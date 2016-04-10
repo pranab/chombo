@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.Attribute;
+import org.chombo.util.AttributeZscoreFilter;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Tuple;
@@ -58,7 +59,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-        Utility.setConfiguration(job.getConfiguration(), "chombo");
+        Utility.setConfiguration(job.getConfiguration(), "chombo", true);
         job.setMapperClass(NumericalAttrStats.StatsMapper.class);
         job.setReducerClass(NumericalAttrStats.StatsReducer.class);
         job.setCombinerClass(NumericalAttrStats.StatsCombiner.class);
@@ -99,11 +100,16 @@ public class NumericalAttrStats  extends Configured implements Tool {
         private SeasonalAnalyzer seasonalAnalyzer;
         private long timeStamp;
         private int cycleIndex;
+        private AttributeZscoreFilter attrZscoreFilter;
         
+        
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	schema = Utility.getGenericAttributeSchema(config,  "schema.file.path");
+        	schema = Utility.getGenericAttributeSchema(config,  "nas.schema.file.path");
         	attributes =  Utility.getAttributes("nas.attr.list", configDelim,schema, config,  
         			Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_DOUBLE);        	
         	
@@ -113,11 +119,12 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	//seasonal
         	seasonalAnalysis = config.getBoolean("nas.seasonal.analysis", false);
         	if (seasonalAnalysis) {
-        		seasonalCycleType =  Utility.assertStringConfigParam(config,"nas.seasonal.cycle.type", "missing seasonal cycle type parameter");
+        		seasonalCycleType =  Utility.assertStringConfigParam(config,"nas.seasonal.cycle.type", 
+        				"missing seasonal cycle type parameter");
         		seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType);
             	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
             			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
-            		Map<Integer, Integer>  hourRanges = Utility. assertIntIntegerIntegerMapConfigParam(config, "nas.seasonal.hour.groups", 
+            		Map<Integer, Integer>  hourRanges = Utility. assertIntegerIntegerMapConfigParam(config, "nas.seasonal.hour.groups", 
             				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups", true);
             		seasonalAnalyzer.setHourRanges(hourRanges);
             	} 
@@ -127,11 +134,20 @@ public class NumericalAttrStats  extends Configured implements Tool {
             		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours);
             	}
 
-            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"nas.time.stamp.field.ordinal", "missing time stamp field ordinal"); 
+            	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"nas.time.stamp.field.ordinal", 
+            			"missing time stamp field ordinal"); 
             	boolean timeStampInMili = config.getBoolean("nas.time.stamp.in.mili", true);
             	seasonalAnalyzer.setTimeStampInMili(timeStampInMili);
         	}
 
+        	//score filter
+        	boolean filterOutlier = config.getBoolean("nas.filter.outlier", false);
+        	if (filterOutlier) {
+        		String fieldDelim = config.get("field.delim.out", ",");
+        		Map<Integer, Double> attrZscores = Utility.assertIntegerDoubleMapConfigParam(config, "nas.attr.zscore", 
+        				Utility.configDelim, Utility.configSubFieldDelim, "attribute max zscore missing");
+        		attrZscoreFilter = new AttributeZscoreFilter(attrZscores, config, "nas.stats.file.path", fieldDelim);
+        	}
        }
 
         @Override
@@ -165,15 +181,17 @@ public class NumericalAttrStats  extends Configured implements Tool {
                     outKey.add(cycleIndex);
         		}
             	
-        		outKey.add( condAttrVal);
+        		outKey.add(condAttrVal);
 
             	val = Double.parseDouble(items[attr]);
-            	sqVal = val * val;
-            	outVal.add(val, val, val, sqVal, count);
-            	context.write(outKey, outVal);
+            	if (null == attrZscoreFilter || attrZscoreFilter.isWithinBound(attr, val))  {
+            		//emit if filter is not set or value is within zscore bounds 
+                	sqVal = val * val;
+                	outVal.add(val, val, val, sqVal, count);
+                	context.write(outKey, outVal);
+            	}
         	}
         }
-         
 	}
 
 	/**
@@ -190,6 +208,9 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		private double curMin;
 		private double curMax;
 		
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+         */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
     		sum = 0;
@@ -304,11 +325,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
     	protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
     		//x)partitonIds, (0)attr ord (1)seasonal cycle (2)cond attr 3)sum 4)sum square 5)count 6)mean 7)variance 8)std dev 9)min 10)max 
     		stBld.delete(0, stBld.length());
-        	if (conditionedAttr >= 0)  {
-        		stBld.append(key.toString()).append(fieldDelim);
-        	} else {
-        		stBld.append(key.toString(0, key.getSize()-1)).append(fieldDelim);
-        	}
+        	stBld.append(key.toString()).append(fieldDelim);
         	
     		stBld.append(sum).append(fieldDelim).append(Utility.formatDouble(sumSq, outputPrecision)).
     			append(fieldDelim).append(totalCount).append(fieldDelim) ;
