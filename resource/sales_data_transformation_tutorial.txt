@@ -4,8 +4,8 @@ according to your environment.
 
 Dependent script
 ================
-Checkout the project visitante. Take the script util.py from the project and placeit
-in ../lib directory with respect the directory containing store_order.py
+Checkout the project visitante. Take the script util.py and sampler.py  from that project and 
+place them in ../lib directory with respect the directory containing store_order.py
 
 1. Create sales data
 =======================
