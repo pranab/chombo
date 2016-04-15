@@ -121,6 +121,7 @@ public class Transformer extends Configured implements Tool {
         private Config transformerConfig;
         private boolean configDriven;
         private int fieldOrd;;
+        private int fieldCount;
        
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -129,6 +130,7 @@ public class Transformer extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
         	fieldDelimOut = config.get("field.delim", ",");
+        	fieldCount = config.getInt("tra.field.count", -1);
         	
         	//transformer schema
         	configDriven = config.get("tra.transformer.schema.file.path") != null;
@@ -202,6 +204,13 @@ public class Transformer extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex);
+            if (fieldCount > 0){
+            	//validate with field count
+            	if (!Utility.isFieldCountValid(items, fieldCount, false)){
+            		return;
+            	}
+            }
+            
             stBld.delete(0, stBld.length());
             if (configDriven) {
             	//using configuration based transformers
