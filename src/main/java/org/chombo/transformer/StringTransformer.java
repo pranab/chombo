@@ -446,14 +446,14 @@ public class StringTransformer {
 		public ConcatenatorTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			operation  = config.getString("operation");
-			operation = config.getString("stringToAdd");
+			stringToAdd = config.getString("stringToAdd");
 			delimiter = config.getString("delimiter");
 		}
 		
 		public ConcatenatorTransformer(int numTransAttributes, String operation, String stringToAdd, String delimiter) {
 			super(numTransAttributes);
 			this.operation  = operation;
-			this.operation = operation;
+			this.stringToAdd = stringToAdd;
 			this.delimiter = delimiter;
 		}
 
