@@ -471,4 +471,43 @@ public class StringTransformer {
 		
 	}
 	
+	/**
+	 * Merges multiple fields into one
+	 * @author pranab
+	 *
+	 */
+	public static class FieldMergeTransformer extends AttributeTransformer implements ContextAwareTransformer {
+		private List<Integer> mergeFieldOrdinals;
+		private String delimiter;
+		private String[] fields;
+		
+		
+		public FieldMergeTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			mergeFieldOrdinals  = config.getIntList("mergeFieldOrdinals");
+			delimiter = config.getString("delimiter");
+		}
+		
+		public FieldMergeTransformer(int numTransAttributes, List<Integer> mergeFieldOrdinals, String delimiter) {
+			super(numTransAttributes);
+			this.mergeFieldOrdinals  = mergeFieldOrdinals;
+			this.delimiter = delimiter;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			StringBuilder stBld = new StringBuilder(value);
+			for (int otherOrd : mergeFieldOrdinals) {
+				stBld.append(delimiter).append(fields[otherOrd]);
+			}
+			transformed[0] = stBld.toString();
+			return transformed;
+		}
+
+		@Override
+		public void setContext(Map<String, Object> context) {
+			fields = (String[])context.get("record");
+		}
+		
+	}
 }

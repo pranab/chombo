@@ -64,6 +64,7 @@ public class TransformerFactory {
 	public static final String STRING_CUSTOM_TRANSFORMER  = "stringCustomTrans";
 	public static final String STRING_DELETE_TRANSFORMER  = "stringDeleteTrans";
 	public static final String STRING_CONCATENATION_TRANSFORMER  = "stringConcatenationTrans";
+	public static final String STRING_FIELD_MERGE_TRANSFORMER  = "stringFieldMergeTrans";
 	
 	private static Map<String,String> custTransformerClasses = new HashMap<String,String>();
 	private static Map<String,AttributeTransformer> custTransformers = new HashMap<String,AttributeTransformer>();
@@ -162,6 +163,8 @@ public class TransformerFactory {
 			transformer = new StringTransformer.DeleteTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(STRING_CONCATENATION_TRANSFORMER)) {
 			transformer = new StringTransformer.ConcatenatorTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(STRING_FIELD_MERGE_TRANSFORMER)) {
+			transformer = new StringTransformer.FieldMergeTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
 			//custom transformer with configured transformer class names
 			transformer = createCustomTransformer(transformerTag, prAttr,  config);
