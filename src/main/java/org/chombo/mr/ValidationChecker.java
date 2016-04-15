@@ -18,7 +18,6 @@
 package org.chombo.mr;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,22 +36,16 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.chombo.transformer.TransformerFactory;
-import org.chombo.util.Attribute;
-import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.MedianStatsManager;
 import org.chombo.util.NumericalAttrStatsManager;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
-import org.chombo.util.StatsParameters;
 import org.chombo.util.Utility;
 import org.chombo.validator.InvalidData;
 import org.chombo.validator.Validator;
 import org.chombo.validator.ValidatorFactory;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigList;
 
 /**
  * Data validator. Multiple out of the box validators can be configured for each field. Custom validators

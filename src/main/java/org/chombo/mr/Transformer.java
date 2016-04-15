@@ -18,7 +18,6 @@
 package org.chombo.mr;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,14 +37,11 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.transformer.AttributeTransformer;
 import org.chombo.transformer.TransformerFactory;
-import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.Utility;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigException;
 
 /**
  * Transforms attributes based on plugged in transformers for different attributes.
