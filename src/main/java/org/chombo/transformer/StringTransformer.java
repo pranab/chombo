@@ -432,4 +432,43 @@ public class StringTransformer {
 		}
 	}	
 	
+	/**
+	 * Does string append or prepend with provided string
+	 * @author pranab
+	 *
+	 */
+	public static class ConcatenatorTransformer extends AttributeTransformer {
+		private String operation;
+		private String stringToAdd;
+		private String delimiter;
+		
+		
+		public ConcatenatorTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			operation  = config.getString("operation");
+			operation = config.getString("stringToAdd");
+			delimiter = config.getString("delimiter");
+		}
+		
+		public ConcatenatorTransformer(int numTransAttributes, String operation, String stringToAdd, String delimiter) {
+			super(numTransAttributes);
+			this.operation  = operation;
+			this.operation = operation;
+			this.delimiter = delimiter;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (operation.equals("prepend")) {
+				transformed[0] = stringToAdd + delimiter + value;
+			} else if (operation.equals("append")){
+				transformed[0] = value + delimiter + stringToAdd;
+			} else {
+				throw new IllegalArgumentException("invalid string concatenation operator");
+			}
+			return transformed;
+		}
+		
+	}
+	
 }
