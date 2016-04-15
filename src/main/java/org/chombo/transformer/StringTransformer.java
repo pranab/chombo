@@ -415,4 +415,21 @@ public class StringTransformer {
 		}
 	}
 	
+	/**
+	 * @author pranab
+	 * Removes a field by returning null for transformed value
+	 */
+	public static class DeleteTransformer extends AttributeTransformer {
+		
+		public DeleteTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+		}
+
+
+		@Override
+		public String[] tranform(String value) {
+			return null;
+		}
+	}	
+	
 }

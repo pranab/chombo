@@ -1,0 +1,11 @@
+<project name="chombo_for_hadoop" default="uber-jar" basedir=".">
+<target name="uber-jar">
+    <echo>Packaging chombo into a single uber JAR</echo>
+	<jar destfile="uber-chombo-1.0.jar">
+		<zipgroupfileset dir="/home/pranab/Projects/lib" 
+			includes="jackson-core-asl-1.9.13.jar,jackson-mapper-asl-1.9.13.jar,commons-lang3-3.1.jar,config-1.2.0.jar" /> 
+		<zipgroupfileset dir="/home/pranab/Projects/chombo/target" 
+			includes="chombo-1.0.jar, " /> 
+	</jar>
+</target>
+</project>
