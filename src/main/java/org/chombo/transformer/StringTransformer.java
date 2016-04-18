@@ -170,12 +170,12 @@ public class StringTransformer {
 	 *
 	 */
 	public static class KeyValueTransformer extends AttributeTransformer {
-		private Config config;
+		private Config keyValConfig;
 		private Map<String, String>  kayValues;
 		
 		public KeyValueTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
-			this.config = config;
+			keyValConfig = config.getConfig("keyValues");
 		}
 
 		public KeyValueTransformer( Map<String, String>  kayValues) {
@@ -186,8 +186,8 @@ public class StringTransformer {
 		@Override
 		public String[] tranform(String value) {
 			String newValue = null;
-			if (null != config) {
-				newValue = config.getString(value);
+			if (null != keyValConfig) {
+				newValue = keyValConfig.getString(value);
 			} else {
 				newValue = kayValues.get(value);
 			}
@@ -432,4 +432,83 @@ public class StringTransformer {
 		}
 	}	
 	
+	/**
+	 * Does string append or prepend with provided string
+	 * @author pranab
+	 *
+	 */
+	public static class ConcatenatorTransformer extends AttributeTransformer {
+		private String operation;
+		private String stringToAdd;
+		private String delimiter;
+		
+		
+		public ConcatenatorTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			operation  = config.getString("operation");
+			stringToAdd = config.getString("stringToAdd");
+			delimiter = config.getString("delimiter");
+		}
+		
+		public ConcatenatorTransformer(int numTransAttributes, String operation, String stringToAdd, String delimiter) {
+			super(numTransAttributes);
+			this.operation  = operation;
+			this.stringToAdd = stringToAdd;
+			this.delimiter = delimiter;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (operation.equals("prepend")) {
+				transformed[0] = stringToAdd + delimiter + value;
+			} else if (operation.equals("append")){
+				transformed[0] = value + delimiter + stringToAdd;
+			} else {
+				throw new IllegalArgumentException("invalid string concatenation operator");
+			}
+			return transformed;
+		}
+		
+	}
+	
+	/**
+	 * Merges multiple fields into one
+	 * @author pranab
+	 *
+	 */
+	public static class FieldMergeTransformer extends AttributeTransformer implements ContextAwareTransformer {
+		private List<Integer> mergeFieldOrdinals;
+		private String delimiter;
+		private String[] fields;
+		
+		
+		public FieldMergeTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			config = getFieldSpecificConfig(prAttr.getOrdinal(), config);
+			mergeFieldOrdinals  = config.getIntList("mergeFieldOrdinals");
+			delimiter = config.getString("delimiter");
+		}
+		
+		public FieldMergeTransformer(int numTransAttributes, List<Integer> mergeFieldOrdinals, String delimiter) {
+			super(numTransAttributes);
+			this.mergeFieldOrdinals  = mergeFieldOrdinals;
+			this.delimiter = delimiter;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			StringBuilder stBld = new StringBuilder(value);
+			for (int otherOrd : mergeFieldOrdinals) {
+				stBld.append(delimiter).append(fields[otherOrd]);
+			}
+			transformed[0] = stBld.toString();
+			return transformed;
+		}
+
+		@Override
+		public void setContext(Map<String, Object> context) {
+			fields = (String[])context.get("record");
+		}
+		
+	}
 }

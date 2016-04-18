@@ -17,6 +17,8 @@
 
 package org.chombo.transformer;
 
+import com.typesafe.config.Config;
+
 
 /**
  * @author pranab
@@ -40,5 +42,21 @@ public abstract class  AttributeTransformer {
 	 * @return
 	 */
 	public abstract String[] tranform(String value);
+	
+	/**
+	 * Return field specific configuration if it exists, in case the same transformer is used for
+	 * multiple fields
+	 * @param fieldOrd
+	 * @param config
+	 * @return
+	 */
+	public Config getFieldSpecificConfig(int fieldOrd, Config config) {
+		Config fieldPsecificConfig = null;
+		String fieldKey = "field" + fieldOrd;
+		if (config.hasPath(fieldKey)) {
+			fieldPsecificConfig = config.getConfig(fieldKey);
+		}
+		return fieldPsecificConfig == null ? config : fieldPsecificConfig;
+	}
 	
 }

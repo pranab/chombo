@@ -8,9 +8,12 @@ fresh batch of store order data. By statistics, we mean average and std deviatio
 
 Dependent script
 ================
-Checkout the project visitante. Take the script util.py from the project and placeit
+Checkout the project visitante. Take the script util.py and sampler.py from the project and placeit
 in ../lib directory with respect the directory containing store_order.py
 
+Deployment
+==========
+Please refer to building_uber_jar.txt
 
 1. Create products
 ==================

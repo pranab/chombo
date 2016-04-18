@@ -7,6 +7,11 @@ Dependent script
 Checkout the project visitante. Take the script util.py and sampler.py  from that project and 
 place them in ../lib directory with respect the directory containing store_order.py
 
+Deployment
+==========
+Please refer to building_uber_jar.txt
+
+
 1. Create sales data
 =======================
 ./retail_sell.py <num_of_stores> <num_of_products> <num_of_transactions> <num_of_customers> > <sale_data_file>

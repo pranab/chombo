@@ -36,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.transformer.AttributeTransformer;
+import org.chombo.transformer.ContextAwareTransformer;
 import org.chombo.transformer.TransformerFactory;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
@@ -122,6 +123,7 @@ public class Transformer extends Configured implements Tool {
         private boolean configDriven;
         private int fieldOrd;;
         private int fieldCount;
+        private Map<String, Object> context = new HashMap<String, Object>();
        
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -287,6 +289,13 @@ public class Transformer extends Configured implements Tool {
             	transformedValues = null;
             	if (null != transformerList) {
 	            	for (AttributeTransformer trans :  transformerList) {
+	            		//check if we need to set context data
+	            		if (trans instanceof ContextAwareTransformer) {
+	            			context.clear();
+	            			context.put("record", items);
+	            			((ContextAwareTransformer)trans).setContext(context);
+	            		}
+	            		
 	        			transformedValues = trans.tranform(source);
 	        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
 	        				//only last transformer is allowed to emit multiple values
