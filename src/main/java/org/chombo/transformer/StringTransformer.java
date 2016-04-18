@@ -170,12 +170,12 @@ public class StringTransformer {
 	 *
 	 */
 	public static class KeyValueTransformer extends AttributeTransformer {
-		private Config config;
+		private Config keyValConfig;
 		private Map<String, String>  kayValues;
 		
 		public KeyValueTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
-			this.config = config;
+			keyValConfig = config.getConfig("keyValues");
 		}
 
 		public KeyValueTransformer( Map<String, String>  kayValues) {
@@ -186,8 +186,8 @@ public class StringTransformer {
 		@Override
 		public String[] tranform(String value) {
 			String newValue = null;
-			if (null != config) {
-				newValue = config.getString(value);
+			if (null != keyValConfig) {
+				newValue = keyValConfig.getString(value);
 			} else {
 				newValue = kayValues.get(value);
 			}
@@ -484,6 +484,7 @@ public class StringTransformer {
 		
 		public FieldMergeTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
+			config = getFieldSpecificConfig(prAttr.getOrdinal(), config);
 			mergeFieldOrdinals  = config.getIntList("mergeFieldOrdinals");
 			delimiter = config.getString("delimiter");
 		}
