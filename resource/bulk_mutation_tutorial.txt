@@ -3,8 +3,12 @@ scenario in many big data analytic projects.
 
 Dependent script
 ================
-Checkout the project visitante. Take the script util.py from the project and placeit
+Checkout the project visitante. Take the script util.py and sampler.py from the project and placeit
 in ../lib directory with respect the directory containing product.py
+
+Deployment
+==========
+Please refer to building_uber_jar.txt
 
 Input Data
 ==========

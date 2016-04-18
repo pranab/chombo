@@ -8,8 +8,13 @@ Please make necessary changes in path etc depending on your environment in etl.s
  
 Dependent script
 ================
-Checkout the project visitante. Take the script util.py from the project and placeit
+Checkout the project visitante. Take the script util.py and sampler.py from the project and placeit
 in ../lib directory with respect the directory containing store_order.py
+
+Deployment
+==========
+Please refer to building_uber_jar.txt
+
 
 Generate Input Data
 ===================
