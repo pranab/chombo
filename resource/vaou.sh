@@ -20,6 +20,7 @@ case "$1" in
 ;;
 
 "loadIncr")
+	echo "make sure file name starts with the string defined by the config parameter rug.incremental.file.prefix"
 	hadoop fs -rm $HDFS_BASE_DIR/ruag/input/$2
 	hadoop fs -put $2 $HDFS_BASE_DIR/ruag/input
 	hadoop fs -ls $HDFS_BASE_DIR/ruag/input

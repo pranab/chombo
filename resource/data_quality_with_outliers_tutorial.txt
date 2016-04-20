@@ -33,6 +33,9 @@ store_data_file contains the store data, the first field being the store ID
 average_num_products is the average number of products ordered by a store
 order_data_file is the outfile with order data
 
+order_data_file should be named such that it starts with string defined by the config
+parameter rug.incremental.file.prefix
+
 For product_data_file and store_data_file it's only the first field that matters.
 
 4. Export order data to HDFS
