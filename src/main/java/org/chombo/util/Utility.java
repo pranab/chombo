@@ -1269,6 +1269,47 @@ public class Utility {
 	
 	/**
 	 * @param record
+	 * @param fieldDelim
+	 * @param numFields
+	 * @param failOnInvalid
+	 * @return
+	 */
+	public static String[] splitFields(String record, String fieldDelim, int numFields, boolean failOnInvalid) {
+		String[] items = record.split(fieldDelim);
+		if (items.length != numFields) {
+			if (items.length < numFields) {
+				//check if trailing blank fields
+				int delimCount = StringUtils.countMatches(record, fieldDelim);
+				if (delimCount == numFields - 1) {
+					//trailing blank fields
+					String[] extItems = new String[numFields];
+					for (int i = 0; i < numFields; ++i) {
+						if (i < items.length) {
+							extItems[i] = items[i];
+						} else {
+							//fill trailing fields with blanks
+							extItems[i] = "";
+						}
+					}
+					items = extItems;
+				} else {
+					//got too few fields
+					items = null;
+				}
+			} else {
+				//got too many fields
+				items = null;
+			}
+			
+			if (null == items && failOnInvalid) {
+				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + items.length);
+			}
+		}
+		return items;
+	}
+	
+	/**
+	 * @param record
 	 * @param fieldDelem
 	 * @param numFields
 	 * @param throwEx
@@ -1283,6 +1324,21 @@ public class Utility {
 			fields = null;
 		}
 		return fields;
+	}
+	
+	/**
+	 * @param items
+	 * @return
+	 */
+	public static boolean anyEmptyField(String[] items) {
+		boolean isEmpty = false;
+		for (String item : items) {
+			if (item.isEmpty()) {
+				isEmpty = true;
+				break;
+			}
+		}
+		return isEmpty;
 	}
 	
 	/**
