@@ -187,7 +187,11 @@ public class StringTransformer {
 		public String[] tranform(String value) {
 			String newValue = null;
 			if (null != keyValConfig) {
-				newValue = keyValConfig.getString(value);
+				if (keyValConfig.hasPath(value)) {
+					newValue = keyValConfig.getString(value);
+				} else {
+					newValue = null;
+				}
 			} else {
 				newValue = kayValues.get(value);
 			}

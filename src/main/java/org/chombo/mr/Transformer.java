@@ -122,7 +122,7 @@ public class Transformer extends Configured implements Tool {
         private Config transformerConfig;
         private boolean configDriven;
         private int fieldOrd;;
-        private int fieldCount;
+        private int numFields;
         private Map<String, Object> context = new HashMap<String, Object>();
        
         /* (non-Javadoc)
@@ -132,7 +132,7 @@ public class Transformer extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", "\\[\\]");
         	fieldDelimOut = config.get("field.delim", ",");
-        	fieldCount = config.getInt("tra.field.count", -1);
+        	numFields = config.getInt("tra.num.fields", -1);
         	
         	//transformer schema
         	configDriven = config.get("tra.transformer.schema.file.path") != null;
@@ -205,12 +205,14 @@ public class Transformer extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            items  =  value.toString().split(fieldDelimRegex);
-            if (fieldCount > 0){
+            if (numFields > 0){
             	//validate with field count
-            	if (!Utility.isFieldCountValid(items, fieldCount, false)){
+            	items = Utility.splitFields(value.toString(), fieldDelimRegex, numFields, false);
+            	if (null == items) {
             		return;
             	}
+            } else {
+                items  =  value.toString().split(fieldDelimRegex);
             }
             
             stBld.delete(0, stBld.length());
