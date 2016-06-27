@@ -22,83 +22,196 @@ package org.chombo.common
  * @author pranab
  *
  */
-class Record(val size:Int) {
-	val record = new Array[Any](size)
+class Record(val size:Int) extends Serializable {
+	val array = new Array[Any](size)
 	var cursor:Int = 0
 	
+	/**
+	 * @param size
+	 * @param record
+	 */
+	def this(size:Int, record:Record) {
+	  this(size)
+	  Array.copy(record.array, 0, array, 0, record.size)
+	}
+	
+	def getArray() :Array[Any] = array
+	
+	/**
+	 * @param index
+	 * @param strVal
+	 * @return
+	 */
 	def addString(index:Int, strVal:String) : Record = {
-	  record(index) = strVal
+	  array(index) = strVal
 	  this
 	}
 
+	/**
+	 * @param strVal
+	 * @return
+	 */
 	def addString(strVal:String) : Record = {
-	  record(cursor) = strVal
+	  array(cursor) = strVal
 	  cursor += 1
 	  this
 	}
 
+	/**
+	 * @param index
+	 * @param intVal
+	 * @return
+	 */
 	def addInt(index:Int, intVal:Int) : Record = {
-	  record(index) = intVal
+	  array(index) = intVal
 	  this
 	}
 	
+	/**
+	 * @param index
+	 * @param strVal
+	 * @return
+	 */
+	def addInt(index:Int, strVal:String) : Record = {
+	  addInt(index, strVal.toInt)
+	}
+	
+	/**
+	 * @param intVal
+	 * @return
+	 */
 	def addInt(intVal:Int) : Record = {
-	  record(cursor) = intVal
+	  array(cursor) = intVal
 	  cursor += 1
 	  this
 	}
 	
+	/**
+	 * @param strVal
+	 * @return
+	 */
+	def addInt(strVal:String) : Record = {
+	  addInt(strVal.toInt)
+	}
+
+	/**
+	 * @param index
+	 * @param dblVal
+	 * @return
+	 */
 	def addDouble(index:Int, dblVal:Double) : Record = {
-	  record(index) = dblVal
+	  array(index) = dblVal
 	  this
 	}
-	
+
+	/**
+	 * @param index
+	 * @param strlVal
+	 * @return
+	 */
+	def addDouble(index:Int, strlVal:String) : Record = {
+	  addDouble(index, strlVal.toDouble)
+	}
+
+	/**
+	 * @param dblVal
+	 * @return
+	 */
 	def addDouble(dblVal:Double) : Record = {
-	  record(cursor) = dblVal
+	  array(cursor) = dblVal
 	  cursor += 1
 	  this
 	}
 	
+	/**
+	 * @param strlVal
+	 * @return
+	 */
+	def addDouble(strlVal:String) : Record = {
+	  addDouble(strlVal.toDouble)
+	}
+
+	/**
+	 * @param values
+	 * @return
+	 */
 	def add(values:Any*) : Record = {
 	  cursor = 0
 	  for (value <- values) {
-		record(cursor) = value
+		array(cursor) = value
 		cursor += 1
 	  }
 	  this
 	}
 
+	/**
+	 * @param index
+	 * @return
+	 */
 	def getString(index:Int) : String = {
-	  record(index).asInstanceOf[String]
+	  array(index).asInstanceOf[String]
 	}
 	
+	/**
+	 * @return
+	 */
 	def getString() : String = {
-	  val strVal = record(cursor).asInstanceOf[String]
+	  val strVal = array(cursor).asInstanceOf[String]
 	  cursor += 1
 	  strVal
 	}
 	
+	/**
+	 * @param index
+	 * @return
+	 */
 	def getInt(index:Int) : Int = {
-	  record(index).asInstanceOf[Int]
+	  array(index).asInstanceOf[Int]
 	}
 	
+	/**
+	 * @return
+	 */
 	def getInt() : Int = {
-	  val intVal = record(cursor).asInstanceOf[Int]
+	  val intVal = array(cursor).asInstanceOf[Int]
 	  cursor += 1
 	  intVal
 	}
 
+	/**
+	 * @param index
+	 * @return
+	 */
 	def getDouble(index:Int) : Double = {
-	  record(index).asInstanceOf[Double]
+	  array(index).asInstanceOf[Double]
 	}
 	
+	/**
+	 * @return
+	 */
 	def getDouble() : Double = {
-	  val dblVal = record(cursor).asInstanceOf[Double]
+	  val dblVal = array(cursor).asInstanceOf[Double]
 	  cursor += 1
 	  dblVal
 	}
 	
+	/**
+	 * 
+	 */
 	def intialize() {
 	  cursor = 0
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	override def hashCode() : Int = array.hashCode()
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	override def equals(obj : Any) : Boolean = {
+	  val other = obj.asInstanceOf[Record]
+      array.equals(other.array)
 	}
 }
