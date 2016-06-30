@@ -16,7 +16,7 @@
  */
 
 
-package org.chombo.common
+package org.chombo.spark.common
 
 /**
  * @author pranab
