@@ -93,6 +93,44 @@ class Record(val size:Int) extends Serializable {
 	def addInt(strVal:String) : Record = {
 	  addInt(strVal.toInt)
 	}
+	
+	/**
+	 * @param index
+	 * @param intVal
+	 * @return
+	 */
+	def addLong(index:Int, longVal:Long) : Record = {
+	  array(index) = longVal
+	  this
+	}
+	
+	/**
+	 * @param index
+	 * @param strVal
+	 * @return
+	 */
+	def addLong(index:Int, strVal:String) : Record = {
+	  addLong(index, strVal.toLong)
+	}
+	
+	/**
+	 * @param intVal
+	 * @return
+	 */
+	def addLong(longVal:Long) : Record = {
+	  array(cursor) = longVal
+	  cursor += 1
+	  this
+	}
+	
+	/**
+	 * @param strVal
+	 * @return
+	 */
+	def addLong(strVal:String) : Record = {
+	  addLong(strVal.toLong)
+	}
+	
 
 	/**
 	 * @param index

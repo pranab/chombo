@@ -111,9 +111,9 @@ def configFileFromCommandLine(args: Array[String]) : String = {
 		)
 		
 		//all app properties
-		if (config.hasPath("app")) {
-			config.getConfigList("app").map ( cfg => {
-				  val name = "spark." + cfg.getString("name")
+		if (config.hasPath(appName)) {
+			config.getConfigList(appName).map ( cfg => {
+				  val name = "app." + cfg.getString("name")
 				  val value = cfg.getString("value")
 				  sparkConf.set(name, value)
 			  }
