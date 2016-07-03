@@ -220,6 +220,23 @@ class Record(val size:Int) extends Serializable {
 	 * @param index
 	 * @return
 	 */
+	def getLong(index:Int) : Long = {
+	  array(index).asInstanceOf[Long]
+	}
+	
+	/**
+	 * @return
+	 */
+	def getLong() : Long = {
+	  val longVal = array(cursor).asInstanceOf[Long]
+	  cursor += 1
+	  longVal
+	}
+	
+	/**
+	 * @param index
+	 * @return
+	 */
 	def getDouble(index:Int) : Double = {
 	  array(index).asInstanceOf[Double]
 	}
