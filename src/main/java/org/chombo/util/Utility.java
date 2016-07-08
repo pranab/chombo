@@ -813,6 +813,27 @@ public class Utility {
 
     /**
      * @param arr
+     * @param obj
+     * @return
+     */
+    public static <T> int getIndex(T[] arr, T obj) {
+    	int i = 0;
+    	boolean found = false;
+    	for (T thisObj : arr) {
+    		if (thisObj.equals(obj)) {
+    			found = true;
+    			break;
+    		}
+    		++i;
+    	}
+    	if (!found) {
+    		throw new IllegalArgumentException("object not found in array");
+    	}
+    	return i;
+    }
+    
+    /**
+     * @param arr
      * @return
      */
     public static <T> String join(T[] arr) {

@@ -18,13 +18,16 @@
 
 package org.chombo.util;
 
+import java.io.Serializable;
+import java.util.List;
+
 import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * @author pranab
  *
  */
-public class DoubleTable {
+public class DoubleTable implements Serializable {
 	protected double[][] table;
 	protected int numRow;
 	protected int numCol;
@@ -50,6 +53,17 @@ public class DoubleTable {
 	public DoubleTable(String[] rowLabels, String[] colLabels) {
 		initialize( rowLabels.length,  colLabels.length);
 		setLabels(rowLabels, colLabels); 
+	}
+
+	/**
+	 * @param rowLabels
+	 * @param colLabels
+	 */
+	public DoubleTable(List<String> rowLabels, List<String> colLabels) {
+		initialize( rowLabels.size(),  colLabels.size());
+		String[] rowLabelsAr = rowLabels.toArray(new String[0]);
+		String[] colLabelsAr = colLabels.toArray(new String[0]);
+		setLabels(rowLabelsAr, colLabelsAr); 
 	}
 
 	/**
@@ -86,6 +100,17 @@ public class DoubleTable {
 	}
 	
 	/**
+	 * @param rowLabel
+	 * @param colLabel
+	 * @param val
+	 */
+	public void set(String rowLabel, String colLabel, double val) {
+		int row = ArrayUtils.indexOf(rowLabels, rowLabel);
+		int col = ArrayUtils.indexOf(colLabels, colLabel);
+		table[row][col] = val;
+	}
+
+	/**
 	 * @param row
 	 * @param col
 	 * @return
@@ -95,8 +120,8 @@ public class DoubleTable {
 	}
 
 	/**
-	 * @param row
-	 * @param col
+	 * @param rowLabel
+	 * @param colLabel
 	 * @return
 	 */
 	public double get(String rowLabel, String colLabel) {
@@ -196,6 +221,14 @@ public class DoubleTable {
 	}
 
 	/**
+	 * @param rowLabel
+	 * @return
+	 */
+	public double getRowSum(String rowLabel) {
+		return getRowSum(getRow(rowLabel));
+	}
+	
+	/**
 	 * sum of column
 	 * @param col
 	 * @return
@@ -208,6 +241,50 @@ public class DoubleTable {
 		return sum;
 	}
 	
+	/**
+	 * @param rowLabel
+	 * @return
+	 */
+	public double getColumnSum(String colLabel) {
+		return getColumnSum(getCol(colLabel));
+	}
+
+	/**
+	 * @param row
+	 * @param scale
+	 */
+	public void scaleRow(int row, double scale) {
+		for (int c = 0; c < numCol; ++c) {
+			table[row][c] *= scale;
+		}
+	}
+	
+	/**
+	 * @param rowLabel
+	 * @param scale
+	 */
+	public void scaleRow(String rowLabel, double scale) {
+		scaleRow(getRow(rowLabel), scale);
+	}
+
+	/**
+	 * @param col
+	 * @param scale
+	 */
+	public void scaleColumn(int col, double scale) {
+		for (int r = 0; r < numRow; ++r) {
+			table[r][col] *= scale;
+		}
+	}
+
+	/**
+	 * @param colLabel
+	 * @param scale
+	 */
+	public void scaleColumn(String colLabel, double scale) {
+		scaleColumn(getCol(colLabel), scale);
+	}
+
 	/**
 	 * serializes table
 	 * @return
@@ -294,5 +371,24 @@ public class DoubleTable {
 
 		return rowCol;
 	}
+	
+	/**
+	 * Row index
+	 * @param rowLabel
+	 * @return
+	 */
+	private int getRow(String rowLabel) {
+		int row = Utility.getIndex(rowLabels, rowLabel);
+		return row;
+	}
 
+	/**
+	 * Column index
+	 * @param colLabel
+	 * @return
+	 */
+	private int getCol(String colLabel) {
+		int col = Utility.getIndex(colLabels, colLabel);
+		return col;
+	}
 }
