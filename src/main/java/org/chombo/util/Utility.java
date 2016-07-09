@@ -1680,6 +1680,17 @@ public class Utility {
     	stream.close();
     	return stBld.toString();
     }
+
+    /**
+     * @param dateTimeStamp
+     * @param dateFormat
+     * @return
+     * @throws ParseException
+     */
+    public static long getEpochTime(String dateTimeStamp, SimpleDateFormat dateFormat) throws ParseException {
+    	return getEpochTime(dateTimeStamp, false, dateFormat,0);
+    }
+
     /**
      * @param dateTimeStamp
      * @param isEpochTime
@@ -1740,6 +1751,8 @@ public class Utility {
 			modTime /= MILISEC_PER_HOUR;
 		} else if (timeUnit.equals("day")) {
 			modTime /= MILISEC_PER_DAY;
+		} else {
+			throw new IllegalArgumentException("invalid time unit");
 		}
     	return modTime;
     }

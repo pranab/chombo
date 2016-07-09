@@ -18,6 +18,18 @@
 
 package org.chombo.spark.common
 
+import org.chombo.util.Utility
+
+
+object Record {
+  var floatPrecision = 6
+  
+  def apply(size:Int) : Record = new Record(size)
+  
+  def apply(size:Int, record:Record) : Record = new Record(size, record)
+  
+}
+
 /**
  * @author pranab
  *
@@ -268,5 +280,19 @@ class Record(val size:Int) extends Serializable {
 	override def equals(obj : Any) : Boolean = {
 	  val other = obj.asInstanceOf[Record]
       array.equals(other.array)
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	override def toString() : String = {
+	  val stArray = array.map(a => {
+	    if (a.isInstanceOf[Double]) {
+	      Utility.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
+	    } else {
+	      a
+	    }
+	  })
+	  stArray.mkString(",")
 	}
 }

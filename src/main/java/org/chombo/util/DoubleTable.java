@@ -34,7 +34,11 @@ public class DoubleTable implements Serializable {
 	protected String[] rowLabels;
 	protected String[] colLabels;
 	protected static final String DELIMETER = ",";
+	private int outputPrecision = 6;
 	
+	/**
+	 * 
+	 */
 	public DoubleTable() {
 	}
 	
@@ -108,6 +112,10 @@ public class DoubleTable implements Serializable {
 		int row = ArrayUtils.indexOf(rowLabels, rowLabel);
 		int col = ArrayUtils.indexOf(colLabels, colLabel);
 		table[row][col] = val;
+	}
+
+	public void setOutputPrecision(int outputPrecision) {
+		this.outputPrecision = outputPrecision;
 	}
 
 	/**
@@ -293,11 +301,19 @@ public class DoubleTable implements Serializable {
 		StringBuilder stBld = new StringBuilder();
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
-				stBld.append(table[r][c]).append(DELIMETER);
+				stBld.append(Utility.formatDouble(table[r][c], outputPrecision)).append(DELIMETER);
 			}
+			
 		}
 		
 		return stBld.substring(0, stBld.length()-1);
+	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return serialize();
 	}
 
 	/**
@@ -308,7 +324,7 @@ public class DoubleTable implements Serializable {
 	public String serializeRow(int row) {
 		StringBuilder stBld = new StringBuilder();
 		for (int c = 0; c < numCol; ++c) {
-			stBld.append(table[row][c]).append(DELIMETER);
+			stBld.append(Utility.formatDouble(table[row][c], outputPrecision)).append(DELIMETER);
 		}
 		
 		return stBld.substring(0, stBld.length()-1);
