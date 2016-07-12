@@ -49,7 +49,7 @@ object DataValidator extends JobConfiguration  {
    def main(args: Array[String]) {
 	   val Array(master: String, inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
-	   val sparkConf = createSparkConf("app.data validation", config)
+	   val sparkConf = createSparkConf("app.data validation", config, false)
 	   val sparkCntxt = new SparkContext(sparkConf)
 	   
 	   if (config.hasPath("app.invalid.records.output.file"))

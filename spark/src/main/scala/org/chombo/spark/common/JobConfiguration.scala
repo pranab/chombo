@@ -95,7 +95,7 @@ def configFileFromCommandLine(args: Array[String]) : String = {
 	 * @param config
 	 * @return
 	 */
-	def createSparkConf(appName : String, config : Config) : SparkConf =  {
+	def createSparkConf(appName : String, config : Config, includeAppConfig: Boolean) : SparkConf =  {
 	  val sparkConf = new SparkConf()
 		.setMaster(config.getString("system.master"))
 		.setAppName(appName)
@@ -103,21 +103,21 @@ def configFileFromCommandLine(args: Array[String]) : String = {
 		val z = config.getConfigList("spark")
 		
 		//all spark properties
-		config.getConfigList("spark").map ( cfg => {
-			  val name = "spark." + cfg.getString("name")
-			  val value = cfg.getString("value")
-			  sparkConf.set(name, value)
-		  }
-		)
-		
+		if (config.hasPath("spark")) {
+			config.getConfigList("spark").map ( cfg => {
+				val name = cfg.getString("name")
+				val value = cfg.getString("value")
+				sparkConf.set(name, value)
+		  })
+		}
+	  
 		//all app properties
-		if (config.hasPath(appName)) {
+		if (includeAppConfig && config.hasPath(appName)) {
 			config.getConfigList(appName).map ( cfg => {
 				  val name = "app." + cfg.getString("name")
 				  val value = cfg.getString("value")
 				  sparkConf.set(name, value)
-			  }
-			)
+			  })
 		}
 	  
 		sparkConf
@@ -134,4 +134,16 @@ def configFileFromCommandLine(args: Array[String]) : String = {
 	  })
 	}
 	
+	/**
+	 * @param sparkCntxt
+	 * @param config
+	 * @param fromList
+	 * @param paramName
+	 */
+	def addJars(sparkCntxt : SparkContext, config : Config, fromList : Boolean, paramName : String) {
+	  val jarPaths = config.getStringList(paramName)
+	  jarPaths.foreach(jar => {  
+	    sparkCntxt.addJar(jar)
+	  })
+	}
 }
