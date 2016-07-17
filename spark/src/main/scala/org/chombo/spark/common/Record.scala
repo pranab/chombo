@@ -278,8 +278,10 @@ class Record(val size:Int) extends Serializable {
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	override def equals(obj : Any) : Boolean = {
-	  val other = obj.asInstanceOf[Record]
-      array.equals(other.array)
+	  obj match { 
+      	case that: Record => this.array.equals(that.array) 
+      	case _ => false 
+	  }
 	}
 	
 	/* (non-Javadoc)

@@ -23,6 +23,7 @@ import com.typesafe.config.Config
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
  * Various configuration helper methods for spark jobs
@@ -96,15 +97,18 @@ def configFileFromCommandLine(args: Array[String]) : String = {
 	 * @return
 	 */
 	def createSparkConf(appName : String, config : Config, includeAppConfig: Boolean) : SparkConf =  {
-	  val sparkConf = new SparkConf()
-		.setMaster(config.getString("system.master"))
+		val sparkConf = new SparkConf()
 		.setAppName(appName)
 		
-		val z = config.getConfigList("spark")
+		if(config.hasPath("system.master")) {
+			val master = config.getString("system.master")
+			sparkConf.setMaster(master)
+		}
 		
 		//all spark properties
-		if (config.hasPath("spark")) {
-			config.getConfigList("spark").map ( cfg => {
+		if (config.hasPath("sparkParam")) {
+			val sparkList = config.getConfigList("sparkParam").toList
+			sparkList.map ( cfg => {
 				val name = cfg.getString("name")
 				val value = cfg.getString("value")
 				sparkConf.set(name, value)
@@ -113,7 +117,8 @@ def configFileFromCommandLine(args: Array[String]) : String = {
 	  
 		//all app properties
 		if (includeAppConfig && config.hasPath(appName)) {
-			config.getConfigList(appName).map ( cfg => {
+			val appList = config.getConfigList(appName).toList
+			appList.map ( cfg => {
 				  val name = "app." + cfg.getString("name")
 				  val value = cfg.getString("value")
 				  sparkConf.set(name, value)
@@ -141,9 +146,11 @@ def configFileFromCommandLine(args: Array[String]) : String = {
 	 * @param paramName
 	 */
 	def addJars(sparkCntxt : SparkContext, config : Config, fromList : Boolean, paramName : String) {
-	  val jarPaths = config.getStringList(paramName)
-	  jarPaths.foreach(jar => {  
-	    sparkCntxt.addJar(jar)
-	  })
+	  if (config.hasPath(paramName)) {
+	  	val jarPaths = config.getStringList(paramName).toList
+	  	jarPaths.foreach(jar => {  
+	  		sparkCntxt.addJar(jar)
+	  	})
+	  }
 	}
 }
