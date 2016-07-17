@@ -89,20 +89,6 @@ public class Utility {
 	public static long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
 	public static long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
 
-    /*
-    static AmazonS3 s3 = null;
- 	static {
-		try {	
-			s3 = new AmazonS3Client(new PropertiesCredentials(Utility.class.getResourceAsStream("AwsCredentials.properties")));
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	*/
-    
-    
-	
     /**
      * sets configuration
      * @param conf

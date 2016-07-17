@@ -335,7 +335,7 @@ public class DoubleTable implements Serializable {
 	public String serializeRow(int row) {
 		StringBuilder stBld = new StringBuilder();
 		for (int c = 0; c < numCol; ++c) {
-			stBld.append(Utility.formatDouble(table[row][c], outputPrecision)).append(DELIMETER);
+			stBld.append(BasicUtils.formatDouble(table[row][c], outputPrecision)).append(DELIMETER);
 		}
 		
 		return stBld.substring(0, stBld.length()-1);
@@ -405,7 +405,7 @@ public class DoubleTable implements Serializable {
 	 * @return
 	 */
 	private int getRow(String rowLabel) {
-		int row = Utility.getIndex(rowLabels, rowLabel);
+		int row = BasicUtils.getIndex(rowLabels, rowLabel);
 		return row;
 	}
 
@@ -415,7 +415,7 @@ public class DoubleTable implements Serializable {
 	 * @return
 	 */
 	private int getCol(String colLabel) {
-		int col = Utility.getIndex(colLabels, colLabel);
+		int col = BasicUtils.getIndex(colLabels, colLabel);
 		return col;
 	}
 }
