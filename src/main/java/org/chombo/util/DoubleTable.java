@@ -85,6 +85,22 @@ public class DoubleTable implements Serializable {
 		this.numCol = numCol;
 	}
 	
+	public int getNumRow() {
+		return numRow;
+	}
+
+	public void setNumRow(int numRow) {
+		this.numRow = numRow;
+	}
+
+	public int getNumCol() {
+		return numCol;
+	}
+
+	public void setNumCol(int numCol) {
+		this.numCol = numCol;
+	}
+
 	/**
 	 * @param rowLabels
 	 * @param colLabels

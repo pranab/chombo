@@ -272,14 +272,24 @@ class Record(val size:Int) extends Serializable {
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
-	override def hashCode() : Int = array.hashCode()
+	override def hashCode() : Int = {
+	  var hashCode = 0
+	  array.foreach(a => hashCode += a.hashCode)
+	  hashCode
+	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	override def equals(obj : Any) : Boolean = {
 	  obj match { 
-      	case that: Record => this.array.equals(that.array) 
+      	case that: Record => {
+      	  var isEqual = true
+      	  for(i <- 0 until array.length) {
+      	    isEqual &&= array(i).equals(that.array(i))
+      	  }
+      	  isEqual
+      	} 
       	case _ => false 
 	  }
 	}
