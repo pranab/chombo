@@ -338,7 +338,7 @@ public class DoubleTable implements Serializable {
 	public String serializeTabular() {
 		StringBuilder stBld = new StringBuilder();
 		for (int r = 0; r < numRow; ++r) {
-			stBld.append(serializeRow(r)).append("\\n");
+			stBld.append(serializeRow(r)).append("\n");
 		}
 		return stBld.substring(0, stBld.length()-1);
 	}
