@@ -285,8 +285,12 @@ class Record(val size:Int) extends Serializable {
 	  obj match { 
       	case that: Record => {
       	  var isEqual = true
-      	  for(i <- 0 until array.length) {
-      	    isEqual &&= array(i).equals(that.array(i))
+      	  if (array.length == that.array.length) {
+	      	  for(i <- 0 until array.length) {
+	      	    isEqual &&= array(i).equals(that.array(i))
+	      	  }
+      	  } else {
+      	    isEqual = false
       	  }
       	  isEqual
       	} 

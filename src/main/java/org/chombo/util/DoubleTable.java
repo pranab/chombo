@@ -317,7 +317,7 @@ public class DoubleTable implements Serializable {
 		StringBuilder stBld = new StringBuilder();
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
-				stBld.append(Utility.formatDouble(table[r][c], outputPrecision)).append(DELIMETER);
+				stBld.append(BasicUtils.formatDouble(table[r][c], outputPrecision)).append(DELIMETER);
 			}
 			
 		}
