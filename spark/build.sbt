@@ -11,6 +11,8 @@ scalaVersion := "2.10.4"
 
 libraryDependencies ++=Seq(
   "org.apache.spark" %% "spark-core" % "1.6.1" % "provided",
+  "org.apache.spark" %% "spark-streaming" % "1.6.1",
+  "org.apache.spark" %% "spark-streaming-kafka" % "1.6.1",
   "org.apache.commons" % "commons-lang3" % "3.0",
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.3.3",
   "com.fasterxml.jackson.module" % "jackson-module-scala_2.10" % "2.3.3",
