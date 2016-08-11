@@ -19,6 +19,7 @@
 package org.chombo.spark.common
 
 import org.chombo.util.Utility
+import scala.collection.mutable.Buffer
 
 
 object Record {
@@ -27,6 +28,14 @@ object Record {
   def apply(size:Int) : Record = new Record(size)
   
   def apply(size:Int, record:Record) : Record = new Record(size, record)
+  
+  def extractFields(fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = {
+	  val keyRec = new Record(fieldOrdinals.length)
+	  fieldOrdinals.foreach(ord => {
+	      keyRec.addString(fields(ord))
+	  })
+	  keyRec
+  }
   
 }
 
@@ -181,6 +190,44 @@ class Record(val size:Int) extends Serializable {
 	  addDouble(strlVal.toDouble)
 	}
 
+	/**
+	 * @param index
+	 * @param intVal
+	 * @return
+	 */
+	def addBoolean(index:Int, boolVal:Boolean) : Record = {
+	  array(index) = boolVal
+	  this
+	}
+	
+	/**
+	 * @param index
+	 * @param strlVal
+	 * @return
+	 */
+	def addBoolean(index:Int, strlVal:String) : Record = {
+	  addBoolean(index, strlVal.toBoolean)
+	}	
+	
+	/**
+	 * @param intVal
+	 * @return
+	 */
+	def addBoolean(boolVal:Boolean) : Record = {
+	  array(cursor) = boolVal
+	  cursor += 1
+	  this
+	}
+
+	/**
+	 * @param strlVal
+	 * @return
+	 */
+	def addBoolean(strlVal:String) : Record = {
+	  addBoolean(strlVal.toBoolean)
+	}
+
+	
 	/**
 	 * @param values
 	 * @return
