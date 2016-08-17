@@ -72,7 +72,7 @@ public class ValidationChecker extends Configured implements Tool {
         job.setNumReduceTasks(0);
         
         //create invalid data report file
-       OutputStream os = Utility.getCreateFileOutputStream(job.getConfiguration(), "invalid.data.file.path");
+       OutputStream os = Utility.getCreateFileOutputStream(job.getConfiguration(), "vac.invalid.data.file.path");
        os.close();
         
         int status =  job.waitForCompletion(true) ? 0 : 1;

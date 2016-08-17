@@ -18,20 +18,27 @@
 
 package org.chombo.util;
 
+import java.io.Serializable;
+import java.util.List;
+
 import org.apache.commons.lang3.ArrayUtils;
 
 /**
  * @author pranab
  *
  */
-public class DoubleTable {
+public class DoubleTable implements Serializable {
 	protected double[][] table;
 	protected int numRow;
 	protected int numCol;
 	protected String[] rowLabels;
 	protected String[] colLabels;
 	protected static final String DELIMETER = ",";
+	private int outputPrecision = 6;
 	
+	/**
+	 * 
+	 */
 	public DoubleTable() {
 	}
 	
@@ -53,6 +60,17 @@ public class DoubleTable {
 	}
 
 	/**
+	 * @param rowLabels
+	 * @param colLabels
+	 */
+	public DoubleTable(List<String> rowLabels, List<String> colLabels) {
+		initialize( rowLabels.size(),  colLabels.size());
+		String[] rowLabelsAr = rowLabels.toArray(new String[0]);
+		String[] colLabelsAr = colLabels.toArray(new String[0]);
+		setLabels(rowLabelsAr, colLabelsAr); 
+	}
+
+	/**
 	 * @param numRow
 	 * @param numCol
 	 */
@@ -67,6 +85,22 @@ public class DoubleTable {
 		this.numCol = numCol;
 	}
 	
+	public int getNumRow() {
+		return numRow;
+	}
+
+	public void setNumRow(int numRow) {
+		this.numRow = numRow;
+	}
+
+	public int getNumCol() {
+		return numCol;
+	}
+
+	public void setNumCol(int numCol) {
+		this.numCol = numCol;
+	}
+
 	/**
 	 * @param rowLabels
 	 * @param colLabels
@@ -86,6 +120,21 @@ public class DoubleTable {
 	}
 	
 	/**
+	 * @param rowLabel
+	 * @param colLabel
+	 * @param val
+	 */
+	public void set(String rowLabel, String colLabel, double val) {
+		int row = ArrayUtils.indexOf(rowLabels, rowLabel);
+		int col = ArrayUtils.indexOf(colLabels, colLabel);
+		table[row][col] = val;
+	}
+
+	public void setOutputPrecision(int outputPrecision) {
+		this.outputPrecision = outputPrecision;
+	}
+
+	/**
 	 * @param row
 	 * @param col
 	 * @return
@@ -95,8 +144,8 @@ public class DoubleTable {
 	}
 
 	/**
-	 * @param row
-	 * @param col
+	 * @param rowLabel
+	 * @param colLabel
 	 * @return
 	 */
 	public double get(String rowLabel, String colLabel) {
@@ -196,6 +245,14 @@ public class DoubleTable {
 	}
 
 	/**
+	 * @param rowLabel
+	 * @return
+	 */
+	public double getRowSum(String rowLabel) {
+		return getRowSum(getRow(rowLabel));
+	}
+	
+	/**
 	 * sum of column
 	 * @param col
 	 * @return
@@ -209,6 +266,50 @@ public class DoubleTable {
 	}
 	
 	/**
+	 * @param rowLabel
+	 * @return
+	 */
+	public double getColumnSum(String colLabel) {
+		return getColumnSum(getCol(colLabel));
+	}
+
+	/**
+	 * @param row
+	 * @param scale
+	 */
+	public void scaleRow(int row, double scale) {
+		for (int c = 0; c < numCol; ++c) {
+			table[row][c] *= scale;
+		}
+	}
+	
+	/**
+	 * @param rowLabel
+	 * @param scale
+	 */
+	public void scaleRow(String rowLabel, double scale) {
+		scaleRow(getRow(rowLabel), scale);
+	}
+
+	/**
+	 * @param col
+	 * @param scale
+	 */
+	public void scaleColumn(int col, double scale) {
+		for (int r = 0; r < numRow; ++r) {
+			table[r][col] *= scale;
+		}
+	}
+
+	/**
+	 * @param colLabel
+	 * @param scale
+	 */
+	public void scaleColumn(String colLabel, double scale) {
+		scaleColumn(getCol(colLabel), scale);
+	}
+
+	/**
 	 * serializes table
 	 * @return
 	 */
@@ -216,13 +317,32 @@ public class DoubleTable {
 		StringBuilder stBld = new StringBuilder();
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
-				stBld.append(table[r][c]).append(DELIMETER);
+				stBld.append(BasicUtils.formatDouble(table[r][c], outputPrecision)).append(DELIMETER);
 			}
+			
 		}
 		
 		return stBld.substring(0, stBld.length()-1);
 	}
+	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return serialize();
+	}
 
+	/**
+	 * @return
+	 */
+	public String serializeTabular() {
+		StringBuilder stBld = new StringBuilder();
+		for (int r = 0; r < numRow; ++r) {
+			stBld.append(serializeRow(r)).append("\n");
+		}
+		return stBld.substring(0, stBld.length()-1);
+	}
+	
 	/**
 	 * serialize row
 	 * @param row
@@ -231,7 +351,7 @@ public class DoubleTable {
 	public String serializeRow(int row) {
 		StringBuilder stBld = new StringBuilder();
 		for (int c = 0; c < numCol; ++c) {
-			stBld.append(table[row][c]).append(DELIMETER);
+			stBld.append(BasicUtils.formatDouble(table[row][c], outputPrecision)).append(DELIMETER);
 		}
 		
 		return stBld.substring(0, stBld.length()-1);
@@ -294,5 +414,24 @@ public class DoubleTable {
 
 		return rowCol;
 	}
+	
+	/**
+	 * Row index
+	 * @param rowLabel
+	 * @return
+	 */
+	private int getRow(String rowLabel) {
+		int row = BasicUtils.getIndex(rowLabels, rowLabel);
+		return row;
+	}
 
+	/**
+	 * Column index
+	 * @param colLabel
+	 * @return
+	 */
+	private int getCol(String colLabel) {
+		int col = BasicUtils.getIndex(colLabels, colLabel);
+		return col;
+	}
 }

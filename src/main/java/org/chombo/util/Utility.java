@@ -89,20 +89,6 @@ public class Utility {
 	public static long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
 	public static long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
 
-    /*
-    static AmazonS3 s3 = null;
- 	static {
-		try {	
-			s3 = new AmazonS3Client(new PropertiesCredentials(Utility.class.getResourceAsStream("AwsCredentials.properties")));
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	*/
-    
-    
-	
     /**
      * sets configuration
      * @param conf
@@ -811,6 +797,27 @@ public class Utility {
     	return stBld.substring(0, stBld.length() -1);
     }
 
+    /**
+     * @param arr
+     * @param obj
+     * @return
+     */
+    public static <T> int getIndex(T[] arr, T obj) {
+    	int i = 0;
+    	boolean found = false;
+    	for (T thisObj : arr) {
+    		if (thisObj.equals(obj)) {
+    			found = true;
+    			break;
+    		}
+    		++i;
+    	}
+    	if (!found) {
+    		throw new IllegalArgumentException("object not found in array");
+    	}
+    	return i;
+    }
+    
     /**
      * @param arr
      * @return
@@ -1659,6 +1666,17 @@ public class Utility {
     	stream.close();
     	return stBld.toString();
     }
+
+    /**
+     * @param dateTimeStamp
+     * @param dateFormat
+     * @return
+     * @throws ParseException
+     */
+    public static long getEpochTime(String dateTimeStamp, SimpleDateFormat dateFormat) throws ParseException {
+    	return getEpochTime(dateTimeStamp, false, dateFormat,0);
+    }
+
     /**
      * @param dateTimeStamp
      * @param isEpochTime
@@ -1719,6 +1737,8 @@ public class Utility {
 			modTime /= MILISEC_PER_HOUR;
 		} else if (timeUnit.equals("day")) {
 			modTime /= MILISEC_PER_DAY;
+		} else {
+			throw new IllegalArgumentException("invalid time unit");
 		}
     	return modTime;
     }
