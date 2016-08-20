@@ -23,6 +23,7 @@ import org.apache.spark.SparkContext
 import org.chombo.util.Utility
 import org.chombo.validator.ValidatorFactory
 import com.typesafe.config.Config
+import com.typesafe.config.ConfigValue
 import org.chombo.validator.Validator
 import org.chombo.util.ProcessorAttributeSchema
 import org.chombo.util.NumericalAttrStatsManager
@@ -47,16 +48,14 @@ object DataValidator extends JobConfiguration  {
  * @return
  */
    def main(args: Array[String]) {
-	   val Array(master: String, inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
+	   val Array( inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf("app.data validation", config, false)
 	   val sparkCntxt = new SparkContext(sparkConf)
 	   
 	   if (config.hasPath("app.invalid.records.output.file"))
 	     config.getString("app.invalid.records.output.file")
-	   else 
-	     ""
-	   
+
 	   val fieldDelimIn = config.getString("app.field.delim.in")
 	   val fieldDelimOut = config.getString("app.field.delim.out")
 	   val valTagSeparator = config.getString("app.val.tag.separator")
@@ -66,26 +65,36 @@ object DataValidator extends JobConfiguration  {
 	   if (config.hasPath("app.invalid.records.output.file"))
 	     config.getString("app.invalid.records.output.file")
 	   else 
-	     ""
-	   val validationSchema = Utility.getProcessingSchema( config.getString("app.schema.file.path")) 
+		""
+	   val validationSchema = Utility.getProcessingSchema( config.getString("app.schema.file.path"))
+	   
 	   val validatorConfig = config.atPath("app")
-	   ValidatorFactory.initialize( config.getString( "app,custom.valid.factory.class"), validatorConfig )
+
+	   val configClass =
+	   if (config.hasPath("app.custom.valid.factory.class")) 
+		config.getString("app.custom.valid.factory.class") 
+	   else 
+		 null
+	   ValidatorFactory.initialize(configClass, validatorConfig )
 	   val ordinals =  validationSchema.getAttributeOrdinals()
-	   val tagSep = config.getString( "app,vaidator.tag.separator")
+	   val tagSep = config.getString( "app.val.tag.separator")
 	   
 	   //initialize stats manager
-	   getAttributeStats(config.getString("app.stats.file.path"))
-	   getAttributeMeds(config.getString("app.med.stats.file.path"), config.getString("app.mad.stats.file.path"), 
-	       Utility.intArrayFromString(config.getString("app.id.ordinals"), ",") )
+	   if(config.hasPath("app.stats.file.path"))
+	      getAttributeStats(config.getString("app.stats.file.path"))
+	   if(config.hasPath("app.med.stats.file.path"))
+ 	      getAttributeMeds(config.getString("app.med.stats.file.path"), config.getString("app.mad.stats.file.path"), 
+	           Utility.intArrayFromString(config.getString("app.id.ordinals"), ",") )
 	  
 
 	   //simple validators  
 	   var foundSimpleValidators = false
+
 	   ordinals.foreach(ord => {
 		   val  key = "app.validator." + ord
 		   if (config.hasPath(key)) {
-			   val validatorTag = config.getString(key)
-			   val valTags = validatorTag.split(tagSep);
+			   val validatorTag : String = config.getString(key)
+			   val valTags :Array[String] = validatorTag.split(tagSep);
 			   createValidators(config, valTags, ord, validationSchema, mutValidators)
 			   foundSimpleValidators = true
 		   }
@@ -110,12 +119,12 @@ object DataValidator extends JobConfiguration  {
 	    
 	    //apply all validators for the field
 	    val taggedItems = itemsZipped.map(z => {
-	    	val valList = validators.get(z._2).get
+	    	val valList : Array[Validator] = validators.get(z._2).get
 	    	val valStatuses = valList.map(validator => {
 	    		val status = validator.isValid(z._1)
 	    		(validator.getTag(), status)
 	    	})
-	    	
+		
 	    	//only failed validators
 	    	val failedValidators = valStatuses.filter(s => {
 	    	  !s._2
@@ -124,17 +133,18 @@ object DataValidator extends JobConfiguration  {
 	    	val field = if (failedValidators.isEmpty)
 	    		z._1
 	    	else 
-	    	  z._1 + valTagSeparator + failedValidators.mkString(fieldDelimOut)
+	    	  z._1 + ":" + failedValidators.mkString(fieldDelimOut)
 	    	  
 	    	field
 	    })
-	 
 	    taggedItems.mkString(fieldDelimOut)
 	  })
 	 taggedData.cache
 	 
 	 //filter valid data
-	 val validData = taggedData.filter(line => !line.contains(valTagSeparator))
+	 val validData = taggedData.filter(line => !line.contains(":"))
+	 val list = validData.collect()
+	 list.foreach(println)
 	 validData.saveAsTextFile(outputPath)
 	  
 	 //filter invalid data
@@ -154,9 +164,9 @@ object DataValidator extends JobConfiguration  {
 private  def createValidators( config : Config , valTags : Array[String],   ord : Int,
        validationSchema :  ProcessorAttributeSchema, mutValidators : scala.collection.mutable.HashMap[Int, Array[Validator]])  {
 	   val validatorList =  List[Validator]()
-	   val  prAttr = validationSchema.findAttributeByOrdinal(ord)
-	   val validatorConfig = config.atPath("app")
-	   val validators = valTags.map(tag => {
+	   val prAttr = validationSchema.findAttributeByOrdinal(ord)
+	   val validatorConfig = config
+	   val validators = valTags.filter(_.length > 0 ).map(tag => {
 		    val validator = tag match {
 		     case "zscoreBasedRange" => {
 		    	 getAttributeStats(config.getString("app.stats.file.path"))

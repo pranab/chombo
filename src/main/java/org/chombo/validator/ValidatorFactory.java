@@ -171,7 +171,7 @@ public class ValidatorFactory {
 				validator = new  NumericalValidator.StatsBasedRangeValidator(validatorType, prAttr, validatorContext);
 		} else if (validatorType.equals( ROBUST_ZCORE_BASED_RANGE_VALIDATOR)) {
 			validator = new  NumericalValidator.RobustZscoreBasedRangeValidator(validatorType, prAttr, validatorContext);
-		} else {
+		} else if (null != valConfig){
 			//custom validator with configured validator class names
 			validator = createCustomValidator(validatorType, prAttr,  valConfig);
 			
@@ -221,6 +221,12 @@ public class ValidatorFactory {
      * @return
      */
     public static Config getValidatorConfig(Config transformerConfig ,String validatorTag, ProcessorAttribute prAttr) {
+	if(null == transformerConfig)
+		return null;
+
+	if(!transformerConfig.hasPath("validators." + validatorTag))
+		return null;
+
     	Config valConfig = transformerConfig.getConfig("validators." + validatorTag);
     	Config config = null;
     	try {
