@@ -93,7 +93,7 @@ object DataValidator extends JobConfiguration  {
 
 	   ordinals.foreach(ord => {
 		   val  key = "app.validator." + ord
-		   if (config.hasPath(key)) {
+		   if (localConfig.hasPath(key)) {
 			   val validatorTag : String = localConfig.getString(key)
 			   val valTags :Array[String] = validatorTag.split(tagSep);
 			   createValidators(config, valTags, ord, validationSchema, mutValidators)
@@ -120,6 +120,7 @@ object DataValidator extends JobConfiguration  {
 	    
 	    //apply all validators for the field
 	    val taggedItems = itemsZipped.map(z => {
+		println("The value of z is " + z)
 	    	val valList : Array[Validator] = validators.get(z._2).get
 	    	val valStatuses = valList.map(validator => {
 	    		val status = validator.isValid(z._1)
@@ -134,7 +135,7 @@ object DataValidator extends JobConfiguration  {
 	    	val field = if (failedValidators.isEmpty)
 	    		z._1
 	    	else 
-	    	  z._1 + ":" + failedValidators.mkString(fieldDelimOut)
+	    	  z._1 + valTagSeparator  + failedValidators.mkString(fieldDelimOut)
 	    	  
 	    	field
 	    })
