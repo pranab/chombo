@@ -50,41 +50,42 @@ object DataValidator extends JobConfiguration  {
    def main(args: Array[String]) {
 	   val Array( inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
+	   val localConfig = config.atPath("app")
 	   val sparkConf = createSparkConf("app.data validation", config, false)
 	   val sparkCntxt = new SparkContext(sparkConf)
 	   
-	   if (config.hasPath("app.invalid.records.output.file"))
-	     config.getString("app.invalid.records.output.file")
+	   if (localConfig.hasPath("app.invalid.records.output.file"))
+	     localConfig.getString("app.invalid.records.output.file")
 
-	   val fieldDelimIn = config.getString("app.field.delim.in")
-	   val fieldDelimOut = config.getString("app.field.delim.out")
-	   val valTagSeparator = config.getString("app.val.tag.separator")
-	   val filterInvalidRecords = config.getBoolean("app.filter.invalid.records")
-	   val outputInvalidRecords = config.getBoolean("app.output.invalid.records")
+	   val fieldDelimIn = localConfig.getString("app.field.delim.in")
+	   val fieldDelimOut = localConfig.getString("app.field.delim.out")
+	   val valTagSeparator = localConfig.getString("app.val.tag.separator")
+	   val filterInvalidRecords = localConfig.getBoolean("app.filter.invalid.records")
+	   val outputInvalidRecords = localConfig.getBoolean("app.output.invalid.records")
 	   val invalidRecordsOutputFile = 
-	   if (config.hasPath("app.invalid.records.output.file"))
-	     config.getString("app.invalid.records.output.file")
+	   if (localConfig.hasPath("app.invalid.records.output.file"))
+	     localConfig.getString("app.invalid.records.output.file")
 	   else 
 		""
-	   val validationSchema = Utility.getProcessingSchema( config.getString("app.schema.file.path"))
+	   val validationSchema = Utility.getProcessingSchema( localConfig.getString("app.schema.file.path"))
 	   
 	   val validatorConfig = config.atPath("app")
 
 	   val configClass =
-	   if (config.hasPath("app.custom.valid.factory.class")) 
-		config.getString("app.custom.valid.factory.class") 
+	   if (localConfig.hasPath("app.custom.valid.factory.class")) 
+		localConfig.getString("app.custom.valid.factory.class") 
 	   else 
 		 null
 	   ValidatorFactory.initialize(configClass, validatorConfig )
 	   val ordinals =  validationSchema.getAttributeOrdinals()
-	   val tagSep = config.getString( "app.val.tag.separator")
+	   val tagSep = localConfig.getString( "app.val.tag.separator")
 	   
 	   //initialize stats manager
-	   if(config.hasPath("app.stats.file.path"))
-	      getAttributeStats(config.getString("app.stats.file.path"))
-	   if(config.hasPath("app.med.stats.file.path"))
- 	      getAttributeMeds(config.getString("app.med.stats.file.path"), config.getString("app.mad.stats.file.path"), 
-	           Utility.intArrayFromString(config.getString("app.id.ordinals"), ",") )
+	   if(localConfig.hasPath("app.stats.file.path"))
+	      getAttributeStats(localConfig.getString("app.stats.file.path"))
+	   if(localConfig.hasPath("app.med.stats.file.path"))
+ 	      getAttributeMeds(localConfig.getString("app.med.stats.file.path"), localConfig.getString("app.mad.stats.file.path"), 
+	           Utility.intArrayFromString(localConfig.getString("app.id.ordinals"), ",") )
 	  
 
 	   //simple validators  
@@ -93,7 +94,7 @@ object DataValidator extends JobConfiguration  {
 	   ordinals.foreach(ord => {
 		   val  key = "app.validator." + ord
 		   if (config.hasPath(key)) {
-			   val validatorTag : String = config.getString(key)
+			   val validatorTag : String = localConfig.getString(key)
 			   val valTags :Array[String] = validatorTag.split(tagSep);
 			   createValidators(config, valTags, ord, validationSchema, mutValidators)
 			   foundSimpleValidators = true
