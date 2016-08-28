@@ -63,7 +63,7 @@ public class BinaryCategoryCreator {
 	}
 	
 	public String findToken(long value) {
-		String token = value > threshold ? upperToken : lowerToken;
+		String token = value >= threshold ? upperToken : lowerToken;
 		return token;
 	}
 	
