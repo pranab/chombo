@@ -28,7 +28,6 @@ import org.chombo.util.Utility;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 
-
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
 
@@ -265,6 +264,11 @@ public class NumericTransformer  {
 		public BinaryCreator(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			dataType = prAttr.getDataType();
+			
+			long threshold = config.getLong("threshold");
+			String lowerToken = config.getString("lowerToken");
+			String upperToken = config.getString("upperToken");
+			binaryCategoryCreator = new BinaryCategoryCreator(threshold, lowerToken, upperToken);
 		}
 		
 		@Override

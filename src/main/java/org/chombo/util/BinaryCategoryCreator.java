@@ -31,6 +31,13 @@ public class BinaryCategoryCreator {
 	public BinaryCategoryCreator() {
 	}
 
+	public BinaryCategoryCreator(long threshold, String lowerToken, String upperToken) {
+		super();
+		this.threshold = threshold;
+		this.lowerToken = lowerToken;
+		this.upperToken = upperToken;
+	}
+
 	public long getThreshold() {
 		return threshold;
 	}
@@ -56,7 +63,7 @@ public class BinaryCategoryCreator {
 	}
 	
 	public String findToken(long value) {
-		String token = value > threshold ? upperToken : lowerToken;
+		String token = value >= threshold ? upperToken : lowerToken;
 		return token;
 	}
 	
