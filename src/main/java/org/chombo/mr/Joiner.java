@@ -162,6 +162,7 @@ public class Joiner extends Configured implements Tool {
 		            	}
 		            	outVal.prepend("1");
 	   	    			//context.getCounter("Join stats", "right set count").increment(1);
+	   	    			toEmit = true;
 		            }
 	            }
 	            if (toEmit) {
@@ -227,7 +228,7 @@ public class Joiner extends Configured implements Tool {
 	        	secondSetCount = 0;
 	        	for (Tuple value : values){
 	        		if (value.startsWith("0")) {
-	        			fistTypeList.add(value);
+	        			fistTypeList.add(value.createClone());
 	        		} else {
 	        			secondType = value;
 	        			++secondSetCount;
