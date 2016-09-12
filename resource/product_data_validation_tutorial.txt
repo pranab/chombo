@@ -36,6 +36,33 @@ parameter.
 
 6. Configuration
 ================
-Sample configuration is in dava.properties
+Sample configuration is in etl.properties. This only defines high level configuration e.g., what 
+validator should be used for what field.
+
+Many of the validators will use metadata from JSON schema as configuration parameters.
+Here are the attribute metadata  that can be set in the JSOn schema file. Depending on the validator 
+type, some of them will be used. You can look inside the classes StringValidator and NumericalValidator 
+to find out how they are used.
+
+- min 
+- max 
+- mean 
+- variance
+- stdDev
+- skew
+- maxZscore
+- datePattern
+- nullable;
+- stringPattern
+- minString
+- maxString
+- length
+ 
+There are some validators that use more complex configuration. For example StatsBasedRangeValidator 
+does range validation based on statistical analysis performed on sample data. This validator expects an 
+instance of NumericalAttrStatsManager to be passed as part of a context hash map.
+
+In future we may have validators that may require complex configuration, passed TypeSafe hcon 
+configuration which support nested structure like JSON.
 
 
