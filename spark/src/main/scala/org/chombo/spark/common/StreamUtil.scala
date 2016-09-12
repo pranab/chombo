@@ -76,8 +76,8 @@ object StreamUtil {
 	 * @return
 	 */
 	def getKeyedStreamSource(config: Config, strContxt: StreamingContext) : DStream[(Record, String)] = {
-	  	val source = config.getString("stream.source")
-	  	val keyFieldOrdinals = config.getIntList("key.field.ordinals").asScala
+	  	val source = config.getString("general.stream.source")
+	  	val keyFieldOrdinals = config.getIntList("field.key.ordinals").asScala
 	  	val fieldDelimIn = config.getString("field.delim.in")
 	  	
 	  	val strm = source match {
