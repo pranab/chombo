@@ -179,7 +179,7 @@ public class Transformer extends Configured implements Tool {
 	        		List<String> transformerTagList = prAttr.getTransformers();
 	        		if (null != transformerTagList) {
 	        			String[] transformerTags =  transformerTagList.toArray(new String[transformerTagList.size()]);
-	        			createTransformers(transformerTags,  fieldOrd);
+	        			createTransformers(transformerTags, fieldOrd);
 	        		}
 	        	}
 	        	
@@ -191,7 +191,6 @@ public class Transformer extends Configured implements Tool {
 		        		createGenerators(generatorTags, prAttr);
 		        	}
 	        	}
-	        	
         	}
         	//output
         	itemsOut = new String[transformerSchema.findDerivedAttributeCount()];

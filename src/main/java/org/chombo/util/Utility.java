@@ -555,12 +555,40 @@ public class Utility {
      * @param tuple
      */
     public static void createTuple(String  record, Tuple tuple) {
-    	tuple.initialize();
     	String[] items = record.split(",");
-    	for (String item : items) {
-    		tuple.add(item);
-    	}
+    	createStringTuple(items, 0, items.length, tuple);
     }    
+ 
+	/**
+	 * @param record
+	 * @param offset
+	 * @param tuple
+	 */
+	public static void createStringTupleFromBegining(String[] record, int offset, Tuple tuple) {
+		createStringTuple(record, 0, offset, tuple);
+	}    
+
+	/**
+	 * @param record
+	 * @param offset
+	 * @param tuple
+	 */
+	public static void createStringTupleFromEnd(String[] record, int offset, Tuple tuple) {
+		createStringTuple(record, offset, record.length, tuple);
+	}    
+
+	/**
+	 * @param record
+	 * @param beg
+	 * @param end
+	 * @param tuple
+	 */
+	public static void createStringTuple(String[] record, int beg, int end, Tuple tuple) {
+		tuple.initialize();
+		for (int i = beg; i < end; ++i) {
+			tuple.add(record[i]);
+		}
+	}
     
     /**
      * @param record
@@ -1615,7 +1643,8 @@ public class Utility {
     		}
     	}
     }
-    
+
+
     /**
      * @param val
      * @param prec

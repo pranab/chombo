@@ -23,10 +23,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
-
-
 
 /**
  * General purpose tuple consisting list of primitive types. Implements WritableComparable
@@ -563,6 +560,22 @@ public class Tuple  implements WritableComparable<Tuple>  {
 			}
 		}		
 		return stBld.toString();
+	}
+
+	/**
+	 * @param offset
+	 * @return
+	 */
+	public Tuple beginningSubTuple(int offset) {
+		return subTuple(0, offset);
+	}
+	
+	/**
+	 * @param offset
+	 * @return
+	 */
+	public Tuple endSubTuple(int offset) {
+		return subTuple(offset, fields.size());
 	}
 
 	/**
