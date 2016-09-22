@@ -121,7 +121,6 @@ public class ValidatorFactory {
 	public static Validator create(String validatorType,  ProcessorAttribute prAttr, 
 			Map<String, Object> validatorContext, Config validatorConfig) {
 		Validator validator = null;
-		Config valConfig =  getValidatorConfig(validatorConfig ,validatorType, prAttr);
 		
 		if (validatorType.equals(MIN_VALIDATOR)) {
 			if (prAttr.isInteger()) {
@@ -172,6 +171,12 @@ public class ValidatorFactory {
 		} else if (validatorType.equals( ROBUST_ZCORE_BASED_RANGE_VALIDATOR)) {
 			validator = new  NumericalValidator.RobustZscoreBasedRangeValidator(validatorType, prAttr, validatorContext);
 		} else {
+			if (null == validatorConfig) {
+				throw new IllegalStateException("missing HOCON configuration needed for custom validators");
+			}
+			
+			Config valConfig =  getValidatorConfig(validatorConfig ,validatorType, prAttr);
+
 			//custom validator with configured validator class names
 			validator = createCustomValidator(validatorType, prAttr,  valConfig);
 			
@@ -220,8 +225,8 @@ public class ValidatorFactory {
      * @param prAttr
      * @return
      */
-    public static Config getValidatorConfig(Config transformerConfig ,String validatorTag, ProcessorAttribute prAttr) {
-    	Config valConfig = transformerConfig.getConfig("validators." + validatorTag);
+    public static Config getValidatorConfig(Config validatorConfig ,String validatorTag, ProcessorAttribute prAttr) {
+    	Config valConfig = validatorConfig.getConfig("validators." + validatorTag);
     	Config config = null;
     	try {
     		//attribute specific config
