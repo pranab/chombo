@@ -41,6 +41,8 @@ import org.chombo.transformer.TransformerFactory;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.Utility;
+import org.chombo.validator.Validator;
+import org.chombo.validator.ValidatorFactory;
 
 import com.typesafe.config.Config;
 
@@ -134,46 +136,95 @@ public class Transformer extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim", ",");
         	numFields = config.getInt("tra.num.fields", -1);
         	
-        	//transformer schema
-        	configDriven = config.get("tra.transformer.schema.file.path") != null;
-        	if (configDriven) {
-        		//schema
-	        	transformerSchema = Utility.getProcessingSchema(config, "tra.transformer.schema.file.path");
-	        	transformerSchema.validateTargetAttributeMapping();
-	        	
-	        	//transformer config
-	        	transformerConfig = Utility.getHoconConfig(config, "tra.transformer.config.file.path");
-	        	
-	        	//intialize transformer factory
-	        	TransformerFactory.initialize( config.get( "tra.custom.trans.factory.class"), transformerConfig);
+        	//schema
+        	transformerSchema = Utility.getProcessingSchema(config, "tra.transformer.schema.file.path");
+        	transformerSchema.validateTargetAttributeMapping();
 
+        	//transformer config
+        	transformerConfig = Utility.getHoconConfig(config, "tra.transformer.config.file.path");
+        	
+        	//intialize transformer factory
+        	TransformerFactory.initialize(config.get( "tra.custom.trans.factory.class"), transformerConfig);
+        	
+            //transformers from  prop file configuration
+            int[] ordinals  = transformerSchema.getAttributeOrdinals();
+            boolean foundInPropConfig = false;
+            for (int ord : ordinals) {
+            	String key = "tra.transformer." + ord;
+            	String transformerString = config.get(key);
+            	if (null != transformerString) {
+            		//transformer tags in property file
+            		String[] tranformerTags = transformerString.split(fieldDelimOut);
+            		createTransformers(tranformerTags,  ord);
+            		foundInPropConfig = true;
+            	}
+            }
+            
+            //generators from prop file configuration
+            if (foundInPropConfig) {
+            	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
+            		String key = "tra.generator." + prAttr.getOrdinal();
+                	String generatorString = config.get(key);
+            		String[] generatorTags = generatorString.split(fieldDelimOut);
+            		createGenerators(generatorTags, prAttr);
+            	}
+            }
+
+            //all schema driven
+        	if (!foundInPropConfig) {
 	        	//build transformers
 	        	AttributeTransformer attrTrans;
 	        	for (ProcessorAttribute prAttr : transformerSchema.getAttributes()) {
 	        		fieldOrd = prAttr.getOrdinal();
-	        		if (null != prAttr.getTransformers()) {
-	        			for (String tranformerTag  : prAttr.getTransformers() ) {
-	        				attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
-	        				registerTransformers(fieldOrd, attrTrans);
-	        			}
+	        		List<String> transformerTagList = prAttr.getTransformers();
+	        		if (null != transformerTagList) {
+	        			String[] transformerTags =  transformerTagList.toArray(new String[transformerTagList.size()]);
+	        			createTransformers(transformerTags, fieldOrd);
 	        		}
 	        	}
 	        	
 	        	//build generators
 	        	if (null != transformerSchema.getAttributeGenerators()) {
 		        	for (ProcessorAttribute prAttr : transformerSchema.getAttributeGenerators()) {
-		        		for (String tranformerTag  : prAttr.getTransformers() ) {
-		        			attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
-		        			registerGenerators(attrTrans);
-		        		}
+		        		List<String> generatorTagList = prAttr.getTransformers();
+		        		String[] generatorTags =  generatorTagList.toArray(new String[generatorTagList.size()]);
+		        		createGenerators(generatorTags, prAttr);
 		        	}
 	        	}
-	        	
-	        	//output
-	        	itemsOut = new String[transformerSchema.findDerivedAttributeCount()];
         	}
+        	//output
+        	itemsOut = new String[transformerSchema.findDerivedAttributeCount()];
        }
+
+        /**
+         * @param tranformerTags
+         * @param ord
+         * @throws IOException
+         */
+        private void createTransformers(String[] tranformerTags,  int ord) 
+        		throws IOException {
+        	//create all transformers for  a field
+			ProcessorAttribute prAttr = transformerSchema.findAttributeByOrdinal(ord);
+			AttributeTransformer attrTrans = null;
+    		for (String tranformerTag :  tranformerTags) {
+				attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
+				registerTransformers(fieldOrd, attrTrans);
+    		}
+        }
         
+        /**
+         * @param generatorTags
+         * @param prAttr
+         * @throws IOException
+         */
+        private void createGenerators(String[] generatorTags,  ProcessorAttribute prAttr) 
+        		throws IOException {
+			AttributeTransformer attrTrans = null;
+        	for (String generatorTag : generatorTags) {
+        		attrTrans = TransformerFactory.createTransformer(generatorTag, prAttr, transformerConfig);
+    			registerGenerators(attrTrans);
+        	}
+        }
         
         /**
          * @param fieldOrd
