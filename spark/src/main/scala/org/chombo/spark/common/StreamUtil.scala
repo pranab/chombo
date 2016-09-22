@@ -35,7 +35,7 @@ object StreamUtil {
 	 * @return
 	 */
 	def getStreamSource(config: Config, strContxt: StreamingContext) : DStream[String] = {
-	  	val source = config.getString("stream.source")
+	  	val source = config.getString("general.stream.source")
 	  	val strm = source match {
 			//HDFS files as stream source
 	  		case "hdfs" => {
@@ -79,6 +79,7 @@ object StreamUtil {
 	  	val source = config.getString("general.stream.source")
 	  	val keyFieldOrdinals = config.getIntList("field.key.ordinals").asScala
 	  	val fieldDelimIn = config.getString("field.delim.in")
+	  	val debugOn = config.getBoolean("general.debug.on")
 	  	
 	  	val strm = source match {
 			//HDFS files as stream source
@@ -98,6 +99,9 @@ object StreamUtil {
 	  			val host = config.getString("source.socket.receiver.host")
 	  			val port = config.getInt("source.socket.receiver.port")
 	  			val st = strContxt.socketTextStream(host, port, StorageLevel.MEMORY_AND_DISK_SER_2)
+	  			if (debugOn) {
+	  			  st.foreach(rdd => {println("*** num of records in RDD: " + rdd.count)})
+	  			}
 	  			st.map(r => {
 	  			  val fields = r.split(fieldDelimIn)
 	  			  val id = Record.extractFields(fields, keyFieldOrdinals)
