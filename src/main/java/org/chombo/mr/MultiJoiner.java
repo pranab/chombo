@@ -234,7 +234,7 @@ public class MultiJoiner extends Configured implements Tool {
             	tupleTraversalDone = false;
         		while(!tupleTraversalDone) {
                 	stBld.delete(0, stBld.length());
-                	stBld.append(key.toString(0, key.getSize()-1));
+                	stBld.append(key.toStringEnd(key.getSize()-1));
                 	//nested join
                 	for (int i = 0; i < numSplits; ++i) {
                 		//tuple list for a split and the a tuple within list
