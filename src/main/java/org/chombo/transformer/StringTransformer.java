@@ -93,11 +93,13 @@ public class StringTransformer {
 		private Pattern pattern;
 		private Matcher matcher;
 		private boolean failOnMissingGroup;
+		private boolean retainOriginalField;
 		
 		public PatternBasedTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			pattern = Pattern.compile(config.getString("regEx"));
 			failOnMissingGroup = config.getBoolean("failOnMissingGroup");
+			retainOriginalField = config.getBoolean("retainOriginalField");
 		}
 
 		public PatternBasedTransformer(int numTransAttributes, String regEx, boolean failOnMissingGroup) {
@@ -110,8 +112,14 @@ public class StringTransformer {
 		public String[] tranform(String value) {
 			matcher = pattern.matcher(value);
 			if (matcher.matches()) {
+				int grIndx = 1;
 				for (int i = 0; i < transformed.length; ++i) {
-			        String extracted = matcher.group(i+1);
+					if (retainOriginalField && i == 0) {
+						transformed[i] = value;
+						continue;
+					}
+					
+			        String extracted = matcher.group(grIndx);
 			        if(extracted != null) {
 			        	transformed[i] = extracted;
 			        } else {
@@ -121,6 +129,7 @@ public class StringTransformer {
 			        		transformed[i] = "";
 			        	}
 			        }
+			        ++grIndx;
 			    }
 			} else {
 				throw new IllegalArgumentException("mtaching failed for pattern based transformer");
