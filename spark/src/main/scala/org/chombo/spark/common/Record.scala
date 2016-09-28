@@ -25,10 +25,32 @@ import scala.collection.mutable.Buffer
 object Record {
   var floatPrecision = 6
   
+  /**
+ * @param size
+ * @return
+ */
   def apply(size:Int) : Record = new Record(size)
   
+  /**
+ * @param size
+ * @param record
+ * @return
+ */
   def apply(size:Int, record:Record) : Record = new Record(size, record)
   
+  /**
+ * @param data
+ * @param beg
+ * @param end
+ * @return
+ */
+  def apply(data:Array[String], beg:Int, end:Int) : Record = new Record(data, beg, end)
+  
+  /**
+ * @param fields
+ * @param fieldOrdinals
+ * @return
+ */
   def extractFields(fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = {
 	  val keyRec = new Record(fieldOrdinals.length)
 	  fieldOrdinals.foreach(ord => {
@@ -37,12 +59,26 @@ object Record {
 	  keyRec
   }
   
+  /**
+ * @param fields
+ * @param beg
+ * @param end
+ * @return
+ */
+  def extractFields(fields: Array[String], beg:Int, end:Int) : Record = {
+	  val rec = new Record(end-beg)
+	  for(i <- beg to (end - 1)){
+	     rec.addString(fields(i))
+	  }
+	  rec
+  }
 }
 
 /**
  * @author pranab
  *
  */
+
 class Record(val size:Int) extends Serializable {
 	val array = new Array[Any](size)
 	var cursor:Int = 0
@@ -55,6 +91,18 @@ class Record(val size:Int) extends Serializable {
 	  this(size)
 	  Array.copy(record.array, 0, array, 0, record.size)
 	}
+	
+	/**
+ 	* @param data
+ 	* @param beg
+ 	* @param end
+ 	*/	
+	def this(data:Array[String], beg:Int, end:Int) {
+	  this(end - beg)
+	  for(i <- beg to (end - 1)){
+	     addString(data(i))
+	  }
+	} 
 	
 	def getArray() :Array[Any] = array
 	

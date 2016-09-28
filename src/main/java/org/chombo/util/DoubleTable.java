@@ -75,16 +75,25 @@ public class DoubleTable implements Serializable {
 	 * @param numCol
 	 */
 	public void  initialize(int numRow, int numCol) {
+		initialize(numRow, numCol, 0);
+	}
+	
+	/**
+	 * @param numRow
+	 * @param numCol
+	 * @param value
+	 */
+	public void  initialize(int numRow, int numCol, double value) {
 		table = new double[numRow][numCol];
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
-				table[r][c] = 0;
+				table[r][c] = value;
 			}
 		}
 		this.numRow = numRow;
 		this.numCol = numCol;
 	}
-	
+
 	public int getNumRow() {
 		return numRow;
 	}
@@ -308,6 +317,76 @@ public class DoubleTable implements Serializable {
 	public void scaleColumn(String colLabel, double scale) {
 		scaleColumn(getCol(colLabel), scale);
 	}
+	
+	/**
+	 * @return
+	 */
+	public double getMaxElement() {
+		double max = Double.MIN_VALUE;
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				if (table[r][c] > max) {
+					max = table[r][c];
+				}
+			}
+		}
+		
+		return max;
+	}
+	
+	/**
+	 * @return
+	 */
+	public double getMaxDiagonalElement() {
+		if (numRow != numCol) {
+			throw new IllegalStateException("table is not diagonal");
+		}
+		double max = Double.MIN_VALUE;
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				if (table[r][c] > max) {
+					max = table[r][c];
+				}
+			}
+		}
+		return max;
+	}
+
+	/**
+	 * @return
+	 */
+	public double getMinDiagonalElement() {
+		if (numRow != numCol) {
+			throw new IllegalStateException("table is not diagonal");
+		}
+		double min = Double.MAX_VALUE;
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				if (table[r][c] < min) {
+					min = table[r][c];
+				}
+			}
+		}
+		return min;
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean isDisagonal() {
+		return numRow == numCol;
+	}
+	
+	/**
+	 * @param scale
+	 */
+	public void scale(double scale) {
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				table[r][c] /= scale;
+			}
+		}
+	}	
 
 	/**
 	 * serializes table
@@ -371,6 +450,20 @@ public class DoubleTable implements Serializable {
 		}
 	}
 	
+	/**
+	 * @param items
+	 * @param beg
+	 * @param end
+	 */
+	public void deseralize(String[] items, int beg) {
+		int k = beg;
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				table[r][c]  = Double.parseDouble(items[k++]);
+			}
+		}
+	}
+
 	/**
 	 * deserialize row
 	 * @param data
