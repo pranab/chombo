@@ -39,18 +39,25 @@ object Record {
   def apply(size:Int, record:Record) : Record = new Record(size, record)
   
   /**
- * @param data
- * @param beg
- * @param end
- * @return
- */
+   * @param data
+   * @param beg
+   * @param end
+   * @return
+  */
   def apply(data:Array[String], beg:Int, end:Int) : Record = new Record(data, beg, end)
   
   /**
- * @param fields
- * @param fieldOrdinals
- * @return
- */
+   * @param fields
+   * @param fieldOrdinals
+   * @return
+  */
+  def apply(fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = new Record(fields, fieldOrdinals)
+  
+  /**
+   * @param fields
+   * @param fieldOrdinals
+   * @return
+  */
   def extractFields(fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = {
 	  val keyRec = new Record(fieldOrdinals.length)
 	  fieldOrdinals.foreach(ord => {
@@ -78,7 +85,6 @@ object Record {
  * @author pranab
  *
  */
-
 class Record(val size:Int) extends Serializable {
 	val array = new Array[Any](size)
 	var cursor:Int = 0
@@ -103,6 +109,18 @@ class Record(val size:Int) extends Serializable {
 	     addString(data(i))
 	  }
 	} 
+
+
+	/**
+	 * @param fields
+	 * @param fieldOrdinals
+	 */
+	def this(fields: Array[String], fieldOrdinals: Buffer[Integer]) {
+	  this(fieldOrdinals.length)
+	  fieldOrdinals.foreach(ord => {
+	      addString(fields(ord))
+	  })
+	}
 	
 	def getArray() :Array[Any] = array
 	

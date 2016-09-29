@@ -35,6 +35,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_DOUBLE = "double";
 	public static final String DATA_TYPE_TEXT = "text";
 	public static final String DATA_TYPE_DATE = "date";
+	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";
 	
 	public String getName() {
 		return name;

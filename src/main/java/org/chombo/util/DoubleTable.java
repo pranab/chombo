@@ -74,8 +74,8 @@ public class DoubleTable implements Serializable {
 	 * @param numRow
 	 * @param numCol
 	 */
-	public void  initialize(int numRow, int numCol) {
-		initialize(numRow, numCol, 0);
+	public DoubleTable initialize(int numRow, int numCol) {
+		return initialize(numRow, numCol, 0);
 	}
 	
 	/**
@@ -83,7 +83,7 @@ public class DoubleTable implements Serializable {
 	 * @param numCol
 	 * @param value
 	 */
-	public void  initialize(int numRow, int numCol, double value) {
+	public DoubleTable  initialize(int numRow, int numCol, double value) {
 		table = new double[numRow][numCol];
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
@@ -92,20 +92,46 @@ public class DoubleTable implements Serializable {
 		}
 		this.numRow = numRow;
 		this.numCol = numCol;
+		return this;
+	}
+	
+	/**
+	 * @param value
+	 */
+	public DoubleTable initializeDiagonal(double value) {
+		if (numRow != numCol) {
+			throw new IllegalStateException("table is not square");
+		}
+		for (int i = 0; i < numRow; ++i) {
+			table[i][i] = value;
+		}
+		return this;
 	}
 
+	/**
+	 * @return
+	 */
 	public int getNumRow() {
 		return numRow;
 	}
 
+	/**
+	 * @param numRow
+	 */
 	public void setNumRow(int numRow) {
 		this.numRow = numRow;
 	}
 
+	/**
+	 * @return
+	 */
 	public int getNumCol() {
 		return numCol;
 	}
 
+	/**
+	 * @param numCol
+	 */
 	public void setNumCol(int numCol) {
 		this.numCol = numCol;
 	}
@@ -339,7 +365,7 @@ public class DoubleTable implements Serializable {
 	 */
 	public double getMaxDiagonalElement() {
 		if (numRow != numCol) {
-			throw new IllegalStateException("table is not diagonal");
+			throw new IllegalStateException("table is not square");
 		}
 		double max = Double.MIN_VALUE;
 		for (int r = 0; r < numRow; ++r) {
