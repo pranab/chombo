@@ -54,4 +54,16 @@ public class PoisonDistr {
 		distr *=  (avCount / curCount);
 		return curDistr;
 	}
+	
+	/**
+	 * @param count
+	 * @return
+	 */
+	public double get(int count) {
+		double distr = Math.exp(-avCount);
+		if (count > 0) {
+			distr *= Math.pow(avCount, count) / BasicUtils.factorial(count);
+		}
+		return distr;
+	}
 }

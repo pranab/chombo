@@ -876,5 +876,17 @@ public class BasicUtils {
     	}
     	return product;
     }
+    
+    /**
+     * @param value
+     * @return
+     */
+    public  static int factorial(int value) {
+    	int fact = 1;
+    	for (int i = value ; i > 1; --i) {
+    		fact *= i;
+    	}
+    	return fact;
+    }
    
 }

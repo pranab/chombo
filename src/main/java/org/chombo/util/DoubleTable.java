@@ -198,6 +198,14 @@ public class DoubleTable implements Serializable {
 	}
 	
 	/**
+	 * @param rowLabel
+	 * @return
+	 */
+	public double[] getRow(String rowLabel) {
+		return table[getRowIndex(rowLabel)];
+	}
+
+	/**
 	 * @param rowNum
 	 * @param row
 	 */
@@ -215,6 +223,14 @@ public class DoubleTable implements Serializable {
 		double[] column = new double[numRow];
 		getColumn(colNum, column);
 		return column;
+	}
+
+	/**
+	 * @param colLabel
+	 * @return
+	 */
+	public double[] getColumn(String colLabel) {
+		return getColumn(getColIndex(colLabel));
 	}
 	
 	/**
@@ -284,7 +300,7 @@ public class DoubleTable implements Serializable {
 	 * @return
 	 */
 	public double getRowSum(String rowLabel) {
-		return getRowSum(getRow(rowLabel));
+		return getRowSum(getRowIndex(rowLabel));
 	}
 	
 	/**
@@ -305,7 +321,7 @@ public class DoubleTable implements Serializable {
 	 * @return
 	 */
 	public double getColumnSum(String colLabel) {
-		return getColumnSum(getCol(colLabel));
+		return getColumnSum(getColIndex(colLabel));
 	}
 
 	/**
@@ -323,7 +339,7 @@ public class DoubleTable implements Serializable {
 	 * @param scale
 	 */
 	public void scaleRow(String rowLabel, double scale) {
-		scaleRow(getRow(rowLabel), scale);
+		scaleRow(getRowIndex(rowLabel), scale);
 	}
 
 	/**
@@ -341,7 +357,7 @@ public class DoubleTable implements Serializable {
 	 * @param scale
 	 */
 	public void scaleColumn(String colLabel, double scale) {
-		scaleColumn(getCol(colLabel), scale);
+		scaleColumn(getColIndex(colLabel), scale);
 	}
 	
 	/**
@@ -412,7 +428,7 @@ public class DoubleTable implements Serializable {
 				table[r][c] /= scale;
 			}
 		}
-	}	
+	}	 
 
 	/**
 	 * serializes table
@@ -463,6 +479,15 @@ public class DoubleTable implements Serializable {
 	}
 
 	/**
+	 * serialize row
+	 * @param rowLabel
+	 * @return
+	 */
+	public String serializeRow(String rowLabel) {
+		return serializeRow(getRowIndex(rowLabel));
+	}
+	
+	/**
 	 * deserialize table
 	 * @param data
 	 */
@@ -504,6 +529,15 @@ public class DoubleTable implements Serializable {
 	}
 	
 	/**
+	 * deserialize row
+	 * @param data
+	 * @param row
+	 */
+	public void deseralizeRow(String data, String rowLabel) {
+		deseralizeRow(data, getRowIndex(rowLabel));
+	}
+
+	/**
 	 * Row and column index
 	 * @param rowLabel
 	 * @param colLabel
@@ -539,7 +573,7 @@ public class DoubleTable implements Serializable {
 	 * @param rowLabel
 	 * @return
 	 */
-	private int getRow(String rowLabel) {
+	private int getRowIndex(String rowLabel) {
 		int row = BasicUtils.getIndex(rowLabels, rowLabel);
 		return row;
 	}
@@ -549,7 +583,7 @@ public class DoubleTable implements Serializable {
 	 * @param colLabel
 	 * @return
 	 */
-	private int getCol(String colLabel) {
+	private int getColIndex(String colLabel) {
 		int col = BasicUtils.getIndex(colLabels, colLabel);
 		return col;
 	}

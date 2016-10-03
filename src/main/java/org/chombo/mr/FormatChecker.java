@@ -103,6 +103,7 @@ public class FormatChecker extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
+        	//sub sampling
         	if (samplingInterval > 0 && recCount < nextSample) {
         		++recCount;
         		return;
@@ -155,6 +156,7 @@ public class FormatChecker extends Configured implements Tool {
             	}
             }
             
+            //set next sample
         	if (samplingInterval > 0 && recCount == nextSample) {
         		int nextSampleInterval = (int)(samplingInterval * ( 1 + Math.random() / 4));
         		nextSample += nextSampleInterval;
