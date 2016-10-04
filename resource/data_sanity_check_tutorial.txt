@@ -1,0 +1,36 @@
+This tutorial for for basic sanity check for data correctness. Please modify etl_spark.sh
+based on you environment
+
+Build
+=====
+1. chombo
+mvn install
+sbt publishLocal
+
+2. chombo/spark
+sbt package
+
+3. user jar
+ant -f chombo_spark.xml
+
+Input Data
+==========
+1. generate data
+Make sure dependent python scripts are ../lib directory
+./retail_sell.py 5 200 5000 100 > retail.txt
+
+Feel free to change command line arguments for retail_sell.py
+
+2. Place input in HDFS 
+hdfs dfs -put retail.txt    /etl/input
+
+Run Spark Job
+=============
+./etl_spark.sh simpleValidator
+
+Configuration
+=============
+It's in etl.conf file. Please feel free to modify as needed. If you want to test for num of fields in a 
+record, please change field.types parameter. The number of data types in the array should be
+different from the actual number of fields in the data
+
