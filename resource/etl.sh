@@ -308,7 +308,7 @@ case "$1" in
 
 "checker")
 	echo "running mr FormatChecker for median"
-	CLASS_NAME=org.chombo.mr.FormatChecker
+	CLASS_NAME=org.chombo.mr.SimpleValidationChecker
 	IN_PATH=/user/pranab/foch/input
 	OUT_PATH=/user/pranab/foch/output
 	echo "input $IN_PATH output $OUT_PATH"

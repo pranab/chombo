@@ -19,6 +19,7 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -81,6 +82,9 @@ public class SimpleValidationChecker extends Configured implements Tool {
         private int samplingInterval; 
         private int recCount;
         private int nextSample;
+        private String invalidFieldMarker;
+        private String invalidRecMarker;
+        private SimpleDateFormat dateFormatter;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -94,7 +98,14 @@ public class SimpleValidationChecker extends Configured implements Tool {
         			"missing field types");
         	numFields = fieldTypes.length;
         	invalidRec = new String[numFields];
-        	samplingInterval = config.getInt("foc.sampling.interval", -1);
+        	float samplingFraction = config.getFloat("foc.sampling.fraction", (float)-1.0);
+        	samplingInterval = (int)(1 / samplingFraction); 
+        	invalidFieldMarker = config.get("foc.invalid.field.marker", "[x]");
+        	invalidRecMarker = config.get("foc.invalid.rec.marker", "[xx]");
+        	String dateFormatSt = config.get("foc.date.formatter");
+        	if (null != dateFormatSt) {
+        		dateFormatter = new SimpleDateFormat(dateFormatSt);
+        	}
         }
         
 		/* (non-Javadoc)
@@ -114,40 +125,48 @@ public class SimpleValidationChecker extends Configured implements Tool {
             if (items.length != numFields) {
             	//if field count does not match, individual fields are not checked
             	valid = false;
-        		outVal.set(BasicUtils.join(items, fieldDelimOut));
+        		outVal.set(invalidRecMarker + BasicUtils.join(items, fieldDelimOut));
             } else {
             	//check fields
             	for (int i = 0 ; i < numFields; ++i) {
             		if (fieldTypes[i].equals(BaseAttribute.DATA_TYPE_INT)) {
-            			try {
-            				int iVal = Integer.parseInt(items[i]);
+            			if (BasicUtils.isInt(items[i])) {
             				invalidRec[i] = items[i];
-            			} catch (Exception ex) {
+            			} else {
             				handleInvalid(i);
             			}
             		} else if (fieldTypes[i].equals(BaseAttribute.DATA_TYPE_LONG)) {
-            			try {
-            				long lVal = Long.parseLong(items[i]);
+            			if (BasicUtils.isLong(items[i])) {
             				invalidRec[i] = items[i];
-            			} catch (Exception ex) {
+            			} else {
             				handleInvalid(i);
             			}
             		} else if (fieldTypes[i].equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
-            			try {
-            				double dVal = Double.parseDouble(items[i]);
+            			if (BasicUtils.isDouble(items[i])) {
             				invalidRec[i] = items[i];
-            			} catch (Exception ex) {
+            			} else {
             				handleInvalid(i);
             			}
             		} else if (fieldTypes[i].equals(BaseAttribute.DATA_TYPE_STRING_COMPOSITE)) {
-        				String[] subItems = items[i].split(subFieldDelimRegex); 
-        				if(subItems.length > 1) {
+            			if (BasicUtils.isComposite(items[i], subFieldDelimRegex)) {
             				invalidRec[i] = items[i];
-        				} else {
+            			} else {
             				handleInvalid(i);
-        				}
-            		} else {
+            			}
+            		} else if (fieldTypes[i].equals(BaseAttribute.DATA_TYPE_DATE)) {
+            			if (null != dateFormatter) {
+	            			if (BasicUtils.isDate(items[i], dateFormatter)) {
+	            				invalidRec[i] = items[i];
+	            			} else {
+	            				handleInvalid(i);
+	            			}
+            			} else  {
+            				invalidRec[i] = items[i];
+            			}
+            		} else if (fieldTypes[i].equals(BaseAttribute.DATA_TYPE_STRING)) {
         				invalidRec[i] = items[i];
+            		} else {
+            			throw new IllegalStateException("invalid data type");
             		}
             	}
             	
@@ -174,7 +193,7 @@ public class SimpleValidationChecker extends Configured implements Tool {
          */
         private void handleInvalid(int fieldOrd) {
 			valid = false;
-			invalidRec[fieldOrd] = INVALID_MARKER + items[fieldOrd];
+			invalidRec[fieldOrd] = invalidFieldMarker + items[fieldOrd];
         }
 	}
 
