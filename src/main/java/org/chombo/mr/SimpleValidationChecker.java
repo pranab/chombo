@@ -41,7 +41,7 @@ import org.chombo.util.Utility;
  * @author pranab
  *
  */
-public class FormatChecker extends Configured implements Tool {
+public class SimpleValidationChecker extends Configured implements Tool {
 	private static final String INVALID_MARKER = "[x]";
 	
 	@Override
@@ -49,13 +49,13 @@ public class FormatChecker extends Configured implements Tool {
         Job job = new Job(getConf());
         String jobName = "FormatChecker  MR";
         job.setJobName(jobName);
-        job.setJarByClass(FormatChecker.class);
+        job.setJarByClass(SimpleValidationChecker.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration());
-        job.setMapperClass(FormatChecker.ValidationMapper.class);
+        job.setMapperClass(SimpleValidationChecker.ValidationMapper.class);
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
         job.setNumReduceTasks(0);
@@ -182,7 +182,7 @@ public class FormatChecker extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-        int exitCode = ToolRunner.run(new FormatChecker(), args);
+        int exitCode = ToolRunner.run(new SimpleValidationChecker(), args);
         System.exit(exitCode);
 	}
 	
