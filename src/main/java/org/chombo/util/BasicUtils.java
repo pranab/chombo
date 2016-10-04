@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -941,4 +942,20 @@ public class BasicUtils {
 		valid = subItems.length > 1;
     	return valid;
     }    
+    
+    /**
+     * @param val
+     * @param formatter
+     * @return
+     */
+    public static boolean isDate(String val, SimpleDateFormat formatter) {
+    	boolean valid = true;
+    	try {
+    		Date date = formatter.parse(val);	
+    		valid = null != date;
+    	}catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
 }

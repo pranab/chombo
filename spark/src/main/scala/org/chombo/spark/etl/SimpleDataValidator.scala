@@ -23,6 +23,7 @@ import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.util.BaseAttribute
 import org.chombo.util.BasicUtils
+import java.text.SimpleDateFormat
 
 /**
  * Does simple validation checks. If you suspect the data is grossly invalid, 
@@ -54,6 +55,11 @@ object SimpleDataValidator extends JobConfiguration {
 	   val sampleFraction = getOptionalDoubleParam(appConfig, "sample.fraction") 
 	   val invalidFieldMarker = appConfig.getString("invalid.field.marker")
 	   val invalidRecordMarker = appConfig.getString("invalid.record.marker")
+	   val dateFromatStr = getOptionalStringParam(appConfig, "date.format")
+	   val dateFormat = dateFromatStr match {
+	     case Some(format:String) => Some(new SimpleDateFormat(format))
+	     case None => None
+	   }
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
 	   
@@ -79,6 +85,14 @@ object SimpleDataValidator extends JobConfiguration {
 	           case BaseAttribute.DATA_TYPE_DOUBLE => BasicUtils.isDouble(items(t._2))
 	           case BaseAttribute.DATA_TYPE_STRING => true
 	           case BaseAttribute.DATA_TYPE_STRING_COMPOSITE => BasicUtils.isComposite(items(t._2), subFieldDelimIn)
+	           case BaseAttribute.DATA_TYPE_DATE => {
+	             //use date formatter if provided, otherwise treat as string
+	             val dateValid = dateFormat match {
+	               case Some(formatter:SimpleDateFormat) => BasicUtils.isDate(items(t._2), formatter)
+	               case None => true
+	             }
+	             dateValid
+	           }
 	           case _ => throw new IllegalStateException("invalid data type specified " + t._1)
 	         }
 	         if (!valid) {
