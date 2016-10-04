@@ -889,4 +889,56 @@ public class BasicUtils {
     	return fact;
     }
    
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isInt(String val) {
+    	boolean valid = true;
+		try {
+			int iVal = Integer.parseInt(val);
+		} catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+    
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isLong(String val) {
+    	boolean valid = true;
+		try {
+			long lVal = Long.parseLong(val);
+		} catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isDouble(String val) {
+    	boolean valid = true;
+		try {
+			double dVal = Double.parseDouble(val);
+		} catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+    
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isComposite(String val, String subFieldDelim) {
+    	boolean valid = true;
+		String[] subItems = val.split(subFieldDelim); 
+		valid = subItems.length > 1;
+    	return valid;
+    }    
 }
