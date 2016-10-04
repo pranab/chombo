@@ -52,8 +52,8 @@ object SimpleDataValidator extends JobConfiguration {
 	   val fieldTypes = appConfig.getStringList("field.types")
 	   val fieldCount = fieldTypes.size()
 	   val sampleFraction = getOptionalDoubleParam(appConfig, "sample.fraction") 
-	   val invalidFieldMarker = appConfig.getStringList("invalid.field.marker")
-	   val invalidRecordMarker = appConfig.getStringList("invalid.record.marker")
+	   val invalidFieldMarker = appConfig.getString("invalid.field.marker")
+	   val invalidRecordMarker = appConfig.getString("invalid.record.marker")
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
 	   
@@ -77,8 +77,9 @@ object SimpleDataValidator extends JobConfiguration {
 	           case BaseAttribute.DATA_TYPE_INT => BasicUtils.isInt(items(t._2))
 	           case BaseAttribute.DATA_TYPE_LONG => BasicUtils.isLong(items(t._2))
 	           case BaseAttribute.DATA_TYPE_DOUBLE => BasicUtils.isDouble(items(t._2))
+	           case BaseAttribute.DATA_TYPE_STRING => true
 	           case BaseAttribute.DATA_TYPE_STRING_COMPOSITE => BasicUtils.isComposite(items(t._2), subFieldDelimIn)
-	           case _ => throw new IllegalStateException("invalid data type specified")
+	           case _ => throw new IllegalStateException("invalid data type specified " + t._1)
 	         }
 	         if (!valid) {
 	           items(t._2) = invalidFieldMarker + items(t._2)
