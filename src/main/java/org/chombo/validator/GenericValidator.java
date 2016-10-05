@@ -17,6 +17,9 @@
 
 package org.chombo.validator;
 
+import java.text.SimpleDateFormat;
+
+import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
 
 /**
@@ -53,13 +56,7 @@ public class GenericValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			boolean valid = true;
-			try {
-				int intVal = Integer.parseInt(value);
-			} catch (Exception ex) {
-				valid = false;
-			}
-			return valid;
+			return BasicUtils.isInt(value);
 		}
 	}
 
@@ -75,13 +72,7 @@ public class GenericValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			boolean valid = true;
-			try {
-				long longVal = Long.parseLong(value);
-			} catch (Exception ex) {
-				valid = false;
-			}
-			return valid;
+			return BasicUtils.isLong(value);
 		}
 	}
 
@@ -97,13 +88,25 @@ public class GenericValidator {
 
 		@Override
 		public boolean isValid(String value) {
-			boolean valid = true;
-			try {
-				double dblVal = Double.parseDouble(value);
-			} catch (Exception ex) {
-				valid = false;
-			}
-			return valid;
+			return BasicUtils.isDouble(value);
 		}
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class EnsureDateValidator extends Validator {
+		private SimpleDateFormat dateFormatter;
+		public EnsureDateValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag,  prAttr);
+			dateFormatter = new SimpleDateFormat(prAttr.getDatePattern());
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			return BasicUtils.isDate(value, dateFormatter);
+		}
+	}
+	
 }

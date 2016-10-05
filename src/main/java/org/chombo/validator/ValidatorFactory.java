@@ -43,6 +43,7 @@ public class ValidatorFactory {
 	public static final String ENSURE_INT_VALIDATOR = "ensureInt";
 	public static final String ENSURE_LONG_VALIDATOR = "ensureLong";
 	public static final String ENSURE_DOUBLE_VALIDATOR = "ensureDouble";
+	public static final String ENSURE_DATE_VALIDATOR = "ensureDate";
 	public static final String ZCORE_BASED_RANGE_VALIDATOR = "zscoreBasedRange";
 	public static final String ROBUST_ZCORE_BASED_RANGE_VALIDATOR = "robustZscoreBasedRange";
 	
@@ -166,6 +167,8 @@ public class ValidatorFactory {
 			validator = new GenericValidator.EnsureLongValidator(validatorType, prAttr);
 		} else if (validatorType.equals(ENSURE_DOUBLE_VALIDATOR)) {
 			validator = new GenericValidator.EnsureDoubleValidator(validatorType, prAttr);
+		} else if (validatorType.equals(ENSURE_DATE_VALIDATOR)) {
+			validator = new GenericValidator.EnsureDateValidator(validatorType, prAttr);
 		} else if (validatorType.equals( ZCORE_BASED_RANGE_VALIDATOR)) {
 				validator = new  NumericalValidator.StatsBasedRangeValidator(validatorType, prAttr, validatorContext);
 		} else if (validatorType.equals( ROBUST_ZCORE_BASED_RANGE_VALIDATOR)) {
