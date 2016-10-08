@@ -210,4 +210,32 @@ trait JobConfiguration {
 	  paramValue
 	}
 	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalIntListParam(config:Config, paramName:String) : Option[java.util.List[Integer]] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getIntList(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalDoubleListParam(config:Config, paramName:String) : Option[java.util.List[java.lang.Double]] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getDoubleList(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+	
 }

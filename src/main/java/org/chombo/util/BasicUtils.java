@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -957,5 +959,27 @@ public class BasicUtils {
 			valid = false;
 		}
     	return valid;
+    }
+    
+    /**
+     * @param data
+     * @param searchPattern
+     * @return
+     */
+    public static int findNumOccureneces(String data, String searchPattern){
+    	Pattern pattern = Pattern.compile(searchPattern);
+    	return findNumOccureneces(data, pattern);
+    }
+    
+    /**
+     * @param data
+     * @param pattern
+     * @return
+     */
+    public static int findNumOccureneces(String data, Pattern pattern){
+    	int count = 0;
+    	Matcher matcher = pattern.matcher(data);
+    	for( ;matcher.find(); ++count){}  
+    	return count;
     }
 }

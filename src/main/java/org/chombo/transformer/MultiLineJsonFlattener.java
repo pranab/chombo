@@ -17,6 +17,10 @@
 
 package org.chombo.transformer;
 
+import java.util.regex.Pattern;
+
+import org.chombo.util.BasicUtils;
+
 /**
  * Flattens multi line JSON
  * @author pranab
@@ -24,27 +28,60 @@ package org.chombo.transformer;
  */
 public class MultiLineJsonFlattener {
 	private StringBuilder flattenedLineBld = new StringBuilder();
-	private String falttenedRec;
+	private String rec;
 	private int braceMatchCount;
 	private String[] items;
+	private int lineCounter;
+	private Pattern openBrace;
+	private Pattern closeBrace;
+	
 
+	public MultiLineJsonFlattener() {
+		openBrace = Pattern.compile("\\{");
+		closeBrace = Pattern.compile("\\}");
+	}
+	
 	/**
 	 * @param rawLine
 	 * @return
 	 */
 	public String processRawLine(String rawLine) {
-		falttenedRec = null;
+		rec = null;
 		flattenedLineBld.append(" ").append(rawLine);
-		items = rawLine.split("\\{");
-		braceMatchCount += items.length -1;
-		items = rawLine.split("\\}");
-		braceMatchCount -= items.length -1;
+		String current = flattenedLineBld.toString();
+		braceMatchCount = BasicUtils.findNumOccureneces(current, openBrace);
+		braceMatchCount -= BasicUtils.findNumOccureneces(current, closeBrace);
+				
+		String jsonRec = null;
+		if (++lineCounter == 3) {
+			//remove {..[ from beginning
+			String lines = flattenedLineBld.toString();
+			int pos = lines.indexOf("[");
+			if (pos == -1) {
+				throw new IllegalStateException("invalid json");
+			} else {
+				flattenedLineBld.delete(0, flattenedLineBld.length());
+				flattenedLineBld.append(lines.substring(pos + 1));
+				--braceMatchCount;
+			}
+		}
 		
 		if (braceMatchCount == 0) {
 			//got complete JSON
-			falttenedRec = flattenedLineBld.toString();
-			flattenedLineBld.delete(0, flattenedLineBld.length());
+			rec = flattenedLineBld.toString();
+			int firstBrace = rec.indexOf("{");
+			int lastBrace = rec.lastIndexOf("}");
+			if (lastBrace == rec.length() - 1) {
+				jsonRec = rec.substring(firstBrace);
+				flattenedLineBld.delete(0, flattenedLineBld.length());
+			} else {
+				++lastBrace;
+				jsonRec = rec.substring(firstBrace, lastBrace);
+				flattenedLineBld.delete(0, flattenedLineBld.length());
+				flattenedLineBld.append(rec.substring(lastBrace));
+			}
+			
 		}
-		return falttenedRec;
+		return jsonRec;
 	}
 }
