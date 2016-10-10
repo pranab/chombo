@@ -16,6 +16,16 @@ case "$1" in
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;
 
+"jsonExtractor")
+	echo "running jsonExtractor"
+	CLASS_NAME=org.chombo.spark.etl.FlatRecordExtractorFromJson
+	INPUT=hdfs:///etl/input/jex/usage.json
+	OUTPUT=hdfs:///etl/output/jex
+	hdfs dfs -rm -r $OUTPUT
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
+;;
+
 *) 
 	echo "unknown operation $1"
 	;;

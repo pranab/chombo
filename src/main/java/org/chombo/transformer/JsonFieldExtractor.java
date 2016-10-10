@@ -21,6 +21,7 @@ package org.chombo.transformer;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +38,7 @@ import org.codehaus.jackson.type.TypeReference;
  * @author pranab
  *
  */
-public class JsonFieldExtractor {
+public class JsonFieldExtractor implements Serializable {
 	private ObjectMapper mapper;
 	private Map<String, Object> map;
 	private AttributeList extField = null;

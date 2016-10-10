@@ -17,6 +17,7 @@
 
 package org.chombo.transformer;
 
+import java.io.Serializable;
 import java.util.regex.Pattern;
 
 import org.chombo.util.BasicUtils;
@@ -26,7 +27,7 @@ import org.chombo.util.BasicUtils;
  * @author pranab
  *
  */
-public class MultiLineJsonFlattener {
+public class MultiLineJsonFlattener implements Serializable {
 	private StringBuilder flattenedLineBld = new StringBuilder();
 	private String rec;
 	private int braceMatchCount;
