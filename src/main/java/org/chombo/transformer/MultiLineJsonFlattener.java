@@ -31,58 +31,99 @@ public class MultiLineJsonFlattener implements Serializable {
 	private StringBuilder flattenedLineBld = new StringBuilder();
 	private String rec;
 	private int braceMatchCount;
-	private String[] items;
 	private int lineCounter;
 	private Pattern openBrace;
 	private Pattern closeBrace;
-	
+	private boolean atBegin = true;
+	private int numBraces;
+	private boolean debugOn;
 
+	/**
+	 * 
+	 */
 	public MultiLineJsonFlattener() {
 		openBrace = Pattern.compile("\\{");
 		closeBrace = Pattern.compile("\\}");
 	}
 	
+	public void setDebugOn(boolean debugOn) {
+		this.debugOn = debugOn;
+	}
+
 	/**
 	 * @param rawLine
 	 * @return
 	 */
-	public String processRawLine(String rawLine) {
+	public String processRawLine(String rawLine) { 
+		String current = null;
 		rec = null;
 		flattenedLineBld.append(" ").append(rawLine);
-		String current = flattenedLineBld.toString();
-		braceMatchCount = BasicUtils.findNumOccureneces(current, openBrace);
-		braceMatchCount -= BasicUtils.findNumOccureneces(current, closeBrace);
-				
 		String jsonRec = null;
-		if (++lineCounter == 3) {
-			//remove {..[ from beginning
-			String lines = flattenedLineBld.toString();
-			int pos = lines.indexOf("[");
-			if (pos == -1) {
-				throw new IllegalStateException("invalid json");
+		++lineCounter;
+		if (debugOn)
+			System.out.println("lineCounter: " + lineCounter + " raw line: " + rawLine);
+		
+		if (atBegin) {
+			if (rawLine.indexOf("[") != -1) {
+				truncateBegin();
+				atBegin = false;
 			} else {
-				flattenedLineBld.delete(0, flattenedLineBld.length());
-				flattenedLineBld.append(lines.substring(pos + 1));
-				--braceMatchCount;
+				if (debugOn)
+					System.out.println("still in begin segment");
+			}
+		} else {
+			current = flattenedLineBld.toString();
+			braceCount(current);
+			
+			//got complete JSON
+			if (numBraces > 0 && braceMatchCount == 0) {
+				rec = flattenedLineBld.toString();
+				int firstBrace = rec.indexOf("{");
+				int lastBrace = rec.lastIndexOf("}");
+				System.out.println("brace matched  rec:" + rec);
+				if (lastBrace == rec.length() - 1) {
+					jsonRec = rec.substring(firstBrace);
+					flattenedLineBld.delete(0, flattenedLineBld.length());
+				} else {
+					++lastBrace;
+					jsonRec = rec.substring(firstBrace, lastBrace);
+					flattenedLineBld.delete(0, flattenedLineBld.length());
+					flattenedLineBld.append(rec.substring(lastBrace));
+				}
+			} else {
+				if (debugOn)
+					System.out.println("brace not matched");
 			}
 		}
 		
-		if (braceMatchCount == 0) {
-			//got complete JSON
-			rec = flattenedLineBld.toString();
-			int firstBrace = rec.indexOf("{");
-			int lastBrace = rec.lastIndexOf("}");
-			if (lastBrace == rec.length() - 1) {
-				jsonRec = rec.substring(firstBrace);
-				flattenedLineBld.delete(0, flattenedLineBld.length());
-			} else {
-				++lastBrace;
-				jsonRec = rec.substring(firstBrace, lastBrace);
-				flattenedLineBld.delete(0, flattenedLineBld.length());
-				flattenedLineBld.append(rec.substring(lastBrace));
-			}
-			
-		}
 		return jsonRec;
+	}
+	
+	/**
+	 * 
+	 */
+	private void truncateBegin() {
+		String current = null;
+		//remove {..[ from beginning
+		String lines = flattenedLineBld.toString();
+		int pos = lines.indexOf("[");
+		if (pos == -1) {
+			throw new IllegalStateException("invalid json");
+		} else {
+			flattenedLineBld.delete(0, flattenedLineBld.length());
+			current = lines.substring(pos + 1);
+			flattenedLineBld.append(current);
+			braceCount(current);
+		}
+		if (debugOn)
+			System.out.println("after trucating doc begin: " + flattenedLineBld.toString());
+	}
+	
+	/**
+	 * @param current
+	 */
+	private void braceCount(String current) {
+		braceMatchCount = numBraces = BasicUtils.findNumOccureneces(current, openBrace);
+		braceMatchCount -= BasicUtils.findNumOccureneces(current, closeBrace);
 	}
 }

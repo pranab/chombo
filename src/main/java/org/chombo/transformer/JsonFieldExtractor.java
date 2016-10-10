@@ -39,7 +39,7 @@ import org.codehaus.jackson.type.TypeReference;
  *
  */
 public class JsonFieldExtractor implements Serializable {
-	private ObjectMapper mapper;
+	private  ObjectMapper mapper;
 	private Map<String, Object> map;
 	private AttributeList extField = null;
 	private boolean failOnInvalid;
@@ -50,22 +50,32 @@ public class JsonFieldExtractor implements Serializable {
 	private int numChildObjects;
 	private List<String[]> extractedRecords = new ArrayList<String[]>();
 	private int numAttributes;
+	private String listChild = "@a";
+	private int  listChildLen = 2;
+	private boolean debugOn;
 
 	/**
 	 * @param failOnInvalid
 	 */
 	public JsonFieldExtractor(boolean failOnInvalid, boolean normalize) {
-		mapper = new ObjectMapper();
+		//mapper = new ObjectMapper();
 		this.failOnInvalid = failOnInvalid;
 		this.normalize = normalize;
 	}
 	
+	public void setDebugOn(boolean debugOn) {
+		this.debugOn = debugOn;
+	}
+
 	/**
 	 * @param record
 	 */
 	public void parse(String record) {
 		try {
-			InputStream is = new ByteArrayInputStream((record).getBytes());
+			if (null == mapper) {
+				mapper = new ObjectMapper();
+			}
+			InputStream is = new ByteArrayInputStream(record.getBytes());
 			map = mapper.readValue(is, new TypeReference<Map<String, Object>>() {});
 		} catch (JsonParseException ex) {
 			handleParseError(ex);
@@ -109,18 +119,29 @@ public class JsonFieldExtractor implements Serializable {
 		String key = null;
 		int keyIndex = 0;
 		String pathElem = pathElements[index];
-		int pos = pathElem.indexOf("[");
+		int pos = pathElem.indexOf(listChild);
 		if (pos == -1) {
 			//scalar
 			key = pathElem;
+			if (debugOn)
+				System.out.println("non array key: " + key);
 		} else {
 			//array
 			key = pathElem.substring(0, pos);
+			if (debugOn)
+				System.out.println("array key: " + key);
 			
 			//whole list if no index provided
-			String indexPart = pathElem.substring(pos+1);
-			indexPart = indexPart.substring(0, indexPart.length()-1);
-			keyIndex = !indexPart.isEmpty()? Integer.parseInt(indexPart) : -1;
+			String indexPart = pathElem.substring(pos + listChildLen);
+			if (debugOn)
+				System.out.println("indexPart: " + indexPart);
+			if (!indexPart.isEmpty()) {
+				keyIndex = Integer.parseInt(indexPart.substring(1));
+			} else {
+				keyIndex = -1;
+			}
+			if (debugOn)
+				System.out.println("keyIndex: " + keyIndex);
 		}
 		
 		Object obj = map.get(key);
@@ -134,12 +155,16 @@ public class JsonFieldExtractor implements Serializable {
 		} else {
 			//traverse further
 			if (obj instanceof Map<?,?>) {
+				if (debugOn)
+					System.out.println("got map next");
 				//got object
 				if (index == pathElements.length - 1) {
 					throw new IllegalArgumentException("got map at end of json path");
 				}
 				extractField((Map<String, Object>)obj, pathElements, index + 1);
 			} else if (obj instanceof List<?>) { 
+				if (debugOn)
+					System.out.println("got list next");
 				//got list
 				List<?> listObj = (List<?>)obj;
 				if (keyIndex >= 0) {
@@ -198,6 +223,8 @@ public class JsonFieldExtractor implements Serializable {
 		if (null != map) {
 			int i = 0;
 			for (String path : paths) {
+				if (debugOn)
+					System.out.println("next path: " + path);
 				AttributeList fields = extractField(path);
 				if (!fields.isEmpty()) {
 					records[i++] = fields;
@@ -256,8 +283,9 @@ public class JsonFieldExtractor implements Serializable {
 	private boolean isChildObject(String path) {
 		//ends with either list of primitives or child of object which is an element of a list
 		String[] pathElements = path.split("\\.");
-		return pathElements[pathElements.length - 2].endsWith("[]") || 
-				pathElements[pathElements.length - 1].endsWith("[]");
+		int len = pathElements.length;
+		return len >= 2 && pathElements[len - 2].endsWith(listChild) || 
+				pathElements[len - 1].endsWith(listChild);
 	}
 	
 	/**
@@ -267,7 +295,7 @@ public class JsonFieldExtractor implements Serializable {
 	private String getChildPath(String path) {
 		String[] pathElements = path.split("\\.");
 		String childPath = path;
-		if (!pathElements[pathElements.length - 1].endsWith("[]")) {
+		if (!pathElements[pathElements.length - 1].endsWith(listChild)) {
 			int pos = path.lastIndexOf(".");
 			childPath =  path.substring(0, pos);
 		}

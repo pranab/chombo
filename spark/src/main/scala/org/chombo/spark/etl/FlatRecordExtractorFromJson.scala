@@ -44,6 +44,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
 	   val appConfig = config.getConfig(appName)
 	   
 	   //configuration params
+	   val debugOn = appConfig.getBoolean("debug.on")
 	   val fieldDelimOut = appConfig.getString("field.delim.out")
 	   val schemaFilePath = appConfig.getString("schema.file.path")
        val mapper = new ObjectMapper();
@@ -51,15 +52,19 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
 	   val failOnInvalid = appConfig.getBoolean("fail.on.invalid")
 	   val normalizeOutput = appConfig.getBoolean("normalize.output")
 	   val fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalizeOutput);
+       fieldExtractor.setDebugOn(debugOn)
        val flattener = rawSchema.getRecordType() match {
-         case RawAttributeSchema.REC_MULTI_LINE_JSON => Some(new MultiLineJsonFlattener())
+         case RawAttributeSchema.REC_MULTI_LINE_JSON => {
+           val flattener = new MultiLineJsonFlattener()
+           flattener.setDebugOn(debugOn)
+           Some(flattener)
+         }
          case _ => None
        }
- 	   val debugOn = appConfig.getBoolean("debug.on")
-	   val saveOutput = appConfig.getBoolean("save.output")
+ 	   val saveOutput = appConfig.getBoolean("save.output")
       
        
-       val data = sparkCntxt.textFile(inputPath)
+       val data = sparkCntxt.textFile(inputPath, 1)
        val invalidRecs = List("x")
        val transformedRecords = data.flatMap(line => {
     	   val jsonRecord = flattener match {
@@ -74,6 +79,12 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
     	       }
     	     //single line JSON
     	     case None => Some(line)
+    	   }
+    	   if (debugOn) {
+    	     jsonRecord match {
+    	       case Some(re:String) =>  println("got rec")
+    	       case None => println("got no rec")
+    	     }
     	   }
     	   
     	   val flatRecs = jsonRecord match {
@@ -93,7 +104,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
     	     }
     	     case None => invalidRecs
     	   }
-    	   
+    	   flatRecs.foreach(println(_))
          flatRecs
        })
 	   

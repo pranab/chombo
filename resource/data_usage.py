@@ -14,8 +14,7 @@ from sampler import *
 num_users = int(sys.argv[1])
 plans = ["standard", "standard plus", "super"]
 
-doc_beg = """
-{
+doc_beg = """{
 	"dataUsage" : ["""
 acct_beg_template = """
 		{
@@ -24,7 +23,7 @@ acct_beg_template = """
 usage_template = """
   			{
     			"plan" : "$plan",
-    			"deviceID" ; "$deviceID",
+    			"deviceID" : "$deviceID",
     			"used" : $used,
     			"startTime" : $startTime,
     			"endTime" : $endTime
