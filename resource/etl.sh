@@ -306,6 +306,17 @@ case "$1" in
 	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
 ;;
 
+"checker")
+	echo "running mr FormatChecker for median"
+	CLASS_NAME=org.chombo.mr.SimpleValidationChecker
+	IN_PATH=/user/pranab/foch/input
+	OUT_PATH=/user/pranab/foch/output
+	echo "input $IN_PATH output $OUT_PATH"
+	hadoop fs -rmr $OUT_PATH
+	echo "removed output dir"
+	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
+;;
+
 *) 
 	echo "unknown operation $1"
 	;;

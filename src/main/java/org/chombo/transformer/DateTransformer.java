@@ -23,6 +23,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.Utility;
 
@@ -159,6 +160,106 @@ public class DateTransformer  {
 					transformed[0] = targetDateFormat.format(date);
 				} else {
 					transformed[0] =  "" + date.getTime();
+				}
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+			return transformed;
+		}
+	}	
+	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class ElapsedTimeTransformer extends AttributeTransformer {
+		private SimpleDateFormat dateFormat;
+		private boolean epochTime;
+		private long refTime;
+		private String timeUnit;
+		private boolean failOnInvalid;
+		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
+		public ElapsedTimeTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			String refDateStr = config.hasPath("refDateStr")? config.getString("refDateStr") :  null;
+			intialize(config.getString("dateFormat"), config.getString("timeZone"),
+					config.getString("timeUnit"), config.getBoolean("failOnInvalid"), refDateStr);
+		}
+		
+		/**
+		 * @param dateFormat
+		 * @param timeZone
+		 * @param failOnInvalid
+		 */
+		public ElapsedTimeTransformer(String dateFormat, String timeZone, String timeUnit, boolean failOnInvalid, 
+			String refDateStr) {
+			super(1);
+			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid, refDateStr);
+		}
+
+		/**
+		 * @param dateFormatStr
+		 * @param timeZone
+		 * @param failOnInvalid
+		 */
+		private void intialize(String dateFormatStr, String timeZone, String timeUnit, boolean failOnInvalid, 
+			String refDateStr) {
+			try {
+				if (dateFormatStr.equals("epochTime")) {
+					epochTime = true;
+				} else  {
+					dateFormat = new SimpleDateFormat(dateFormatStr);
+					if (!Utility.isBlank(timeZone)) {
+						dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+					}
+				}
+				
+				//set reference time
+				if (null != refDateStr) {
+					if (epochTime) {
+						refTime = Long.parseLong(refDateStr);
+					} else {
+						Date refDate = dateFormat.parse(refDateStr);
+						refTime = refDate.getTime();
+					}
+				} else {
+					refTime = System.currentTimeMillis();
+				}
+				this.timeUnit = timeUnit;
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			long elapsed  = 0;
+			long time = 0;
+			try {
+				Date date = null;
+				if (null != dateFormat) {
+					//date format
+					date = dateFormat.parse(value);
+					time = date.getTime();
+				} else {
+					//epoch time
+					time = Long.parseLong(value);
+				}
+				if (time > refTime) {
+					elapsed = time - refTime;
+					elapsed = BasicUtils.convertTimeUnit(elapsed, timeUnit);
+					transformed[0] =  "" + elapsed;
+				} else {
+					if (failOnInvalid) {
+						throw new IllegalArgumentException("date in future");
+					} else {
+						transformed[0] =  "0";
+					}
 				}
 			} catch (ParseException ex) {
 				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());

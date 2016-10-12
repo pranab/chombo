@@ -74,29 +74,64 @@ public class DoubleTable implements Serializable {
 	 * @param numRow
 	 * @param numCol
 	 */
-	public void  initialize(int numRow, int numCol) {
+	public DoubleTable initialize(int numRow, int numCol) {
+		return initialize(numRow, numCol, 0);
+	}
+	
+	/**
+	 * @param numRow
+	 * @param numCol
+	 * @param value
+	 */
+	public DoubleTable  initialize(int numRow, int numCol, double value) {
 		table = new double[numRow][numCol];
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
-				table[r][c] = 0;
+				table[r][c] = value;
 			}
 		}
 		this.numRow = numRow;
 		this.numCol = numCol;
+		return this;
 	}
 	
+	/**
+	 * @param value
+	 */
+	public DoubleTable initializeDiagonal(double value) {
+		if (numRow != numCol) {
+			throw new IllegalStateException("table is not square");
+		}
+		for (int i = 0; i < numRow; ++i) {
+			table[i][i] = value;
+		}
+		return this;
+	}
+
+	/**
+	 * @return
+	 */
 	public int getNumRow() {
 		return numRow;
 	}
 
+	/**
+	 * @param numRow
+	 */
 	public void setNumRow(int numRow) {
 		this.numRow = numRow;
 	}
 
+	/**
+	 * @return
+	 */
 	public int getNumCol() {
 		return numCol;
 	}
 
+	/**
+	 * @param numCol
+	 */
 	public void setNumCol(int numCol) {
 		this.numCol = numCol;
 	}
@@ -163,6 +198,14 @@ public class DoubleTable implements Serializable {
 	}
 	
 	/**
+	 * @param rowLabel
+	 * @return
+	 */
+	public double[] getRow(String rowLabel) {
+		return table[getRowIndex(rowLabel)];
+	}
+
+	/**
 	 * @param rowNum
 	 * @param row
 	 */
@@ -180,6 +223,14 @@ public class DoubleTable implements Serializable {
 		double[] column = new double[numRow];
 		getColumn(colNum, column);
 		return column;
+	}
+
+	/**
+	 * @param colLabel
+	 * @return
+	 */
+	public double[] getColumn(String colLabel) {
+		return getColumn(getColIndex(colLabel));
 	}
 	
 	/**
@@ -249,7 +300,7 @@ public class DoubleTable implements Serializable {
 	 * @return
 	 */
 	public double getRowSum(String rowLabel) {
-		return getRowSum(getRow(rowLabel));
+		return getRowSum(getRowIndex(rowLabel));
 	}
 	
 	/**
@@ -270,7 +321,7 @@ public class DoubleTable implements Serializable {
 	 * @return
 	 */
 	public double getColumnSum(String colLabel) {
-		return getColumnSum(getCol(colLabel));
+		return getColumnSum(getColIndex(colLabel));
 	}
 
 	/**
@@ -288,7 +339,7 @@ public class DoubleTable implements Serializable {
 	 * @param scale
 	 */
 	public void scaleRow(String rowLabel, double scale) {
-		scaleRow(getRow(rowLabel), scale);
+		scaleRow(getRowIndex(rowLabel), scale);
 	}
 
 	/**
@@ -306,8 +357,78 @@ public class DoubleTable implements Serializable {
 	 * @param scale
 	 */
 	public void scaleColumn(String colLabel, double scale) {
-		scaleColumn(getCol(colLabel), scale);
+		scaleColumn(getColIndex(colLabel), scale);
 	}
+	
+	/**
+	 * @return
+	 */
+	public double getMaxElement() {
+		double max = Double.MIN_VALUE;
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				if (table[r][c] > max) {
+					max = table[r][c];
+				}
+			}
+		}
+		
+		return max;
+	}
+	
+	/**
+	 * @return
+	 */
+	public double getMaxDiagonalElement() {
+		if (numRow != numCol) {
+			throw new IllegalStateException("table is not square");
+		}
+		double max = Double.MIN_VALUE;
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				if (table[r][c] > max) {
+					max = table[r][c];
+				}
+			}
+		}
+		return max;
+	}
+
+	/**
+	 * @return
+	 */
+	public double getMinDiagonalElement() {
+		if (numRow != numCol) {
+			throw new IllegalStateException("table is not diagonal");
+		}
+		double min = Double.MAX_VALUE;
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				if (table[r][c] < min) {
+					min = table[r][c];
+				}
+			}
+		}
+		return min;
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean isDisagonal() {
+		return numRow == numCol;
+	}
+	
+	/**
+	 * @param scale
+	 */
+	public void scale(double scale) {
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				table[r][c] /= scale;
+			}
+		}
+	}	 
 
 	/**
 	 * serializes table
@@ -358,6 +479,15 @@ public class DoubleTable implements Serializable {
 	}
 
 	/**
+	 * serialize row
+	 * @param rowLabel
+	 * @return
+	 */
+	public String serializeRow(String rowLabel) {
+		return serializeRow(getRowIndex(rowLabel));
+	}
+	
+	/**
 	 * deserialize table
 	 * @param data
 	 */
@@ -372,6 +502,20 @@ public class DoubleTable implements Serializable {
 	}
 	
 	/**
+	 * @param items
+	 * @param beg
+	 * @param end
+	 */
+	public void deseralize(String[] items, int beg) {
+		int k = beg;
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				table[r][c]  = Double.parseDouble(items[k++]);
+			}
+		}
+	}
+
+	/**
 	 * deserialize row
 	 * @param data
 	 * @param row
@@ -384,6 +528,15 @@ public class DoubleTable implements Serializable {
 		}
 	}
 	
+	/**
+	 * deserialize row
+	 * @param data
+	 * @param row
+	 */
+	public void deseralizeRow(String data, String rowLabel) {
+		deseralizeRow(data, getRowIndex(rowLabel));
+	}
+
 	/**
 	 * Row and column index
 	 * @param rowLabel
@@ -420,7 +573,7 @@ public class DoubleTable implements Serializable {
 	 * @param rowLabel
 	 * @return
 	 */
-	private int getRow(String rowLabel) {
+	private int getRowIndex(String rowLabel) {
 		int row = BasicUtils.getIndex(rowLabels, rowLabel);
 		return row;
 	}
@@ -430,7 +583,7 @@ public class DoubleTable implements Serializable {
 	 * @param colLabel
 	 * @return
 	 */
-	private int getCol(String colLabel) {
+	private int getColIndex(String colLabel) {
 		int col = BasicUtils.getIndex(colLabels, colLabel);
 		return col;
 	}

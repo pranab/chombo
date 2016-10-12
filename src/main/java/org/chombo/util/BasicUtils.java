@@ -23,12 +23,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,10 +53,19 @@ public class BasicUtils {
 	
 	public static String configDelim = ",";
 	public  static String configSubFieldDelim = ":";
-	
-	public static long MILISEC_PER_HOUR = 60L * 1000 * 1000;
+
+	public static long MILISEC_PER_SEC = 1000;
+	public static long MILISEC_PER_MIN = 60L * MILISEC_PER_SEC;
+	public static long MILISEC_PER_HOUR = 60L * MILISEC_PER_MIN;
 	public static long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
 	public static long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
+
+	public static final String TIME_UNIT_MS = "ms";
+    public static final String TIME_UNIT_SEC = "sec";
+    public static final String TIME_UNIT_MIN = "min";
+    public static final String TIME_UNIT_HOUR = "hour";
+    public static final String TIME_UNIT_DAY = "day";
+   
     
     /**
      * @param vec
@@ -850,9 +862,13 @@ public class BasicUtils {
      */
     public static long convertTimeUnit(long epochTime, String timeUnit) {
     	long modTime = epochTime;
-		if (timeUnit.equals("hour")) {
+		if (timeUnit.equals(TIME_UNIT_SEC)) {
+			modTime /= MILISEC_PER_SEC;
+		}else if (timeUnit.equals(TIME_UNIT_MIN)) {
+			modTime /= MILISEC_PER_MIN;
+		}else if (timeUnit.equals(TIME_UNIT_HOUR)) {
 			modTime /= MILISEC_PER_HOUR;
-		} else if (timeUnit.equals("day")) {
+		} else if (timeUnit.equals(TIME_UNIT_DAY)) {
 			modTime /= MILISEC_PER_DAY;
 		} else {
 			throw new IllegalArgumentException("invalid time unit");
@@ -876,5 +892,108 @@ public class BasicUtils {
     	}
     	return product;
     }
+    
+    /**
+     * @param value
+     * @return
+     */
+    public  static int factorial(int value) {
+    	int fact = 1;
+    	for (int i = value ; i > 1; --i) {
+    		fact *= i;
+    	}
+    	return fact;
+    }
    
-}
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isInt(String val) {
+    	boolean valid = true;
+		try {
+			int iVal = Integer.parseInt(val);
+		} catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+    
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isLong(String val) {
+    	boolean valid = true;
+		try {
+			long lVal = Long.parseLong(val);
+		} catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isDouble(String val) {
+    	boolean valid = true;
+		try {
+			double dVal = Double.parseDouble(val);
+		} catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+    
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isComposite(String val, String subFieldDelim) {
+    	boolean valid = true;
+		String[] subItems = val.split(subFieldDelim); 
+		valid = subItems.length > 1;
+    	return valid;
+    }    
+    
+    /**
+     * @param val
+     * @param formatter
+     * @return
+     */
+    public static boolean isDate(String val, SimpleDateFormat formatter) {
+    	boolean valid = true;
+    	try {
+    		Date date = formatter.parse(val);	
+    		valid = null != date;
+    	}catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+    
+    /**
+     * @param data
+     * @param searchPattern
+     * @return
+     */
+    public static int findNumOccureneces(String data, String searchPattern){
+    	Pattern pattern = Pattern.compile(searchPattern);
+    	return findNumOccureneces(data, pattern);
+    }
+    
+    /**
+     * @param data
+     * @param pattern
+     * @return
+     */
+    public static int findNumOccureneces(String data, Pattern pattern){
+    	int count = 0;
+    	Matcher matcher = pattern.matcher(data);
+    	for( ;matcher.find(); ++count){}  
+    	return count;
+    }
+    
+ }

@@ -1,0 +1,11 @@
+{
+	"recordType" : "multiLineJson",
+	"jsonPaths" : [
+		"acctID", 
+		"usages@a.plan", 
+		"usages@a.deviceID", 
+		"usages@a.used",
+		"usages@a.startTime",
+		"usages@a.endTime"
+	]
+}

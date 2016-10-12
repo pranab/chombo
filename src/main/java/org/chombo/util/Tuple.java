@@ -545,6 +545,22 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	}
 	
 	/**
+	 * @param start
+	 * @return
+	 */
+	public String toStringBeg(int start) {
+		return toString(start, fields.size());
+	}
+	
+	/**
+	 * @param end
+	 * @return
+	 */
+	public String toStringEnd(int end) {
+		return toString(0, end);
+	}
+
+	/**
 	 * to string starting at given index
 	 * @param start
 	 * @param end

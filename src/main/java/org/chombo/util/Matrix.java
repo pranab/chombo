@@ -58,7 +58,7 @@ public class Matrix extends DoubleTable{
 	 */
 	public Matrix dot(Matrix that) {
 		if (this.numCol != that.numRow) {
-			throw new IllegalArgumentException("matrix size invalid for dot product");
+			throw new IllegalStateException("matrix size invalid for dot product");
 		}
 		
 		Matrix product = new Matrix(this.numRow, that.numCol);
@@ -67,12 +67,60 @@ public class Matrix extends DoubleTable{
 			that.getColumn(c, thatColumn);
 			for (int r = 0; r < this.numRow; ++r) {
 				double[] thisRow = this.getRow(r);
-				double val = Utility.dotProduct(thisRow, thatColumn);
+				double val = BasicUtils.dotProduct(thisRow, thatColumn);
 				product.table[r][c] = val;
 			}
 		}
 		
 		return product;
+	}
+	
+	/**
+	 * @param that
+	 * @return
+	 */
+	public Matrix add(Matrix that) {
+		if (this.numRow != that.numRow || this.numCol != that.numCol) {
+			throw new IllegalStateException("matrices should be of same size for sum");
+		}
+		
+		Matrix sum = new Matrix(this.numRow, this.numCol);
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				sum.table[r][c] = this.table[r][c] + that.table[r][c];
+			}
+		}
+		return sum;
+	}
+	
+	/**
+	 * @param that
+	 * @return
+	 */
+	public void sum(Matrix that) {
+		if (this.numRow != that.numRow || this.numCol != that.numCol) {
+			throw new IllegalStateException("matrices should be of same size for sum");
+		}
+		
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				this.table[r][c] +=  that.table[r][c];
+			}
+		}
+	}	
+
+	/**
+	 * @param factor
+	 * @return
+	 */
+	public Matrix multiply(double factor) {
+		Matrix multiplied = new Matrix(numRow, numCol);
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				multiplied.table[r][c] = table[r][c] * factor;
+			}
+		}
+		return multiplied;
 	}
 	
 }

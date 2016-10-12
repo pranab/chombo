@@ -20,6 +20,7 @@ package org.chombo.mr;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -74,11 +75,11 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
 	public static class ExtractionMapper extends Mapper<LongWritable, Text, NullWritable, Text> {
 		private Text outVal = new Text();
         private String fieldDelimOut;
-        private String[] itemsOut;
         private RawAttributeSchema rawSchema;
         private String jsonString;
         private JsonFieldExtractor fieldExtractor;
         private MultiLineJsonFlattener flattener;
+        private boolean normalize;
 
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -92,11 +93,9 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	ObjectMapper mapper = new ObjectMapper();
         	rawSchema = mapper.readValue(is, RawAttributeSchema.class);
         	
-        	//output
-        	itemsOut = new String[rawSchema.getJsonPaths().size()];
-        	
         	boolean failOnInvalid = config.getBoolean("frej.fail.on.invalid", true);
-        	fieldExtractor = new JsonFieldExtractor(failOnInvalid);
+        	normalize = config.getBoolean("frej.normalize.output", true);
+        	fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalize);
         	
         	//record type
         	if (rawSchema.getRecordType().equals(RawAttributeSchema.REC_MULTI_LINE_JSON)) {
@@ -119,9 +118,17 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         		jsonString = value.toString();
         	}
         	
-        	if (null != jsonString && fieldExtractor.extractAllFields(jsonString, rawSchema.getJsonPaths(), itemsOut)) {
-                outVal.set(Utility.join(itemsOut, fieldDelimOut));
-                context.write(NullWritable.get(), outVal);
+        	if (null != jsonString && fieldExtractor.extractAllFields(jsonString, rawSchema.getJsonPaths())) {
+        		//there will be multiple records if there are child objects and result are normalized
+        		List<String[]> records = fieldExtractor.getExtractedRecords();
+        		for (String[] record : records) {
+        			outVal.set(Utility.join(record, fieldDelimOut));
+        			context.write(NullWritable.get(), outVal);
+        		}
+        		
+        		if (!normalize) {
+        			//get child objects as separate sets of records
+        		}
         	}
         }        
 	}

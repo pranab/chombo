@@ -33,15 +33,15 @@ import scala.collection.JavaConverters._
 trait JobConfiguration {
   
   /**
- * @param args
- * @return
+   * @param args
+   * @return
  */
-def configFileFromCommandLine(args: Array[String]) : String = {
-    val confifFilePath = args.length match {
+	def configFileFromCommandLine(args: Array[String]) : String = {
+		val confifFilePath = args.length match {
 			case x: Int if x == 1 => args(0)
 			case _ => throw new IllegalArgumentException("invalid number of  command line args, expecting 1")
-	}
-    confifFilePath
+		}
+		confifFilePath
   }
 
 	/**
@@ -153,4 +153,89 @@ def configFileFromCommandLine(args: Array[String]) : String = {
 	  	})
 	  }
 	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalStringParam(config:Config, paramName:String) : Option[String] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getString(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalIntParam(config:Config, paramName:String) : Option[Int] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getInt(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalDoubleParam(config:Config, paramName:String) : Option[Double] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getDouble(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalStringListParam(config:Config, paramName:String) : Option[java.util.List[String]] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getStringList(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalIntListParam(config:Config, paramName:String) : Option[java.util.List[Integer]] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getIntList(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalDoubleListParam(config:Config, paramName:String) : Option[java.util.List[java.lang.Double]] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getDoubleList(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+	
 }
