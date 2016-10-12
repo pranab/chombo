@@ -176,7 +176,7 @@ public class DateTransformer  {
 	public static class ElapsedTimeTransformer extends AttributeTransformer {
 		private SimpleDateFormat dateFormat;
 		private boolean epochTime;
-		private long curTime;
+		private long refTime;
 		private String timeUnit;
 		private boolean failOnInvalid;
 		
@@ -186,8 +186,9 @@ public class DateTransformer  {
 		 */
 		public ElapsedTimeTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
+			String refDateStr = config.hasPath("refDateStr")? config.getString("refDateStr") :  null;
 			intialize(config.getString("dateFormat"), config.getString("timeZone"),
-					config.getString("timeUnit"), config.getBoolean("failOnInvalid"));
+					config.getString("timeUnit"), config.getBoolean("failOnInvalid"), refDateStr);
 		}
 		
 		/**
@@ -195,9 +196,10 @@ public class DateTransformer  {
 		 * @param timeZone
 		 * @param failOnInvalid
 		 */
-		public ElapsedTimeTransformer(String dateFormat, String timeZone, String timeUnit, boolean failOnInvalid) {
+		public ElapsedTimeTransformer(String dateFormat, String timeZone, String timeUnit, boolean failOnInvalid, 
+			String refDateStr) {
 			super(1);
-			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid);
+			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid, refDateStr);
 		}
 
 		/**
@@ -205,17 +207,33 @@ public class DateTransformer  {
 		 * @param timeZone
 		 * @param failOnInvalid
 		 */
-		private void intialize(String dateFormatStr, String timeZone, String timeUnit, boolean failOnInvalid) {
-			if (dateFormatStr.equals("epochTime")) {
-				epochTime = true;
-			} else  {
-				dateFormat = new SimpleDateFormat(dateFormatStr);
-				if (!Utility.isBlank(timeZone)) {
-					dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+		private void intialize(String dateFormatStr, String timeZone, String timeUnit, boolean failOnInvalid, 
+			String refDateStr) {
+			try {
+				if (dateFormatStr.equals("epochTime")) {
+					epochTime = true;
+				} else  {
+					dateFormat = new SimpleDateFormat(dateFormatStr);
+					if (!Utility.isBlank(timeZone)) {
+						dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+					}
 				}
+				
+				//set reference time
+				if (null != refDateStr) {
+					if (epochTime) {
+						refTime = Long.parseLong(refDateStr);
+					} else {
+						Date refDate = dateFormat.parse(refDateStr);
+						refTime = refDate.getTime();
+					}
+				} else {
+					refTime = System.currentTimeMillis();
+				}
+				this.timeUnit = timeUnit;
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
 			}
-			curTime = System.currentTimeMillis();
-			this.timeUnit = timeUnit;
 		}
 
 		@Override
@@ -232,8 +250,8 @@ public class DateTransformer  {
 					//epoch time
 					time = Long.parseLong(value);
 				}
-				if (time > curTime) {
-					elapsed = time - curTime;
+				if (time > refTime) {
+					elapsed = time - refTime;
 					elapsed = BasicUtils.convertTimeUnit(elapsed, timeUnit);
 					transformed[0] =  "" + elapsed;
 				} else {
