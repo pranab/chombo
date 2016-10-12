@@ -53,10 +53,19 @@ public class BasicUtils {
 	
 	public static String configDelim = ",";
 	public  static String configSubFieldDelim = ":";
-	
-	public static long MILISEC_PER_HOUR = 60L * 1000 * 1000;
+
+	public static long MILISEC_PER_SEC = 1000;
+	public static long MILISEC_PER_MIN = 60L * MILISEC_PER_SEC;
+	public static long MILISEC_PER_HOUR = 60L * MILISEC_PER_MIN;
 	public static long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
 	public static long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
+
+	public static final String TIME_UNIT_MS = "ms";
+    public static final String TIME_UNIT_SEC = "sec";
+    public static final String TIME_UNIT_MIN = "min";
+    public static final String TIME_UNIT_HOUR = "hour";
+    public static final String TIME_UNIT_DAY = "day";
+   
     
     /**
      * @param vec
@@ -853,9 +862,13 @@ public class BasicUtils {
      */
     public static long convertTimeUnit(long epochTime, String timeUnit) {
     	long modTime = epochTime;
-		if (timeUnit.equals("hour")) {
+		if (timeUnit.equals(TIME_UNIT_SEC)) {
+			modTime /= MILISEC_PER_SEC;
+		}else if (timeUnit.equals(TIME_UNIT_MIN)) {
+			modTime /= MILISEC_PER_MIN;
+		}else if (timeUnit.equals(TIME_UNIT_HOUR)) {
 			modTime /= MILISEC_PER_HOUR;
-		} else if (timeUnit.equals("day")) {
+		} else if (timeUnit.equals(TIME_UNIT_DAY)) {
 			modTime /= MILISEC_PER_DAY;
 		} else {
 			throw new IllegalArgumentException("invalid time unit");
@@ -982,4 +995,5 @@ public class BasicUtils {
     	for( ;matcher.find(); ++count){}  
     	return count;
     }
-}
+    
+ }
