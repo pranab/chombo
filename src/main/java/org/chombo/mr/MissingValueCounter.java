@@ -36,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -103,13 +104,30 @@ public class MissingValueCounter extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
             
             if (dimension.equals("row")) {
-            	
+            	int i = idOrdinals.length;
+            	int count = 0;
+            	for ( ; i < items.length; ++i) {
+            		if (items[i].isEmpty()) {
+            			++count;
+            		}
+            	} 
+            	//descending order of count
+       			outKey.initialize();
+       			outKey.add(Integer.MAX_VALUE - count);
+       			
+       			//record ID
+       			outVal.initialize();
+       			outVal.add(BasicUtils.extractFields(items, idOrdinals, BasicUtils.DEF_FIELD_DELIM, false));
+            	context.write(outKey, outVal);
             } else {
             	int i = idOrdinals.length;
             	for ( ; i < items.length; ++i) {
             		if (items[i].isEmpty()) {
+            			//column ordinal
             			outKey.initialize();
             			outKey.add(i);
+            			
+            			//count
             			outVal.initialize();
             			outVal.add(1);
                     	context.write(outKey, outVal);
@@ -165,11 +183,13 @@ public class MissingValueCounter extends Configured implements Tool {
 		
 		@Override
 		protected void cleanup(Context context) throws IOException, InterruptedException {
-			Collections.sort(colCounters);
-			for (MissingColumnCounter colCnt : colCounters) {
-				outVal.set("" + colCnt.getLeft() + fieldDelim + colCnt.getRight());
-				context.write(NullWritable.get(), outVal);
-			}
+            if (dimension.equals("column")) {
+            	Collections.sort(colCounters);
+            	for (MissingColumnCounter colCnt : colCounters) {
+            		outVal.set("" + colCnt.getLeft() + fieldDelim + colCnt.getRight());
+            		context.write(NullWritable.get(), outVal);
+            	}
+            }
 			super.cleanup(context);
 		}
 		
@@ -179,7 +199,11 @@ public class MissingValueCounter extends Configured implements Tool {
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
             if (dimension.equals("row")) {
-            	
+            	count = Integer.MAX_VALUE - key.getInt(0);
+        		for (Tuple val : values) {
+            		outVal.set("" + count + fieldDelim + val.getString(0));
+            		context.write(NullWritable.get(), outVal);
+        		}            	
             } else {
             	count = 0;
         		for (Tuple val : values) {
