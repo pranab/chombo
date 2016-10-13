@@ -42,7 +42,7 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
- * Counts missing field values colun wise or row wise
+ * Counts missing field values column wise or row wise
  * @author pranab
  *
  */
@@ -60,7 +60,7 @@ public class MissingValueCounter extends Configured implements Tool {
 
         Utility.setConfiguration(job.getConfiguration(), "chombo");
         job.setMapperClass(MissingValueCounter.CounterMapper.class);
-        if (job.getConfiguration().get("mvc.couting.dimension", "column").equals("column")) { 
+        if (job.getConfiguration().get("mvc.counting.dimension", "column").equals("column")) { 
             job.setCombinerClass(MissingValueCounter.CounterCombiner.class);
         }
     	job.setReducerClass(MissingValueCounter.CounterReducer.class);
@@ -87,6 +87,7 @@ public class MissingValueCounter extends Configured implements Tool {
         private String fieldDelimRegex;
         private int[] idOrdinals;
         private String dimension;
+        private int count;
 
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -104,22 +105,29 @@ public class MissingValueCounter extends Configured implements Tool {
             items  =  value.toString().split(fieldDelimRegex);
             
             if (dimension.equals("row")) {
+            	//row wise
             	int i = idOrdinals.length;
-            	int count = 0;
+            	count = 0;
             	for ( ; i < items.length; ++i) {
             		if (items[i].isEmpty()) {
             			++count;
             		}
             	} 
-            	//descending order of count
-       			outKey.initialize();
-       			outKey.add(Integer.MAX_VALUE - count);
-       			
-       			//record ID
-       			outVal.initialize();
-       			outVal.add(BasicUtils.extractFields(items, idOrdinals, BasicUtils.DEF_FIELD_DELIM, false));
-            	context.write(outKey, outVal);
+            	if (count > 0) {
+                	//descending order of count
+	       			outKey.initialize();
+	       			outKey.add(Integer.MAX_VALUE - count);
+	       			
+	       			//record ID or whole record
+	       			outVal.initialize();
+	       			String rec = null != idOrdinals ? 
+	       				BasicUtils.extractFields(items, idOrdinals, BasicUtils.DEF_FIELD_DELIM, false) :
+	       				value.toString();
+	       			outVal.add(rec);
+	            	context.write(outKey, outVal);
+            	}
             } else {
+            	//column wise
             	int i = idOrdinals.length;
             	for ( ; i < items.length; ++i) {
             		if (items[i].isEmpty()) {
