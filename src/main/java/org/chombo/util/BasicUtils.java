@@ -731,7 +731,7 @@ public class BasicUtils {
      * @param maxSubListSize
      * @return
      */
-    public static <T> List<List<T>>  generateSublists(List<T> list,   int maxSubListSize) {
+    public static <T> List<List<T>>  generateSublists(List<T> list, int maxSubListSize) {
     	 List<List<T>> subLists = new ArrayList<List<T>>();
     	 
     	 //for each  item  in list generate sublists up to max length
@@ -1032,4 +1032,16 @@ public class BasicUtils {
     	return doesContain;
     }
    
+    /**
+     * @param arr
+     * @return
+     */
+    public static <T> Set<T> generateSetFromArray(T[] arr) {
+    	Set<T> set = new HashSet<T>();
+    	for (T obj : arr) {
+    		set.add(obj);
+    	}
+    	return set;
+    }
+    
  }

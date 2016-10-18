@@ -30,6 +30,9 @@ public class RowColumnFilter {
 	private String[] rowKeys;
 	private int[] colOrdinals;
 
+	public RowColumnFilter() {
+	}
+	
 	/**
 	 * @param rowStream
 	 * @param colStream
@@ -37,6 +40,19 @@ public class RowColumnFilter {
 	 * @throws IOException
 	 */
 	public RowColumnFilter(InputStream rowStream, InputStream colStream, String delim) throws IOException {
+		//row Keys
+		processRows(rowStream,  delim);
+		
+		//column ordinals
+		processColumns(colStream,  delim);
+	}
+	
+	/**
+	 * @param rowStream
+	 * @param delim
+	 * @throws IOException
+	 */
+	public void processRows(InputStream rowStream, String delim) throws IOException {
 		//row Keys
 		List<String> rows = BasicUtils.getFileLines(rowStream);
 		rowKeys = new String[rows.size()];
@@ -46,17 +62,26 @@ public class RowColumnFilter {
 			pos = row.lastIndexOf(delim);
 			rowKeys[i++] = row.substring(0, pos);
 		}
-		
+	}
+	
+	/**
+	 * @param colStream
+	 * @param delim
+	 * @throws IOException
+	 */
+	public void processColumns(InputStream colStream, String delim) throws IOException {
 		//column ordinals
 		List<String> cols = BasicUtils.getFileLines(colStream);
 		colOrdinals = new int[cols.size()];
-		i = 0;
+		int i = 0;
+		int pos = 0;
 		for (String col : cols) {
 			pos = col.indexOf(delim);
 			colOrdinals[i++] = Integer.parseInt(col.substring(0, pos));
 		}
+		
 	}
-	
+
 	/**
 	 * @param numCols
 	 * @return
