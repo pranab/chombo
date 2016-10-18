@@ -17,7 +17,10 @@
 
 package org.chombo.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -728,7 +731,7 @@ public class BasicUtils {
      * @param maxSubListSize
      * @return
      */
-    public static <T> List<List<T>>  generateSublists(List<T> list,   int maxSubListSize) {
+    public static <T> List<List<T>>  generateSublists(List<T> list, int maxSubListSize) {
     	 List<List<T>> subLists = new ArrayList<List<T>>();
     	 
     	 //for each  item  in list generate sublists up to max length
@@ -994,6 +997,51 @@ public class BasicUtils {
     	Matcher matcher = pattern.matcher(data);
     	for( ;matcher.find(); ++count){}  
     	return count;
+    }
+    
+    /**
+     * @param fs
+     * @return
+     * @throws IOException
+     */
+    public static List<String> getFileLines(InputStream fs) throws IOException {
+    	List<String> lines = new ArrayList<String>();
+    	if (null != fs) {
+    		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+    		String line = null; 
+    		while((line = reader.readLine()) != null) {
+    			lines.add(line);
+    		}
+    	}
+    	return lines;
+    }
+    
+    /**
+     * @param values
+     * @param value
+     * @return
+     */
+    public static boolean contains(int[] values, int value) {
+    	boolean doesContain = false;
+    	for (int thisValue : values) {
+    		if (thisValue == value) {
+    			doesContain = true;
+    			break;
+    		}
+    	}
+    	return doesContain;
+    }
+   
+    /**
+     * @param arr
+     * @return
+     */
+    public static <T> Set<T> generateSetFromArray(T[] arr) {
+    	Set<T> set = new HashSet<T>();
+    	for (T obj : arr) {
+    		set.add(obj);
+    	}
+    	return set;
     }
     
  }

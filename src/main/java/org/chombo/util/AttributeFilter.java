@@ -82,6 +82,7 @@ public class AttributeFilter {
 		for (AttributePredicate  predicate : predicates) {
 			status = status & predicate.evaluate(record);
 			if (!status) {
+				//predicates and connected
 				break;
 			}
 		}
