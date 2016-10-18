@@ -57,7 +57,7 @@ public class StringAttributePredicate extends AttributePredicate {
 		this.value = value;
 		if (null != context) {
 			//large value set
-			valueSet = (Set<String>)context.get("valueSet");
+			valueSet = (Set<String>)context.get(value);
 		} else {
 			String[] valueItems = value.split(VALUE_LIST_SEP);
 			if (valueItems.length > 1) {

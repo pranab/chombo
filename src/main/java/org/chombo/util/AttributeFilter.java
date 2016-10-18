@@ -51,11 +51,9 @@ public class AttributeFilter {
 			String[] valueParts  = predParts[2].split(AttributePredicate.DATA_TYPE_SEP);
 			
 			if (valueParts[0].equals(BaseAttribute.DATA_TYPE_INT)) {
-				int iValue = Integer.parseInt(valueParts[1]);
-				predicate = new IntAttributePredicate(attr, predParts[1], iValue);
+				predicate = new IntAttributePredicate(attr, predParts[1], valueParts[1]);
 			} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
-				double dValue = Double.parseDouble(valueParts[1]);
-				predicate = new DoubleAttributePredicate(attr, predParts[1], dValue);
+				predicate = new DoubleAttributePredicate(attr, predParts[1], valueParts[1]);
 			} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_STRING)) {
 				if (null != context) {
 					predicate = new StringAttributePredicate();

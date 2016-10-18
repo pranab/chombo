@@ -30,11 +30,18 @@ public class DoubleAttributePredicate extends AttributePredicate {
 	 * @param operator
 	 * @param value
 	 */
-	public DoubleAttributePredicate(int attribute, String operator, double value) {
+	public DoubleAttributePredicate(int attribute, String operator, String value) {
 		super(attribute, operator);
-		this.value = value;
+		this.value = Double.parseDouble(value);
 	}
 
+	@Override
+	public void build(int attribute, String operator, String value) {
+		this.attribute = attribute;
+		this.operator = operator;
+		this.value = Double.parseDouble(value);
+	}
+	
 	@Override
 	public boolean evaluate(String[] record) {
 		boolean status = false;
@@ -50,5 +57,6 @@ public class DoubleAttributePredicate extends AttributePredicate {
 		}
 		return status;
 	}
+
 
 }

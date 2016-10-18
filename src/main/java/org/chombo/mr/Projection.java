@@ -108,6 +108,7 @@ public class Projection extends Configured implements Tool {
 		private int[]  projectionFields;
         private String fieldDelimRegex;
         private String fieldDelimOut;
+        private AttributeFilter attrFilter;
 
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -115,15 +116,21 @@ public class Projection extends Configured implements Tool {
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim", ",");
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
+        	String selectFilter = config.get("pro.select.filter");
+        	if (null != selectFilter) {
+        		attrFilter = new AttributeFilter(selectFilter);
+        	}
        }
         
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
-	        outVal.set(items[keyField] + fieldDelimOut +  Utility.extractFields(items , projectionFields, 
+            if (null == attrFilter || attrFilter.evaluate(items)) {
+            	outVal.set(items[keyField] + fieldDelimOut +  Utility.extractFields(items , projectionFields, 
 	        		fieldDelimOut, false));
-	        context.write(NullWritable.get(), outVal);
+            	context.write(NullWritable.get(), outVal);
+            }
         }
 	}
 	
