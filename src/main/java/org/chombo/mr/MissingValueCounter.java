@@ -179,6 +179,8 @@ public class MissingValueCounter extends Configured implements Tool {
         private String dimension;
         private int count;
         private List<MissingColumnCounter> colCounters = new ArrayList<MissingColumnCounter>();
+        private int colMissingCountMin;
+        private int rowMissingCountMin;
         
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -187,15 +189,22 @@ public class MissingValueCounter extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
         	dimension = config.get("mvc.counting.dimension", "column");
+        	colMissingCountMin = config.getInt("mvc.col.missing.count.min", -1);
+        	rowMissingCountMin = config.getInt("mvc.row.missing.count.min", -1);
 		}
 		
 		@Override
 		protected void cleanup(Context context) throws IOException, InterruptedException {
             if (dimension.equals("column")) {
+            	//sort by descending order of count
             	Collections.sort(colCounters);
+            	
             	for (MissingColumnCounter colCnt : colCounters) {
-            		outVal.set("" + colCnt.getLeft() + fieldDelim + colCnt.getRight());
-            		context.write(NullWritable.get(), outVal);
+            		//only if the count is above threshold if specified
+            		if (colMissingCountMin == -1  || colCnt.getRight() > colMissingCountMin) {
+            			outVal.set("" + colCnt.getLeft() + fieldDelim + colCnt.getRight());
+            			context.write(NullWritable.get(), outVal);
+            		}
             	}
             }
 			super.cleanup(context);
@@ -208,10 +217,13 @@ public class MissingValueCounter extends Configured implements Tool {
         	throws IOException, InterruptedException {
             if (dimension.equals("row")) {
             	count = Integer.MAX_VALUE - key.getInt(0);
-        		for (Tuple val : values) {
-            		outVal.set("" + count + fieldDelim + val.getString(0));
-            		context.write(NullWritable.get(), outVal);
-        		}            	
+        		//only if the count is above threshold if specified
+            	if (rowMissingCountMin == -1 || count > rowMissingCountMin) {
+	        		for (Tuple val : values) {
+	            		outVal.set("" + val.getString(0) +  fieldDelim + count);
+	            		context.write(NullWritable.get(), outVal);
+	        		} 
+            	}
             } else {
             	count = 0;
         		for (Tuple val : values) {

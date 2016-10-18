@@ -40,6 +40,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.redis.RedisCache;
+import org.chombo.util.AttributeFilter;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -107,6 +108,7 @@ public class Projection extends Configured implements Tool {
 		private int[]  projectionFields;
         private String fieldDelimRegex;
         private String fieldDelimOut;
+        private AttributeFilter attrFilter;
 
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -114,15 +116,21 @@ public class Projection extends Configured implements Tool {
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim", ",");
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
+        	String selectFilter = config.get("pro.select.filter");
+        	if (null != selectFilter) {
+        		attrFilter = new AttributeFilter(selectFilter);
+        	}
        }
         
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
-	        outVal.set(items[keyField] + fieldDelimOut +  Utility.extractFields(items , projectionFields, 
+            if (null == attrFilter || attrFilter.evaluate(items)) {
+            	outVal.set(items[keyField] + fieldDelimOut +  Utility.extractFields(items , projectionFields, 
 	        		fieldDelimOut, false));
-	        context.write(NullWritable.get(), outVal);
+            	context.write(NullWritable.get(), outVal);
+            }
         }
 	}
 	
@@ -140,6 +148,7 @@ public class Projection extends Configured implements Tool {
         private int orderByField;
         private boolean groupBy;
         private boolean isOrderByFieldNumeric;
+        private AttributeFilter attrFilter;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -155,6 +164,11 @@ public class Projection extends Configured implements Tool {
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
         	orderByField = config.getInt("pro.orderBy.field", -1);
         	isOrderByFieldNumeric = config.getBoolean("pro.orderBy.filed.numeric", false);
+        	
+        	String selectFilter = config.get("pro.select.filter");
+        	if (null != selectFilter) {
+        		attrFilter = new AttributeFilter(selectFilter);
+        	}
        }
 
         /* (non-Javadoc)
@@ -164,18 +178,20 @@ public class Projection extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex);
-        	outKey.initialize();
-            if (orderByField >= 0) {
-            	if (isOrderByFieldNumeric) {
-               		outKey.add(items[keyField],Double.parseDouble( items[orderByField]));
-            	} else {
-            		outKey.add(items[keyField], items[orderByField]);
-            	}
-            } else {
-            	outKey.add(items[keyField]);
+            if (null == attrFilter || attrFilter.evaluate(items)) {
+	        	outKey.initialize();
+	            if (orderByField >= 0) {
+	            	if (isOrderByFieldNumeric) {
+	               		outKey.add(items[keyField],Double.parseDouble( items[orderByField]));
+	            	} else {
+	            		outKey.add(items[keyField], items[orderByField]);
+	            	}
+	            } else {
+	            	outKey.add(items[keyField]);
+	            }
+	        	outVal.set( Utility.extractFields(items , projectionFields, fieldDelimOut, false));
+	        	context.write(outKey, outVal);
             }
-        	outVal.set( Utility.extractFields(items , projectionFields, fieldDelimOut, false));
-        	context.write(outKey, outVal);
         }
 	}
 	

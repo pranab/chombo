@@ -19,6 +19,7 @@ package org.chombo.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author pranab
@@ -26,31 +27,50 @@ import java.util.List;
  */
 public class AttributeFilter {
 	private List<AttributePredicate> predicates = new ArrayList<AttributePredicate>();
+	private Map<String, Object> context;
+	
+	public AttributeFilter(){
+	}
 
 	/**
 	 * @param filter
 	 */
 	public AttributeFilter(String filter) {
+		build(filter);
+	}
+	
+	/**
+	 * @param filter
+	 */
+	public void build(String filter) {
 		AttributePredicate  predicate = null;
 		String[] preds = filter.split(",");
 		for (String pred : preds) {
-			String[] predParts = pred.split("\\s+");
+			String[] predParts = pred.split(AttributePredicate.PREDICATE_SEP);
 			int attr = Integer.parseInt(predParts[0]);
-			String[] valueParts  = predParts[2].split(":");
+			String[] valueParts  = predParts[2].split(AttributePredicate.DATA_TYPE_SEP);
 			
-			if (valueParts[0].equals("int")) {
-				int iValue = Integer.parseInt(valueParts[1]);
-				predicate = new IntAttributePredicate(attr, predParts[1], iValue);
-			} else if (valueParts[0].equals("double")) {
-				double dValue = Double.parseDouble(valueParts[1]);
-				predicate = new DoubleAttributePredicate(attr, predParts[1], dValue);
-			} else if (valueParts[0].equals("string")) {
-				predicate = new StringAttributePredicate(attr, predParts[1], valueParts[1]);
+			if (valueParts[0].equals(BaseAttribute.DATA_TYPE_INT)) {
+				predicate = new IntAttributePredicate(attr, predParts[1], valueParts[1]);
+			} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+				predicate = new DoubleAttributePredicate(attr, predParts[1], valueParts[1]);
+			} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_STRING)) {
+				if (null != context) {
+					predicate = new StringAttributePredicate();
+					predicate.withContext(context).build(attr, predParts[1], valueParts[1]);
+				} else {
+					predicate = new StringAttributePredicate(attr, predParts[1], valueParts[1]);
+				}
 			} else {
 				throw new IllegalArgumentException("invalid data type");
 			}
 			predicates.add(predicate);
 		}
+	}
+	
+	public AttributeFilter withContext(Map<String, Object> context) {
+		this.context = context;
+		return this;
 	}
 	
 	/**

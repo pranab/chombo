@@ -17,6 +17,8 @@
 
 package org.chombo.util;
 
+import java.util.Map;
+
 /**
  * @author pranab
  *
@@ -24,15 +26,37 @@ package org.chombo.util;
 public abstract class AttributePredicate {
 	protected int attribute;
 	protected String operator;
-	protected final String GREATER_THAN = "gt";
-	protected final String LESS_THAN = "lt";
-	protected final String EQUAL_TO = "eq";
+	protected Map<String, Object> context;
+
+	public static final String GREATER_THAN = "gt";
+	public static final String LESS_THAN = "lt";
+	public static final String EQUAL_TO = "eq";
+	public static final String IN = "in";
+	public static final String NOT_IN = "ni";
+	public static final String PREDICATE_SEP = "\\s+";
+	public static final String DATA_TYPE_SEP = ":";
+	public static final String VALUE_LIST_SEP = "\\|";
+	
+	public AttributePredicate() {
+	}
 	
 	public AttributePredicate(int attribute, String operator) {
 		super();
 		this.attribute = attribute;
 		this.operator = operator;
 	}
+	
+	public abstract void build(int attribute, String operator, String value);
+
+	/**
+	 * @param context
+	 * @return
+	 */
+	public AttributePredicate withContext(Map<String, Object> context) {
+		this.context = context;
+		return this;
+	}
+
 	
 	/**
 	 * evaluates predicate 
