@@ -125,13 +125,7 @@ public class Projection extends Configured implements Tool {
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
         	if (null == projectionFields) {
         		//projected field from the output of another MR
-        		InputStream colStream = Utility.getFileStream(config, "pro.exclude.columns.file");
-        		if (null == colStream) {
-        			throw new IllegalStateException("error aceesing excluded column file");
-        		}
-        		rowColFilter.processColumns(colStream, fileterFieldDelimRegex);
-        		int numCols = Utility.assertIntConfigParam(config, "pro.num.fields", "missing configuration for number of fields");
-        		projectionFields = rowColFilter.getIncludedColOrdinals(numCols);
+        		projectionFields = findIncludedColumns(config, rowColFilter);
         	}
         	
         	
@@ -141,19 +135,7 @@ public class Projection extends Configured implements Tool {
         		attrFilter = new AttributeFilter(selectFilter);
         		
         		//bulk data for in or notin operator
-        		String notInSetName = config.get("pro.operator.notin.set.name");
-        		if (null == notInSetName) {
-        			//notin operator with out of band set values
-        			InputStream rowStream = Utility.getFileStream(config, "pro.exclude.rows.file");
-        			if (null == rowStream) {
-        				throw new IllegalStateException("error aceesing excluded row file");
-        			}
-        			rowColFilter.processRows(rowStream, fileterFieldDelimRegex);
-        			String[] exclRowKeys = rowColFilter.getExcludedRowKeys();
-        			Map<String, Object> setOpContext = new HashMap<String, Object>();
-        			setOpContext.put(notInSetName, BasicUtils.generateSetFromArray(exclRowKeys));
-        			attrFilter.withContext(setOpContext);
-        		}
+        		createExcludedRowsContext( config,  rowColFilter,attrFilter);
         	} 
        }
         
@@ -184,6 +166,7 @@ public class Projection extends Configured implements Tool {
         private boolean groupBy;
         private boolean isOrderByFieldNumeric;
         private AttributeFilter attrFilter;
+        private RowColumnFilter rowColFilter = new RowColumnFilter();
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -197,12 +180,22 @@ public class Projection extends Configured implements Tool {
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim.out", ",");
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
+        	if (null == projectionFields) {
+        		//projected field from the output of another MR
+        		projectionFields = findIncludedColumns(config, rowColFilter);
+        	}
+        	
+        	//order by
         	orderByField = config.getInt("pro.orderBy.field", -1);
         	isOrderByFieldNumeric = config.getBoolean("pro.orderBy.filed.numeric", false);
         	
+        	//selection
         	String selectFilter = config.get("pro.select.filter");
         	if (null != selectFilter) {
         		attrFilter = new AttributeFilter(selectFilter);
+        		
+        		//bulk data for in or notin operator
+        		createExcludedRowsContext(config,  rowColFilter, attrFilter);
         	}
        }
 
@@ -494,6 +487,48 @@ public class Projection extends Configured implements Tool {
     	}
     }
  
+    /**
+     * @param config
+     * @param rowColFilter
+     * @return
+     * @throws IOException
+     */
+    public static int[] findIncludedColumns(Configuration config, RowColumnFilter rowColFilter) throws IOException {
+		//projected field from the output of another MR
+    	String fileterFieldDelimRegex = config.get("pro.filter.field.delim.regex", ",");
+		InputStream colStream = Utility.getFileStream(config, "pro.exclude.columns.file");
+		if (null == colStream) {
+			throw new IllegalStateException("error aceesing excluded column file");
+		}
+		rowColFilter.processColumns(colStream, fileterFieldDelimRegex);
+		int numCols = Utility.assertIntConfigParam(config, "pro.num.fields", "missing configuration for number of fields");
+		return rowColFilter.getIncludedColOrdinals(numCols);
+    }
+    
+    /**
+     * @param config
+     * @param rowColFilter
+     * @param attrFilter
+     * @throws IOException
+     */
+    public static void createExcludedRowsContext(Configuration config, RowColumnFilter rowColFilter, 
+    		AttributeFilter attrFilter) throws IOException {
+    	String fileterFieldDelimRegex = config.get("pro.filter.field.delim.regex", ",");
+		String notInSetName = config.get("pro.operator.notin.set.name");
+		if (null == notInSetName) {
+			//notin operator with out of band set values
+			InputStream rowStream = Utility.getFileStream(config, "pro.exclude.rows.file");
+			if (null == rowStream) {
+				throw new IllegalStateException("error aceesing excluded row file");
+			}
+			rowColFilter.processRows(rowStream, fileterFieldDelimRegex);
+			String[] exclRowKeys = rowColFilter.getExcludedRowKeys();
+			Map<String, Object> setOpContext = new HashMap<String, Object>();
+			setOpContext.put(notInSetName, BasicUtils.generateSetFromArray(exclRowKeys));
+			attrFilter.withContext(setOpContext);
+		}
+    }    
+    
 	/**
 	 * @param args
 	 */
