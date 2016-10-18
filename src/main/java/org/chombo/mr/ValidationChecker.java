@@ -261,7 +261,7 @@ public class ValidationChecker extends Configured implements Tool {
             	}
             }
             
-            if (valid || !filterInvalidRecords ) {
+            if (null == invalidData || !filterInvalidRecords ) {
             	outVal.set(value.toString());
             	context.write(NullWritable.get(), outVal);
             }
