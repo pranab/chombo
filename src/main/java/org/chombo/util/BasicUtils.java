@@ -17,7 +17,10 @@
 
 package org.chombo.util;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -996,4 +999,37 @@ public class BasicUtils {
     	return count;
     }
     
+    /**
+     * @param fs
+     * @return
+     * @throws IOException
+     */
+    public static List<String> getFileLines(InputStream fs) throws IOException {
+    	List<String> lines = new ArrayList<String>();
+    	if (null != fs) {
+    		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+    		String line = null; 
+    		while((line = reader.readLine()) != null) {
+    			lines.add(line);
+    		}
+    	}
+    	return lines;
+    }
+    
+    /**
+     * @param values
+     * @param value
+     * @return
+     */
+    public static boolean contains(int[] values, int value) {
+    	boolean doesContain = false;
+    	for (int thisValue : values) {
+    		if (thisValue == value) {
+    			doesContain = true;
+    			break;
+    		}
+    	}
+    	return doesContain;
+    }
+   
  }
