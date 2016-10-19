@@ -50,6 +50,7 @@ public class TransformerFactory {
 	public static final String DATE_FORMAT_TRANSFORMER = "dateFormatTrans";
 	public static final String ELAPSED_TIME_TRANSFORMER = "elapsedTimeTrans";
 	public static final String CONTEXTUAL_ELAPSED_TIME_TRANSFORMER = "contextualElapsedTimeTrans";
+	public static final String TIME_CYCLE_SHIFT_TRANSFORMER = "timeCycleShiftTrans";
 	public static final String NUM_DATA_DISCRETIZER = "discretizerTrans";
 	public static final String NUM_BINARY_TRANSFORMER  = "binaryTrans";
 	public static final String INT_ADD_TRANSFORMER = "intAddTrans";
@@ -145,6 +146,8 @@ public class TransformerFactory {
 			transformer = new DateTransformer.ElapsedTimeTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(CONTEXTUAL_ELAPSED_TIME_TRANSFORMER)) {
 			transformer = new DateTransformer.ContextualElapsedTimeTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(TIME_CYCLE_SHIFT_TRANSFORMER)) {
+			transformer = new DateTransformer.TimeCyclicShiftTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(NUM_DATA_DISCRETIZER)) {
 			transformer = new NumericTransformer.Discretizer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(NUM_BINARY_TRANSFORMER)) {

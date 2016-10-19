@@ -370,4 +370,83 @@ public class DateTransformer  {
 		
 	}
 	
+	public static class TimeCyclicShiftTransformer extends AttributeTransformer  {
+		private SimpleDateFormat dateFormat;
+		private boolean epochTime;
+		private long refTime;
+		private String timeUnit;
+		private boolean failOnInvalid;
+		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
+		public TimeCyclicShiftTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			String refDateStr = config.hasPath("refDateStr")? config.getString("refDateStr") :  null;
+			intialize(config.getString("dateFormat"), config.getString("timeZone"),
+					config.getString("timeUnit"), config.getBoolean("failOnInvalid"), refDateStr);
+		}
+		
+		/**
+		 * @param dateFormat
+		 * @param timeZone
+		 * @param failOnInvalid
+		 */
+		public TimeCyclicShiftTransformer(String dateFormat, String timeZone, String timeUnit, boolean failOnInvalid, 
+			String refDateStr) {
+			super(1);
+			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid, refDateStr);
+		}
+
+		/**
+		 * @param dateFormatStr
+		 * @param timeZone
+		 * @param failOnInvalid
+		 */
+		private void intialize(String dateFormatStr, String timeZone, String timeUnit, boolean failOnInvalid, 
+			String refDateStr) {
+			try {
+				dateFormat = new SimpleDateFormat(dateFormatStr);
+				if (!Utility.isBlank(timeZone)) {
+					dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+				}
+				
+				//set reference time
+				if (null != refDateStr) {
+					Date refDate = dateFormat.parse(refDateStr);
+					refTime = refDate.getTime();
+				} else {
+					refTime = System.currentTimeMillis();
+				}
+				this.timeUnit = timeUnit;
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			try {
+				Calendar date = Calendar.getInstance();
+				date.setTime(dateFormat.parse(value));
+				for (long time = date.getTimeInMillis(); time < refTime; time = date.getTimeInMillis()) {
+					if (timeUnit.equals(BasicUtils.TIME_UNIT_MONTH)) {
+						date.add(Calendar.MONTH, 1);
+					} else if (timeUnit.equals(BasicUtils.TIME_UNIT_QUARTER)) {
+						date.add(Calendar.MONTH, 3);
+					} else if (timeUnit.equals(BasicUtils.TIME_UNIT_YEAR)) {
+						date.add(Calendar.YEAR, 1);
+					} else {
+						throw new IllegalStateException("invalid time cycle unit for time shift");
+					}
+				}
+				transformed[0] = dateFormat.format(date);
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+			return transformed;
+		}		
+	}	
+	
 }

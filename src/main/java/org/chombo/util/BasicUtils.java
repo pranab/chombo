@@ -54,20 +54,24 @@ public class BasicUtils {
 	
 	public static final String DEF_FIELD_DELIM = ",";
 	
-	public static String configDelim = ",";
-	public  static String configSubFieldDelim = ":";
+	public static final String configDelim = ",";
+	public static final String configSubFieldDelim = ":";
 
-	public static long MILISEC_PER_SEC = 1000;
-	public static long MILISEC_PER_MIN = 60L * MILISEC_PER_SEC;
-	public static long MILISEC_PER_HOUR = 60L * MILISEC_PER_MIN;
-	public static long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
-	public static long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
+	public static final long MILISEC_PER_SEC = 1000;
+	public static final long MILISEC_PER_MIN = 60L * MILISEC_PER_SEC;
+	public static final long MILISEC_PER_HOUR = 60L * MILISEC_PER_MIN;
+	public static final long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
+	public static final long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
 
 	public static final String TIME_UNIT_MS = "ms";
     public static final String TIME_UNIT_SEC = "sec";
     public static final String TIME_UNIT_MIN = "min";
     public static final String TIME_UNIT_HOUR = "hour";
     public static final String TIME_UNIT_DAY = "day";
+    public static final String TIME_UNIT_WEEK = "week";
+    public static final String TIME_UNIT_MONTH = "month";
+    public static final String TIME_UNIT_QUARTER = "quarter";
+    public static final String TIME_UNIT_YEAR = "year";
    
     
     /**
