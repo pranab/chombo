@@ -209,12 +209,14 @@ public class Projection extends Configured implements Tool {
             if (null == attrFilter || attrFilter.evaluate(items)) {
 	        	outKey.initialize();
 	            if (orderByField >= 0) {
+	            	//group by and order by
 	            	if (isOrderByFieldNumeric) {
 	               		outKey.add(items[keyField],Double.parseDouble( items[orderByField]));
 	            	} else {
 	            		outKey.add(items[keyField], items[orderByField]);
 	            	}
 	            } else {
+	            	//group by
 	            	outKey.add(items[keyField]);
 	            }
 	        	outVal.set( Utility.extractFields(items , projectionFields, fieldDelimOut, false));

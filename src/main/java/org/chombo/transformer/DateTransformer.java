@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 import java.util.TimeZone;
 
 import org.chombo.util.BasicUtils;
@@ -173,7 +174,7 @@ public class DateTransformer  {
 	 * @author pranab
 	 *
 	 */
-	public static class ElapsedTimeTransformer extends AttributeTransformer {
+	public static class ElapsedTimeTransformer extends AttributeTransformer  {
 		private SimpleDateFormat dateFormat;
 		private boolean epochTime;
 		private long refTime;
@@ -267,5 +268,106 @@ public class DateTransformer  {
 			return transformed;
 		}
 	}	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class ContextualElapsedTimeTransformer extends AttributeTransformer implements ContextAwareTransformer {
+		private String[] fields;
+		private boolean epochTime;
+		private long refTime;
+		private String timeUnit;
+		private boolean failOnInvalid;
+		private SimpleDateFormat dateFormat;
+		private int refDateFieldOrdinal;
+		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
+		public ContextualElapsedTimeTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			refDateFieldOrdinal = config.getInt("refDateFieldOrdinal");
+			intialize(config.getString("dateFormat"), config.getString("timeZone"),
+					config.getString("timeUnit"), config.getBoolean("failOnInvalid"));
+
+		}
+		
+		/**
+		 * @param dateFormat
+		 * @param timeZone
+		 * @param timeUnit
+		 * @param failOnInvalid
+		 */
+		public ContextualElapsedTimeTransformer(String dateFormat, String timeZone, String timeUnit, boolean failOnInvalid) {
+			super(1);
+			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid);
+		}
+
+		/**
+		 * @param dateFormatStr
+		 * @param timeZone
+		 * @param timeUnit
+		 * @param failOnInvalid
+		 */
+		private void intialize(String dateFormatStr, String timeZone, String timeUnit, boolean failOnInvalid) {
+			if (dateFormatStr.equals("epochTime")) {
+				epochTime = true;
+			} else  {
+				dateFormat = new SimpleDateFormat(dateFormatStr);
+				if (!Utility.isBlank(timeZone)) {
+					dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+				}
+			}
+			this.timeUnit = timeUnit;
+		}
+		
+		@Override
+		public void setContext(Map<String, Object> context) {
+			fields = (String[])context.get("record");
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			long elapsed  = 0;
+			long time = 0;
+			try {
+				//reference date time
+				String refDateStr = fields[refDateFieldOrdinal];
+				if (epochTime) {
+					refTime = Long.parseLong(refDateStr);
+				} else {
+					Date refDate = dateFormat.parse(refDateStr);
+					refTime = refDate.getTime();
+				}
+
+				Date date = null;
+				if (null != dateFormat) {
+					//date format
+					date = dateFormat.parse(value);
+					time = date.getTime();
+				} else {
+					//epoch time
+					time = Long.parseLong(value);
+				}
+				if (time > refTime) {
+					elapsed = time - refTime;
+					elapsed = BasicUtils.convertTimeUnit(elapsed, timeUnit);
+					transformed[0] =  "" + elapsed;
+				} else {
+					if (failOnInvalid) {
+						throw new IllegalArgumentException("date in future");
+					} else {
+						transformed[0] =  "0";
+					}
+				}
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+			return transformed;
+		}
+		
+	}
 	
 }
