@@ -52,10 +52,10 @@ For Hadoop 2 (yarn)
 
 For spark
 * Build chombo first in master branch with 
-** mvn clean install  
-** sbt publishLocal
+	* mvn clean install  
+	* sbt publishLocal
 * Build chombo-spark in  chombo/spark directory
-** sbt clean package
+	* sbt clean package
 
 ## Help
 Please feel free to email me at pkghosh99@gmail.com
