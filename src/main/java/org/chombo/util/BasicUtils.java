@@ -1044,4 +1044,15 @@ public class BasicUtils {
     	return set;
     }
     
+    /**
+     * @param arr
+     * @return
+     */
+    public static <T> Set<T> generateSetFromList(List<T> list) {
+    	Set<T> set = new HashSet<T>();
+    	for (T obj : list) {
+    		set.add(obj);
+    	}
+    	return set;
+    }
  }
