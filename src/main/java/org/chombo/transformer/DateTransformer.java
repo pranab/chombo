@@ -370,6 +370,10 @@ public class DateTransformer  {
 		
 	}
 	
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static class TimeCyclicShiftTransformer extends AttributeTransformer  {
 		private SimpleDateFormat dateFormat;
 		private boolean epochTime;
@@ -447,6 +451,122 @@ public class DateTransformer  {
 			}
 			return transformed;
 		}		
+	}	
+	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class ContextualTimeCyclicShiftTransformer extends AttributeTransformer implements ContextAwareTransformer {
+		private SimpleDateFormat dateFormat;
+		private long refTime;
+		private String timeUnit;
+		private String[] fields;
+		private int timeUnitColOrd;
+		private int refDateColOrd;
+		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
+		public ContextualTimeCyclicShiftTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			int refDateColOrd = config.hasPath("refDateColOrd")? config.getInt("refDateColOrd") :  -1;
+			String refDateStr = config.hasPath("refDateStr")? config.getString("refDateStr") :  null;
+			int timeUnitColOrd = config.hasPath("timeUnitColOrd")? config.getInt("timeUnitColOrd") :  -1;
+			String timeUnit = config.hasPath("timeUnit")? config.getString("timeUnit") :  null;
+			intialize(config.getString("dateFormat"), config.getString("timeZone"),
+					timeUnitColOrd, timeUnit, config.getBoolean("failOnInvalid"), refDateColOrd, refDateStr);
+		}
+		
+		/**
+		 * @param dateFormat
+		 * @param timeZone
+		 * @param failOnInvalid
+		 */
+		public ContextualTimeCyclicShiftTransformer(String dateFormat, String timeZone, int timeUnitColOrd, 
+			String timeUnit, boolean failOnInvalid, int refDateColOrd, String refDateStr) {
+			super(1);
+			intialize(dateFormat,  timeZone, timeUnitColOrd, timeUnit, failOnInvalid, refDateColOrd, refDateStr);
+		}
+
+		/**
+		 * @param dateFormatStr
+		 * @param timeZone
+		 * @param failOnInvalid
+		 */
+		private void intialize(String dateFormatStr, String timeZone, int timeUnitColOrd, String timeUnit, 
+			boolean failOnInvalid, int refDateColOrd, String refDateStr) {
+			try {
+				dateFormat = new SimpleDateFormat(dateFormatStr);
+				if (!Utility.isBlank(timeZone)) {
+					dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+				}
+				
+				//set reference time
+				if (null != refDateStr) {
+					Date refDate = dateFormat.parse(refDateStr);
+					refTime = refDate.getTime();
+				} 
+				this.timeUnit = timeUnit;
+				this.timeUnitColOrd = timeUnitColOrd;
+				this.refDateColOrd = refDateColOrd;
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			try {
+				//reference date
+				long thisRefTime = 0;
+				if (refDateColOrd >= 0) {
+					Date refDate = dateFormat.parse(fields[refDateColOrd]);
+					thisRefTime = refDate.getTime();
+				} else if (refTime > 0) {
+					thisRefTime = refTime;
+				} else {
+					throw new IllegalStateException("either reference date column index or global ref date must be provided");
+				}
+				
+				//time unit
+				String thisTimeUnit = null;
+				if (timeUnitColOrd >= 0) {
+					thisTimeUnit = fields[timeUnitColOrd];
+				} else if (null != timeUnit) {
+					thisTimeUnit = timeUnit;
+				} else {
+					throw new IllegalStateException("either cycle time unit column index or global cycle time unit must be provided");
+				}
+				
+				//roll forward
+				Calendar date = Calendar.getInstance();
+				date.setTime(dateFormat.parse(value));
+				for (long time = date.getTimeInMillis(); time < thisRefTime; time = date.getTimeInMillis()) {
+					if (thisTimeUnit.equals(BasicUtils.TIME_UNIT_MONTH)) {
+						date.add(Calendar.MONTH, 1);
+					} else if (thisTimeUnit.equals(BasicUtils.TIME_UNIT_QUARTER)) {
+						date.add(Calendar.MONTH, 3);
+					} else if (thisTimeUnit.equals(BasicUtils.TIME_UNIT_YEAR)) {
+						date.add(Calendar.YEAR, 1);
+					} else {
+						throw new IllegalStateException("invalid time cycle unit for time shift");
+					}
+				}
+				transformed[0] = dateFormat.format(date);
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+			return transformed;
+		}		
+		
+		@Override
+		public void setContext(Map<String, Object> context) {
+			fields = (String[])context.get("record");
+		}
+		
 	}	
 	
 }
