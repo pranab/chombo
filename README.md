@@ -35,6 +35,7 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * https://pkghosh.wordpress.com/2015/08/25/anomaly-detection-with-robust-zscore/
 * https://pkghosh.wordpress.com/2015/10/22/operational-analytics-with-seasonal-data/
 * https://pkghosh.wordpress.com/2015/11/17/transforming-big-data/
+* https://pkghosh.wordpress.com/2016/10/04/simple-sanity-checks-for-data-correctness-with-spark/
 
 
 ## Build
@@ -48,6 +49,13 @@ For Hadoop 2 (non yarn)
 For Hadoop 2 (yarn)
 * git checkout nuovo
 * mvn clean install -P yarn
+
+For spark
+* Build chombo first in master branch with 
+	* mvn clean install  
+	* sbt publishLocal
+* Build chombo-spark in  chombo/spark directory
+	* sbt clean package
 
 ## Help
 Please feel free to email me at pkghosh99@gmail.com
