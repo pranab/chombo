@@ -129,7 +129,7 @@ public class Normalizer extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            items  =  value.toString().split(fieldDelimRegex);
+            items  =  value.toString().split(fieldDelimRegex, -1);
             outKey.initialize();
             outKey.add(1, items[ID_ORD]);
             

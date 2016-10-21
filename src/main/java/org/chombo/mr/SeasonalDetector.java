@@ -132,7 +132,7 @@ public class SeasonalDetector  extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            items  =  value.toString().split(fieldDelimRegex);
+            items  =  value.toString().split(fieldDelimRegex, -1);
             
             timeStamp = Long.parseLong(items[timeStampFieldOrdinal]);
             cycleIndex = seasonalAnalyzer.getCycleIndex(timeStamp);

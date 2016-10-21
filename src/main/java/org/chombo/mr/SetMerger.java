@@ -110,7 +110,7 @@ public class SetMerger extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            String[] items  =  value.toString().split(fieldDelimRegex);
+            String[] items  =  value.toString().split(fieldDelimRegex, -1);
             
             //beginning keyLen fields constitute key
             Utility.createStringTupleFromBegining(items, keyLen, outKey);

@@ -107,7 +107,7 @@ public class MultiVarHistogram extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            String[] items  =  value.toString().split(fieldDelimRegex);
+            String[] items  =  value.toString().split(fieldDelimRegex, -1);
             if ( items.length  != numFields){
             	context.getCounter("Data", "Invalid").increment(1);
             	return;
