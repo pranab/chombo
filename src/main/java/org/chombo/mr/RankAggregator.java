@@ -101,7 +101,7 @@ public class RankAggregator extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            items  =  value.toString().split(fieldDelimRegex);
+            items  =  value.toString().split(fieldDelimRegex, -1);
             Utility.createStringTuple(items, idOrdinals, outKey);
             outVal.set(Double.parseDouble(items[rankOrdinal]));
         	context.write(outKey, outVal);

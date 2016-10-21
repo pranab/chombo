@@ -120,7 +120,7 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
          */
         protected void map(LongWritable key, Text value, Context context)
         		throws IOException, InterruptedException {
-        	items  =  value.toString().split(fieldDelimRegex);
+        	items  =  value.toString().split(fieldDelimRegex, -1);
         	try {
 				timeStamp = Utility.getEpochTime(items[timeStampFieldOrdinal], isEpochTime, dateFormat, timeZoneShiftHours);
 				

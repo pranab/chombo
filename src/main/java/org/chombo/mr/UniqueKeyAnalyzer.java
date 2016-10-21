@@ -103,7 +103,7 @@ public class UniqueKeyAnalyzer extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            items  =  value.toString().split(fieldDelimRegex);
+            items  =  value.toString().split(fieldDelimRegex, -1);
             Utility.intializeTuple(items, keyOrdinals, schema, outKey);
            	context.write(outKey, outVal);
         }

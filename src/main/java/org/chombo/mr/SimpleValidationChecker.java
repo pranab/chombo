@@ -120,7 +120,7 @@ public class SimpleValidationChecker extends Configured implements Tool {
         		return;
         	}
         	
-            items  =  value.toString().split(fieldDelimRegex);
+            items  =  value.toString().split(fieldDelimRegex, -1);
             valid = true;
             if (items.length != numFields) {
             	//if field count does not match, individual fields are not checked

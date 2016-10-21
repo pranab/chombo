@@ -97,7 +97,7 @@ public class TokenCounter extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            items  =  value.toString().split(tokenDelimRegex);
+            items  =  value.toString().split(tokenDelimRegex, -1);
             int i = 0;
             for (String item : items) {
                 outKey.initialize();

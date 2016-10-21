@@ -115,7 +115,7 @@ public class UniqueCounter  extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            items  =  value.toString().split(fieldDelimRegex);
+            items  =  value.toString().split(fieldDelimRegex, -1);
             if (null != attributes) {
             	//fixed number of columns
 	        	for (int attr : attributes) {

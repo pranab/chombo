@@ -201,7 +201,7 @@ public class WeightedAverage extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            items  =  value.toString().split(fieldDelimRegex);
+            items  =  value.toString().split(fieldDelimRegex, -1);
             sum = 0;
             for (Pair<Integer, Integer> pair : filedWeights) {
             	fieldOrd = pair.getLeft();
