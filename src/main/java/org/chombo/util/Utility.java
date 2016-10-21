@@ -1310,7 +1310,7 @@ public class Utility {
 	 * @return
 	 */
 	public static String[] splitFields(String record, String fieldDelim, int numFields, boolean failOnInvalid) {
-		String[] items = record.split(fieldDelim);
+		String[] items = record.split(fieldDelim, -1);
 		if (items.length != numFields) {
 			if (items.length < numFields) {
 				//check if trailing blank fields
