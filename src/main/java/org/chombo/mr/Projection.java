@@ -142,7 +142,7 @@ public class Projection extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            String[] items  =  value.toString().split(fieldDelimRegex);
+            String[] items  =  value.toString().split(fieldDelimRegex, -1);
             if (null == attrFilter || attrFilter.evaluate(items)) {
             	outVal.set(items[keyField] + fieldDelimOut +  Utility.extractFields(items , projectionFields, 
 	        		fieldDelimOut, false));
@@ -205,7 +205,7 @@ public class Projection extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-            String[] items  =  value.toString().split(fieldDelimRegex);
+            String[] items  =  value.toString().split(fieldDelimRegex, -1);
             if (null == attrFilter || attrFilter.evaluate(items)) {
 	        	outKey.initialize();
 	            if (orderByField >= 0) {
