@@ -128,7 +128,7 @@ public class Projection extends Configured implements Tool {
         		//projected field from the output of another MR
         		projectionFields = findIncludedColumns(config, rowColFilter);
         	}
-        	idIncluded = config.getBoolean("pro.id.incuden.in.projection", true);
+        	idIncluded = config.getBoolean("pro.id.incuded.in.projection", true);
         	
         	
         	//selection
