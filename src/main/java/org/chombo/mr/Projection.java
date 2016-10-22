@@ -113,6 +113,7 @@ public class Projection extends Configured implements Tool {
         private String fieldDelimOut;
         private AttributeFilter attrFilter;
         private RowColumnFilter rowColFilter = new RowColumnFilter();
+        private boolean idIncluded;
 
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
@@ -127,6 +128,7 @@ public class Projection extends Configured implements Tool {
         		//projected field from the output of another MR
         		projectionFields = findIncludedColumns(config, rowColFilter);
         	}
+        	idIncluded = config.getBoolean("pro.id.incuden.in.projection", true);
         	
         	
         	//selection
@@ -144,8 +146,12 @@ public class Projection extends Configured implements Tool {
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex, -1);
             if (null == attrFilter || attrFilter.evaluate(items)) {
-            	outVal.set(items[keyField] + fieldDelimOut +  Utility.extractFields(items , projectionFields, 
-	        		fieldDelimOut, false));
+            	if (idIncluded) {
+            		outVal.set(Utility.extractFields(items , projectionFields, fieldDelimOut, false));
+            	} else {
+            		outVal.set(items[keyField] + fieldDelimOut +  Utility.extractFields(items , projectionFields, 
+            				fieldDelimOut, false));
+            	}
             	context.write(NullWritable.get(), outVal);
             }
         }
