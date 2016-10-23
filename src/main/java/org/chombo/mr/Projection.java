@@ -523,7 +523,7 @@ public class Projection extends Configured implements Tool {
     		AttributeFilter attrFilter) throws IOException {
     	String fileterFieldDelimRegex = config.get("pro.filter.field.delim.regex", ",");
 		String notInSetName = config.get("pro.operator.notin.set.name");
-		if (null == notInSetName) {
+		if (null != notInSetName) {
 			//notin operator with out of band set values
 			InputStream rowStream = Utility.getFileStream(config, "pro.exclude.rows.file");
 			if (null == rowStream) {
