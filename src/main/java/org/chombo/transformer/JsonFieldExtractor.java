@@ -85,8 +85,8 @@ public class JsonFieldExtractor implements Serializable {
 	 * @param autoIdGeneration
 	 * @return
 	 */
-	public JsonFieldExtractor withAutoIdGeneration(boolean autoIdGeneration) {
-		this.autoIdGeneration = autoIdGeneration;
+	public JsonFieldExtractor withAutoIdGeneration() {
+		this.autoIdGeneration = true;
 		return this;
 	}
 	
