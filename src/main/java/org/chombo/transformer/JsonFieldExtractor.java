@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.chombo.util.BasicUtils;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -46,13 +47,21 @@ public class JsonFieldExtractor implements Serializable {
 	private boolean normalize;
 	private AttributeList[] records;
 	private Map<Integer, String> fieldTypes = new HashMap<Integer, String>();
-	private Set<String> childObjectPaths = new HashSet<String>();
+	private Map<String, Integer> childObjectPaths = new HashMap<String, Integer>();
 	private int numChildObjects;
 	private List<String[]> extractedRecords = new ArrayList<String[]>();
 	private int numAttributes;
 	private String listChild = "@a";
 	private int  listChildLen = 2;
+	private Map<String, List<Integer>> entityColumnIndexes = new HashMap<String, List<Integer>>();
+	private String[] extractedParentRecord;
+	private Map<String, List<String[]>> extractedChildRecords = new HashMap<String, List<String[]>>();
+	private int numParentFields;
 	private boolean debugOn;
+	private static final String ROOT_ENTITY = "root";
+	private String idFieldPath;
+	private int idFieldIndex;
+	private boolean autoIdGeneration;
 
 	/**
 	 * @param failOnInvalid
@@ -63,10 +72,43 @@ public class JsonFieldExtractor implements Serializable {
 		this.normalize = normalize;
 	}
 	
+	/**
+	 * @param idFieldPath
+	 * @return
+	 */
+	public JsonFieldExtractor withIdFieldPath(String idFieldPath) {
+		this.idFieldPath = idFieldPath;
+		return this;
+	}
+	
+	/**
+	 * @param autoIdGeneration
+	 * @return
+	 */
+	public JsonFieldExtractor withAutoIdGeneration() {
+		this.autoIdGeneration = true;
+		return this;
+	}
+	
 	public void setDebugOn(boolean debugOn) {
 		this.debugOn = debugOn;
 	}
 
+	/**
+	 * @return
+	 */
+	public List<String[]> getExtractedRecords() {
+		return extractedRecords;
+	}
+
+	public String[] getExtractedParentRecord() {
+		return extractedParentRecord;
+	}
+
+	public Map<String, List<String[]>> getExtractedChildRecords() {
+		return extractedChildRecords;
+	}
+	
 	/**
 	 * @param record
 	 */
@@ -240,7 +282,7 @@ public class JsonFieldExtractor implements Serializable {
 			if (normalize) {
 				normalize(paths);
 			} else {
-				
+				deNormalize(paths);
 			}
 		}
 		
@@ -258,7 +300,7 @@ public class JsonFieldExtractor implements Serializable {
 			if (isChildObject(path)) {
 				String childPath = getChildPath(path);
 				fieldTypes.put(index, childPath);
-				childObjectPaths.add(childPath);
+				childObjectPaths.put(childPath, records[index].size());
 			} else {
 				fieldTypes.put(index, "root");
 			}
@@ -332,12 +374,111 @@ public class JsonFieldExtractor implements Serializable {
 		}
 	}
 	
+
 	/**
+	 * @param paths
+	 */
+	private void deNormalize(List<String> paths) {
+		int index = 0;
+		childObjectPaths.clear();
+		numParentFields = 0;
+		entityColumnIndexes.clear();
+		idFieldIndex = -1;
+		for (String path : paths) {
+			if (isChildObject(path)) {
+				String childPath = getChildPath(path);
+				List<Integer> indexes = getEnityColIndexes(childPath);
+				indexes.add(index);
+				childObjectPaths.put(childPath, records[index].size());
+			} else {
+				List<Integer> indexes = getEnityColIndexes(ROOT_ENTITY);
+				indexes.add(index);
+				
+				//root object ID field
+				if (null != idFieldPath && path.equals(idFieldPath)) {
+					idFieldIndex = index;
+				}
+			}
+			++index;
+		}
+		
+		//auto generate Id
+		if (-1 == idFieldIndex) {
+			if (autoIdGeneration) {
+				idFieldIndex = 0;
+			}
+		}
+		
+		if (idFieldIndex < 0) {
+			throw new IllegalStateException("parent entity id field not found");
+		}
+		
+		//build parent record
+		buildParentRecord();
+		
+		//build all child records
+		buildChildRecords();
+	}	
+	
+	/**
+	 * @param entity
 	 * @return
 	 */
-	public List<String[]> getExtractedRecords() {
-		return extractedRecords;
+	private List<Integer> getEnityColIndexes(String entity) {
+		List<Integer> indexes = entityColumnIndexes.get(entity);
+		if (null == indexes) {
+			indexes = new ArrayList<Integer>();
+			entityColumnIndexes.put("root", indexes);
+		}
+		return indexes;
 	}
-
+	
+	/**
+	 * 
+	 */
+	private void buildParentRecord() {
+		List<Integer> indexes = getEnityColIndexes(ROOT_ENTITY);
+		int i = 0;
+		if (autoIdGeneration) {
+			extractedParentRecord = new String[indexes.size() + 1];
+			extractedParentRecord[i++] = BasicUtils.generateId();
+		} else {
+			extractedParentRecord = new String[indexes.size()];
+		}
+		
+		//populate all fields
+		for (int index : indexes) {
+			extractedParentRecord[i++] = records[index].get(0);
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	private void buildChildRecords() {
+		extractedChildRecords.clear();
+		for (String entity : entityColumnIndexes.keySet()) {
+			if (!entity.equals(ROOT_ENTITY)) {
+				List<String[]> childRecList = new ArrayList<String[]>();
+				List<Integer> indexes = getEnityColIndexes(entity);
+				int numRecs = childObjectPaths.get(entity);
+				for(int i = 0; i < numRecs; ++i) {
+					String[] childRec = new String[indexes.size() + 1];
+					int j = 0;
+					
+					//ref to parent rec
+					childRec[j++] = extractedParentRecord[idFieldIndex];
+					
+					//all child record fields
+					for (int index : indexes) {
+						childRec[j++] = records[index].get(0);
+					}
+					childRecList.add(childRec);
+				}
+				extractedChildRecords.put(entity, childRecList);
+			}
+		}
+	}
+	
 	private static class AttributeList extends ArrayList<String> {}
 }

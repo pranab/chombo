@@ -82,9 +82,11 @@ public class MultiLineJsonFlattener implements Serializable {
 				int lastBrace = rec.lastIndexOf("}");
 				System.out.println("brace matched  rec:" + rec);
 				if (lastBrace == rec.length() - 1) {
+					//line ends with }
 					jsonRec = rec.substring(firstBrace);
 					flattenedLineBld.delete(0, flattenedLineBld.length());
 				} else {
+					//there is more in the line after }
 					++lastBrace;
 					jsonRec = rec.substring(firstBrace, lastBrace);
 					flattenedLineBld.delete(0, flattenedLineBld.length());

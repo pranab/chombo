@@ -51,7 +51,12 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
        val rawSchema = mapper.readValue(new File(schemaFilePath), classOf[RawAttributeSchema])
 	   val failOnInvalid = appConfig.getBoolean("fail.on.invalid")
 	   val normalizeOutput = appConfig.getBoolean("normalize.output")
+	   val idFieldPath = getOptionalStringParam(config, "id.attr.path")
 	   val fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalizeOutput);
+       idFieldPath match {
+         case Some(path:String) => fieldExtractor.withIdFieldPath(path)
+         case None if !normalizeOutput => fieldExtractor.withAutoIdGeneration()
+       }
        fieldExtractor.setDebugOn(debugOn)
        val flattener = rawSchema.getRecordType() match {
          case RawAttributeSchema.REC_MULTI_LINE_JSON => {
@@ -90,13 +95,16 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
     	   val flatRecs = jsonRecord match {
     	     case Some(re:String) => {
     	       val listRecs = if (fieldExtractor.extractAllFields(re, rawSchema.getJsonPaths())) {
-    	         val listOfArr = fieldExtractor.getExtractedRecords()
-    	         
-    	         //list of fields to list of records
-    	         val recs = listOfArr.asScala.map(a => {
-    	           a.mkString(fieldDelimOut)
-    	         })
-    	         recs
+    	         val allRecs = normalizeOutput match {
+    	           case true => {
+    	             getNormalizedRecords(fieldExtractor, fieldDelimOut)
+    	           }
+    	           case false => {
+    	             getDeNormalizedParentRecord(fieldExtractor, fieldDelimOut) ::
+    	               getDeNormalizedChildRecords(fieldExtractor, fieldDelimOut)
+    	           }
+    	         }
+    	         allRecs
     	       } else {
     	         invalidRecs
     	       }
@@ -123,4 +131,57 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
        
    }
 
+   
+   /**
+   * @param fieldExtractor
+   * @param fieldDelimOut
+   * @return
+   */
+   def getNormalizedRecords(fieldExtractor : JsonFieldExtractor, fieldDelimOut:String) : 
+     List[String] = {
+     val listOfArr = fieldExtractor.getExtractedRecords()
+    	         
+     //list of fields to list of records
+     val recs = listOfArr.asScala.map(a => {
+       a.mkString(fieldDelimOut)
+     })
+     recs.toList
+     //List[String](recs:_*)
+   }
+   
+   /**
+   * @param fieldExtractor
+   * @param fieldDelimOut
+   * @return
+   */
+    def getDeNormalizedParentRecord(fieldExtractor : JsonFieldExtractor, 
+     fieldDelimOut:String) : String = {
+     val arr = fieldExtractor.getExtractedParentRecord()
+     val rec = arr.mkString(fieldDelimOut)	
+     rec
+   }
+    
+   /**
+   * @param fieldExtractor
+   * @param fieldDelimOut
+   * @return
+   */
+    def getDeNormalizedChildRecords(fieldExtractor : JsonFieldExtractor, 
+     fieldDelimOut:String) : List[String] = {
+     val childRecMap = fieldExtractor.getExtractedChildRecords()
+     
+     //records as list of strings
+     val chMap = childRecMap.asScala.mapValues(v => {
+         val recs = v.asScala.map(a => {
+         a.mkString(fieldDelimOut)
+       })
+       recs
+     })
+    
+     //consolidated flat list
+     val allChRecs = chMap.flatMap(kv => {
+       kv._2
+     })
+     allChRecs.toList
+    }  
 }
