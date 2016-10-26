@@ -134,10 +134,14 @@ public class Projection extends Configured implements Tool {
         	//selection
         	String selectFilter = config.get("pro.select.filter");
         	if (null != selectFilter) {
-        		attrFilter = new AttributeFilter(selectFilter);
-        		
-        		//bulk data for in or notin operator
-        		createExcludedRowsContext( config,  rowColFilter,attrFilter);
+        		String notInSetName = config.get("pro.operator.notin.set.name");
+        		if (null == notInSetName) {
+        			attrFilter = new AttributeFilter(selectFilter);
+        		} else {
+               		//bulk data for in or notin operator
+        			attrFilter =  new AttributeFilter();
+            		createExcludedRowsContext( config,  rowColFilter,attrFilter, selectFilter);
+            	}
         	} 
        }
         
@@ -198,10 +202,14 @@ public class Projection extends Configured implements Tool {
         	//selection
         	String selectFilter = config.get("pro.select.filter");
         	if (null != selectFilter) {
-        		attrFilter = new AttributeFilter(selectFilter);
-        		
-        		//bulk data for in or notin operator
-        		createExcludedRowsContext(config,  rowColFilter, attrFilter);
+        		String notInSetName = config.get("pro.operator.notin.set.name");
+        		if (null == notInSetName) {
+        			attrFilter = new AttributeFilter(selectFilter);
+        		} else {
+               		//bulk data for in or notin operator
+        			attrFilter =  new AttributeFilter();
+            		createExcludedRowsContext( config,  rowColFilter,attrFilter, selectFilter);
+            	}
         	}
        }
 
@@ -520,21 +528,20 @@ public class Projection extends Configured implements Tool {
      * @throws IOException
      */
     public static void createExcludedRowsContext(Configuration config, RowColumnFilter rowColFilter, 
-    		AttributeFilter attrFilter) throws IOException {
+    		AttributeFilter attrFilter, String selectFilter) throws IOException {
     	String fileterFieldDelimRegex = config.get("pro.filter.field.delim.regex", ",");
 		String notInSetName = config.get("pro.operator.notin.set.name");
-		if (null != notInSetName) {
-			//notin operator with out of band set values
-			InputStream rowStream = Utility.getFileStream(config, "pro.exclude.rows.file");
-			if (null == rowStream) {
-				throw new IllegalStateException("error aceesing excluded row file");
-			}
-			rowColFilter.processRows(rowStream, fileterFieldDelimRegex);
-			String[] exclRowKeys = rowColFilter.getExcludedRowKeys();
-			Map<String, Object> setOpContext = new HashMap<String, Object>();
-			setOpContext.put(notInSetName, BasicUtils.generateSetFromArray(exclRowKeys));
-			attrFilter.withContext(setOpContext);
+		
+		//notin operator with out of band set values
+		InputStream rowStream = Utility.getFileStream(config, "pro.exclude.rows.file");
+		if (null == rowStream) {
+			throw new IllegalStateException("error aceesing excluded row file");
 		}
+		rowColFilter.processRows(rowStream, fileterFieldDelimRegex);
+		String[] exclRowKeys = rowColFilter.getExcludedRowKeys();
+		Map<String, Object> setOpContext = new HashMap<String, Object>();
+		setOpContext.put(notInSetName, BasicUtils.generateSetFromArray(exclRowKeys));
+		attrFilter.withContext(setOpContext).build(selectFilter);;
     }    
     
 	/**

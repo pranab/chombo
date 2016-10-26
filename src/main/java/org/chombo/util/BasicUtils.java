@@ -62,6 +62,7 @@ public class BasicUtils {
 	public static final long MILISEC_PER_HOUR = 60L * MILISEC_PER_MIN;
 	public static final long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
 	public static final long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
+	public static final long MILISEC_PER_WEEK = 7 * MILISEC_PER_DAY;
 
 	public static final String TIME_UNIT_MS = "ms";
     public static final String TIME_UNIT_SEC = "sec";
