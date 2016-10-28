@@ -157,6 +157,166 @@ trait JobConfiguration {
 	/**
 	 * @param config
 	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryStringParam(config:Config, paramName:String, errorMsg:String) : String = {
+	  getStringParam(config, paramName, None, Some(errorMsg))
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getMandatoryStringParam(config:Config, paramName:String) : String = {
+	  getStringParam(config, paramName, None, None)
+	}
+
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getStringParamOrElse(config:Config, paramName:String, defValue:String) : String = {
+	  getStringParam(config, paramName, Some(defValue), None)
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @defValue
+	 * @param errorMsg
+	 * @return
+	 */
+	def getStringParam(config:Config, paramName:String, defValue:Option[String], errorMsg:Option[String]) : String = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    config.getString(paramName)
+	  } else {
+	    defValue match {
+	      case Some(va:String) => va
+	      case None => {
+	        errorMsg match {
+	          case Some(e:String) => throw new IllegalStateException(e + " parameter: " + paramName)
+	          case None => throw new IllegalStateException("missing mandatory configuration parameter: " + paramName)
+	        }
+	      }
+	    }
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryIntParam(config:Config, paramName:String, errorMsg:String) : Int = {
+	  getIntParam(config, paramName, None, Some(errorMsg))
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getMandatoryIntParam(config:Config, paramName:String) : Int = {
+	  getIntParam(config, paramName, None, None)
+	}
+
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getIntParamOrElse(config:Config, paramName:String, defValue:Int) : Int = {
+	  getIntParam(config, paramName, Some(defValue), None)
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @defValue
+	 * @param errorMsg
+	 * @return
+	 */
+	def getIntParam(config:Config, paramName:String, defValue:Option[Int], errorMsg:Option[String]) : Int = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    config.getInt(paramName)
+	  } else {
+	    defValue match {
+	      case Some(va:Int) => va
+	      case None => {
+	        errorMsg match {
+	          case Some(e:String) => throw new IllegalStateException(e + " parameter: " + paramName)
+	          case None => throw new IllegalStateException("missing mandatory configuration parameter: " + paramName)
+	        }
+	      }
+	    }
+	  }
+	  paramValue
+	}
+	
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryDoubleParam(config:Config, paramName:String, errorMsg:String) : Double = {
+	  getDoubleParam(config, paramName, None, Some(errorMsg))
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getMandatoryDoubleParam(config:Config, paramName:String) : Double = {
+	  getDoubleParam(config, paramName, None, None)
+	}
+
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getDoubleParamOrElse(config:Config, paramName:String, defValue:Double) : Double = {
+	  getDoubleParam(config, paramName, Some(defValue), None)
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @defValue
+	 * @param errorMsg
+	 * @return
+	 */
+	def getDoubleParam(config:Config, paramName:String, defValue:Option[Double], errorMsg:Option[String]) : Double = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    config.getDouble(paramName)
+	  } else {
+	    defValue match {
+	      case Some(va:Double) => va
+	      case None => {
+	        errorMsg match {
+	          case Some(e:String) => throw new IllegalStateException(e + " parameter: " + paramName)
+	          case None => throw new IllegalStateException("missing mandatory configuration parameter: " + paramName)
+	        }
+	      }
+	    }
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
 	 * @return
 	 */
 	def getOptionalStringParam(config:Config, paramName:String) : Option[String] = {
