@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.chombo.transformer.NumericTransformer.Custom;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
@@ -523,5 +524,60 @@ public class StringTransformer {
 			fields = (String[])context.get("record");
 		}
 		
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class WithinFieldDelimiterTransformer extends AttributeTransformer implements ContextAwareTransformer {
+		private int numFieldsToCollapse = -1;
+		private String replacementDelimiter = " ";
+		private String[] fields;
+		private int expectedNumFields;
+		private int curFieldOrdinal;
+		
+		public WithinFieldDelimiterTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			curFieldOrdinal = prAttr.getOrdinal();
+			config = getFieldSpecificConfig(prAttr.getOrdinal(), config);
+			if (config.hasPath("numFieldsToCollapse")) {
+				numFieldsToCollapse = config.getInt("numFieldsToCollapse");
+			}
+			if (config.hasPath("replacementDelimiter")) {
+				replacementDelimiter = config.getString("replacementDelimiter");
+			}
+			expectedNumFields = config.getInt("expectedNumFields");
+		}
+
+		public WithinFieldDelimiterTransformer(int numTransAttributes, int curFieldOrdinal, int numFieldsToCollapse,
+				String replacementDelimiter, int expectedNumFields) {
+			super(numTransAttributes);
+			this.curFieldOrdinal  = curFieldOrdinal;
+			this.numFieldsToCollapse = numFieldsToCollapse;
+			this.replacementDelimiter = replacementDelimiter;
+			this.expectedNumFields = expectedNumFields;
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			if (expectedNumFields != fields.length) {
+				//get number of fields to collapse from the total field count
+				if (numFieldsToCollapse < 0) {
+					numFieldsToCollapse = fields.length - expectedNumFields;
+				}
+				transformed[0] = BasicUtils.join(fields, curFieldOrdinal, curFieldOrdinal + numFieldsToCollapse + 1, 
+						replacementDelimiter);
+			} else {
+				//nothing to do
+				transformed[0] = value;
+			}
+			return transformed;
+		}
+		
+		@Override
+		public void setContext(Map<String, Object> context) {
+			fields = (String[])context.get("record");
+		}
 	}
 }
