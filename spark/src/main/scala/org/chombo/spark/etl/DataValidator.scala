@@ -47,9 +47,10 @@ object DataValidator extends JobConfiguration  {
  * @return
  */
    def main(args: Array[String]) {
-	   val Array(master: String, inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
+           val appName = "app.data validation"
+	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
-	   val sparkConf = createSparkConf("app.data validation", config, false)
+	   val sparkConf = createSparkConf(appName, config, false)
 	   val sparkCntxt = new SparkContext(sparkConf)
 	   
 	   if (config.hasPath("app.invalid.records.output.file"))
@@ -69,14 +70,20 @@ object DataValidator extends JobConfiguration  {
 	     ""
 	   val validationSchema = Utility.getProcessingSchema( config.getString("app.schema.file.path")) 
 	   val validatorConfig = config.atPath("app")
-	   ValidatorFactory.initialize( config.getString( "app,custom.valid.factory.class"), validatorConfig )
+	   val configClass = if (config.hasPath("app.custom.valid.factory.class"))
+	     config.getString("app.custom.valid.factory.class")
+	   else
+	     null
+	   ValidatorFactory.initialize( configClass, validatorConfig )
 	   val ordinals =  validationSchema.getAttributeOrdinals()
-	   val tagSep = config.getString( "app,vaidator.tag.separator")
+	   val tagSep = config.getString( "app.validator.tag.separator")
 	   
 	   //initialize stats manager
-	   getAttributeStats(config.getString("app.stats.file.path"))
-	   getAttributeMeds(config.getString("app.med.stats.file.path"), config.getString("app.mad.stats.file.path"), 
-	       Utility.intArrayFromString(config.getString("app.id.ordinals"), ",") )
+	   if(config.hasPath("app.stats.file.path"))
+	      getAttributeStats(config.getString("app.stats.file.path"))
+	   if(config.hasPath("app.med.stats.file.path"))
+	      getAttributeMeds(config.getString("app.med.stats.file.path"), config.getString("app.mad.stats.file.path"),
+	   Utility.intArrayFromString(config.getString("app.id.ordinals"), ",") )
 	  
 
 	   //simple validators  
@@ -102,7 +109,7 @@ object DataValidator extends JobConfiguration  {
 	   }
 	   
 	  val data = sparkCntxt.textFile(inputPath)
-	  
+
 	  //apply validators to each field in each line to create RDD of tagged records
 	  val taggedData = data.map(line => {
 	    val items = line.split(fieldDelimIn)
@@ -132,7 +139,7 @@ object DataValidator extends JobConfiguration  {
 	    taggedItems.mkString(fieldDelimOut)
 	  })
 	 taggedData.cache
-	 
+
 	 //filter valid data
 	 val validData = taggedData.filter(line => !line.contains(valTagSeparator))
 	 validData.saveAsTextFile(outputPath)

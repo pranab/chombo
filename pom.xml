@@ -36,7 +36,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
               				<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
             			</manifest>
           			</archive>                
-          	</configuration>
+          	    </configuration>
             </plugin>
         </plugins>
     </build>
