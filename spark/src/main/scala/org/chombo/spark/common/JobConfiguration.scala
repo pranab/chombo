@@ -317,6 +317,168 @@ trait JobConfiguration {
 	/**
 	 * @param config
 	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryBooleanParam(config:Config, paramName:String, errorMsg:String) : Boolean = {
+	  getBooleanParam(config, paramName, None, Some(errorMsg))
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getMandatoryBooleanParam(config:Config, paramName:String) : Boolean = {
+	  getBooleanParam(config, paramName, None, None)
+	}
+
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getBooleanParamOrElse(config:Config, paramName:String, defValue:Boolean) : Boolean = {
+	  getBooleanParam(config, paramName, Some(defValue), None)
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @defValue
+	 * @param errorMsg
+	 * @return
+	 */
+	def getBooleanParam(config:Config, paramName:String, defValue:Option[Boolean], errorMsg:Option[String]) : Boolean = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    config.getBoolean(paramName)
+	  } else {
+	    defValue match {
+	      case Some(va:Boolean) => va
+	      case None => {
+	        errorMsg match {
+	          case Some(e:String) => throw new IllegalStateException(e + " parameter: " + paramName)
+	          case None => throw new IllegalStateException("missing mandatory configuration parameter: " + paramName)
+	        }
+	      }
+	    }
+	  }
+	  paramValue
+	}
+	
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryStringListParam(config:Config, paramName:String, errorMsg:String) : java.util.List[String] = {
+	  getStringListParam(config, paramName, None, Some(errorMsg))
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getMandatoryStringListParam(config:Config, paramName:String) : java.util.List[String] = {
+	  getStringListParam(config, paramName, None, None)
+	}
+
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getStringListParamOrElse(config:Config, paramName:String, defValue:java.util.List[String]) : java.util.List[String] = {
+	  getStringListParam(config, paramName, Some(defValue), None)
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @defValue
+	 * @param errorMsg
+	 * @return
+	 */
+	def getStringListParam(config:Config, paramName:String, defValue:Option[java.util.List[String]], errorMsg:Option[String]) : 
+	  java.util.List[String] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    config.getStringList(paramName)
+	  } else {
+	    defValue match {
+	      case Some(va:java.util.List[String]) => va
+	      case None => {
+	        errorMsg match {
+	          case Some(e:String) => throw new IllegalStateException(e + " parameter: " + paramName)
+	          case None => throw new IllegalStateException("missing mandatory configuration parameter: " + paramName)
+	        }
+	      }
+	    }
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryIntListParam(config:Config, paramName:String, errorMsg:String) : java.util.List[Integer] = {
+	  getIntListParam(config, paramName, None, Some(errorMsg))
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getMandatoryIntListParam(config:Config, paramName:String) : java.util.List[Integer] = {
+	  getIntListParam(config, paramName, None, None)
+	}
+
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getIntListParamOrElse(config:Config, paramName:String, defValue:java.util.List[Integer]) : java.util.List[Integer] = {
+	  getIntListParam(config, paramName, Some(defValue), None)
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @defValue
+	 * @param errorMsg
+	 * @return
+	 */
+	def getIntListParam(config:Config, paramName:String, defValue:Option[java.util.List[Integer]], errorMsg:Option[String]) : 
+	  java.util.List[Integer] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    config.getIntList(paramName)
+	  } else {
+	    defValue match {
+	      case Some(va:java.util.List[Integer]) => va
+	      case None => {
+	        errorMsg match {
+	          case Some(e:String) => throw new IllegalStateException(e + " parameter: " + paramName)
+	          case None => throw new IllegalStateException("missing mandatory configuration parameter: " + paramName)
+	        }
+	      }
+	    }
+	  }
+	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
 	 * @return
 	 */
 	def getOptionalStringParam(config:Config, paramName:String) : Option[String] = {
@@ -356,6 +518,20 @@ trait JobConfiguration {
 	  paramValue
 	}
 	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getOptionalBooleanParam(config:Config, paramName:String) : Option[Boolean] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    Some(config.getBoolean(paramName))
+	  } else {
+	    None
+	  }
+	  paramValue
+	}
+
 	/**
 	 * @param config
 	 * @param paramName

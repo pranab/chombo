@@ -18,6 +18,7 @@
 package org.chombo.util;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,6 +42,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.codehaus.jackson.map.ObjectMapper;
 
 
 /**
@@ -339,6 +341,15 @@ public class BasicUtils {
 		return valueList;
     }
 
+    /**
+     * @param valueList
+     * @return
+     */
+    public static String[] fromListToStringArray(List<String> valueList) {
+    	String[] values = new String[valueList.size()];
+    	values = valueList.toArray(values);
+    	return values;
+    }
     /**
      * @param list
      * @return
@@ -1060,4 +1071,68 @@ public class BasicUtils {
     	}
     	return set;
     }
+    
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static InputStream getFileStream(String filePath) throws IOException {
+    	InputStream fiStrm = null;
+        if (null != filePath) {
+        	fiStrm = new FileInputStream(filePath);
+        }
+        return fiStrm;
+    }
+    
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static RichAttributeSchema getRichAttributeSchema(String path) throws IOException {
+        InputStream fs = new FileInputStream(path);
+        ObjectMapper mapper = new ObjectMapper();
+        RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
+        return schema;
+	}
+   
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static GenericAttributeSchema getGenericAttributeSchema(String path) throws IOException {
+        InputStream fs = new FileInputStream(path);
+        ObjectMapper mapper = new ObjectMapper();
+        GenericAttributeSchema schema = mapper.readValue(fs, GenericAttributeSchema.class);
+        return schema;
+	}
+	
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static FeatureSchema getFeatureSchema(String path) throws IOException {
+        InputStream fs = new FileInputStream(path);
+        ObjectMapper mapper = new ObjectMapper();
+        FeatureSchema schema = mapper.readValue(fs, FeatureSchema.class);
+        return schema;
+	}
+	
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static ProcessorAttributeSchema getProcessingSchema(String path) throws IOException {
+        InputStream fs = new FileInputStream(path);
+        ObjectMapper mapper = new ObjectMapper();
+        ProcessorAttributeSchema schema = mapper.readValue(fs, ProcessorAttributeSchema.class);
+        return schema;
+	}
+	
+	
  }
