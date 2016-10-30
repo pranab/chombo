@@ -171,6 +171,7 @@ public class Transformer extends Configured implements Tool {
             }
 
             //all schema driven
+            boolean foundInSchemaConfig = false;
         	if (!foundInPropConfig) {
 	        	//build transformers
 	        	AttributeTransformer attrTrans;
@@ -180,6 +181,7 @@ public class Transformer extends Configured implements Tool {
 	        		if (null != transformerTagList) {
 	        			String[] transformerTags =  transformerTagList.toArray(new String[transformerTagList.size()]);
 	        			createTransformers(transformerTags, fieldOrd);
+	        			foundInSchemaConfig = true;
 	        		}
 	        	}
 	        	
@@ -192,6 +194,10 @@ public class Transformer extends Configured implements Tool {
 		        	}
 	        	}
         	}
+        	
+        	//transformers and generator created from configuration
+        	configDriven = foundInPropConfig || foundInSchemaConfig;
+        	
         	//output
         	itemsOut = new String[transformerSchema.findDerivedAttributeCount()];
        }
@@ -269,7 +275,6 @@ public class Transformer extends Configured implements Tool {
             stBld.delete(0, stBld.length());
             if (configDriven) {
             	//using configuration based transformers
-            	
             	//transformers
             	getTranformedAttributes(transformerSchema.getAttributes(), true);
 	        	
@@ -291,6 +296,9 @@ public class Transformer extends Configured implements Tool {
 		            	//all transformers
 		            	for (AttributeTransformer trans :  transformerList) {
 			        		if (null !=trans) {
+			            		//check if we need to set context data
+			            		setTransformerContext(trans);
+			        			
 			        			transformedValues = trans.tranform(source);
 			        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
 			        				//only last transformer is allowed to emit multiple values
@@ -343,11 +351,7 @@ public class Transformer extends Configured implements Tool {
             	if (null != transformerList) {
 	            	for (AttributeTransformer trans :  transformerList) {
 	            		//check if we need to set context data
-	            		if (trans instanceof ContextAwareTransformer) {
-	            			context.clear();
-	            			context.put("record", items);
-	            			((ContextAwareTransformer)trans).setContext(context);
-	            		}
+	            		setTransformerContext(trans);
 	            		
 	        			transformedValues = trans.tranform(source);
 	        			if (transformerList.size() > 1 && t <  transformerList.size() -1 && transformedValues.length > 1 ) {
@@ -379,7 +383,20 @@ public class Transformer extends Configured implements Tool {
         	}
         	
         }
+        
+    	/**
+    	 * @param trans
+    	 */
+    	private void setTransformerContext(AttributeTransformer trans) {
+    		if (trans instanceof ContextAwareTransformer) {
+    			context.clear();
+    			context.put("record", items);
+    			((ContextAwareTransformer)trans).setContext(context);
+    		}
+    	}
+        
 	}
+	
 	
 	/**
 	 * @author pranab
