@@ -445,7 +445,7 @@ public class DateTransformer  {
 						throw new IllegalStateException("invalid time cycle unit for time shift");
 					}
 				}
-				transformed[0] = dateFormat.format(date);
+				transformed[0] = dateFormat.format(date.getTime());
 			} catch (ParseException ex) {
 				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
 			}

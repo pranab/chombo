@@ -54,7 +54,7 @@ object DataValidator extends JobConfiguration  {
 	   val sparkCntxt = new SparkContext(sparkConf)
 	   val appConfig = config.getConfig(appName)
 	   
-	   val invalidRecordsOutputFile = this.getOptionalStringParam(appConfig, "invalid.records.output.file")
+	   val invalidRecordsOutputFile = getOptionalStringParam(appConfig, "invalid.records.output.file")
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val valTagSeparator = getStringParamOrElse(appConfig, "val.tag.separator", ";")
@@ -72,7 +72,7 @@ object DataValidator extends JobConfiguration  {
 	   ValidatorFactory.initialize(configClass, validatorConfig)
 	   val ordinals =  validationSchema.getAttributeOrdinals()
 	   
-	   val tagSep = getStringParamOrElse(appConfig, "validator.tag.separator", ",")
+	   //val tagSep = getStringParamOrElse(appConfig, "validator.tag.separator", ",")
 	   
 	   //initialize stats manager
 	   val statsFilePath = getOptionalStringParam(appConfig, "stats.file.path")
@@ -152,10 +152,16 @@ object DataValidator extends JobConfiguration  {
 	 taggedData.cache
 
 	 //filter valid data
-	 val validData = taggedData.filter(line => !line.contains(valTagSeparator))
-	 validData.saveAsTextFile(outputPath)
+	 if (filterInvalidRecords) {
+	     //only valid records
+		 val validData = taggedData.filter(line => !line.contains(valTagSeparator))
+		 validData.saveAsTextFile(outputPath)
+	 } else {
+	   //all records
+	   taggedData.saveAsTextFile(outputPath)
+	 }
 	  
-	 //filter invalid data
+	 //output invalid data
 	 if (outputInvalidRecords){
 		val invalidData = taggedData.filter(line => line.contains(valTagSeparator))
 		invalidRecordsOutputFile match {
