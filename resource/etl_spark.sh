@@ -7,7 +7,7 @@ MASTER=spark://akash:7077
 case "$1" in
 
 "simpleValidator")
-	echo "running simpleValidator"
+	echo "running SimpleDataValidator"
 	CLASS_NAME=org.chombo.spark.etl.SimpleDataValidator
 	INPUT=hdfs:///etl/input/retail.txt
 	OUTPUT=hdfs:///etl/output
@@ -16,8 +16,20 @@ case "$1" in
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;
 
+"validator")
+	echo "running DataValidator"
+	CLASS_NAME=org.chombo.spark.etl.DataValidator
+	INPUT=hdfs:///input/etl/val/elec_prod.txt
+	OUTPUT=hdfs:///output/etl/val/main
+	OUTPUT_INVALID=hdfs:///output/etl/val/inva
+	hdfs dfs -rm -r $OUTPUT
+	hdfs dfs -rm -r $OUTPUT_INVALID
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
+;;
+
 "jsonExtractor")
-	echo "running jsonExtractor"
+	echo "running FlatRecordExtractorFromJson"
 	CLASS_NAME=org.chombo.spark.etl.FlatRecordExtractorFromJson
 	INPUT=hdfs:///etl/input/jex/usage.json
 	OUTPUT=hdfs:///etl/output/jex
