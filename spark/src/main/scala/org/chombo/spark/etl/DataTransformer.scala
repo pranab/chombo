@@ -61,6 +61,8 @@ object DataTransformer extends JobConfiguration  {
 	     null
 	   TransformerFactory.initialize(customClass, appConfig)
 	   val ordinals  = transformerSchema.getAttributeOrdinals()
+	   val debugOn = appConfig.getBoolean("debug.on")
+	   val saveOutput = appConfig.getBoolean("save.output")
 	   
 	   //create trassformers and generator
 	   var foundinConfig = createTransformersFromConfig(transformerSchema, appConfig)
@@ -73,20 +75,26 @@ object DataTransformer extends JobConfiguration  {
 	     createGeneratorsFromSchema(transformerSchema, appConfig)
 	   }
        
-	   val data = sparkCntxt.textFile(inputPath)
+       //broadcast transformers and generators
+	   val brTransformers = sparkCntxt.broadcast(transformers)
+	   val brGenerators = sparkCntxt.broadcast(generators)
 
 	   //apply validators to each field in each line to create RDD of tagged records
+	   val data = sparkCntxt.textFile(inputPath)
 	   val transformedData = data.map(line => {
 	     val items = line.split(fieldDelimIn, -1)
-	     val itemsZipped = items.zipWithIndex
          val itemsOut = new Array[String](transformerSchema.findDerivedAttributeCount());
 	     
-	     getTranformedAttributes(transformerSchema,  true, items, itemsOut)
+	     getTranformedAttributes(transformerSchema,  true, items, itemsOut,brTransformers.value, brGenerators.value)
+	     getTranformedAttributes(transformerSchema,  false, items, itemsOut, brTransformers.value, brGenerators.value)
 	     
 	     itemsOut.mkString(fieldDelimOut)
 	   })
 	   
-       
+       if(saveOutput) {	   
+		   transformedData.saveAsTextFile(outputPath) 
+   	   }
+
     }
     
     /**
@@ -96,7 +104,8 @@ object DataTransformer extends JobConfiguration  {
      * @param paramName
      */
     private def getTranformedAttributes(transformerSchema : ProcessorAttributeSchema,  isTransformer : Boolean,
-        items : Array[String], itemsOut : Array[String]) {
+        items : Array[String], itemsOut : Array[String], transformers : Map[Int, Array[AttributeTransformer]],
+        generators : Array[AttributeTransformer]) {
     	transformerSchema.getAttributes().asScala.toList.foreach(prAttr => {
 	       val targetOrdsOpt = CommonUtil.asOption(prAttr.getTargetFieldOrdinals())
 	       targetOrdsOpt match {
