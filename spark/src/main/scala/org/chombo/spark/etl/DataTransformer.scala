@@ -25,11 +25,17 @@ import org.chombo.transformer.TransformerFactory
 import com.typesafe.config.Config
 import org.chombo.util.ProcessorAttributeSchema
 import org.chombo.transformer.AttributeTransformer
+import scala.collection.JavaConverters._
+import org.chombo.spark.common.CommonUtil
+import org.chombo.util.ProcessorAttribute
+import org.chombo.transformer.ContextAwareTransformer
 
 object DataTransformer extends JobConfiguration  {
     val mutTransformers : scala.collection.mutable.HashMap[Int, Array[AttributeTransformer]]   = scala.collection.mutable.HashMap()
     lazy val transformers :  Map[Int, Array[AttributeTransformer]]   = mutTransformers.toMap
-    var generators : Array[Option[AttributeTransformer]] = _
+    var mutGenerators : Array[Option[AttributeTransformer]] = _
+    lazy val generators = CommonUtil.filterNoneFromArray(mutGenerators)
+    val context : java.util.Map[String, Object] = new java.util.HashMap[String, Object]()
     
     /**
     * @param args
@@ -56,7 +62,121 @@ object DataTransformer extends JobConfiguration  {
 	   TransformerFactory.initialize(customClass, appConfig)
 	   val ordinals  = transformerSchema.getAttributeOrdinals()
 	   
+	   //create trassformers and generator
+	   var foundinConfig = createTransformersFromConfig(transformerSchema, appConfig)
+	   if (foundinConfig) {
+	       //found transformers in configuration, so expect generator also there
+	       createGeneratorsFromConfig(transformerSchema, appConfig)
+	   } else {
+	     //since not in config, use schema
+	     createTransformersFromSchema(transformerSchema, appConfig)
+	     createGeneratorsFromSchema(transformerSchema, appConfig)
+	   }
+       
+	   val data = sparkCntxt.textFile(inputPath)
+
+	   //apply validators to each field in each line to create RDD of tagged records
+	   val transformedData = data.map(line => {
+	     val items = line.split(fieldDelimIn, -1)
+	     val itemsZipped = items.zipWithIndex
+         val itemsOut = new Array[String](transformerSchema.findDerivedAttributeCount());
+	     
+	     getTranformedAttributes(transformerSchema,  true, items, itemsOut)
+	     
+	     itemsOut.mkString(fieldDelimOut)
+	   })
+	   
+       
+    }
+    
+    /**
+     * @param sparkCntxt
+     * @param config
+     * @param fromList
+     * @param paramName
+     */
+    private def getTranformedAttributes(transformerSchema : ProcessorAttributeSchema,  isTransformer : Boolean,
+        items : Array[String], itemsOut : Array[String]) {
+    	transformerSchema.getAttributes().asScala.toList.foreach(prAttr => {
+	       val targetOrdsOpt = CommonUtil.asOption(prAttr.getTargetFieldOrdinals())
+	       targetOrdsOpt match {
+	         case Some(targetOrds : Array[Int]) => {
+	        	 	var  source:String = ""
+	                val transformerList = if (isTransformer) {
+	                	val fieldOrd = prAttr.getOrdinal();
+	                	source = items(fieldOrd);
+	                	transformers.get(fieldOrd);
+	                } else {
+	                	source = null;
+	                	Some(generators)
+	                }
+	        	 	
+	        	 	var transformedValues : Array[String] = new Array[String](1)
+	        	 	transformerList match {
+	        	 	  case Some(transformers : Array[AttributeTransformer]) => {
+	        	 	    //apply all transformers
+	        	 	    transformers.zipWithIndex.foreach(ztrans => {
+	        	 	      setTransformerContext(ztrans._1, items, context)
+	        	 	      transformedValues = ztrans._1.tranform(source)
+	        	 	      if (ztrans._2 < transformers.length -1 && transformedValues.length > 1) {
+	        	 	        throw new  IllegalStateException(
+	        	 	            "for cascaded transformers only last transformer is allowed to emit multiple values")
+	        	 	      }
+	        	 	      source = transformedValues(0)
+	        	 	    })
+	        	 	  }
+	        	 	  case None => {
+	        	 	    transformedValues(0) = source
+	        	 	  }
+	        	 	}
+	        	 	
+	        	 	val targetfieldOrdinals = prAttr.getTargetFieldOrdinals()
+	        	 	
+	        	    //check output size with target attribute count
+            	    if (transformedValues.length != targetfieldOrdinals.length) {
+            	    	throw new IllegalStateException("transformed output size does not match with target attribute count");
+            	    }
+	        	 	
+	        	 	targetfieldOrdinals.zipWithIndex.foreach(tf => {
+	        	 	  itemsOut(tf._1) = transformedValues(tf._2)
+	        	 	})
+	         }
+	         case None =>
+	       }
+	       
+	     })
+      
+    }
+   
+    /**
+     * @param config
+     * @param paramName
+     * @param defValue
+     * @param errorMsg
+     * @return
+     */
+    def setTransformerContext(trans : AttributeTransformer, items : Array[String], context : 
+        java.util.Map[String, Object] ) {
+      trans match {
+        case (cntxTrans : ContextAwareTransformer) => {
+          context.clear()
+          context.put("record", items)
+          cntxTrans.setContext(context)
+        }
+        
+        case _ =>
+      }
+    }
+    
+    /**
+	* @param transformerSchema
+	* @param config
+	* @return
+	*/    
+    private def createTransformersFromConfig(transformerSchema : ProcessorAttributeSchema, appConfig: Config) : 
+       Boolean = {
 	   var foundinConfig = false
+	   val ordinals  = transformerSchema.getAttributeOrdinals()
 	   ordinals.foreach(ord => {
 		   val  key = "transformer." + ord
 		   val transformerTagList = getOptionalStringListParam(appConfig, key)
@@ -69,27 +189,75 @@ object DataTransformer extends JobConfiguration  {
 		     case None =>
 		   }  
 	   })
-	   
-	   if (foundinConfig) {
-		   generators = ordinals.map(ord => {
-			   val  key = "generator." + ord
-			   val generatorTag = getOptionalStringParam(appConfig, key)
-			   generatorTag match {
-			     case Some(genTag:String) => {
-			   		Some(createGenerator(transformerSchema, appConfig, genTag,  ord))
-			   	  }
-			   	  case None => None
-			   }  
-		   })
-	   }
-	   
-       
+      foundinConfig
     }
-   
+
     /**
-	* @param appName
+	* @param transformerSchema
 	* @param config
-	* @param includeAppConfig
+	* @return
+	*/    
+    private def createGeneratorsFromConfig(transformerSchema : ProcessorAttributeSchema, appConfig: Config) {
+	   val ordinals  = transformerSchema.getAttributeOrdinals()
+	   mutGenerators = ordinals.map(ord => {
+	       val  key = "generator." + ord
+		   val generatorTag = getOptionalStringParam(appConfig, key)
+		   generatorTag match {
+		       case Some(genTag:String) => {
+			   	  	Some(createGenerator(transformerSchema, appConfig, genTag,  ord))
+			   }
+			   case None => None
+		   }  
+	  })
+      
+    }   
+    
+    /**
+	* @param transformerSchema
+	* @param config
+	* @return
+	*/    
+    private def createTransformersFromSchema(transformerSchema : ProcessorAttributeSchema, appConfig: Config) {
+    	transformerSchema.getAttributes().asScala.toList.foreach(prAttr => {
+    	  val fieldOrd = prAttr.getOrdinal()
+    	  val transformerTagList = prAttr.getTransformers()
+    	  if (null != transformerTagList) {
+    	    val transTags =  transformerTagList.asScala.toArray
+    	    createTransformers(transformerSchema, appConfig, transTags,  prAttr.getOrdinal())
+    	  }
+    	})
+    }
+    
+    /**
+	* @param transformerSchema
+	* @param config
+	* @return
+	*/    
+    private def createGeneratorsFromSchema(transformerSchema : ProcessorAttributeSchema, appConfig: Config) {
+    	mutGenerators = transformerSchema.getAttributeGenerators().asScala.toArray.map(prAttr => {
+    	  val fieldOrd = prAttr.getOrdinal()
+    	  val generatorTagList = prAttr.getTransformers()
+    	  val generatorTag = if (null != generatorTagList) {
+    	    val generatorTags =  generatorTagList.asScala.toArray
+    	    Some(generatorTags(0))
+    	  } else {
+    	    None
+    	  }
+    	  generatorTag match {
+		  	 case Some(genTag:String) => {
+			   	  Some(createGenerator(transformerSchema, appConfig, genTag,  fieldOrd))
+			 }
+			 case None => None
+		  }  
+  
+    	})
+    }     
+    
+    /**
+	* @param transformerSchema
+	* @param config
+	* @param transTags
+	* @param ord
 	* @return
 	*/    
     private  def createTransformers(transformerSchema : ProcessorAttributeSchema, config : Config , 
@@ -101,6 +269,8 @@ object DataTransformer extends JobConfiguration  {
         //add transformers to map
 	    mutTransformers += ord -> transArr
    }
+    
+    
 
     /**
 	* @param appName
