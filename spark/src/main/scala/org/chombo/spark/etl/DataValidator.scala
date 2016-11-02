@@ -133,7 +133,7 @@ object DataValidator extends JobConfiguration  {
 
 	   //apply validators to each field in each line to create RDD of tagged records
 	   val taggedData = data.map(line => {
-	     val items = line.split(fieldDelimIn)
+	     val items = line.split(fieldDelimIn, -1)
 	     val itemsZipped = items.zipWithIndex
 	    
 	     //apply all validators for the field
@@ -195,13 +195,13 @@ object DataValidator extends JobConfiguration  {
    }
    
    /**
- * @param config
- * @param valTags
- * @param ord
- * @param validatorConfig
- * @param validationSchema
- */
-private  def createValidators( config : Config , valTags : Array[String],   ord : Int,
+   * @param config
+   * @param valTags
+   * @param ord
+   * @param validatorConfig
+   * @param validationSchema
+   */
+   private  def createValidators( config : Config , valTags : Array[String],   ord : Int,
        validationSchema :  ProcessorAttributeSchema, mutValidators : scala.collection.mutable.HashMap[Int, Array[Validator]])  {
 	   val validatorList =  List[Validator]()
 	   val  prAttr = validationSchema.findAttributeByOrdinal(ord)
