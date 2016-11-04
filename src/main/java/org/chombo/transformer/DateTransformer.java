@@ -21,6 +21,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -567,6 +569,113 @@ public class DateTransformer  {
 			fields = (String[])context.get("record");
 		}
 		
+	}	
+	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class DateComponentTransformer extends AttributeTransformer {
+		private SimpleDateFormat sourceDateFormat;
+		private Map<String, SimpleDateFormat> componentDateFormats = new HashMap<String, SimpleDateFormat>();
+		private boolean sourceEpochTime;
+		private List<String> dateComponents;
+		private Calendar cal = Calendar.getInstance();
+
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
+		public DateComponentTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			List<String> dateComponents = config.getStringList("dateComponenets");
+			
+			//component format string
+			Map<String, String> componentFormats = new HashMap<String, String>();
+			for (String dateComponent : dateComponents) {
+				if (!dateComponent.equals(BasicUtils.TIME_UNIT_QUARTER)) {
+					String compFormat = config.getString("format." + dateComponent);
+					componentFormats.put(dateComponent, compFormat);
+				}
+			}
+			
+			intialize(config.getString("sourceDateFormat"), config.getString("sourceTimeZone"),  
+					config.getStringList("dateComponenets"), componentFormats, config.getString("targetTimeZone"));
+		}
+		
+		/**
+		 * @param sourceDateFormat
+		 * @param sourceTimeZone
+		 * @param dateComponents
+		 * @param targetComponentFormats
+		 * @param targetTimeZone
+		 */
+		public DateComponentTransformer(String sourceDateFormat, String sourceTimeZone, List<String> dateComponents, 
+				Map<String, String> targetComponentFormats, 
+				String targetTimeZone) {
+			super(dateComponents.size());
+			intialize(sourceDateFormat,  sourceTimeZone, dateComponents, targetComponentFormats,  targetTimeZone);
+		}
+
+		/**
+		 * @param sourceDateFormatStr
+		 * @param sourceTimeZone
+		 * @param dateComponents
+		 * @param componentFormats
+		 * @param targetTimeZone
+		 */
+		private void intialize(String sourceDateFormatStr, String sourceTimeZone, List<String> dateComponents,  
+				Map<String, String> componentFormats, String targetTimeZone) {
+			this.dateComponents = dateComponents;
+			if (sourceDateFormatStr.equals("epochTime")) {
+				sourceEpochTime = true;
+			} else  {
+				sourceDateFormat = new SimpleDateFormat(sourceDateFormatStr);
+				if (!Utility.isBlank(sourceTimeZone)) {
+					sourceDateFormat.setTimeZone(TimeZone.getTimeZone(sourceTimeZone));
+				}
+			}
+
+			//format object for all components
+			for (Map.Entry<String,String> entry :componentFormats.entrySet()) {
+				SimpleDateFormat targetDateFormat = new SimpleDateFormat(entry.getValue());
+				if (!Utility.isBlank(targetTimeZone)) {
+					targetDateFormat.setTimeZone(TimeZone.getTimeZone(targetTimeZone));
+				}
+				componentDateFormats.put(entry.getKey(), targetDateFormat);
+			}
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			try {
+				Date date = null;
+				if (null != sourceDateFormat) {
+					//date format
+					date = sourceDateFormat.parse(value);
+				} else {
+					//epoch time
+					date = new Date(Long.parseLong(value));
+				}
+				
+				int i = 0;
+				for (String dateComponent : dateComponents) {
+					if (dateComponent.equals(BasicUtils.TIME_UNIT_QUARTER)) {
+						cal.setTime(date);
+						int month = cal.get(Calendar.MONTH);
+						int quarter = month / 3 + 1;
+						transformed[i++] = "" + quarter;
+					} else {
+						SimpleDateFormat targetDateFormat = componentDateFormats.get(dateComponent);
+						transformed[i++] = targetDateFormat.format(date);
+					}
+				}
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+			return transformed;
+		}
 	}	
 	
 }

@@ -79,7 +79,7 @@ object DataTransformer extends JobConfiguration  {
 	   val brTransformers = sparkCntxt.broadcast(transformers)
 	   val brGenerators = sparkCntxt.broadcast(generators)
 
-	   //apply validators to each field in each line to create RDD of tagged records
+	   //apply transformers or generators to each field in each line 
 	   val data = sparkCntxt.textFile(inputPath)
 	   val transformedData = data.map(line => {
 	     val items = line.split(fieldDelimIn, -1)
