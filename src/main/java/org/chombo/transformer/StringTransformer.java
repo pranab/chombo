@@ -539,7 +539,10 @@ public class StringTransformer {
 		private int expectedNumFields;
 		private int curFieldOrdinal;
 		private String outputDelimiter = ",";
-		private static Set<Integer> collasedFieldOrdinals = new HashSet<Integer>();
+		private static int lastCollapsedFieldsDefined;
+		private static int lastCollapsedFieldsNotDefined;
+		private static boolean checkedForValidity;
+		private static int collapsedFieldsNotDefinedCount;
 		
 		public WithinFieldDelimiterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
@@ -550,10 +553,24 @@ public class StringTransformer {
 			//embedded delimiter problem
 			if (config.hasPath("numFieldsToCollapse")) {
 				numFieldsToCollapse = config.getInt("numFieldsToCollapse");
+				if (curFieldOrdinal > lastCollapsedFieldsDefined) {
+					lastCollapsedFieldsDefined = curFieldOrdinal;
+				}
+			} else {
+				++collapsedFieldsNotDefinedCount;
+				if (curFieldOrdinal > lastCollapsedFieldsNotDefined) {
+					lastCollapsedFieldsNotDefined = curFieldOrdinal;
+				}
 			}
+			
+			
 			if (config.hasPath("replacementDelimiter")) {
 				replacementDelimiter = config.getString("replacementDelimiter");
-			}
+				if (curFieldOrdinal > lastCollapsedFieldsDefined) {
+					lastCollapsedFieldsDefined = curFieldOrdinal;
+				}
+			} 
+			
 			if (config.hasPath("outputDelimiter")) {
 				outputDelimiter = config.getString("outputDelimiter");
 			}
@@ -573,6 +590,8 @@ public class StringTransformer {
 		@Override
 		public String[] tranform(String value) {
 			if (expectedNumFields != fields.length) {
+				checkForValidity();
+				
 				//get number of fields to collapse from the total field count if not specified
 				int actualNumFieldsToCollapse = numFieldsToCollapse < 0 ? fields.length - expectedNumFields : 
 					numFieldsToCollapse;
@@ -581,13 +600,6 @@ public class StringTransformer {
 					replacementDelimiter);
 				
 				if (numFieldsToCollapse < 0) {
-					//if number of fields to collapse is auto configured, then there should be one such field
-					collasedFieldOrdinals.add(curFieldOrdinal);
-					if (collasedFieldOrdinals.size() > 1) {
-						throw new IllegalStateException(
-								"if number of fields to copplapse not specified, there could be only one such field");
-					}
-					
 					//not specified implying num of embedded delimiters could vary across rows so collapse remaining
 					collapsedFields = collapsedFields + outputDelimiter + BasicUtils.join(fields, 
 						afterLastCollapsedFieldOrdinal, fields.length, outputDelimiter);
@@ -598,6 +610,23 @@ public class StringTransformer {
 				transformed[0] = value;
 			}
 			return transformed;
+		}
+		
+		private static void checkForValidity() {
+			if (!checkedForValidity) {
+				if (collapsedFieldsNotDefinedCount > 1) {
+					//multiple fields with undefined number of fields to collapse not allowed
+					throw new IllegalStateException(
+							"mulitiple fields found where number of fields to copplapse not specified");
+				} else if (collapsedFieldsNotDefinedCount == 1) {
+					//multiple fields with undefined number of fields to collapse not allowed
+					if (lastCollapsedFieldsNotDefined < lastCollapsedFieldsDefined) {
+						throw new IllegalStateException(
+								"if there is any field with undefined number of fields to collapse it should be last one");
+					}
+				}
+				checkedForValidity = true;
+			}
 		}
 		
 		@Override
