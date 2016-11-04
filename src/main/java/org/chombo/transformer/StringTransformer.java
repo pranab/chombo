@@ -527,6 +527,7 @@ public class StringTransformer {
 	}
 	
 	/**
+	 * Collapses multiple fields into one to solve filed delimiter embedded in field problem.
 	 * @author pranab
 	 *
 	 */
@@ -536,38 +537,53 @@ public class StringTransformer {
 		private String[] fields;
 		private int expectedNumFields;
 		private int curFieldOrdinal;
+		private String outputDelimiter = ",";
 		
 		public WithinFieldDelimiterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			curFieldOrdinal = prAttr.getOrdinal();
 			config = getFieldSpecificConfig(prAttr.getOrdinal(), config);
+			
+			//if not specified, then there could be only one field in the record with 
+			//embedded delimiter problem
 			if (config.hasPath("numFieldsToCollapse")) {
 				numFieldsToCollapse = config.getInt("numFieldsToCollapse");
 			}
 			if (config.hasPath("replacementDelimiter")) {
 				replacementDelimiter = config.getString("replacementDelimiter");
 			}
+			if (config.hasPath("outputDelimiter")) {
+				outputDelimiter = config.getString("outputDelimiter");
+			}
 			expectedNumFields = config.getInt("expectedNumFields");
 		}
 
 		public WithinFieldDelimiterTransformer(int numTransAttributes, int curFieldOrdinal, int numFieldsToCollapse,
-				String replacementDelimiter, int expectedNumFields) {
+				String replacementDelimiter, int expectedNumFields, String outputDelimiter) {
 			super(numTransAttributes);
 			this.curFieldOrdinal  = curFieldOrdinal;
 			this.numFieldsToCollapse = numFieldsToCollapse;
 			this.replacementDelimiter = replacementDelimiter;
 			this.expectedNumFields = expectedNumFields;
+			this.outputDelimiter = outputDelimiter;
 		}
 		
 		@Override
 		public String[] tranform(String value) {
 			if (expectedNumFields != fields.length) {
-				//get number of fields to collapse from the total field count
-				if (numFieldsToCollapse < 0) {
-					numFieldsToCollapse = fields.length - expectedNumFields;
-				}
-				transformed[0] = BasicUtils.join(fields, curFieldOrdinal, curFieldOrdinal + numFieldsToCollapse + 1, 
+				//get number of fields to collapse from the total field count if not specified
+				int actualNumFieldsToCollapse = numFieldsToCollapse < 0 ? fields.length - expectedNumFields : 
+					numFieldsToCollapse;
+				int afterLastCollapsedFieldOrdinal = curFieldOrdinal + actualNumFieldsToCollapse + 1;
+				String collapsedFields = BasicUtils.join(fields, curFieldOrdinal, afterLastCollapsedFieldOrdinal, 
 						replacementDelimiter);
+				
+				if (numFieldsToCollapse < 0) {
+					//not specified implying num of embedded delimiters could vary across rows so collapse remaining
+					collapsedFields = collapsedFields + outputDelimiter + BasicUtils.join(fields, 
+							afterLastCollapsedFieldOrdinal, fields.length, outputDelimiter);
+				}
+				transformed[0] = collapsedFields;
 			} else {
 				//nothing to do
 				transformed[0] = value;

@@ -214,7 +214,7 @@ public class Transformer extends Configured implements Tool {
 			AttributeTransformer attrTrans = null;
     		for (String tranformerTag :  tranformerTags) {
 				attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
-				registerTransformers(fieldOrd, attrTrans);
+				registerTransformers(ord, attrTrans);
     		}
         }
         
@@ -269,7 +269,7 @@ public class Transformer extends Configured implements Tool {
             		return;
             	}
             } else {
-                items  =  value.toString().split(fieldDelimRegex);
+                items  =  value.toString().split(fieldDelimRegex, -1);
             }
             
             stBld.delete(0, stBld.length());
