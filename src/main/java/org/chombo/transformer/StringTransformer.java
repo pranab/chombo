@@ -20,6 +20,7 @@ package org.chombo.transformer;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -538,6 +539,7 @@ public class StringTransformer {
 		private int expectedNumFields;
 		private int curFieldOrdinal;
 		private String outputDelimiter = ",";
+		private static Set<Integer> collasedFieldOrdinals = new HashSet<Integer>();
 		
 		public WithinFieldDelimiterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
@@ -576,12 +578,19 @@ public class StringTransformer {
 					numFieldsToCollapse;
 				int afterLastCollapsedFieldOrdinal = curFieldOrdinal + actualNumFieldsToCollapse + 1;
 				String collapsedFields = BasicUtils.join(fields, curFieldOrdinal, afterLastCollapsedFieldOrdinal, 
-						replacementDelimiter);
+					replacementDelimiter);
 				
 				if (numFieldsToCollapse < 0) {
+					//if number of fields to collapse is auto configured, then there should be one such field
+					collasedFieldOrdinals.add(curFieldOrdinal);
+					if (collasedFieldOrdinals.size() > 1) {
+						throw new IllegalStateException(
+								"if number of fields to copplapse not specified, there could be only one such field");
+					}
+					
 					//not specified implying num of embedded delimiters could vary across rows so collapse remaining
 					collapsedFields = collapsedFields + outputDelimiter + BasicUtils.join(fields, 
-							afterLastCollapsedFieldOrdinal, fields.length, outputDelimiter);
+						afterLastCollapsedFieldOrdinal, fields.length, outputDelimiter);
 				}
 				transformed[0] = collapsedFields;
 			} else {
