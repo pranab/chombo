@@ -72,23 +72,24 @@ object SimpleDataValidator extends JobConfiguration {
 	   
 	   //find invalid records
 	   val processedRecords = sampled.map(line => {
-	     val items = line.split(fieldDelimIn)
+	     val items = line.split(fieldDelimIn, -1)
 	     val rec = if (items.length != fieldCount) {
 	       invalidRecordMarker + line
 	     } else {
 	       var recValid = true
 	       val zipped = fieldTypes.asScala.zipWithIndex
 	       zipped.foreach(t => {
+	         val item = items(t._2)
 	         val valid = t._1 match {
-	           case BaseAttribute.DATA_TYPE_INT => BasicUtils.isInt(items(t._2))
-	           case BaseAttribute.DATA_TYPE_LONG => BasicUtils.isLong(items(t._2))
-	           case BaseAttribute.DATA_TYPE_DOUBLE => BasicUtils.isDouble(items(t._2))
-	           case BaseAttribute.DATA_TYPE_STRING => true
-	           case BaseAttribute.DATA_TYPE_STRING_COMPOSITE => BasicUtils.isComposite(items(t._2), subFieldDelimIn)
+	           case BaseAttribute.DATA_TYPE_INT => !item.isEmpty() && BasicUtils.isInt(item)
+	           case BaseAttribute.DATA_TYPE_LONG => !item.isEmpty() && BasicUtils.isLong(item)
+	           case BaseAttribute.DATA_TYPE_DOUBLE => !item.isEmpty() && BasicUtils.isDouble(item)
+	           case BaseAttribute.DATA_TYPE_STRING => !item.isEmpty()
+	           case BaseAttribute.DATA_TYPE_STRING_COMPOSITE => !item.isEmpty() && BasicUtils.isComposite(item, subFieldDelimIn)
 	           case BaseAttribute.DATA_TYPE_DATE => {
 	             //use date formatter if provided, otherwise treat as string
 	             val dateValid = dateFormat match {
-	               case Some(formatter:SimpleDateFormat) => BasicUtils.isDate(items(t._2), formatter)
+	               case Some(formatter:SimpleDateFormat) => !item.isEmpty() && BasicUtils.isDate(item, formatter)
 	               case None => true
 	             }
 	             dateValid

@@ -48,6 +48,7 @@ public class TransformerFactory {
 	public static final String EPOCH_TIME_GENERATOR = "epochTimeGen";
 	public static final String DATE_GENERATOR = "dateGen";
 	public static final String DATE_FORMAT_TRANSFORMER = "dateFormatTrans";
+	public static final String DATE_COMPONENT_TRANSFORMER = "dateComponentTrans";
 	public static final String ELAPSED_TIME_TRANSFORMER = "elapsedTimeTrans";
 	public static final String CONTEXTUAL_ELAPSED_TIME_TRANSFORMER = "contextualElapsedTimeTrans";
 	public static final String TIME_CYCLE_SHIFT_TRANSFORMER = "timeCycleShiftTrans";
@@ -144,6 +145,8 @@ public class TransformerFactory {
 			transformer = new DateTransformer.DateGenerator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(DATE_FORMAT_TRANSFORMER)) {
 			transformer = new DateTransformer.DateFormatTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(DATE_COMPONENT_TRANSFORMER)) {
+			transformer = new DateTransformer.DateComponentTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(ELAPSED_TIME_TRANSFORMER)) {
 			transformer = new DateTransformer.ElapsedTimeTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(CONTEXTUAL_ELAPSED_TIME_TRANSFORMER)) {

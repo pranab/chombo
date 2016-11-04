@@ -68,11 +68,12 @@ object DataValidator extends JobConfiguration  {
 	     appConfig.getString("custom.valid.factory.class")
 	   else
 	     null
+	   val debugOn = appConfig.getBoolean("debug.on")
+	   val saveOutput = appConfig.getBoolean("save.output")
 
+	     
 	   ValidatorFactory.initialize(configClass, validatorConfig)
 	   val ordinals =  validationSchema.getAttributeOrdinals()
-	   
-	   //val tagSep = getStringParamOrElse(appConfig, "validator.tag.separator", ",")
 	   
 	   //initialize stats manager
 	   val statsFilePath = getOptionalStringParam(appConfig, "stats.file.path")
@@ -119,32 +120,54 @@ object DataValidator extends JobConfiguration  {
 	      })
 	   }
 	   
+	   if (debugOn) {
+	     validators.foreach(kv => {
+	       println("field: " + kv._1 + " num validators:" + kv._2.length )
+	     })
+	   }
+	   
+	   //broadcast validator
+	   val brValidators = sparkCntxt.broadcast(validators)
+
 	  val data = sparkCntxt.textFile(inputPath)
 
-	  //apply validators to each field in each line to create RDD of tagged records
-	  val taggedData = data.map(line => {
-	    val items = line.split(fieldDelimIn)
-	    val itemsZipped = items.zipWithIndex
+	   //apply validators to each field in each line to create RDD of tagged records
+	   val taggedData = data.map(line => {
+	     val items = line.split(fieldDelimIn, -1)
+	     val itemsZipped = items.zipWithIndex
 	    
-	    //apply all validators for the field
-	    val taggedItems = itemsZipped.map(z => {
-	    	val valList = validators.get(z._2).get
-	    	val valStatuses = valList.map(validator => {
-	    		val status = validator.isValid(z._1)
-	    		(validator.getTag(), status)
-	    	})
+	     //apply all validators for the field
+	     val valMap = brValidators.value
+	     val taggedItems = itemsZipped.map(z => {
+	    	val valListOpt = valMap.get(z._2)
 	    	
-	    	//only failed validators
-	    	val failedValidators = valStatuses.filter(s => {
-	    	  !s._2
-	    	}).map(vs => vs._1)
+	    	valListOpt match  {
+	    	  case Some(valList: Array[Validator]) => {
+	    		  val valStatuses = valList.map(validator => {
+	    		  val status = validator.isValid(z._1)
+	    		  (validator.getTag(), status)
+	    		  })
+	    		  
+	    		  if (debugOn) {
+	    		    println("field: " + z._1)
+	    		    valStatuses.foreach(vs => println("validator: " + vs._1 + " status:" + vs._2))
+	    		  }
+	    	
+	    		  //only failed validators
+	    		  val failedValidators = valStatuses.filter(s => {
+	    		   !s._2
+	    		  }).map(vs => vs._1)
 	    
-	    	val field = if (failedValidators.isEmpty)
-	    		z._1
-	    	else 
-	    	  z._1 + valTagSeparator + failedValidators.mkString(fieldDelimOut)
+	    		  val field = 
+	    	       	if (failedValidators.isEmpty)
+	    	    	   z._1
+	    	    	 else 
+	    			   z._1 + valTagSeparator + failedValidators.mkString(fieldDelimOut)
+	    	    field
+	    	  }
 	    	  
-	    	field
+	    	  case None =>  z._1
+	    	}
 	    })
 	 
 	    taggedItems.mkString(fieldDelimOut)
@@ -172,13 +195,13 @@ object DataValidator extends JobConfiguration  {
    }
    
    /**
- * @param config
- * @param valTags
- * @param ord
- * @param validatorConfig
- * @param validationSchema
- */
-private  def createValidators( config : Config , valTags : Array[String],   ord : Int,
+   * @param config
+   * @param valTags
+   * @param ord
+   * @param validatorConfig
+   * @param validationSchema
+   */
+   private  def createValidators( config : Config , valTags : Array[String],   ord : Int,
        validationSchema :  ProcessorAttributeSchema, mutValidators : scala.collection.mutable.HashMap[Int, Array[Validator]])  {
 	   val validatorList =  List[Validator]()
 	   val  prAttr = validationSchema.findAttributeByOrdinal(ord)
