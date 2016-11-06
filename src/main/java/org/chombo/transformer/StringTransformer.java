@@ -543,6 +543,7 @@ public class StringTransformer {
 		private static int lastCollapsedFieldsNotDefined;
 		private static boolean checkedForValidity;
 		private static int collapsedFieldsNotDefinedCount;
+		private static int totalNumFieldsToCollapse;
 		
 		public WithinFieldDelimiterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
@@ -556,6 +557,7 @@ public class StringTransformer {
 				if (curFieldOrdinal > lastCollapsedFieldsDefined) {
 					lastCollapsedFieldsDefined = curFieldOrdinal;
 				}
+				++totalNumFieldsToCollapse;
 			} else {
 				++collapsedFieldsNotDefinedCount;
 				if (curFieldOrdinal > lastCollapsedFieldsNotDefined) {
@@ -593,8 +595,8 @@ public class StringTransformer {
 				checkForValidity();
 				
 				//get number of fields to collapse from the total field count if not specified
-				int actualNumFieldsToCollapse = numFieldsToCollapse < 0 ? fields.length - expectedNumFields : 
-					numFieldsToCollapse;
+				int actualNumFieldsToCollapse = numFieldsToCollapse < 0 ? 
+					fields.length - expectedNumFields - totalNumFieldsToCollapse: numFieldsToCollapse;
 				int afterLastCollapsedFieldOrdinal = curFieldOrdinal + actualNumFieldsToCollapse + 1;
 				String collapsedFields = BasicUtils.join(fields, curFieldOrdinal, afterLastCollapsedFieldOrdinal, 
 					replacementDelimiter);
