@@ -31,10 +31,26 @@ import scala.collection.mutable.HashMap
 import org.chombo.util.BasicUtils
 
 /**
+ * @author pranab
+ *
+ */
+abstract trait ValidatorRegistration {
+  def registerValidators(fieldOrd : Int, validators : Validator*)
+}
+
+/**
+ * @author pranab
+ *
+ */
+abstract trait ValidatorBuilder {
+	def createValidators(config : Config, validator : ValidatorRegistration) 
+}
+
+/**
 @author pranab
  *
 * */
-object DataValidator extends JobConfiguration  {
+object DataValidator extends JobConfiguration  with ValidatorRegistration {
   var statsManager: Option[NumericalAttrStatsManager] = None
   var medStatManager : Option[MedianStatsManager] = None
   val validationContext = new java.util.HashMap[String, Object]()
@@ -58,8 +74,8 @@ object DataValidator extends JobConfiguration  {
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val valTagSeparator = getStringParamOrElse(appConfig, "val.tag.separator", ";")
-	   val filterInvalidRecords = this.getBooleanParamOrElse(appConfig, "filter.invalid.records", true)
-	   val outputInvalidRecords = this.getBooleanParamOrElse(appConfig, "output.invalid.records", true)
+	   val filterInvalidRecords = getBooleanParamOrElse(appConfig, "filter.invalid.records", true)
+	   val outputInvalidRecords = getBooleanParamOrElse(appConfig, "output.invalid.records", true)
 	   
 	   val validationSchema = BasicUtils.getProcessingSchema(
 	       getMandatoryStringParam(appConfig, "schema.file.path", "missing schema file path configuration"))
@@ -95,7 +111,7 @@ object DataValidator extends JobConfiguration  {
 	   }
 	   
 	   //simple validators  
-	   var foundSimpleValidators = false
+	   var foundPropConfigBasedValidators = false
 	   
 	   ordinals.foreach(ord => {
 		   val  key = "validator." + ord
@@ -104,20 +120,31 @@ object DataValidator extends JobConfiguration  {
 		     case Some(li:java.util.List[String]) => {
 		    	 val valTags = BasicUtils.fromListToStringArray(li)
 		    	 createValidators(appConfig, valTags, ord, validationSchema, mutValidators)
-		    	 foundSimpleValidators = true
+		    	 foundPropConfigBasedValidators = true
 		     }
 		     case None =>
 		   }  		     
 	   })
 	   
 	   //complex validators
-	   if (!foundSimpleValidators) {
+	   var foundSchemaBasedValidators = false
+	   if (!foundPropConfigBasedValidators) {
 	      validationSchema.getAttributes().asScala.foreach( attr  => {
 	    	  	if (null != attr.getValidators()) {
 	    	  		val validatorTags =  attr.getValidators().asScala.toArray
 	    	  		createValidators(appConfig, validatorTags, attr.getOrdinal(), validationSchema, mutValidators)
+	    	  		foundSchemaBasedValidators = true
 	    	  	}
 	      })
+	   }
+	   
+	   //custom validators
+	   if (!foundPropConfigBasedValidators && !foundSchemaBasedValidators) {
+         val bulderClassName = getMandatoryStringParam(appConfig, "validatorBuilderClass", 
+             "missing validator builder class name")
+         val obj = Class.forName(bulderClassName).newInstance()
+         val builder = obj.asInstanceOf[ValidatorBuilder]
+         builder.createValidators(appConfig, this)
 	   }
 	   
 	   if (debugOn) {
@@ -256,4 +283,14 @@ object DataValidator extends JobConfiguration  {
     validationContext.clear()
     validationContext.put("stats",  medStatManager.get)
   }
+  
+    /**
+     * @param fieldOrd
+     * @param transformers
+     */
+    def registerValidators(fieldOrd : Int, validators : Validator*) {
+      val valArr = validators.toArray
+      mutValidators += fieldOrd -> valArr
+    }
+  
 }
