@@ -608,8 +608,15 @@ public class StringTransformer {
 				}
 				transformed[0] = collapsedFields;
 			} else {
-				//nothing to do
-				transformed[0] = value;
+				//record does not embedded delimiter issue
+				if (numFieldsToCollapse < 0) {
+					//collapse remaining fields
+					String collapsedFields = value + outputDelimiter + BasicUtils.join(fields, 
+						curFieldOrdinal + 1, fields.length, outputDelimiter);
+					transformed[0] = collapsedFields;
+				} else {
+					transformed[0] = value;
+				}
 			}
 			return transformed;
 		}
