@@ -643,4 +643,42 @@ public class StringTransformer {
 			fields = (String[])context.get("record");
 		}
 	}
+	
+	/**
+	 * Splits string different ways
+	 * @author pranab
+	 *
+	 */
+	public static class SplitterTransformer extends AttributeTransformer {
+		private String operation;
+		private String delimiter;
+		
+		public SplitterTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			operation  = config.getString("operation");
+			delimiter = config.getString("delimiter");
+		}
+		
+		public SplitterTransformer(int numTransAttributes, String operation, String delimiter) {
+			super(numTransAttributes);
+			this.operation  = operation;
+			this.delimiter = delimiter;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (operation.equals("spltOnFirst")) {
+				transformed = BasicUtils.splitOnFirstOccurence(value, delimiter);
+			} else if (operation.equals("spltOnLast")){
+				transformed = BasicUtils.splitOnLastOccurence(value, delimiter);
+			} else if (operation.equals("spltOnAll")){
+				transformed = value.split(delimiter, -1);
+			}  else {
+				throw new IllegalArgumentException("invalid string concatenation operator");
+			}
+			return transformed;
+		}
+		
+	}
+	
 }

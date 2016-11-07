@@ -69,6 +69,7 @@ public class TransformerFactory {
 	public static final String STRING_CUSTOM_TRANSFORMER  = "stringCustomTrans";
 	public static final String STRING_DELETE_TRANSFORMER  = "stringDeleteTrans";
 	public static final String STRING_CONCATENATION_TRANSFORMER  = "stringConcatenationTrans";
+	public static final String STRING_SPLIT_TRANSFORMER  = "stringSplitTrans";
 	public static final String STRING_FIELD_MERGE_TRANSFORMER  = "stringFieldMergeTrans";
 	public static final String STRING_WITHIN_FIELD_DELIM_TRANSFORMER  = "stringWithinFieldDelimTrans";
 	
@@ -179,6 +180,8 @@ public class TransformerFactory {
 			transformer = new StringTransformer.DeleteTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(STRING_CONCATENATION_TRANSFORMER)) {
 			transformer = new StringTransformer.ConcatenatorTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(STRING_SPLIT_TRANSFORMER)) {
+			transformer = new StringTransformer.SplitterTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(STRING_FIELD_MERGE_TRANSFORMER)) {
 			transformer = new StringTransformer.FieldMergeTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(STRING_WITHIN_FIELD_DELIM_TRANSFORMER)) {
