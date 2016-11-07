@@ -74,6 +74,7 @@ public class BasicUtils {
     public static final String TIME_UNIT_WEEK = "week";
     public static final String TIME_UNIT_MONTH = "month";
     public static final String TIME_UNIT_QUARTER = "quarter";
+    public static final String TIME_UNIT_SEMI_ANNUAL = "semiAnnual";
     public static final String TIME_UNIT_YEAR = "year";
    
     

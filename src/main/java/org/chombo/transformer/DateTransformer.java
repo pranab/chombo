@@ -441,6 +441,8 @@ public class DateTransformer  {
 						date.add(Calendar.MONTH, 1);
 					} else if (timeUnit.equals(BasicUtils.TIME_UNIT_QUARTER)) {
 						date.add(Calendar.MONTH, 3);
+					} else if (timeUnit.equals(BasicUtils.TIME_UNIT_SEMI_ANNUAL)) {
+						date.add(Calendar.MONTH, 6);
 					} else if (timeUnit.equals(BasicUtils.TIME_UNIT_YEAR)) {
 						date.add(Calendar.YEAR, 1);
 					} else {
