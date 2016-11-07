@@ -543,6 +543,7 @@ public class StringTransformer {
 		private static int lastCollapsedFieldsNotDefined;
 		private static boolean checkedForValidity;
 		private static int collapsedFieldsNotDefinedCount;
+		private static int totalNumFieldsToCollapse;
 		
 		public WithinFieldDelimiterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
@@ -556,6 +557,7 @@ public class StringTransformer {
 				if (curFieldOrdinal > lastCollapsedFieldsDefined) {
 					lastCollapsedFieldsDefined = curFieldOrdinal;
 				}
+				++totalNumFieldsToCollapse;
 			} else {
 				++collapsedFieldsNotDefinedCount;
 				if (curFieldOrdinal > lastCollapsedFieldsNotDefined) {
@@ -593,8 +595,8 @@ public class StringTransformer {
 				checkForValidity();
 				
 				//get number of fields to collapse from the total field count if not specified
-				int actualNumFieldsToCollapse = numFieldsToCollapse < 0 ? fields.length - expectedNumFields : 
-					numFieldsToCollapse;
+				int actualNumFieldsToCollapse = numFieldsToCollapse < 0 ? 
+					fields.length - expectedNumFields - totalNumFieldsToCollapse: numFieldsToCollapse;
 				int afterLastCollapsedFieldOrdinal = curFieldOrdinal + actualNumFieldsToCollapse + 1;
 				String collapsedFields = BasicUtils.join(fields, curFieldOrdinal, afterLastCollapsedFieldOrdinal, 
 					replacementDelimiter);
@@ -606,8 +608,15 @@ public class StringTransformer {
 				}
 				transformed[0] = collapsedFields;
 			} else {
-				//nothing to do
-				transformed[0] = value;
+				//record does not embedded delimiter issue
+				if (numFieldsToCollapse < 0) {
+					//collapse remaining fields
+					String collapsedFields = value + outputDelimiter + BasicUtils.join(fields, 
+						curFieldOrdinal + 1, fields.length, outputDelimiter);
+					transformed[0] = collapsedFields;
+				} else {
+					transformed[0] = value;
+				}
 			}
 			return transformed;
 		}
@@ -634,4 +643,42 @@ public class StringTransformer {
 			fields = (String[])context.get("record");
 		}
 	}
+	
+	/**
+	 * Splits string different ways
+	 * @author pranab
+	 *
+	 */
+	public static class SplitterTransformer extends AttributeTransformer {
+		private String operation;
+		private String delimiter;
+		
+		public SplitterTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			operation  = config.getString("operation");
+			delimiter = config.getString("delimiter");
+		}
+		
+		public SplitterTransformer(int numTransAttributes, String operation, String delimiter) {
+			super(numTransAttributes);
+			this.operation  = operation;
+			this.delimiter = delimiter;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (operation.equals("spltOnFirst")) {
+				transformed = BasicUtils.splitOnFirstOccurence(value, delimiter);
+			} else if (operation.equals("spltOnLast")){
+				transformed = BasicUtils.splitOnLastOccurence(value, delimiter);
+			} else if (operation.equals("spltOnAll")){
+				transformed = value.split(delimiter, -1);
+			}  else {
+				throw new IllegalArgumentException("invalid string concatenation operator");
+			}
+			return transformed;
+		}
+		
+	}
+	
 }

@@ -63,4 +63,13 @@ object CommonUtil {
 	rawArr 
   }
   
+  /**
+  * @param name
+  * @param evidence$3
+  * @return
+  */
+  def createInstance[T:ClassTag](name: String): T = {
+    val obj = Class.forName(name).newInstance()
+	obj.asInstanceOf[T]
+  }  
 }

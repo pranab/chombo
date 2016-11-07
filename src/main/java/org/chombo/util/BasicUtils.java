@@ -74,6 +74,7 @@ public class BasicUtils {
     public static final String TIME_UNIT_WEEK = "week";
     public static final String TIME_UNIT_MONTH = "month";
     public static final String TIME_UNIT_QUARTER = "quarter";
+    public static final String TIME_UNIT_SEMI_ANNUAL = "semiAnnual";
     public static final String TIME_UNIT_YEAR = "year";
    
     
@@ -1134,5 +1135,40 @@ public class BasicUtils {
         return schema;
 	}
 	
+	/**
+	 * @param value
+	 * @param delim
+	 * @return
+	 */
+	public static String[] splitOnFirstOccurence(String value, String delim) {
+		int pos = value.indexOf(delim);
+		return splitOnPosition(value, pos);
+	}
+	
+	/**
+	 * @param value
+	 * @param delim
+	 * @return
+	 */
+	public static String[] splitOnLastOccurence(String value, String delim) {
+		int pos = value.lastIndexOf(delim);
+		return splitOnPosition(value, pos);
+	}
+	
+	/**
+	 * @param value
+	 * @param pos
+	 * @return
+	 */
+	public static String[] splitOnPosition(String value, int pos) {
+		String[] items = new String[2];
+		if (pos >= 0) {
+			items[0] = value.substring(0, pos);
+			items[1] = value.substring(pos + 1);
+		} else {
+			throw new IllegalArgumentException("delimiter not found");
+		}
+		return items;
+	}
 	
  }

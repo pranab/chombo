@@ -30,7 +30,30 @@ import org.chombo.spark.common.CommonUtil
 import org.chombo.util.ProcessorAttribute
 import org.chombo.transformer.ContextAwareTransformer
 
-object DataTransformer extends JobConfiguration  {
+
+/**
+ * @author pranab
+ *
+ */
+abstract trait TransformerRegistration {
+  def registerTransformers(fieldOrd : Int, transformers : AttributeTransformer*) 
+  def registerGenerators(generators : AttributeTransformer*)   
+}
+
+/**
+ * @author pranab
+ *
+ */
+abstract trait TransformerBuilder {
+	def createTransformers(config : Config, transformer : TransformerRegistration) 
+}
+
+
+/**
+ * @author pranab
+ *
+ */
+object DataTransformer extends JobConfiguration with TransformerRegistration  {
     val mutTransformers : scala.collection.mutable.HashMap[Int, Array[AttributeTransformer]]   = scala.collection.mutable.HashMap()
     lazy val transformers :  Map[Int, Array[AttributeTransformer]]   = mutTransformers.toMap
     var mutGenerators : Array[Option[AttributeTransformer]] = _
@@ -49,6 +72,8 @@ object DataTransformer extends JobConfiguration  {
 	   val sparkCntxt = new SparkContext(sparkConf)
 	   val appConfig = config.getConfig(appName)
 	   
+	  
+	   
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
@@ -66,14 +91,25 @@ object DataTransformer extends JobConfiguration  {
 	   
 	   //create trassformers and generator
 	   var foundinConfig = createTransformersFromConfig(transformerSchema, appConfig)
+	   var foundinSchema = false
 	   if (foundinConfig) {
 	       //found transformers in configuration, so expect generator also there
 	       createGeneratorsFromConfig(transformerSchema, appConfig)
 	   } else {
 	     //since not in config, use schema
-	     createTransformersFromSchema(transformerSchema, appConfig)
+	     var foundinSchema = createTransformersFromSchema(transformerSchema, appConfig)
 	     createGeneratorsFromSchema(transformerSchema, appConfig)
 	   }
+       
+       //last option is custom 
+       if (!foundinConfig && !foundinSchema) {
+         val bulderClassName = getMandatoryStringParam(appConfig, "transformerBuilderClass", 
+             "missing transformer builder class name")
+         val obj = Class.forName(bulderClassName).newInstance()
+         val builder = obj.asInstanceOf[TransformerBuilder]
+         builder.createTransformers(appConfig, this)
+       }
+       
        
        //broadcast transformers and generators
 	   val brTransformers = sparkCntxt.broadcast(transformers)
@@ -206,19 +242,22 @@ object DataTransformer extends JobConfiguration  {
 	* @param config
 	* @return
 	*/    
-    private def createGeneratorsFromConfig(transformerSchema : ProcessorAttributeSchema, appConfig: Config) {
-	   val ordinals  = transformerSchema.getAttributeOrdinals()
+    private def createGeneratorsFromConfig(transformerSchema : ProcessorAttributeSchema, appConfig: Config) : 
+      Boolean =  {
+	  var foundinSchema = false 
+      val ordinals  = transformerSchema.getAttributeOrdinals()
 	   mutGenerators = ordinals.map(ord => {
 	       val  key = "generator." + ord
 		   val generatorTag = getOptionalStringParam(appConfig, key)
 		   generatorTag match {
 		       case Some(genTag:String) => {
+		    	   	foundinSchema = true
 			   	  	Some(createGenerator(transformerSchema, appConfig, genTag,  ord))
 			   }
 			   case None => None
 		   }  
 	  })
-      
+      foundinSchema
     }   
     
     /**
@@ -292,4 +331,21 @@ object DataTransformer extends JobConfiguration  {
          val prAttr = transformerSchema.findAttributeByOrdinal(ord)
          TransformerFactory.createTransformer(genTag, prAttr, config)
    }
+    
+    /**
+     * @param fieldOrd
+     * @param transformers
+     */
+    def registerTransformers(fieldOrd : Int, transformers : AttributeTransformer*) {
+      val transArr = transformers.toArray
+      mutTransformers += fieldOrd -> transArr
+    }
+
+    /**
+    * @param generators
+    */
+    def registerGenerators(generators : AttributeTransformer*) {
+       val genArr = generators.toArray
+       mutGenerators = genArr.map(gen => Some(gen))
+     }   
 }
