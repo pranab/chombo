@@ -1140,9 +1140,9 @@ public class BasicUtils {
 	 * @param delim
 	 * @return
 	 */
-	public static String[] splitOnFirstOccurence(String value, String delim) {
+	public static String[] splitOnFirstOccurence(String value, String delim, boolean failOnDelimNotFound) {
 		int pos = value.indexOf(delim);
-		return splitOnPosition(value, pos);
+		return splitOnPosition(value, pos, failOnDelimNotFound);
 	}
 	
 	/**
@@ -1150,9 +1150,9 @@ public class BasicUtils {
 	 * @param delim
 	 * @return
 	 */
-	public static String[] splitOnLastOccurence(String value, String delim) {
+	public static String[] splitOnLastOccurence(String value, String delim, boolean failOnDelimNotFound) {
 		int pos = value.lastIndexOf(delim);
-		return splitOnPosition(value, pos);
+		return splitOnPosition(value, pos, failOnDelimNotFound);
 	}
 	
 	/**
@@ -1160,13 +1160,18 @@ public class BasicUtils {
 	 * @param pos
 	 * @return
 	 */
-	public static String[] splitOnPosition(String value, int pos) {
+	public static String[] splitOnPosition(String value, int pos, boolean failOnDelimNotFound) {
 		String[] items = new String[2];
 		if (pos >= 0) {
 			items[0] = value.substring(0, pos);
 			items[1] = value.substring(pos + 1);
 		} else {
-			throw new IllegalArgumentException("delimiter not found");
+			if (failOnDelimNotFound) {
+				throw new IllegalArgumentException("delimiter not found");
+			} else {
+				items[0] = value;
+				items[1] = "";
+			}
 		}
 		return items;
 	}
