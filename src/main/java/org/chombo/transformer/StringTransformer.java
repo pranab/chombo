@@ -20,7 +20,6 @@ package org.chombo.transformer;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,7 +29,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.chombo.transformer.NumericTransformer.Custom;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
 
@@ -653,29 +651,36 @@ public class StringTransformer {
 		private String operation;
 		private String delimiter;
 		private boolean failOnDelimNotFound;
+		private String retainPolicy;
 		
 		public SplitterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			operation  = config.getString("operation");
 			delimiter = config.getString("delimiter");
 			failOnDelimNotFound = config.getBoolean("failOnDelimNotFound");
+			retainPolicy = config.getString("retainPolicy");
 		}
 		
-		public SplitterTransformer(int numTransAttributes, String operation, String delimiter, boolean failOnDelimNotFound) {
+		public SplitterTransformer(int numTransAttributes, String operation, String delimiter, boolean failOnDelimNotFound,
+				String retainPolicy) {
 			super(numTransAttributes);
 			this.operation  = operation;
 			this.delimiter = delimiter;
 			this.failOnDelimNotFound = failOnDelimNotFound;
+			this.retainPolicy = retainPolicy;
 		}
 
 		@Override
 		public String[] tranform(String value) {
+			String[] items = null;
 			if (operation.equals("spltOnFirst")) {
-				transformed = BasicUtils.splitOnFirstOccurence(value, delimiter, failOnDelimNotFound);
+				items = BasicUtils.splitOnFirstOccurence(value, delimiter, failOnDelimNotFound);
+				retainOutputFields(items);
 			} else if (operation.equals("spltOnLast")){
-				transformed = BasicUtils.splitOnLastOccurence(value, delimiter, failOnDelimNotFound);
+				items = BasicUtils.splitOnLastOccurence(value, delimiter, failOnDelimNotFound);
+				retainOutputFields(items);
 			} else if (operation.equals("spltOnAll")){
-				String[] items = value.split(delimiter, -1);
+				items = value.split(delimiter, -1);
 				if (items.length == transformed.length) {
 					transformed = items;
 				} else {
@@ -685,6 +690,20 @@ public class StringTransformer {
 				throw new IllegalArgumentException("invalid string splitting operator");
 			}
 			return transformed;
+		}
+		
+		/**
+		 * @param items
+		 */
+		private void retainOutputFields(String[] items) {
+			if (retainPolicy.equals("first")) {
+				transformed[0] = items[0];
+			} else if (retainPolicy.equals("second")) {
+				transformed[0] = items[1];
+			} else if (retainPolicy.equals("both")) {
+				transformed[0] = items[0];
+				transformed[1] = items[1];
+			}
 		}
 		
 	}
