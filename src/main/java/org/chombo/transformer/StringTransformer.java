@@ -652,29 +652,37 @@ public class StringTransformer {
 	public static class SplitterTransformer extends AttributeTransformer {
 		private String operation;
 		private String delimiter;
+		private boolean failOnDelimNotFound;
 		
 		public SplitterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			operation  = config.getString("operation");
 			delimiter = config.getString("delimiter");
+			failOnDelimNotFound = config.getBoolean("failOnDelimNotFound");
 		}
 		
-		public SplitterTransformer(int numTransAttributes, String operation, String delimiter) {
+		public SplitterTransformer(int numTransAttributes, String operation, String delimiter, boolean failOnDelimNotFound) {
 			super(numTransAttributes);
 			this.operation  = operation;
 			this.delimiter = delimiter;
+			this.failOnDelimNotFound = failOnDelimNotFound;
 		}
 
 		@Override
 		public String[] tranform(String value) {
 			if (operation.equals("spltOnFirst")) {
-				transformed = BasicUtils.splitOnFirstOccurence(value, delimiter);
+				transformed = BasicUtils.splitOnFirstOccurence(value, delimiter, failOnDelimNotFound);
 			} else if (operation.equals("spltOnLast")){
-				transformed = BasicUtils.splitOnLastOccurence(value, delimiter);
+				transformed = BasicUtils.splitOnLastOccurence(value, delimiter, failOnDelimNotFound);
 			} else if (operation.equals("spltOnAll")){
-				transformed = value.split(delimiter, -1);
+				String[] items = value.split(delimiter, -1);
+				if (items.length == transformed.length) {
+					transformed = items;
+				} else {
+					throw new IllegalArgumentException("did not get expected number of items after splitting");
+				}
 			}  else {
-				throw new IllegalArgumentException("invalid string concatenation operator");
+				throw new IllegalArgumentException("invalid string splitting operator");
 			}
 			return transformed;
 		}
