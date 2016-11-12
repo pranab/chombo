@@ -285,6 +285,42 @@ public class BasicUtils {
 
     /**
      * @param items
+     * @param index
+     * @return
+     */
+    public static String extractStringFromStringArray(String[] items, int index) {
+    	return items[index];
+    }
+    
+    /**
+     * @param items
+     * @param index
+     * @return
+     */
+    public static int extractIntFromStringArray(String[] items, int index) {
+    	return Integer.parseInt(items[index]);
+    }
+    
+    /**
+     * @param items
+     * @param index
+     * @return
+     */
+    public static long extractLongFromStringArray(String[] items, int index) {
+    	return Long.parseLong(items[index]);
+    }
+
+    /**
+     * @param items
+     * @param index
+     * @return
+     */
+    public static double extractDoubleFromStringArray(String[] items, int index) {
+    	return Double.parseDouble(items[index]);
+    }
+
+    /**
+     * @param items
      * @param filteredFields
      * @return
      */
