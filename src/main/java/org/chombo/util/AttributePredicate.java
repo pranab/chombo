@@ -64,5 +64,6 @@ public abstract class AttributePredicate {
 	 * @return
 	 */
 	public abstract boolean evaluate(String[] record);
+
 	
 }

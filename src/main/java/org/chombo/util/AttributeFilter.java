@@ -28,6 +28,8 @@ import java.util.Map;
 public class AttributeFilter {
 	private List<AttributePredicate> predicates = new ArrayList<AttributePredicate>();
 	private Map<String, Object> context;
+	public static final String COND_SEP = ",";
+	private static String condSeparator;
 	
 	public AttributeFilter(){
 	}
@@ -44,9 +46,9 @@ public class AttributeFilter {
 	 */
 	public void build(String filter) {
 		AttributePredicate  predicate = null;
-		String[] preds = filter.split(",");
+		String[] preds = filter.split(getCondSeparator());
 		for (String pred : preds) {
-			String[] predParts = pred.split(AttributePredicate.PREDICATE_SEP);
+			String[] predParts = pred.trim().split(AttributePredicate.PREDICATE_SEP);
 			int attr = Integer.parseInt(predParts[0]);
 			String[] valueParts  = predParts[2].split(AttributePredicate.DATA_TYPE_SEP);
 			
@@ -89,4 +91,13 @@ public class AttributeFilter {
 		
 		return status;
 	}
+	
+	public static String getCondSeparator() {
+		return condSeparator != null ? condSeparator : COND_SEP;
+	}
+
+	public static void setCondSeparator(String condSeparator) {
+		AttributeFilter.condSeparator = condSeparator;
+	}
+	
 }
