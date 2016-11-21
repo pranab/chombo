@@ -44,8 +44,21 @@ public class DoubleAttributePredicate extends AttributePredicate {
 	
 	@Override
 	public boolean evaluate(String[] record) {
-		boolean status = false;
 		double operand = Double.parseDouble(record[attribute]);
+		return evaluateHelper(operand);
+	}
+
+	@Override
+	public boolean evaluate(String field) {
+		return evaluateHelper(Double.parseDouble(field));
+	}
+	
+	/**
+	 * @param operand
+	 * @return
+	 */
+	private boolean evaluateHelper(double operand) {
+		boolean status = false;
 		if (operator.equals(GREATER_THAN)) {
 			status = operand > value;
 		} else if (operator.equals(LESS_THAN)) {
@@ -57,6 +70,5 @@ public class DoubleAttributePredicate extends AttributePredicate {
 		}
 		return status;
 	}
-
 
 }

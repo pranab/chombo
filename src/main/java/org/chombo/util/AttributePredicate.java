@@ -101,5 +101,11 @@ public abstract class AttributePredicate {
 	 */
 	public abstract boolean evaluate(String[] record);
 
+	/**
+	 * evaluates predicate 
+	 * @param field
+	 * @return
+	 */
+	public abstract boolean evaluate(String field);
 	
 }

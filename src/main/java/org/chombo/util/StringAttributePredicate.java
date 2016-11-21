@@ -73,8 +73,21 @@ public class StringAttributePredicate extends AttributePredicate {
 	
 	@Override
 	public boolean evaluate(String[] record) {
-		boolean status = false;
 		String operand = record[attribute];
+		return evaluateHelper(operand);
+	}
+
+	@Override
+	public boolean evaluate(String field) {
+		return evaluateHelper(field);
+	}
+
+	/**
+	 * @param operand
+	 * @return
+	 */
+	private boolean evaluateHelper(String operand) {
+		boolean status = false;
 		if (operator.equals(GREATER_THAN)) {
 			status = operand.compareTo(value) > 0;
 		} else if (operator.equals(LESS_THAN)) {
@@ -90,5 +103,4 @@ public class StringAttributePredicate extends AttributePredicate {
 		}
 		return status;
 	}
-
 }

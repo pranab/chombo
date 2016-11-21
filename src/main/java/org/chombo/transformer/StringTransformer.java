@@ -29,6 +29,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.chombo.util.AttributePredicate;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
 
@@ -655,15 +656,18 @@ public class StringTransformer {
 		
 		public SplitterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
-			operation  = config.getString("operation");
-			delimiter = config.getString("delimiter");
-			failOnDelimNotFound = config.getBoolean("failOnDelimNotFound");
-			retainPolicy = config.getString("retainPolicy");
+			intialize(config.getString("operation"), config.getString("delimiter"), 
+					config.getBoolean("failOnDelimNotFound"),config.getString("retainPolicy"));
 		}
 		
 		public SplitterTransformer(int numTransAttributes, String operation, String delimiter, boolean failOnDelimNotFound,
 				String retainPolicy) {
 			super(numTransAttributes);
+			intialize(operation, delimiter, failOnDelimNotFound,retainPolicy);
+		}
+		
+		public void intialize(String operation, String delimiter, boolean failOnDelimNotFound,
+				String retainPolicy) {
 			this.operation  = operation;
 			this.delimiter = delimiter;
 			this.failOnDelimNotFound = failOnDelimNotFound;
@@ -707,5 +711,38 @@ public class StringTransformer {
 		}
 		
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class BinaryValueTransformer extends AttributeTransformer {
+		private AttributePredicate predicate;
+		private String trueValue;
+		private String falseValue;
+		
+		public BinaryValueTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			initialize(config.getString("predicateExpr"), config.getString("trueValue"), 
+					config.getString("falseValue"));
+		}
+
+		public BinaryValueTransformer(String predicateExpr, String trueValue, String falseValue) {
+			super(1);
+			initialize(predicateExpr, trueValue, falseValue);
+		}
+
+		public void initialize(String predicateExpr, String trueValue, String falseValue) {
+			this.predicate = AttributePredicate.create(predicateExpr);
+			this.trueValue = trueValue;
+			this.falseValue = falseValue;
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] = predicate.evaluate(value) ? trueValue : falseValue;
+			return transformed;
+		}
+	}	
 	
 }

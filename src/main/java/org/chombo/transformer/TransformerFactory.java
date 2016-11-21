@@ -72,6 +72,7 @@ public class TransformerFactory {
 	public static final String STRING_SPLIT_TRANSFORMER  = "stringSplitTrans";
 	public static final String STRING_FIELD_MERGE_TRANSFORMER  = "stringFieldMergeTrans";
 	public static final String STRING_WITHIN_FIELD_DELIM_TRANSFORMER  = "stringWithinFieldDelimTrans";
+	public static final String STRING_BINARY_TRANSFORMER  = "stringBinaryTrans";
 	
 	private static Map<String,String> custTransformerClasses = new HashMap<String,String>();
 	private static Map<String,AttributeTransformer> custTransformers = new HashMap<String,AttributeTransformer>();
@@ -186,6 +187,8 @@ public class TransformerFactory {
 			transformer = new StringTransformer.FieldMergeTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(STRING_WITHIN_FIELD_DELIM_TRANSFORMER)) {
 			transformer = new StringTransformer.WithinFieldDelimiterTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(STRING_BINARY_TRANSFORMER)) {
+			transformer = new StringTransformer.BinaryValueTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
 			//custom transformer with configured transformer class names
 			transformer = createCustomTransformer(transformerTag, prAttr,  config);

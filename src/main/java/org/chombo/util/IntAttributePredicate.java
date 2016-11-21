@@ -39,8 +39,17 @@ public class IntAttributePredicate  extends AttributePredicate {
 
 	@Override
 	public boolean evaluate(String[] record) {
-		boolean status = false;
 		int operand = Integer.parseInt(record[attribute]);
+		return evaluateHelper(operand);
+	}
+	
+	@Override
+	public boolean evaluate(String field) {
+		return evaluateHelper(Integer.parseInt(field));
+	}
+	
+	private boolean evaluateHelper(int operand) {
+		boolean status = false;
 		if (operator.equals(GREATER_THAN)) {
 			status = operand > value;
 		} else if (operator.equals(LESS_THAN)) {
@@ -52,5 +61,4 @@ public class IntAttributePredicate  extends AttributePredicate {
 		}
 		return status;
 	}
-
 }
