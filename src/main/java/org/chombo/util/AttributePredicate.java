@@ -45,6 +45,42 @@ public abstract class AttributePredicate {
 		this.attribute = attribute;
 		this.operator = operator;
 	}
+
+	/**
+	 * @param predicateStr
+	 * @return
+	 */
+	public static AttributePredicate create(String predicateStr) {
+		return create(predicateStr, null);
+	}	
+	
+	/**
+	 * @param predicateStr
+	 * @param context
+	 * @return
+	 */
+	public static AttributePredicate create(String predicateStr, Map<String, Object> context) {
+		AttributePredicate  predicate = null;
+		String[] predParts = predicateStr.trim().split(AttributePredicate.PREDICATE_SEP);
+		int attr = Integer.parseInt(predParts[0]);
+		String[] valueParts  = predParts[2].split(AttributePredicate.DATA_TYPE_SEP);
+		
+		if (valueParts[0].equals(BaseAttribute.DATA_TYPE_INT)) {
+			predicate = new IntAttributePredicate(attr, predParts[1], valueParts[1]);
+		} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+			predicate = new DoubleAttributePredicate(attr, predParts[1], valueParts[1]);
+		} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_STRING)) {
+			if (null != context) {
+				predicate = new StringAttributePredicate();
+				predicate.withContext(context).build(attr, predParts[1], valueParts[1]);
+			} else {
+				predicate = new StringAttributePredicate(attr, predParts[1], valueParts[1]);
+			}
+		} else {
+			throw new IllegalArgumentException("invalid data type");
+		}
+		return predicate;
+	}
 	
 	public abstract void build(int attribute, String operator, String value);
 
