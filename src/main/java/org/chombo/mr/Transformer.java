@@ -18,6 +18,7 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,7 @@ import org.apache.hadoop.util.ToolRunner;
 import org.chombo.transformer.AttributeTransformer;
 import org.chombo.transformer.ContextAwareTransformer;
 import org.chombo.transformer.TransformerFactory;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.Utility;
@@ -212,8 +214,21 @@ public class Transformer extends Configured implements Tool {
         	//create all transformers for  a field
 			ProcessorAttribute prAttr = transformerSchema.findAttributeByOrdinal(ord);
 			AttributeTransformer attrTrans = null;
-    		for (String tranformerTag :  tranformerTags) {
-				attrTrans = TransformerFactory.createTransformer(tranformerTag, prAttr, transformerConfig);
+    		for (String transformerTag :  tranformerTags) {
+    			//check if side data is needed
+    			Config tranConfig = TransformerFactory.getTransformerConfig(transformerConfig , transformerTag, prAttr);
+    			InputStream inStrm = null;
+    			if (tranConfig.hasPath("hdfs.data.path")) {
+    				inStrm = Utility.getFileStream(tranConfig.getString("hdfs.data.path"));
+    			} else if (tranConfig.hasPath("fs.data.path")) {
+    				inStrm = BasicUtils.getFileStream(tranConfig.getString("fs.data.path"));
+    			}
+    			
+    			if (null == inStrm) {
+    				attrTrans = TransformerFactory.createTransformer(transformerTag, prAttr, transformerConfig);
+    			} else {
+    				attrTrans = TransformerFactory.createTransformer(transformerTag, prAttr, transformerConfig, inStrm);
+    			}
 				registerTransformers(ord, attrTrans);
     		}
         }

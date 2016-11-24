@@ -18,6 +18,10 @@
 
 package org.chombo.transformer;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -188,11 +192,32 @@ public class StringTransformer {
 			keyValConfig = config.getConfig("keyValues");
 		}
 
-		public KeyValueTransformer( Map<String, String>  kayValues) {
+		public KeyValueTransformer(Map<String, String>  kayValues) {
 			super(1);
 			this.kayValues = kayValues;
 		}
 
+		public KeyValueTransformer(ProcessorAttribute prAttr, Config config, InputStream inStrm) throws IOException {
+			super(1);
+			int fieldOrd = prAttr.getOrdinal();
+			String delim = config.getString("field.delim");
+			try {
+				kayValues = new HashMap<String, String>();
+	    		BufferedReader reader = new BufferedReader(new InputStreamReader(inStrm));
+	    		String line = null; 
+	    		while((line = reader.readLine()) != null) {
+	    			String[] items = line.split(delim);
+	    			if (Integer.parseInt(items[0]) == fieldOrd) {
+	    				kayValues.put(items[1], items[2]);
+	    			}
+	    		}
+			} catch (IOException ex) {
+				throw ex;
+			} finally {
+				inStrm.close();
+			}
+		}
+		
 		@Override
 		public String[] tranform(String value) {
 			String newValue = null;
