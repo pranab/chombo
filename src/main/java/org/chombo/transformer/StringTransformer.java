@@ -18,6 +18,10 @@
 
 package org.chombo.transformer;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +33,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+import org.chombo.util.AttributePredicate;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
 
@@ -187,11 +192,32 @@ public class StringTransformer {
 			keyValConfig = config.getConfig("keyValues");
 		}
 
-		public KeyValueTransformer( Map<String, String>  kayValues) {
+		public KeyValueTransformer(Map<String, String>  kayValues) {
 			super(1);
 			this.kayValues = kayValues;
 		}
 
+		public KeyValueTransformer(ProcessorAttribute prAttr, Config config, InputStream inStrm) throws IOException {
+			super(1);
+			int fieldOrd = prAttr.getOrdinal();
+			String delim = config.getString("field.delim");
+			try {
+				kayValues = new HashMap<String, String>();
+	    		BufferedReader reader = new BufferedReader(new InputStreamReader(inStrm));
+	    		String line = null; 
+	    		while((line = reader.readLine()) != null) {
+	    			String[] items = line.split(delim);
+	    			if (Integer.parseInt(items[0]) == fieldOrd) {
+	    				kayValues.put(items[1], items[2]);
+	    			}
+	    		}
+			} catch (IOException ex) {
+				throw ex;
+			} finally {
+				inStrm.close();
+			}
+		}
+		
 		@Override
 		public String[] tranform(String value) {
 			String newValue = null;
@@ -655,15 +681,18 @@ public class StringTransformer {
 		
 		public SplitterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
-			operation  = config.getString("operation");
-			delimiter = config.getString("delimiter");
-			failOnDelimNotFound = config.getBoolean("failOnDelimNotFound");
-			retainPolicy = config.getString("retainPolicy");
+			intialize(config.getString("operation"), config.getString("delimiter"), 
+					config.getBoolean("failOnDelimNotFound"),config.getString("retainPolicy"));
 		}
 		
 		public SplitterTransformer(int numTransAttributes, String operation, String delimiter, boolean failOnDelimNotFound,
 				String retainPolicy) {
 			super(numTransAttributes);
+			intialize(operation, delimiter, failOnDelimNotFound,retainPolicy);
+		}
+		
+		public void intialize(String operation, String delimiter, boolean failOnDelimNotFound,
+				String retainPolicy) {
 			this.operation  = operation;
 			this.delimiter = delimiter;
 			this.failOnDelimNotFound = failOnDelimNotFound;
@@ -707,5 +736,38 @@ public class StringTransformer {
 		}
 		
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class BinaryValueTransformer extends AttributeTransformer {
+		private AttributePredicate predicate;
+		private String trueValue;
+		private String falseValue;
+		
+		public BinaryValueTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			initialize(config.getString("predicateExpr"), config.getString("trueValue"), 
+					config.getString("falseValue"));
+		}
+
+		public BinaryValueTransformer(String predicateExpr, String trueValue, String falseValue) {
+			super(1);
+			initialize(predicateExpr, trueValue, falseValue);
+		}
+
+		public void initialize(String predicateExpr, String trueValue, String falseValue) {
+			this.predicate = AttributePredicate.create(predicateExpr);
+			this.trueValue = trueValue;
+			this.falseValue = falseValue;
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] = predicate.evaluate(value) ? trueValue : falseValue;
+			return transformed;
+		}
+	}	
 	
 }
