@@ -218,10 +218,10 @@ public class Transformer extends Configured implements Tool {
     			//check if side data is needed
     			Config tranConfig = TransformerFactory.getTransformerConfig(transformerConfig , transformerTag, prAttr);
     			InputStream inStrm = null;
-    			if (tranConfig.hasPath("hdfs.data.path")) {
-    				inStrm = Utility.getFileStream(tranConfig.getString("hdfs.data.path"));
-    			} else if (tranConfig.hasPath("fs.data.path")) {
-    				inStrm = BasicUtils.getFileStream(tranConfig.getString("fs.data.path"));
+    			if (tranConfig.hasPath("hdfsDataPath")) {
+    				inStrm = Utility.getFileStream(tranConfig.getString("hdfsDataPath"));
+    			} else if (tranConfig.hasPath("fsDataPath")) {
+    				inStrm = BasicUtils.getFileStream(tranConfig.getString("fsDataPath"));
     			}
     			
     			if (null == inStrm) {
