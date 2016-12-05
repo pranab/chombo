@@ -200,7 +200,7 @@ public class StringTransformer {
 		public KeyValueTransformer(ProcessorAttribute prAttr, Config config, InputStream inStrm) throws IOException {
 			super(1);
 			int fieldOrd = prAttr.getOrdinal();
-			String delim = config.getString("field.delim");
+			String delim = config.getString("fieldDelim");
 			try {
 				kayValues = new HashMap<String, String>();
 	    		BufferedReader reader = new BufferedReader(new InputStreamReader(inStrm));
