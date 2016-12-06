@@ -1,0 +1,42 @@
+This tutorial is for  transforming jSON to flat relational data.  Make necessary changes 
+in the relevant files, according to your environment. This tutorial will use Spark based solution, 
+although Hadoop based solution is also available.
+
+Build
+=====
+build chombo in ../chombo
+mvn install
+sbt publishLocal
+
+build chombo spark in ../chombo/spark
+sbt package
+
+build uber jar
+ant -f chombo_spark.xml
+
+Input
+=====
+Checkout the project avenir. Take the script util.py and sampler.py  from that project and 
+place them in ../lib directory with respect the directory containing data_usage.py
+
+Run
+./data_usage.py <num_users> > usage.json
+
+where
+num_users = number of users e.g., 100
+
+Place the output file usage.json in the HDFS input dir.
+
+Meta data
+==========
+Make sue rawSchema.json is in the path specified in etl.conf
+
+Spark job
+=========
+Run
+./etl_spark.sh jsonExtractor
+
+
+Configuration
+=============
+It's in etl.conf. Make changes as necessary

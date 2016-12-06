@@ -377,8 +377,12 @@ public class JsonFieldExtractor implements Serializable {
 	 */
 	private void getNormalizedRecords() {
 		extractedRecords.clear();
+		
+		//rows 
 		for (int i = 0; i < numChildObjects; ++i) {
 			String[] record = new String[numAttributes];
+			
+			//fields
 			for (int j = 0; j < numAttributes; ++j) {
 				record[j] = records[j].get(i);
 			}
@@ -398,6 +402,7 @@ public class JsonFieldExtractor implements Serializable {
 		idFieldIndex = -1;
 		for (String path : paths) {
 			if (isChildObject(path)) {
+				//child
 				String childPath = getChildPath(path);
 				
 				//field indexes for this child object
@@ -405,6 +410,7 @@ public class JsonFieldExtractor implements Serializable {
 				indexes.add(index);
 				childObjectPaths.put(childPath, records[index].size());
 			} else {
+				//root
 				List<Integer> indexes = getEnityColIndexes(ROOT_ENTITY);
 				indexes.add(index);
 				
@@ -463,7 +469,7 @@ public class JsonFieldExtractor implements Serializable {
 		
 		//populate all fields of root object
 		for (int index : indexes) {
-			extractedParentRecord[i++] = records[index].get(0);
+			extractedParentRecord[i++] = records[index].get(i);
 		}
 	}
 	
@@ -494,7 +500,7 @@ public class JsonFieldExtractor implements Serializable {
 					
 					//all child record fields
 					for (int index : indexes) {
-						childRec[j++] = records[index].get(0);
+						childRec[j++] = records[index].get(i);
 					}
 					childRecList.add(childRec);
 				}

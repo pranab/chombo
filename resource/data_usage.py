@@ -13,12 +13,16 @@ from sampler import *
 
 num_users = int(sys.argv[1])
 plans = ["standard", "standard plus", "super"]
+email_domains = ["@gmail.com", "@yahoo.com", "@hotmail.com"]
+area_codes = ["(408)", "(650)", "(415)", "(941)", "(305)","(971)","(510)","(574)","(620)"]
 
 doc_beg = """{
 	"dataUsage" : ["""
 acct_beg_template = """
 		{
 			"acctID" : "$acctID",
+			"email" : "$email",
+			"phoneNum" : "$phoneNum",
   			"usages" : [ """
 usage_template = """
   			{
@@ -46,6 +50,10 @@ doc = doc_beg
 for i in range(num_users):
 	acctID = genID(8)
 	acct_beg = acct_beg_template.replace("$acctID", acctID)
+	email = genID(6) + selectRandomFromList(email_domains)
+	acct_beg = acct_beg.replace("$email", email)
+	phone = selectRandomFromList(area_codes) + genNumID(7)
+	acct_beg = acct_beg.replace("$phoneNum", phone)
 	doc = doc + acct_beg
 	
 	num_usage_recs = randint(10, 20)
