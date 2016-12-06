@@ -51,13 +51,21 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
        val rawSchema = mapper.readValue(new File(schemaFilePath), classOf[RawAttributeSchema])
 	   val failOnInvalid = appConfig.getBoolean("fail.on.invalid")
 	   val normalizeOutput = appConfig.getBoolean("normalize.output")
-	   val idFieldPath = getOptionalStringParam(config, "id.attr.path")
+	   val idFieldPath = getOptionalStringParam(appConfig, "id.attr.path")
 	   val fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalizeOutput);
-       idFieldPath match {
-         case Some(path:String) => fieldExtractor.withIdFieldPath(path)
-         case None if !normalizeOutput => fieldExtractor.withAutoIdGeneration()
-       }
        fieldExtractor.setDebugOn(debugOn)
+       idFieldPath match {
+         case Some(path:String) => {
+           fieldExtractor.withIdFieldPath(path)
+           if (debugOn)
+        	   System.out.println("id path:" + path)
+         }
+         case None if !normalizeOutput => {
+           fieldExtractor.withAutoIdGeneration()
+           if(debugOn)
+             System.out.println("no id path defined")
+         }
+       }
        val flattener = rawSchema.getRecordType() match {
          case RawAttributeSchema.REC_MULTI_LINE_JSON => {
            val flattener = new MultiLineJsonFlattener()
