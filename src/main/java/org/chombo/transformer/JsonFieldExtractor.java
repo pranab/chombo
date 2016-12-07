@@ -460,16 +460,19 @@ public class JsonFieldExtractor implements Serializable {
 		List<Integer> indexes = getEnityColIndexes(ROOT_ENTITY);
 		int i = 0;
 		if (autoIdGeneration) {
-			//additional field for synthetic Id
-			extractedParentRecord = new String[indexes.size() + 1];
+			//additional field for entity type synthetic Id
+			extractedParentRecord = new String[indexes.size() + 2];
+			extractedParentRecord[i++] = ROOT_ENTITY;
 			extractedParentRecord[i++] = BasicUtils.generateId();
 		} else {
-			extractedParentRecord = new String[indexes.size()];
+			//additional field for entity type
+			extractedParentRecord = new String[indexes.size() + 1];
+			extractedParentRecord[i++] = ROOT_ENTITY;
 		}
 		
 		//populate all fields of root object
 		for (int index : indexes) {
-			extractedParentRecord[i++] = records[index].get(i);
+			extractedParentRecord[i++] = records[index].get(0);
 		}
 	}
 	
@@ -492,11 +495,15 @@ public class JsonFieldExtractor implements Serializable {
 				
 				//for all child records
 				for(int i = 0; i < numRecs; ++i) {
-					String[] childRec = new String[indexes.size() + 1];
+					//additional fields for entity type and parent ID
+					String[] childRec = new String[indexes.size() + 2];
 					int j = 0;
 					
-					//reference to parent record
-					childRec[j++] = extractedParentRecord[idFieldIndex];
+					//entity type 
+					childRec[j++] = entity;
+					
+					//and reference to parent record, index shifted to accommodate entity type in parent record
+					childRec[j++] = extractedParentRecord[idFieldIndex + 1];
 					
 					//all child record fields
 					for (int index : indexes) {

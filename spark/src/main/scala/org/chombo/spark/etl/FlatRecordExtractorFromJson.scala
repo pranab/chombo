@@ -27,6 +27,7 @@ import org.chombo.transformer.RawAttributeSchema
 import org.chombo.transformer.JsonFieldExtractor
 import org.chombo.transformer.MultiLineJsonFlattener
 import scala.collection.JavaConverters._
+import org.chombo.util.BasicUtils
 
 
 object FlatRecordExtractorFromJson extends JobConfiguration {
@@ -52,6 +53,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
 	   val failOnInvalid = appConfig.getBoolean("fail.on.invalid")
 	   val normalizeOutput = appConfig.getBoolean("normalize.output")
 	   val idFieldPath = getOptionalStringParam(appConfig, "id.attr.path")
+	   val entityList = getOptionalStringListParam(appConfig, "entity.list")
 	   val fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalizeOutput);
        fieldExtractor.setDebugOn(debugOn)
        idFieldPath match {
@@ -133,7 +135,41 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
 	   }
 	   
 	   if(saveOutput) {	   
-		   validRecs.saveAsTextFile(outputPath) 
+	     normalizeOutput match {
+    	 	case true => {
+    	 		validRecs.saveAsTextFile(outputPath) 
+    	    }
+    	    case false => {
+    	      validRecs.cache
+    	      
+    	      val entList = entityList match {
+    	      	case Some(enList:java.util.List[String]) => {
+    	      	  enList
+    	      	}
+    	      	case None  => {
+    	      	  throw new IllegalStateException("missing entity list for denormalized output")
+    	      	}
+    	      }
+    	      
+    	      //filer parent and child entity type records
+    	      entList.asScala.foreach(ent => {
+    	    	  if (debugOn) {
+    	    	    System.out.println("next entity for output: " + ent)
+    	    	  }
+    	    	  val entityRecs = validRecs.filter(rec => {
+    	    	    rec.startsWith(ent)
+    	    	  })
+    	    	  val finalEntityRecs = entityRecs.map(rec => {
+    	    	    BasicUtils.splitOnFirstOccurence(rec, fieldDelimOut, true)(1)
+    	    	  })
+    	    	  val entOutPath = outputPath + "/" + ent
+    	    	  finalEntityRecs.saveAsTextFile(entOutPath) 
+    	      })
+    	      
+    	      
+    	    }
+    	 } 
+		   
    	   }
        
        
