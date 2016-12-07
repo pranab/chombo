@@ -62,7 +62,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
            if (debugOn)
         	   System.out.println("id path:" + path)
          }
-         case None if !normalizeOutput => {
+         case None if normalizeOutput => {
            fieldExtractor.withAutoIdGeneration()
            if(debugOn)
              System.out.println("no id path defined")
@@ -106,12 +106,12 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
     	     case Some(re:String) => {
     	       val listRecs = if (fieldExtractor.extractAllFields(re, rawSchema.getJsonPaths())) {
     	         val allRecs = normalizeOutput match {
-    	           case true => {
-    	             getNormalizedRecords(fieldExtractor, fieldDelimOut)
-    	           }
     	           case false => {
-    	             getDeNormalizedParentRecord(fieldExtractor, fieldDelimOut) ::
-    	               getDeNormalizedChildRecords(fieldExtractor, fieldDelimOut)
+    	             getDeNormalizedRecords(fieldExtractor, fieldDelimOut)
+    	           }
+    	           case true => {
+    	             getNormalizedParentRecord(fieldExtractor, fieldDelimOut) ::
+    	               getNormalizedChildRecords(fieldExtractor, fieldDelimOut)
     	           }
     	         }
     	         allRecs
@@ -136,42 +136,32 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
 	   
 	   if(saveOutput) {	   
 	     normalizeOutput match {
-    	 	case true => {
+    	 	case false => {
+    	 		//denormalized output
     	 		validRecs.saveAsTextFile(outputPath) 
     	    }
-    	    case false => {
-    	      validRecs.cache
+    	    case true => {
+    	    	//normalized output
+    	    	validRecs.cache
     	      
-    	      val entList = entityList match {
-    	      	case Some(enList:java.util.List[String]) => {
-    	      	  enList
-    	      	}
-    	      	case None  => {
-    	      	  throw new IllegalStateException("missing entity list for denormalized output")
-    	      	}
-    	      }
+    	    	val entList = entityList match {
+    	      		case Some(enList:java.util.List[String]) => enList
+    	      		case None  => throw new IllegalStateException("missing entity list for denormalized output")
+    	    	}
     	      
-    	      //filer parent and child entity type records
-    	      entList.asScala.foreach(ent => {
-    	    	  if (debugOn) {
-    	    	    System.out.println("next entity for output: " + ent)
-    	    	  }
-    	    	  val entityRecs = validRecs.filter(rec => {
-    	    	    rec.startsWith(ent)
-    	    	  })
-    	    	  val finalEntityRecs = entityRecs.map(rec => {
-    	    	    BasicUtils.splitOnFirstOccurence(rec, fieldDelimOut, true)(1)
-    	    	  })
-    	    	  val entOutPath = outputPath + "/" + ent
-    	    	  finalEntityRecs.saveAsTextFile(entOutPath) 
-    	      })
-    	      
-    	      
+    	    	//filer parent and child entity type records
+    	    	entList.asScala.foreach(ent => {
+    	    		if (debugOn) {
+    	    			System.out.println("next entity for output: " + ent)
+    	    		}
+    	    		val entityRecs = validRecs.filter(rec => rec.startsWith(ent))
+    	    		val finalEntityRecs = entityRecs.map(rec => BasicUtils.splitOnFirstOccurence(rec, fieldDelimOut, true)(1))
+    	    		val entOutPath = outputPath + "/" + ent
+    	    		finalEntityRecs.saveAsTextFile(entOutPath) 
+    	    	})
     	    }
     	 } 
-		   
    	   }
-       
        
    }
 
@@ -181,7 +171,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
    * @param fieldDelimOut
    * @return
    */
-   def getNormalizedRecords(fieldExtractor : JsonFieldExtractor, fieldDelimOut:String) : 
+   def getDeNormalizedRecords(fieldExtractor : JsonFieldExtractor, fieldDelimOut:String) : 
      List[String] = {
      val listOfArr = fieldExtractor.getExtractedRecords()
     	         
@@ -198,7 +188,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
    * @param fieldDelimOut
    * @return
    */
-    def getDeNormalizedParentRecord(fieldExtractor : JsonFieldExtractor, 
+    def getNormalizedParentRecord(fieldExtractor : JsonFieldExtractor, 
      fieldDelimOut:String) : String = {
      val arr = fieldExtractor.getExtractedParentRecord()
      val rec = arr.mkString(fieldDelimOut)	
@@ -210,7 +200,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
    * @param fieldDelimOut
    * @return
    */
-    def getDeNormalizedChildRecords(fieldExtractor : JsonFieldExtractor, 
+    def getNormalizedChildRecords(fieldExtractor : JsonFieldExtractor, 
      fieldDelimOut:String) : List[String] = {
      val childRecMap = fieldExtractor.getExtractedChildRecords()
      

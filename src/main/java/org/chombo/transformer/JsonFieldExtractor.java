@@ -285,10 +285,10 @@ public class JsonFieldExtractor implements Serializable {
 				}
 			}
 			
-			if (normalize) {
-				normalize(paths);
-			} else {
+			if (!normalize) {
 				deNormalize(paths);
+			} else {
+				normalize(paths);
 			}
 		}
 		
@@ -298,7 +298,7 @@ public class JsonFieldExtractor implements Serializable {
 	/**
 	 * @param paths
 	 */
-	private void normalize(List<String> paths) {
+	private void deNormalize(List<String> paths) {
 		int index = 0;
 		fieldTypes.clear();
 		childObjectPaths.clear();
@@ -325,7 +325,7 @@ public class JsonFieldExtractor implements Serializable {
 		replicateParentAttributes();
 		
 		//get normalized records
-		getNormalizedRecords();
+		getDeNormalizedRecords();
 	}
 	
 	/**
@@ -375,7 +375,7 @@ public class JsonFieldExtractor implements Serializable {
 	/**
 	 * 
 	 */
-	private void getNormalizedRecords() {
+	private void getDeNormalizedRecords() {
 		extractedRecords.clear();
 		
 		//rows 
@@ -394,7 +394,7 @@ public class JsonFieldExtractor implements Serializable {
 	/**
 	 * @param paths
 	 */
-	private void deNormalize(List<String> paths) {
+	private void normalize(List<String> paths) {
 		int index = 0;
 		childObjectPaths.clear();
 		numParentFields = 0;
