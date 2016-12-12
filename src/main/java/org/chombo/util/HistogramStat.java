@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,7 @@ import java.util.TreeMap;
  * @author pranab
  *
  */
-public class HistogramStat {
+public class HistogramStat implements Serializable {
 	protected double binWidth = -1;
 	protected Map<Integer, Bin> binMap = new TreeMap<Integer, Bin>();
 	protected int count;
@@ -336,6 +337,33 @@ public class HistogramStat {
 			entropy -= distrVal * Math.log(distrVal);
 		}
 		return entropy;
+	}
+	
+	/**
+	 * @param histStat
+	 * @return
+	 */
+	public HistogramStat merge(HistogramStat histStat) {
+		HistogramStat mergedHistStat = new HistogramStat();
+		mergedHistStat.binWidth = binWidth;
+		
+		//bins
+		for (Integer index : binMap.keySet()) {
+			Bin bin = binMap.get(index);
+			mergedHistStat.addBin(index, bin.count);
+		}
+		for (Integer index : histStat.binMap.keySet()) {
+			Bin bin = histStat.binMap.get(index);
+			mergedHistStat.addBin(index, bin.count);
+		}
+		
+		//others
+		mergedHistStat.count = count + histStat.count;
+		mergedHistStat.sum = sum + histStat.sum;
+		mergedHistStat.sumSq = sumSq + histStat.sumSq;
+		mergedHistStat.sampleCount = sampleCount + histStat.sampleCount;
+		
+		return mergedHistStat;
 	}
 	
 	/**
