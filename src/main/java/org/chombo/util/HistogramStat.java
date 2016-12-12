@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Histogram that c hnges as data gets added
+ * Histogram that chnges as data gets added
  * 
  * @author pranab
  *
@@ -36,6 +36,7 @@ public class HistogramStat implements Serializable {
 	protected double sum = 0.0;
 	protected double sumSq = 0.0;
 	protected int  sampleCount;
+	protected boolean normalized;
 	protected Map<Double, Double> histogram = new HashMap<Double, Double>();
 
 	/**
@@ -68,6 +69,7 @@ public class HistogramStat implements Serializable {
 		count = 0;
 		sum = 0;
 		sumSq = 0;
+		normalized = false;
 	}
 
 	/**
@@ -322,6 +324,7 @@ public class HistogramStat implements Serializable {
 				double val = index * binWidth + binWidth / 2;
 				histogram.put(val,  ((double)binMap.get(index).count) / count);
 			}
+			normalized = true;
 		}
 		return histogram;
 	}
@@ -364,6 +367,23 @@ public class HistogramStat implements Serializable {
 		mergedHistStat.sampleCount = sampleCount + histStat.sampleCount;
 		
 		return mergedHistStat;
+	}
+	
+	public String toString() {
+		StringBuilder stBld = new StringBuilder();
+		final String delim = ",";
+		if (normalized) {
+			for(double x : histogram.keySet()) {
+				double y = histogram.get(x);
+				stBld.append(x).append(delim).append(y).append(delim);
+			}
+		} else {
+			for (Integer index : binMap.keySet()) {
+				Bin bin = binMap.get(index);
+				stBld.append(index * binWidth).append(delim).append(bin.count).append(delim);
+			}		
+		}
+		return stBld.substring(0, stBld.length() - 1);
 	}
 	
 	/**
