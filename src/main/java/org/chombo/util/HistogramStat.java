@@ -38,7 +38,9 @@ public class HistogramStat implements Serializable {
 	protected int  sampleCount;
 	protected boolean normalized;
 	protected Map<Double, Double> histogram = new HashMap<Double, Double>();
-
+	protected boolean extendedOutput;
+	protected int outputPrecision = 3;
+	
 	/**
 	 * @param binWidth
 	 */
@@ -84,6 +86,24 @@ public class HistogramStat implements Serializable {
 	 */
 	public void setBinWidth(double binWidth) {
 		this.binWidth = binWidth;
+	}
+	
+	/**
+	 * @param extendedOutput
+	 * @return
+	 */
+	public HistogramStat withExtendedOutput(boolean extendedOutput) {
+		this.extendedOutput = extendedOutput;
+		return this;
+	}
+	
+	/**
+	 * @param outputPrecision
+	 * @return
+	 */
+	public HistogramStat withOutputPrecision(int outputPrecision) {
+		this.outputPrecision = outputPrecision;
+		return this;
 	}
 	
 	/**
@@ -349,6 +369,8 @@ public class HistogramStat implements Serializable {
 	public HistogramStat merge(HistogramStat histStat) {
 		HistogramStat mergedHistStat = new HistogramStat();
 		mergedHistStat.binWidth = binWidth;
+		mergedHistStat.extendedOutput = extendedOutput;
+		mergedHistStat.outputPrecision = outputPrecision;
 		
 		//bins
 		for (Integer index : binMap.keySet()) {
@@ -360,7 +382,7 @@ public class HistogramStat implements Serializable {
 			mergedHistStat.addBin(index, bin.count);
 		}
 		
-		//others
+		//other stats
 		mergedHistStat.count = count + histStat.count;
 		mergedHistStat.sum = sum + histStat.sum;
 		mergedHistStat.sumSq = sumSq + histStat.sumSq;
@@ -372,16 +394,35 @@ public class HistogramStat implements Serializable {
 	public String toString() {
 		StringBuilder stBld = new StringBuilder();
 		final String delim = ",";
-		if (normalized) {
-			for(double x : histogram.keySet()) {
-				double y = histogram.get(x);
-				stBld.append(x).append(delim).append(y).append(delim);
-			}
-		} else {
-			for (Integer index : binMap.keySet()) {
-				Bin bin = binMap.get(index);
-				stBld.append(index * binWidth).append(delim).append(bin.count).append(delim);
-			}		
+		if (!normalized) {
+			this.getDistribution();
+		}
+		
+		//formatting
+    	String formatter = "%." + outputPrecision + "f";
+
+		//distribution
+		stBld.append(histogram.size()).append(delim);
+		for(double x : histogram.keySet()) {
+			double y = histogram.get(x);
+			stBld.append(BasicUtils.formatDouble(x, formatter)).append(delim).
+				append(BasicUtils.formatDouble(y, formatter)).append(delim);
+		}
+		
+		//other stats
+		if (extendedOutput) {
+			String formMean = BasicUtils.formatDouble(getMean(), formatter);
+			String formMedian = BasicUtils.formatDouble(getMedian(), formatter);
+			String formStdDev = BasicUtils.formatDouble(getStdDev(), formatter);
+			String formMode = BasicUtils.formatDouble(getMode(), formatter);
+			String formQuartPer = BasicUtils.formatDouble(getQuantile(0.25), formatter);
+			String formHalfPer = BasicUtils.formatDouble(getQuantile(0.50), formatter);
+			String formThreeQuartPer = BasicUtils.formatDouble(getQuantile(0.75), formatter);
+			
+			stBld.append(formMean).append(delim).append(formMedian).append(delim).
+				append(formStdDev).append(delim).append(formMode).append(delim).
+				append(formQuartPer).append(delim).append(formHalfPer).append(delim).
+				append(formThreeQuartPer).append(delim);
 		}
 		return stBld.substring(0, stBld.length() - 1);
 	}

@@ -96,6 +96,7 @@ class Record(val size:Int) extends Serializable {
 	def this(size:Int, record:Record) {
 	  this(size)
 	  Array.copy(record.array, 0, array, 0, record.size)
+	  cursor += record.size
 	}
 	
 	/**

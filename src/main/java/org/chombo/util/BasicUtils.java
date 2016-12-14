@@ -831,6 +831,15 @@ public class BasicUtils {
     
     /**
      * @param val
+     * @param formatter
+     * @return
+     */
+    public static String formatDouble(double val, String formatter) {
+    	return String.format(formatter, val);
+    }
+
+    /**
+     * @param val
      * @param size
      * @return
      */
