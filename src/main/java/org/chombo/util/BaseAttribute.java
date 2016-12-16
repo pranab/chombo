@@ -36,6 +36,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_TEXT = "text";
 	public static final String DATA_TYPE_DATE = "date";
 	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";
+	public static final String DATA_TYPE_GEO_LOCATION = "geoLocation";
 	
 	public String getName() {
 		return name;
@@ -83,4 +84,7 @@ public class BaseAttribute  implements Serializable {
 		return dataType.equals(DATA_TYPE_TEXT );
 	}
 
+	public boolean isGeoLocation() {
+		return dataType.equals(DATA_TYPE_GEO_LOCATION );
+	}
 }

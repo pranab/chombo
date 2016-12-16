@@ -30,51 +30,170 @@ public class AttributeDistance extends BaseAttribute{
 	private double upperThreshold;
 	private double lowerThreshold;
 	private int setting;
+	private double maxGeoDistance = -1.0;
+	private String textSimilarityStrategy = "jaccard";
+	private double jaccardSrcNonMatchingTermWeight = 1.0;
+	private double jaccardTrgNonMatchingTermWeight = 1.0;
 	
+	/**
+	 * @return
+	 */
 	public String getAlgorithm() {
 		return algorithm;
 	}
+	
+	/**
+	 * @param algorithm
+	 */
 	public void setAlgorithm(String algorithm) {
 		this.algorithm = algorithm;
 		setting = setting | 8;
 	}
+	
+	/**
+	 * @return
+	 */
 	public double getWeight() {
 		return weight;
 	}
+	
+	/**
+	 * @param weight
+	 */
 	public void setWeight(double weight) {
 		this.weight = weight;
 		setting = setting | 1;
 	}
+	
+	/**
+	 * @return
+	 */
 	public double getUpperThreshold() {
 		return upperThreshold;
 	}
+	
+	/**
+	 * @param upperThreshold
+	 */
 	public void setUpperThreshold(double upperThreshold) {
 		this.upperThreshold = upperThreshold;
 		setting = setting | 2;
 	}
+	
+	/**
+	 * @return
+	 */
 	public double getLowerThreshold() {
 		return lowerThreshold;
 	}
+	
+	/**
+	 * @param lowerThreshold
+	 */
 	public void setLowerThreshold(double lowerThreshold) {
 		this.lowerThreshold = lowerThreshold;
 		setting = setting | 4;
 	}
 	
+	/**
+	 * @return
+	 */
+	public double getMaxGeoDistance() {
+		return maxGeoDistance;
+	}
+
+	/**
+	 * @param maxGeoDistance
+	 */
+	public void setMaxGeoDistance(double maxGeoDistance) {
+		this.maxGeoDistance = maxGeoDistance;
+		setting = setting | 16;
+	}
+
+	/**
+	 * @return
+	 */
+	public String getTextSimilarityStrategy() {
+		return textSimilarityStrategy;
+	}
+	
+	/**
+	 * @param textSimilarityStrategy
+	 */
+	public void setTextSimilarityStrategy(String textSimilarityStrategy) {
+		this.textSimilarityStrategy = textSimilarityStrategy;
+		setting = setting | 16;
+	}
+
+	/**
+	 * @return
+	 */
+	public double getJaccardSrcNonMatchingTermWeight() {
+		return jaccardSrcNonMatchingTermWeight;
+	}
+
+	/**
+	 * @param jaccardSrcNonMatchingTermWeight
+	 */
+	public void setJaccardSrcNonMatchingTermWeight(double jaccardSrcNonMatchingTermWeight) {
+		this.jaccardSrcNonMatchingTermWeight = jaccardSrcNonMatchingTermWeight;
+	}
+
+	/**
+	 * @return
+	 */
+	public double getJaccardTrgNonMatchingTermWeight() {
+		return jaccardTrgNonMatchingTermWeight;
+	}
+
+	/**
+	 * @param jaccardTrgNonMatchingTermWeight
+	 */
+	public void setJaccardTrgNonMatchingTermWeight(
+			double jaccardTrgNonMatchingTermWeight) {
+		this.jaccardTrgNonMatchingTermWeight = jaccardTrgNonMatchingTermWeight;
+	}
+
+	/**
+	 * @return
+	 */
 	public boolean isWeightSet() {
 		return (setting & 1) == 1;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean isUpperThresholdSet() {
 		return (setting & 2) == 1;
 	}
 	
+	/**
+	 * @return
+	 */
 	public boolean isLowerThresholdSet() {
 		return (setting & 4) == 1;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean isAlgorithmSet() {
 		return (setting & 8) == 1;
 	}
 	
+	/**
+	 * @return
+	 */
+	public boolean isMaxGeoDistanceSet() {
+		return (setting & 16) == 1;
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean isTextSimilarityStrategySet() {
+		return (setting & 32) == 1;
+	}
 	
 }

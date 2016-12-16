@@ -30,23 +30,38 @@ public class RichAttribute  extends Attribute {
 	protected boolean numBucketsDefined;
 	private double[] bucketBoundaries;
 
+	/**
+	 * @return
+	 */
 	public int getBucketWidth() {
 		return bucketWidth;
 	}
 
+	/**
+	 * @param bucketWidth
+	 */
 	public void setBucketWidth(int bucketWidth) {
 		this.bucketWidth = bucketWidth;
 		bucketWidthDefined = true;
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean isBucketWidthDefined() {
 		return bucketWidthDefined;
 	}
 	
+	/**
+	 * @return
+	 */
 	public int getNumBuckets() {
 		return numBuckets;
 	}
 
+	/**
+	 * @param numBuckets
+	 */
 	public void setNumBuckets(int numBuckets) {
 		this.numBuckets = numBuckets;
 		numBucketsDefined = true;
@@ -99,6 +114,11 @@ public class RichAttribute  extends Attribute {
 		return bucket;
 	}
 	
+
+	/**
+	 * @param offset
+	 * @param width
+	 */
 	private void intializeBuckets(double offset, double width) {
 		bucketBoundaries = new double[numBuckets + 1];
 		for (int i = 0; i < numBuckets + 1; ++i, offset += width){
@@ -106,6 +126,10 @@ public class RichAttribute  extends Attribute {
 		}
 	}
 	
+	/**
+	 * @param value
+	 * @return
+	 */
 	private int bucketIndex(double value) {
 		int bucket = 0;
 		for (int i = 1; i <  bucketBoundaries.length && value > bucketBoundaries[i]; ++i, ++bucket) {
