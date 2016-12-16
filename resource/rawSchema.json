@@ -2,6 +2,8 @@
 	"recordType" : "multiLineJson",
 	"jsonPaths" : [
 		"acctID", 
+		"email",
+		"phoneNum",
 		"usages@a.plan", 
 		"usages@a.deviceID", 
 		"usages@a.used",

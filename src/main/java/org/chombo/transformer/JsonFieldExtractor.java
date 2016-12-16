@@ -78,6 +78,9 @@ public class JsonFieldExtractor implements Serializable {
 	 */
 	public JsonFieldExtractor withIdFieldPath(String idFieldPath) {
 		this.idFieldPath = idFieldPath;
+		if (debugOn) {
+			System.out.println("parent id field defined");
+		}
 		return this;
 	}
 	
@@ -87,6 +90,9 @@ public class JsonFieldExtractor implements Serializable {
 	 */
 	public JsonFieldExtractor withAutoIdGeneration() {
 		this.autoIdGeneration = true;
+		if (debugOn) {
+			System.out.println("parent id auto generated");
+		}
 		return this;
 	}
 	
@@ -279,10 +285,10 @@ public class JsonFieldExtractor implements Serializable {
 				}
 			}
 			
-			if (normalize) {
-				normalize(paths);
-			} else {
+			if (!normalize) {
 				deNormalize(paths);
+			} else {
+				normalize(paths);
 			}
 		}
 		
@@ -292,14 +298,18 @@ public class JsonFieldExtractor implements Serializable {
 	/**
 	 * @param paths
 	 */
-	private void normalize(List<String> paths) {
+	private void deNormalize(List<String> paths) {
 		int index = 0;
 		fieldTypes.clear();
 		childObjectPaths.clear();
+		
+		//all paths
 		for (String path : paths) {
 			if (isChildObject(path)) {
 				String childPath = getChildPath(path);
 				fieldTypes.put(index, childPath);
+				
+				//number of child object fields for a given child path
 				childObjectPaths.put(childPath, records[index].size());
 			} else {
 				fieldTypes.put(index, "root");
@@ -315,7 +325,7 @@ public class JsonFieldExtractor implements Serializable {
 		replicateParentAttributes();
 		
 		//get normalized records
-		getNormalizedRecords();
+		getDeNormalizedRecords();
 	}
 	
 	/**
@@ -353,6 +363,8 @@ public class JsonFieldExtractor implements Serializable {
 			if (fields.size() == 1) {
 				//parent object field
 				String value = fields.get(0);
+				
+				//replicate as many times as the number of child objects
 				for(int i = 1; i < numChildObjects; ++i) {
 					fields.add(value);
 				}
@@ -363,10 +375,14 @@ public class JsonFieldExtractor implements Serializable {
 	/**
 	 * 
 	 */
-	private void getNormalizedRecords() {
+	private void getDeNormalizedRecords() {
 		extractedRecords.clear();
+		
+		//rows 
 		for (int i = 0; i < numChildObjects; ++i) {
 			String[] record = new String[numAttributes];
+			
+			//fields
 			for (int j = 0; j < numAttributes; ++j) {
 				record[j] = records[j].get(i);
 			}
@@ -378,7 +394,7 @@ public class JsonFieldExtractor implements Serializable {
 	/**
 	 * @param paths
 	 */
-	private void deNormalize(List<String> paths) {
+	private void normalize(List<String> paths) {
 		int index = 0;
 		childObjectPaths.clear();
 		numParentFields = 0;
@@ -386,11 +402,15 @@ public class JsonFieldExtractor implements Serializable {
 		idFieldIndex = -1;
 		for (String path : paths) {
 			if (isChildObject(path)) {
+				//child
 				String childPath = getChildPath(path);
+				
+				//field indexes for this child object
 				List<Integer> indexes = getEnityColIndexes(childPath);
 				indexes.add(index);
 				childObjectPaths.put(childPath, records[index].size());
 			} else {
+				//root
 				List<Integer> indexes = getEnityColIndexes(ROOT_ENTITY);
 				indexes.add(index);
 				
@@ -428,7 +448,7 @@ public class JsonFieldExtractor implements Serializable {
 		List<Integer> indexes = entityColumnIndexes.get(entity);
 		if (null == indexes) {
 			indexes = new ArrayList<Integer>();
-			entityColumnIndexes.put("root", indexes);
+			entityColumnIndexes.put(entity, indexes);
 		}
 		return indexes;
 	}
@@ -440,13 +460,17 @@ public class JsonFieldExtractor implements Serializable {
 		List<Integer> indexes = getEnityColIndexes(ROOT_ENTITY);
 		int i = 0;
 		if (autoIdGeneration) {
-			extractedParentRecord = new String[indexes.size() + 1];
+			//additional field for entity type synthetic Id
+			extractedParentRecord = new String[indexes.size() + 2];
+			extractedParentRecord[i++] = ROOT_ENTITY;
 			extractedParentRecord[i++] = BasicUtils.generateId();
 		} else {
-			extractedParentRecord = new String[indexes.size()];
+			//additional field for entity type
+			extractedParentRecord = new String[indexes.size() + 1];
+			extractedParentRecord[i++] = ROOT_ENTITY;
 		}
 		
-		//populate all fields
+		//populate all fields of root object
 		for (int index : indexes) {
 			extractedParentRecord[i++] = records[index].get(0);
 		}
@@ -457,21 +481,33 @@ public class JsonFieldExtractor implements Serializable {
 	 */
 	private void buildChildRecords() {
 		extractedChildRecords.clear();
+		
+		//all child objects
 		for (String entity : entityColumnIndexes.keySet()) {
 			if (!entity.equals(ROOT_ENTITY)) {
 				List<String[]> childRecList = new ArrayList<String[]>();
+				
+				//field indexes for this child object
 				List<Integer> indexes = getEnityColIndexes(entity);
+				
+				//number of records for this child object
 				int numRecs = childObjectPaths.get(entity);
+				
+				//for all child records
 				for(int i = 0; i < numRecs; ++i) {
-					String[] childRec = new String[indexes.size() + 1];
+					//additional fields for entity type and parent ID
+					String[] childRec = new String[indexes.size() + 2];
 					int j = 0;
 					
-					//ref to parent rec
-					childRec[j++] = extractedParentRecord[idFieldIndex];
+					//entity type 
+					childRec[j++] = entity;
+					
+					//and reference to parent record, index shifted to accommodate entity type in parent record
+					childRec[j++] = extractedParentRecord[idFieldIndex + 1];
 					
 					//all child record fields
 					for (int index : indexes) {
-						childRec[j++] = records[index].get(0);
+						childRec[j++] = records[index].get(i);
 					}
 					childRecList.add(childRec);
 				}

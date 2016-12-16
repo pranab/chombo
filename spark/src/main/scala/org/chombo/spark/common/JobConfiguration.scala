@@ -186,7 +186,7 @@ trait JobConfiguration {
 	/**
 	 * @param config
 	 * @param paramName
-	 * @defValue
+	 * @param defValue
 	 * @param errorMsg
 	 * @return
 	 */
@@ -239,7 +239,7 @@ trait JobConfiguration {
 	/**
 	 * @param config
 	 * @param paramName
-	 * @defValue
+	 * @param defValue
 	 * @param errorMsg
 	 * @return
 	 */
@@ -293,7 +293,7 @@ trait JobConfiguration {
 	/**
 	 * @param config
 	 * @param paramName
-	 * @defValue
+	 * @param defValue
 	 * @param errorMsg
 	 * @return
 	 */
@@ -346,7 +346,7 @@ trait JobConfiguration {
 	/**
 	 * @param config
 	 * @param paramName
-	 * @defValue
+	 * @param defValue
 	 * @param errorMsg
 	 * @return
 	 */
@@ -400,7 +400,7 @@ trait JobConfiguration {
 	/**
 	 * @param config
 	 * @param paramName
-	 * @defValue
+	 * @param defValue
 	 * @param errorMsg
 	 * @return
 	 */
@@ -454,7 +454,7 @@ trait JobConfiguration {
 	/**
 	 * @param config
 	 * @param paramName
-	 * @defValue
+	 * @param defValue
 	 * @param errorMsg
 	 * @return
 	 */

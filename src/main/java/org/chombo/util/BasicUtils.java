@@ -55,6 +55,7 @@ public class BasicUtils {
 	public  static final Integer ONE = 1;
 	
 	public static final String DEF_FIELD_DELIM = ",";
+	public static final String DEF_SUB_FIELD_DELIM = ":";
 	
 	public static final String configDelim = ",";
 	public static final String configSubFieldDelim = ":";
@@ -77,6 +78,7 @@ public class BasicUtils {
     public static final String TIME_UNIT_SEMI_ANNUAL = "semiAnnual";
     public static final String TIME_UNIT_YEAR = "year";
    
+	public final static double AVERAGE_RADIUS_OF_EARTH = 6371;
     
     /**
      * @param vec
@@ -830,6 +832,15 @@ public class BasicUtils {
     
     /**
      * @param val
+     * @param formatter
+     * @return
+     */
+    public static String formatDouble(double val, String formatter) {
+    	return String.format(formatter, val);
+    }
+
+    /**
+     * @param val
      * @param size
      * @return
      */
@@ -1211,5 +1222,23 @@ public class BasicUtils {
 		}
 		return items;
 	}
-	
+
+    /**
+     * geo location distance by Haversine formula
+     * @param lat1
+     * @param long1
+     * @param lat2
+     * @param long2
+     * @return distance in km
+     */
+    public static double getGeoDistance(double lat1, double long1, double lat2, double long2) {
+        double latDistance = Math.toRadians(lat1 - lat2);
+        double longDistance = Math.toRadians(long1 - long2);
+
+        double a = (Math.sin(latDistance / 2) * Math.sin(latDistance / 2)) + (Math.cos(Math.toRadians(lat1))) *
+                        (Math.cos(Math.toRadians(lat2))) * (Math.sin(longDistance / 2)) * (Math.sin(longDistance / 2));
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return AVERAGE_RADIUS_OF_EARTH * c;
+
+    }    	
  }

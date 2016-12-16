@@ -27,7 +27,6 @@ object CommonUtil {
 
   /**
   * @param obj
-  * @param evidence$1
   * @return
   */
   def asOption[T:ClassTag](obj : T) : Option[T] = {
@@ -40,7 +39,6 @@ object CommonUtil {
   
   /**
   * @param arr
-  * @param evidence$2
   * @return
   */
   def filterNoneFromArray[T:ClassTag](arr : Array[Option[T]]) : Array[T] = {
@@ -65,7 +63,6 @@ object CommonUtil {
   
   /**
   * @param name
-  * @param evidence$3
   * @return
   */
   def createInstance[T:ClassTag](name: String): T = {

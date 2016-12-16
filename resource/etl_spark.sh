@@ -2,7 +2,7 @@
 
 PROJECT_HOME=/Users/pranab/Projects
 JAR_NAME=$PROJECT_HOME/bin/chombo/uber-chombo-spark-1.0.jar
-MASTER=spark://akash:7077
+MASTER=spark://akash.local:7077
 
 case "$1" in
 

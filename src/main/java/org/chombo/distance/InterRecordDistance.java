@@ -18,9 +18,11 @@
 
 package org.chombo.distance;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.chombo.util.BasicUtils;
 import org.chombo.util.RichAttribute;
 import org.chombo.util.RichAttributeSchema;
 
@@ -32,12 +34,16 @@ public class InterRecordDistance {
 	private RichAttributeSchema attrSchema;
 	private AttributeDistanceSchema attrDistSchema;
 	private String fieldDelim;
+	private String subFieldDelim = BasicUtils.DEF_SUB_FIELD_DELIM;
 	private String[] firstItems;
 	private String[] secondItems;
 	private String firstItem;
 	private String secondItem;
 	private int ordinal;
 	private Map<Integer, Double> attrDistances = new HashMap<Integer, Double>();
+	private Map<Integer, DynamicVectorSimilarity> textSimilarityStrategies = 
+			new HashMap<Integer, DynamicVectorSimilarity>();
+	
 	
 	/**
 	 * @param attrSchema
@@ -51,12 +57,18 @@ public class InterRecordDistance {
 		this.fieldDelim = fieldDelim;
 	}
 	
+	public InterRecordDistance withSubFieldDelim(String subFieldDelim) {
+		this.subFieldDelim = subFieldDelim;
+		return this;
+	}
+	
 	/**
 	 * @param first
 	 * @param second
 	 * @return
+	 * @throws IOException 
 	 */
-	public double findDistance(String first, String second ) {
+	public double findDistance(String first, String second ) throws IOException {
 		double recDist = 0;
 		double dist = 0;
 		attrDistances.clear();
@@ -79,6 +91,10 @@ public class InterRecordDistance {
 				dist = numericDistance(Integer.parseInt(firstItem), Integer.parseInt(secondItem), attrDist);
 			} else if (richAttr.isDouble()) {
 				dist = numericDistance(Double.parseDouble(firstItem), Double.parseDouble(secondItem), attrDist);
+			} else if (richAttr.isText()) {
+				dist = textDistance(attrDist);
+			} else if (richAttr.isGeoLocation()) {
+				dist = geoLocationDistance(attrDist);
 			}
 			
 			attrDistances.put(ordinal, dist);
@@ -145,6 +161,41 @@ public class InterRecordDistance {
 	}
 	
 	/**
+	 * @param attrDist
+	 * @return
+	 * @throws IOException 
+	 */
+	private double textDistance(AttributeDistance attrDist) throws IOException {
+		DynamicVectorSimilarity simStrategy = textSimilarityStrategies.get(ordinal);
+		if (null == simStrategy) {
+			simStrategy = DynamicVectorSimilarity.createSimilarityStrategy(attrDist.getTextSimilarityStrategy(), attrDist);
+			textSimilarityStrategies.put(ordinal, simStrategy);
+		}
+		double dist = simStrategy.findDistance(firstItem, secondItem);
+		return dist;
+	}
+	
+	/**
+	 * @param attrDist
+	 * @return
+	 */
+	private double geoLocationDistance(AttributeDistance attrDist) {
+    	String[] items = firstItem.split(subFieldDelim);
+    	double lat1 = Double.parseDouble(items[0]);
+    	double long1 = Double.parseDouble(items[1]);
+    	
+    	items = secondItem.split(":");
+    	double lat2 = Double.parseDouble(items[0]);
+    	double long2 = Double.parseDouble(items[1]);
+		double dist = BasicUtils.getGeoDistance(lat1, long1, lat2, long2);
+		if (attrDist.isMaxGeoDistanceSet()) {
+			dist /= attrDist.getMaxGeoDistance();
+		}
+		
+		return dist;
+	}
+	
+	/**
 	 * @param ordinals
 	 * @return
 	 */
@@ -188,6 +239,10 @@ public class InterRecordDistance {
 		return dist;
 	}
 
+	/**
+	 * @param ordinals
+	 * @return
+	 */
 	private double aggregateCategorical(int[] ordinals) {
 		double dist = 0;
 		double sum = 0;
