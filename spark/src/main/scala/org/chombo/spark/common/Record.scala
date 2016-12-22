@@ -56,6 +56,14 @@ object Record {
   def apply(fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = new Record(fields, fieldOrdinals)
   
   /**
+   * @param size
+   * @param fields
+   * @param fieldOrdinals
+   * @return
+  */
+  def apply(size: Int, fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = new Record(size, fields, fieldOrdinals)
+
+  /**
    * @param fields
    * @param fieldOrdinals
    * @return
@@ -90,6 +98,7 @@ object Record {
 class Record(val size:Int) extends Serializable with Ordered[Record]{
 	val array = new Array[Any](size)
 	var cursor:Int = 0
+	var sortFields:Option[Array[Int]] = None
 	
 	/**
 	 * @param size
@@ -125,6 +134,26 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  })
 	}
 	
+	/**
+	 * @param fields
+	 * @param fieldOrdinals
+	 */
+	def this(size : Int, fields: Array[String], fieldOrdinals: Buffer[Integer]) {
+	  this(size)
+	  require(size > fieldOrdinals.length, "size should be greater than supplied fields length")
+	  fieldOrdinals.foreach(ord => {
+	      addString(fields(ord))
+	  })
+	}
+	
+	/**
+	 * @param sortFields
+	 */
+	def withSortFields(sortFields : Array[Int]) : Record = {
+	  this.sortFields = Some(sortFields)
+	  this
+	}
+
 	def getArray() :Array[Any] = array
 	
 	/**
@@ -436,11 +465,41 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	def compare(that: Record): Int = {
 	  this.array.length compareTo that.array.length match { case 0 => 0; case c => return c }
 	  
-	  //all elements
-	  for (i <- 0 to (this.array.length -1)) {
-	    val thisEl = this.array(i)
-	    val thatEl = that.array(i)
+	  sortFields match {
+	    case Some(sFields:Array[Int]) => {
+	      //sort by selected fields
+	      for (i <- 0 to (sFields.length -1)) {
+	    	  val thisEl = this.array(sFields(i))
+	    	  val thatEl = that.array(sFields(i))
+	    	  compareElement(thisEl, thatEl) match {
+	    	  	case 0 => 0
+	    	  	case c => return c
+	    	  }
+	      }
+	    }
 	    
+	    case None => {
+	    	//sort by all fields
+	    	for (i <- 0 to (this.array.length -1)) {
+	    		val thisEl = this.array(i)
+	    		val thatEl = that.array(i)
+	    		compareElement(thisEl, thatEl) match {
+	    			case 0 => 0
+	    			case c => return c
+	    		}
+	    	}
+	    }
+	  }
+	  
+	  0
+	}
+	
+	/**
+	 * @param thisEl
+	 * @param thatEl
+	 * @return
+	 */
+	def compareElement(thisEl:Any, thatEl:Any) : Int = {
 	    if (thisEl.isInstanceOf[String] ) {
 	      if (thatEl.isInstanceOf[String]) {
 	    	thisEl.asInstanceOf[String] compareTo thatEl.asInstanceOf[String] match { case 0 => 0; case c => return c }
@@ -472,9 +531,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	        return 1
 	      }
 	    }
-	  }
-	  
-	  0
+	    0
 	}
 	
 	/**
