@@ -19,6 +19,7 @@
 package org.chombo.distance;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ import org.chombo.util.RichAttributeSchema;
  * @author pranab
  *
  */
-public class InterRecordDistance {
+public class InterRecordDistance implements Serializable {
 	private RichAttributeSchema attrSchema;
 	private AttributeDistanceSchema attrDistSchema;
 	private String fieldDelim;
@@ -168,11 +169,10 @@ public class InterRecordDistance {
 	private double textDistance(AttributeDistance attrDist) throws IOException {
 		DynamicVectorSimilarity simStrategy = textSimilarityStrategies.get(ordinal);
 		if (null == simStrategy) {
-			simStrategy = DynamicVectorSimilarity.createSimilarityStrategy(attrDist.getTextSimilarityStrategy(), attrDist);
+			simStrategy = DynamicVectorSimilarity.createSimilarityStrategy(attrDist);
 			textSimilarityStrategies.put(ordinal, simStrategy);
 		}
-		double dist = simStrategy.findDistance(firstItem, secondItem);
-		return dist;
+		return simStrategy.findDistance(firstItem, secondItem);
 	}
 	
 	/**

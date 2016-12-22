@@ -120,21 +120,22 @@ public abstract class DynamicVectorSimilarity {
 	 * @return
 	 * @throws IOException 
 	 */
-	public static DynamicVectorSimilarity createSimilarityStrategy(String algorithm, AttributeDistance attrDist) 
+	public static DynamicVectorSimilarity createSimilarityStrategy(AttributeDistance attrDist) 
 		throws IOException {
+		String simAlgorithm = attrDist.getTextSimilarityStrategy();
 		DynamicVectorSimilarity  simStrategy = null;
-		if (algorithm.equals("jaccard")){
+		if (simAlgorithm.equals("jaccard")){
 			double srcNonMatchingTermWeight = attrDist.getJaccardSrcNonMatchingTermWeight();
 			double trgNonMatchingTermWeight = attrDist.getJaccardTrgNonMatchingTermWeight();
 			simStrategy = new JaccardSimilarity(srcNonMatchingTermWeight, trgNonMatchingTermWeight);
-		} else if (algorithm.equals("dice")){
+		} else if (simAlgorithm.equals("dice")){
 			simStrategy = new DiceSimilarity();
-		} else if (algorithm.equals("charPair")){
+		} else if (simAlgorithm.equals("charPair")){
 			simStrategy = new CharacterPairSimilarity();
-		} else if (algorithm.equals("cosine")){
+		} else if (simAlgorithm.equals("cosine")){
 			simStrategy = new CosineSimilarity();
 		} else {
-			throw new IllegalArgumentException("invalid text similarity algorithms:" + algorithm);
+			throw new IllegalArgumentException("invalid text similarity algorithms:" + simAlgorithm);
 		}
 		return simStrategy;
 	}	

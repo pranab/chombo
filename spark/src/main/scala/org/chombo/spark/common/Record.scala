@@ -20,6 +20,8 @@ package org.chombo.spark.common
 
 import org.chombo.util.Utility
 import scala.collection.mutable.Buffer
+import org.chombo.util.BasicUtils
+import scala.reflect.ClassTag
 
 
 object Record {
@@ -85,7 +87,7 @@ object Record {
  * @author pranab
  *
  */
-class Record(val size:Int) extends Serializable {
+class Record(val size:Int) extends Serializable with Ordered[Record]{
 	val array = new Array[Any](size)
 	var cursor:Int = 0
 	
@@ -418,11 +420,73 @@ class Record(val size:Int) extends Serializable {
 	override def toString() : String = {
 	  val stArray = array.map(a => {
 	    if (a.isInstanceOf[Double]) {
-	      Utility.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
+	      BasicUtils.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
 	    } else {
 	      a
 	    }
 	  })
 	  stArray.mkString(",")
 	}
+	
+
+	/**
+	 * @param that
+	 * @return
+	 */
+	def compare(that: Record): Int = {
+	  this.array.length compareTo that.array.length match { case 0 => 0; case c => return c }
+	  
+	  //all elements
+	  for (i <- 0 to (this.array.length -1)) {
+	    val thisEl = this.array(i)
+	    val thatEl = that.array(i)
+	    
+	    if (thisEl.isInstanceOf[String] ) {
+	      if (thatEl.isInstanceOf[String]) {
+	    	thisEl.asInstanceOf[String] compareTo thatEl.asInstanceOf[String] match { case 0 => 0; case c => return c }
+	      } else {
+	        return 1
+	      }
+	    }
+	    
+	    if (thisEl.isInstanceOf[Int] ) {
+	      if (thatEl.isInstanceOf[Int]) {
+	    	thisEl.asInstanceOf[Int] compareTo thatEl.asInstanceOf[Int] match { case 0 => 0; case c => return c }
+	      } else {
+	        return 1
+	      }
+	    }
+
+	    if (thisEl.isInstanceOf[Long] ) {
+	      if (thatEl.isInstanceOf[Long]) {
+	    	thisEl.asInstanceOf[Long] compareTo thatEl.asInstanceOf[Long] match { case 0 => 0; case c => return c }
+	      } else {
+	        return 1
+	      }
+	    }
+	    
+	    if (thisEl.isInstanceOf[Double] ) {
+	      if (thatEl.isInstanceOf[Double]) {
+	    	thisEl.asInstanceOf[Double] compareTo thatEl.asInstanceOf[Double] match { case 0 => 0; case c => return c }
+	      } else {
+	        return 1
+	      }
+	    }
+	  }
+	  
+	  0
+	}
+	
+	/**
+	 * @param suffixLen
+	 * @return
+	 */
+	def prefixHashCode(suffixLen : Int) : Int = {
+	  var hashCode = 0
+	  for (i <- 0 to (array.length - suffixLen - 1)) {
+	   hashCode += array(i).hashCode
+	  }
+	  hashCode
+	}
+	
 }

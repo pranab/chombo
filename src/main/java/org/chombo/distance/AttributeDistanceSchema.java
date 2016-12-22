@@ -18,6 +18,7 @@
 
 package org.chombo.distance;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +26,7 @@ import java.util.Map;
  * @author pranab
  *
  */
-public class AttributeDistanceSchema {
+public class AttributeDistanceSchema implements Serializable {
 	private AttributeDistanceAggregator[] attrAggregators;
 	private AttributeDistance[] attrDistances;
 	private Map<Integer, AttributeDistance> attributeDistanceByOrdinal = new HashMap<Integer, AttributeDistance>();
