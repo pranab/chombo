@@ -41,8 +41,8 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val keyFieldOrdinals = getMandatoryIntListParam(appConfig, "id.field.ordinals").asScala
-	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals", "").asScala
+	   val keyFieldOrdinals = getMandatoryIntListParam(appConfig, "id.field.ordinals").asScala.toArray
+	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals", "").asScala.toArray
 	   val binWidths = numAttrOrdinals.map(ord => {
 	     //attribute bin width tuple
 	     val key = "attrBinWidth." + ord

@@ -53,7 +53,7 @@ object Record {
    * @param fieldOrdinals
    * @return
   */
-  def apply(fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = new Record(fields, fieldOrdinals)
+  def apply(fields: Array[String], fieldOrdinals: Array[Integer]) : Record = new Record(fields, fieldOrdinals)
   
   /**
    * @param size
@@ -61,7 +61,7 @@ object Record {
    * @param fieldOrdinals
    * @return
   */
-  def apply(size: Int, fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = new Record(size, fields, fieldOrdinals)
+  def apply(size: Int, fields: Array[String], fieldOrdinals: Array[Integer]) : Record = new Record(size, fields, fieldOrdinals)
 
   /**
    * @param fields
@@ -127,7 +127,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @param fields
 	 * @param fieldOrdinals
 	 */
-	def this(fields: Array[String], fieldOrdinals: Buffer[Integer]) {
+	def this(fields: Array[String], fieldOrdinals: Array[Integer]) {
 	  this(fieldOrdinals.length)
 	  fieldOrdinals.foreach(ord => {
 	      addString(fields(ord))
@@ -138,7 +138,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @param fields
 	 * @param fieldOrdinals
 	 */
-	def this(size : Int, fields: Array[String], fieldOrdinals: Buffer[Integer]) {
+	def this(size : Int, fields: Array[String], fieldOrdinals: Array[Integer]) {
 	  this(size)
 	  require(size > fieldOrdinals.length, "size should be greater than supplied fields length")
 	  fieldOrdinals.foreach(ord => {
