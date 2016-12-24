@@ -37,7 +37,7 @@ public class HistogramStat implements Serializable {
 	protected double sumSq = 0.0;
 	protected int  sampleCount;
 	protected boolean normalized;
-	protected Map<Double, Double> histogram = new HashMap<Double, Double>();
+	protected Map<Double, Double> histogram = new TreeMap<Double, Double>();
 	protected boolean extendedOutput;
 	protected int outputPrecision = 3;
 	private boolean debugOn = false;

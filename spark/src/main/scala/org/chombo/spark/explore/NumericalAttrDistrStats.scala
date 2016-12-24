@@ -67,9 +67,9 @@ object NumericalAttrDistrStats extends JobConfiguration {
 		     attrValRec.
 		     	withExtendedOutput(extendedOutput).
 		     	withOutputPrecision(outputPrecision)
-		     val attrVal = items(ord._1).toLong
+		     val attrVal = items(ord._1).toDouble
 		     if (debugOn) {
-		       println("attrVal: " + attrVal)
+		       //println("attrVal: " + attrVal)
 		     }
 		     attrValRec.add(attrVal)
 		     (attrKeyRec, attrValRec)
