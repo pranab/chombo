@@ -12,6 +12,7 @@ spark/project/boot/
 spark/tmp/
 spark/.DS_Store
 spark/bin/
+project/
 .history
 spark/dist/
 .DS_Store

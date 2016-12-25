@@ -166,6 +166,13 @@ public class TabularData {
 		return sum;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return serialize();
+	}
+	
 	/**
 	 * serializes table
 	 * @return
