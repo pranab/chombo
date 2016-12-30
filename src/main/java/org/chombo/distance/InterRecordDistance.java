@@ -110,11 +110,11 @@ public class InterRecordDistance implements Serializable {
 					if (null != firstItemRange) {
 						dist = numericDistance(firstItemRange,  Double.parseDouble(secondItem),  attrDist);
 					} else {
-						DoubleRange secondRange = DoubleRange.create(secondItem, subFieldDelim);
-						if (null != secondRange) {
-							
+						DoubleRange secondItemRange = DoubleRange.create(secondItem, subFieldDelim);
+						if (null != secondItemRange) {
+							dist = numericDistance(secondItemRange,  Double.parseDouble(firstItem),  attrDist);
 						} else {
-							
+							throw new IllegalStateException("no range data found in field");
 						}
 					}
 				} else {

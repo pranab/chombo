@@ -32,7 +32,13 @@ public class CategoricalHistogramStat {
 	protected Map<String, Integer> binMap = new HashMap<String, Integer>();
 	protected Map<String, Double> histogram = new HashMap<String, Double>();
 	protected int  sampleCount;
+	protected boolean extendedOutput;
+	protected int outputPrecision = 3;
+	private boolean debugOn = false;
 	
+	/**
+	 * 
+	 */
 	public void intialize() {
 		binMap.clear();
 		histogram.clear();
@@ -45,6 +51,24 @@ public class CategoricalHistogramStat {
 	public void add(String value) {
 		 add(value, 1);
 	}	
+	
+	/**
+	 * @param extendedOutput
+	 * @return
+	 */
+	public CategoricalHistogramStat withExtendedOutput(boolean extendedOutput) {
+		this.extendedOutput = extendedOutput;
+		return this;
+	}
+	
+	/**
+	 * @param outputPrecision
+	 * @return
+	 */
+	public CategoricalHistogramStat withOutputPrecision(int outputPrecision) {
+		this.outputPrecision = outputPrecision;
+		return this;
+	}
 	
 	/**
 	 * @param value
@@ -116,5 +140,27 @@ public class CategoricalHistogramStat {
 		}		
 		return mode;
 	}
+	
+	
+	/**
+	 * @param histStat
+	 * @return
+	 */
+	public CategoricalHistogramStat merge(CategoricalHistogramStat histStat) {
+		CategoricalHistogramStat mergedHistStat = new CategoricalHistogramStat();
+		mergedHistStat.extendedOutput = extendedOutput;
+		mergedHistStat.outputPrecision = outputPrecision;
+		
+		//bins
+		for (String catAttrVal : binMap.keySet()) {
+			mergedHistStat.add(catAttrVal, binMap.get(catAttrVal));
+		}
+		for (String catAttrVal : histStat.binMap.keySet()) {
+			mergedHistStat.add(catAttrVal, histStat.binMap.get(catAttrVal));
+		}
+		
+		return mergedHistStat;
+	}
+	
 	
 }
