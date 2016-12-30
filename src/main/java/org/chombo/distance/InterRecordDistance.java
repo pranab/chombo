@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.chombo.util.BasicUtils;
+import org.chombo.util.Pair;
 import org.chombo.util.RichAttribute;
 import org.chombo.util.RichAttributeSchema;
 
@@ -44,7 +45,7 @@ public class InterRecordDistance implements Serializable {
 	private Map<Integer, Double> attrDistances = new HashMap<Integer, Double>();
 	private Map<Integer, DynamicVectorSimilarity> textSimilarityStrategies = 
 			new HashMap<Integer, DynamicVectorSimilarity>();
-	
+	private boolean doubleRange;
 	
 	/**
 	 * @param attrSchema
@@ -58,8 +59,21 @@ public class InterRecordDistance implements Serializable {
 		this.fieldDelim = fieldDelim;
 	}
 	
+	/**
+	 * @param subFieldDelim
+	 * @return
+	 */
 	public InterRecordDistance withSubFieldDelim(String subFieldDelim) {
 		this.subFieldDelim = subFieldDelim;
+		return this;
+	}
+	
+	/**
+	 * @param doubleRange
+	 * @return
+	 */
+	public InterRecordDistance withDoubleRange(boolean doubleRange) {
+		this.doubleRange = doubleRange;
 		return this;
 	}
 	
@@ -91,7 +105,21 @@ public class InterRecordDistance implements Serializable {
 			} else if (richAttr.isInteger()) {
 				dist = numericDistance(Integer.parseInt(firstItem), Integer.parseInt(secondItem), attrDist);
 			} else if (richAttr.isDouble()) {
-				dist = numericDistance(Double.parseDouble(firstItem), Double.parseDouble(secondItem), attrDist);
+				if (doubleRange) {
+					DoubleRange firstItemRange = DoubleRange.create(firstItem, subFieldDelim);
+					if (null != firstItemRange) {
+						dist = numericDistance(firstItemRange,  Double.parseDouble(secondItem),  attrDist);
+					} else {
+						DoubleRange secondRange = DoubleRange.create(secondItem, subFieldDelim);
+						if (null != secondRange) {
+							
+						} else {
+							
+						}
+					}
+				} else {
+					dist = numericDistance(Double.parseDouble(firstItem), Double.parseDouble(secondItem), attrDist);
+				}
 			} else if (richAttr.isText()) {
 				dist = textDistance(attrDist);
 			} else if (richAttr.isGeoLocation()) {
@@ -157,6 +185,22 @@ public class InterRecordDistance implements Serializable {
 			dist = 1;
 		} else if (attrDist.isLowerThresholdSet() && dist > attrDist.getLowerThreshold()) {
 			dist = 0;
+		}
+		return dist;
+	}
+	
+	/**
+	 * @param firstItemDblRange
+	 * @param secondItemDbl
+	 * @param attrDist
+	 * @return
+	 */
+	private double numericDistance(DoubleRange firstItemDblRange, double secondItemDbl, AttributeDistance attrDist) {
+		double dist = 0;
+		if (secondItemDbl > firstItemDblRange.getUpper()) {
+			dist = numericDistance(firstItemDblRange.getUpper(), secondItemDbl,  attrDist);
+		} else if (secondItemDbl < firstItemDblRange.getLower()) {
+			dist = numericDistance(secondItemDbl, firstItemDblRange.getLower(), attrDist);
 		}
 		return dist;
 	}
@@ -251,5 +295,52 @@ public class InterRecordDistance implements Serializable {
 		}
 		dist = sum / ordinals.length;
 		return dist;
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	private static class DoubleRange extends Pair<Double, Double> {
+		
+		/**
+		 * @param first
+		 * @param second
+		 */
+		public DoubleRange(Double first, Double second) {
+			super(first,  second);
+		}
+		
+		/**
+		 * @return
+		 */
+		public double getLower() {
+			return getLeft();
+		}
+		
+		/**
+		 * @return
+		 */
+		public double getUpper() {
+			return getRight();
+		}
+
+		/**
+		 * @param field
+		 * @param subFieldDelim
+		 * @return
+		 */
+		public static DoubleRange create(String field, String subFieldDelim) {
+			DoubleRange doubleRange = null;
+			String[] items = field.split(subFieldDelim);
+			if (items.length == 2) {
+				doubleRange = new DoubleRange(Double.parseDouble(items[0]), Double.parseDouble(items[1]));
+			} else if (items.length != 1){
+				throw new IllegalStateException("too many sub fields");
+			}
+			
+			return doubleRange;
+		}
+		
 	}
 }
