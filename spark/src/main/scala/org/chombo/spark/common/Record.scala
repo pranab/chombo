@@ -20,6 +20,8 @@ package org.chombo.spark.common
 
 import org.chombo.util.Utility
 import scala.collection.mutable.Buffer
+import org.chombo.util.BasicUtils
+import scala.reflect.ClassTag
 
 
 object Record {
@@ -37,6 +39,14 @@ object Record {
  * @return
  */
   def apply(size:Int, record:Record) : Record = new Record(size, record)
+
+  /**
+   * @param record
+   * @param beg
+   * @param end
+   * @return
+  */
+  def apply(record:Record, beg:Int, end:Int) : Record = new Record(record, beg, end)
   
   /**
    * @param data
@@ -51,8 +61,16 @@ object Record {
    * @param fieldOrdinals
    * @return
   */
-  def apply(fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = new Record(fields, fieldOrdinals)
+  def apply(fields: Array[String], fieldOrdinals: Array[Integer]) : Record = new Record(fields, fieldOrdinals)
   
+  /**
+   * @param size
+   * @param fields
+   * @param fieldOrdinals
+   * @return
+  */
+  def apply(size: Int, fields: Array[String], fieldOrdinals: Array[Integer]) : Record = new Record(size, fields, fieldOrdinals)
+
   /**
    * @param fields
    * @param fieldOrdinals
@@ -85,9 +103,10 @@ object Record {
  * @author pranab
  *
  */
-class Record(val size:Int) extends Serializable {
+class Record(val size:Int) extends Serializable with Ordered[Record]{
 	val array = new Array[Any](size)
 	var cursor:Int = 0
+	var sortFields:Option[Array[Int]] = None
 	
 	/**
 	 * @param size
@@ -98,6 +117,18 @@ class Record(val size:Int) extends Serializable {
 	  Array.copy(record.array, 0, array, 0, record.size)
 	  cursor += record.size
 	}
+
+	/**
+ 	* @param record
+ 	* @param beg
+ 	* @param end
+ 	*/	
+	def this(record:Record, beg:Int, end:Int) {
+	  this(end - beg)
+	  val size = end - beg
+	  Array.copy(record.array, beg, array, 0, size)
+	  cursor += size
+	} 
 	
 	/**
  	* @param data
@@ -116,13 +147,33 @@ class Record(val size:Int) extends Serializable {
 	 * @param fields
 	 * @param fieldOrdinals
 	 */
-	def this(fields: Array[String], fieldOrdinals: Buffer[Integer]) {
+	def this(fields: Array[String], fieldOrdinals: Array[Integer]) {
 	  this(fieldOrdinals.length)
 	  fieldOrdinals.foreach(ord => {
 	      addString(fields(ord))
 	  })
 	}
 	
+	/**
+	 * @param fields
+	 * @param fieldOrdinals
+	 */
+	def this(size : Int, fields: Array[String], fieldOrdinals: Array[Integer]) {
+	  this(size)
+	  require(size > fieldOrdinals.length, "size should be greater than supplied fields length")
+	  fieldOrdinals.foreach(ord => {
+	      addString(fields(ord))
+	  })
+	}
+	
+	/**
+	 * @param sortFields
+	 */
+	def withSortFields(sortFields : Array[Int]) : Record = {
+	  this.sortFields = Some(sortFields)
+	  this
+	}
+
 	def getArray() :Array[Any] = array
 	
 	/**
@@ -309,6 +360,29 @@ class Record(val size:Int) extends Serializable {
 	}
 
 	/**
+	 * @param record
+	 * @return
+	 */
+	def add(record:Record) : Record = {
+	  Array.copy(record.array, 0, array, cursor, record.size)
+	  cursor += record.size
+	  this
+	}
+	
+	/**
+	 * @param record
+ 	 * @param beg
+ 	 * @param end
+	 * @return
+	 */
+	def add(record:Record, beg : Int, end : Int) : Record = {
+	  val size = end - beg
+	  Array.copy(record.array, beg, array, cursor, size)
+	  cursor += size
+	  this
+	}
+
+	/**
 	 * @param index
 	 * @return
 	 */
@@ -418,11 +492,101 @@ class Record(val size:Int) extends Serializable {
 	override def toString() : String = {
 	  val stArray = array.map(a => {
 	    if (a.isInstanceOf[Double]) {
-	      Utility.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
+	      BasicUtils.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
 	    } else {
 	      a
 	    }
 	  })
 	  stArray.mkString(",")
 	}
+	
+
+	/**
+	 * @param that
+	 * @return
+	 */
+	def compare(that: Record): Int = {
+	  this.array.length compareTo that.array.length match { case 0 => 0; case c => return c }
+	  
+	  sortFields match {
+	    case Some(sFields:Array[Int]) => {
+	      //sort by selected fields
+	      for (i <- 0 to (sFields.length -1)) {
+	    	  val thisEl = this.array(sFields(i))
+	    	  val thatEl = that.array(sFields(i))
+	    	  compareElement(thisEl, thatEl) match {
+	    	  	case 0 => 0
+	    	  	case c => return c
+	    	  }
+	      }
+	    }
+	    
+	    case None => {
+	    	//sort by all fields
+	    	for (i <- 0 to (this.array.length -1)) {
+	    		val thisEl = this.array(i)
+	    		val thatEl = that.array(i)
+	    		compareElement(thisEl, thatEl) match {
+	    			case 0 => 0
+	    			case c => return c
+	    		}
+	    	}
+	    }
+	  }
+	  
+	  0
+	}
+	
+	/**
+	 * @param thisEl
+	 * @param thatEl
+	 * @return
+	 */
+	def compareElement(thisEl:Any, thatEl:Any) : Int = {
+	    if (thisEl.isInstanceOf[String] ) {
+	      if (thatEl.isInstanceOf[String]) {
+	    	thisEl.asInstanceOf[String] compareTo thatEl.asInstanceOf[String] match { case 0 => 0; case c => return c }
+	      } else {
+	        return 1
+	      }
+	    }
+	    
+	    if (thisEl.isInstanceOf[Int] ) {
+	      if (thatEl.isInstanceOf[Int]) {
+	    	thisEl.asInstanceOf[Int] compareTo thatEl.asInstanceOf[Int] match { case 0 => 0; case c => return c }
+	      } else {
+	        return 1
+	      }
+	    }
+
+	    if (thisEl.isInstanceOf[Long] ) {
+	      if (thatEl.isInstanceOf[Long]) {
+	    	thisEl.asInstanceOf[Long] compareTo thatEl.asInstanceOf[Long] match { case 0 => 0; case c => return c }
+	      } else {
+	        return 1
+	      }
+	    }
+	    
+	    if (thisEl.isInstanceOf[Double] ) {
+	      if (thatEl.isInstanceOf[Double]) {
+	    	thisEl.asInstanceOf[Double] compareTo thatEl.asInstanceOf[Double] match { case 0 => 0; case c => return c }
+	      } else {
+	        return 1
+	      }
+	    }
+	    0
+	}
+	
+	/**
+	 * @param suffixLen
+	 * @return
+	 */
+	def prefixHashCode(suffixLen : Int) : Int = {
+	  var hashCode = 0
+	  for (i <- 0 to (array.length - suffixLen - 1)) {
+	   hashCode += array(i).hashCode
+	  }
+	  hashCode
+	}
+	
 }

@@ -42,6 +42,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.chombo.distance.AttributeDistanceSchema;
 import org.codehaus.jackson.map.ObjectMapper;
 
 
@@ -1182,6 +1183,18 @@ public class BasicUtils {
         return schema;
 	}
 	
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static AttributeDistanceSchema getDistanceSchema(String path) throws IOException {
+        InputStream fs = new FileInputStream(path);
+        ObjectMapper mapper = new ObjectMapper();
+        AttributeDistanceSchema schema = mapper.readValue(fs, AttributeDistanceSchema.class);
+        return schema;
+	}
+
 	/**
 	 * @param value
 	 * @param delim

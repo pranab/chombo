@@ -37,9 +37,10 @@ public class HistogramStat implements Serializable {
 	protected double sumSq = 0.0;
 	protected int  sampleCount;
 	protected boolean normalized;
-	protected Map<Double, Double> histogram = new HashMap<Double, Double>();
+	protected Map<Double, Double> histogram = new TreeMap<Double, Double>();
 	protected boolean extendedOutput;
 	protected int outputPrecision = 3;
+	private boolean debugOn = false;
 	
 	/**
 	 * @param binWidth
@@ -177,6 +178,10 @@ public class HistogramStat implements Serializable {
 	 * @param value
 	 */
 	private void addToBin(int index, double value, int count) {
+		if (debugOn) {
+			System.out.println("index: " + index + " value: " + BasicUtils.formatDouble(value, outputPrecision) + 
+					" count: " + count);
+		}
 		Bin bin = binMap.get(index);
 		if (null == bin) {
 			bin = new Bin(index);
@@ -382,6 +387,12 @@ public class HistogramStat implements Serializable {
 			mergedHistStat.addBin(index, bin.count);
 		}
 		
+		if (debugOn) {
+			System.out.println("merging histogram " + binsToString());
+			System.out.println("merging histogram " + histStat.binsToString());
+			System.out.println("merged histogram " +  mergedHistStat.binsToString());
+		}
+		
 		//other stats
 		mergedHistStat.count = count + histStat.count;
 		mergedHistStat.sum = sum + histStat.sum;
@@ -391,6 +402,9 @@ public class HistogramStat implements Serializable {
 		return mergedHistStat;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	public String toString() {
 		StringBuilder stBld = new StringBuilder();
 		final String delim = ",";
@@ -428,10 +442,30 @@ public class HistogramStat implements Serializable {
 	}
 	
 	/**
+	 * @return
+	 */
+	private String binsToString() {
+		StringBuilder stBld = new StringBuilder();
+		final String delim = ",";
+		
+		//formatting
+    	String formatter = "%." + outputPrecision + "f";
+
+		//distribution
+		stBld.append(binMap.size()).append(delim);
+		for(int x : binMap.keySet()) {
+			Bin y = binMap.get(x);
+			stBld.append(BasicUtils.formatDouble(x, formatter)).append(delim).
+				append(BasicUtils.formatDouble(y.count, formatter)).append(delim);
+		}
+		return stBld.substring(0, stBld.length() - 1);
+	}
+	
+	/**
 	 * @author pranab
 	 *
 	 */
-	public static class Bin implements  Comparable<Bin> {
+	public static class Bin implements  Comparable<Bin>,  Serializable {
 		private int index;
 		private int count;
 

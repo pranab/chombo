@@ -22,16 +22,16 @@ import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
-import org.chombo.util.HistogramStat
+import org.chombo.util.CategoricalHistogramStat
 
-object NumericalAttrDistrStats extends JobConfiguration {
+object CategoricalAttrDistrStats extends JobConfiguration {
   
    /**
     * @param args
     * @return
     */
    def main(args: Array[String]) {
-	   val appName = "numericalAttrDistrStats"
+	   val appName = "categoricalAttrDistrStats"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)
@@ -42,12 +42,7 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val keyFieldOrdinals = getMandatoryIntListParam(appConfig, "id.field.ordinals").asScala.toArray
-	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals", "").asScala.toArray
-	   val binWidths = numAttrOrdinals.map(ord => {
-	     //attribute bin width tuple
-	     val key = "attrBinWidth." + ord
-	     (ord, getMandatoryIntParam(appConfig, key, "missing bin width"))
-	   })
+	   val catAttrOrdinals = getMandatoryIntListParam(appConfig, "cat.attr.ordinals", "").asScala.toArray
 	   val extendedOutput = getBooleanParamOrElse(appConfig, "extended.output", true)
 	   val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
@@ -59,24 +54,21 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	   val pairedData = data.flatMap(line => {
 		   val items = line.split(fieldDelimIn, -1)
 		   val keyRec = Record(items, keyFieldOrdinals)
-		   val attrValCount = binWidths.map(ord => {
+		   val attrValCount = catAttrOrdinals.map(ord => {
 		     val attrKeyRec = Record(keyRec.size + 1 ,keyRec)
-		     attrKeyRec.addInt(ord._1)
+		     attrKeyRec.addInt(ord)
 		     
-		     val attrValRec =new HistogramStat(ord._2)
+		     val attrValRec =new CategoricalHistogramStat()
 		     attrValRec.
 		     	withExtendedOutput(extendedOutput).
 		     	withOutputPrecision(outputPrecision)
-		     val attrVal = items(ord._1).toDouble
-		     if (debugOn) {
-		       //println("attrVal: " + attrVal)
-		     }
+		     	
+		     val attrVal = items(ord)
 		     attrValRec.add(attrVal)
-		     (attrKeyRec, attrValRec)
+		     (attrKeyRec, attrValRec)		
 		   })
-		   
 		   attrValCount
-	   })
+	   })	   
 	   
 	   //merge histograms
 	   val stats = pairedData.reduceByKey((h1, h2) => h1.merge(h2))
@@ -93,4 +85,6 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	     stats.saveAsTextFile(outputPath)
 	   }
 	   
-   }}
+   }
+
+}
