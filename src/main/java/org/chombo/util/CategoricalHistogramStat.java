@@ -17,10 +17,11 @@
 
 package org.chombo.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import org.chombo.util.HistogramStat.Bin;
+import java.util.TreeMap;
 
 
 /**
@@ -159,6 +160,33 @@ public class CategoricalHistogramStat {
 		}
 		
 		return mergedHistStat;
+	}
+
+	/**
+	 * set of items within confidence bound
+	 * @param confidenceLimitPercent
+	 * @return
+	 */
+	public List<String> getConfidenceBounds(int confidenceLimitPercent) {
+		List<String> confBoundSet = new ArrayList<String>();
+		int confidenceLimit = (sampleCount * confidenceLimitPercent) / 100;
+		
+		//sort by count
+		TreeMap<Integer, String> countSortedHistogram = new TreeMap<Integer, String>();
+		for(Map.Entry<String,Integer> entry : binMap.entrySet()) {
+			countSortedHistogram.put(entry.getValue(), entry.getKey());
+		}
+
+		//collect high count items
+		double confCount = 0;
+		for(Integer count : countSortedHistogram.descendingKeySet()) {
+			confCount += count;
+			if (confCount < confidenceLimit) {
+				confBoundSet.add(countSortedHistogram.get(count));
+			}
+		}
+		
+		return confBoundSet;
 	}
 	
 	/* (non-Javadoc)
