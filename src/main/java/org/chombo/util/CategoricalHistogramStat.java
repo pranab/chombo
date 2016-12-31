@@ -141,7 +141,6 @@ public class CategoricalHistogramStat {
 		return mode;
 	}
 	
-	
 	/**
 	 * @param histStat
 	 * @return
@@ -162,5 +161,31 @@ public class CategoricalHistogramStat {
 		return mergedHistStat;
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		StringBuilder stBld = new StringBuilder();
+		final String delim = ",";
+		getDistribution();
+		
+		//formatting
+    	String formatter = "%." + outputPrecision + "f";
+
+		//distribution
+		stBld.append(histogram.size()).append(delim);
+		for(String catAttrVal : histogram.keySet()) {
+			double catAttrCount = histogram.get(catAttrVal);
+			stBld.append(catAttrVal).append(delim).
+				append(BasicUtils.formatDouble(catAttrCount, formatter)).append(delim);
+		}
+		
+		//other stats
+		if (extendedOutput) {
+			String formEntropy = BasicUtils.formatDouble(getEntropy(), formatter);
+			stBld.append(getMode()).append(delim).append(formEntropy).append(delim);
+		}
+		return stBld.substring(0, stBld.length() - 1);
+	}
 	
 }
