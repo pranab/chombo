@@ -163,7 +163,7 @@ public class CategoricalHistogramStat {
 	}
 
 	/**
-	 * set of items within confidence bound
+	 * returns set of items within confidence bound
 	 * @param confidenceLimitPercent
 	 * @return
 	 */

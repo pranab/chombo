@@ -57,6 +57,15 @@ object Record {
   def apply(data:Array[String], beg:Int, end:Int) : Record = new Record(data, beg, end)
   
   /**
+   * @param size
+   * @param data
+   * @param beg
+   * @param end
+   * @return
+  */
+  def apply(size : Int, data:Array[String], beg:Int, end:Int) : Record = new Record(size, data, beg, end)
+
+  /**
    * @param fields
    * @param fieldOrdinals
    * @return
@@ -142,6 +151,17 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  }
 	} 
 
+	/**
+ 	* @param data
+ 	* @param beg
+ 	* @param end
+ 	*/	
+	def this(size : Int, data:Array[String], beg:Int, end:Int) {
+	  this(size)
+	  for(i <- beg to (end - 1)){
+	     addString(data(i))
+	  }
+	} 
 
 	/**
 	 * @param fields
