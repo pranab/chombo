@@ -49,7 +49,7 @@ public class CategoricalAttrClassDistr extends Configured implements Tool {
 	@Override
 	public int run(String[] args) throws Exception {
         Job job = new Job(getConf());
-        String jobName = "Distance between categorical attribute value based on value difference metric algorithm";
+        String jobName = "Categorical attribute class distribution";
         job.setJobName(jobName);
         
         job.setJarByClass(CategoricalAttrClassDistr.class);
