@@ -1,0 +1,40 @@
+This tutorial is statistical analysis mobile phone usage data. Statistics include histogram
+and some other statistical quantities. Please make necessary changes in path etc depending 
+on your environment in etl.sh
+ 
+Dependent script
+================
+Checkout the project avenir. Take the script util.py and sampler.py from the project and placeit
+in ../lib directory with respect the directory containing call_records.py
+
+Deployment
+==========
+In root directory
+mvn clean install
+sbt publishLocal
+
+In spark directory
+sbt clean package
+
+create uber jar
+ant -f chombo_spark.xml 
+
+Generate Input Data
+===================
+./call_records.py <num_users>  <num_interactions> > <output_file>
+ 
+where
+num_users = number of users
+num_interactions = number of interactions with phone
+
+Place generated file in HDFS directory
+
+Run Spark job
+=============
+./exp_spark.sh numStat
+
+Configurations
+==============
+It's in the file exp.conf. Make changes as necessary
+ 
+ 

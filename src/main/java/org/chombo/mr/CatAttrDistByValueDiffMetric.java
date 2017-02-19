@@ -174,8 +174,12 @@ public class CatAttrDistByValueDiffMetric extends Configured implements Tool {
 					//dist between two values
 					double dist = 0;
 					for (String clVal : clValList) {
-						double firstPr = attrClassValDistr.get(firstVal).get(clVal);
-						double secondPr = attrClassValDistr.get(secondVal).get(clVal);
+						Double firstPr = attrClassValDistr.get(firstVal).get(clVal);
+						firstPr = firstPr == null ? 0 : firstPr;
+						
+						Double secondPr = attrClassValDistr.get(secondVal).get(clVal);
+						secondPr = secondPr == null ? 0 : secondPr;
+						
 						double diff = Math.abs(firstPr - secondPr);
 						dist += Math.pow(diff, distExp);
 					}
