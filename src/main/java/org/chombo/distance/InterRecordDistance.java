@@ -21,6 +21,7 @@ package org.chombo.distance;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.chombo.util.BasicUtils;
@@ -46,6 +47,7 @@ public class InterRecordDistance implements Serializable {
 	private Map<Integer, DynamicVectorSimilarity> textSimilarityStrategies = 
 			new HashMap<Integer, DynamicVectorSimilarity>();
 	private boolean doubleRange;
+	private boolean categoricalSet;
 	
 	/**
 	 * @param attrSchema
@@ -74,6 +76,11 @@ public class InterRecordDistance implements Serializable {
 	 */
 	public InterRecordDistance withDoubleRange(boolean doubleRange) {
 		this.doubleRange = doubleRange;
+		return this;
+	}
+	
+	public InterRecordDistance withCategoricalSet(boolean categoricalSet) {
+		this.categoricalSet = categoricalSet;
 		return this;
 	}
 	
@@ -158,9 +165,20 @@ public class InterRecordDistance implements Serializable {
 	private double categoricalDistance(RichAttribute richAttr, AttributeDistance attrDist) {
 		double dist = 0;
 		if (attrDist.getAlgorithm().equals("cardinality")) {
+			//cardinality
 			dist = firstItem.equals(secondItem) ? 0 : Math.sqrt(2) / richAttr.getCardinality().size();
-		} else {
-			dist = firstItem.equals(secondItem) ? 0 : 1;
+		} else if (attrDist.getAlgorithm().equals("valueDiffMetric")) {
+			//TODO value difference metric
+			
+		}else {
+			//default equality or inclusion based
+			if (categoricalSet) {
+				List<String> firstList = BasicUtils.toList(firstItem.split(subFieldDelim));
+				List<String> secondList = BasicUtils.toList(secondItem.split(subFieldDelim));
+				dist = BasicUtils.listIncluded(firstList, secondList) ? 0 : 1;
+			}else {
+				dist = firstItem.equals(secondItem) ? 0 : 1;
+			}
 		}
 		return dist;
 	}

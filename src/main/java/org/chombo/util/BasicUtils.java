@@ -102,6 +102,18 @@ public class BasicUtils {
     }
     
     /**
+     * @param array
+     * @return
+     */
+    public static <T> List<T> toList(T[] array) {
+    	List<T> list = new ArrayList<T>();
+    	for (T val : array) {
+    		list.add(val);
+    	}
+    	return list;
+    }
+
+    /**
      * @param map
      * @param itemDelim
      * @param keyDelim
@@ -780,6 +792,32 @@ public class BasicUtils {
     		}
     	}
     	return diff;
+    }
+
+    /**
+     * @param firstList
+     * @param secondList
+     * @return
+     */
+    public static <T> boolean listIncluded(List<T> firstList, List<T> secondList) {
+    	boolean included = true;
+    	List<T> superList = null;
+    	List<T> subList = null;
+    	if (firstList.size() >= secondList.size()) {
+    		superList = firstList;
+    		subList = secondList;
+    	} else {
+    		superList = secondList;
+    		subList = firstList;
+    	}
+    	
+    	for (T item : subList) {
+    		if (!superList.contains(item)) {
+    			included = false;
+    			break;
+    		}
+    	}
+    	return included;
     }
 
     /**
