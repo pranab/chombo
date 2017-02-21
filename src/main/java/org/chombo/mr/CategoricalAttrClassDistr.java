@@ -115,11 +115,15 @@ public class CategoricalAttrClassDistr extends Configured implements Tool {
             	outKey.initialize();
             	outVal.initialize();
 
+            	//key
             	if (null != partIdOrdinals) {
             		outKey.addFromArray(items, partIdOrdinals);
             	}
+            	
+            	//attribute ordinal and value
             	outKey.add(attr, items[attr]);
             	
+            	//class attribute value
             	outVal.add(items[classAttrOrdinal], ONE);
             	context.write(outKey, outVal);
         	}
