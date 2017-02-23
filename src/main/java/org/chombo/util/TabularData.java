@@ -235,7 +235,7 @@ public class TabularData {
 	 * @param colLabel
 	 * @return
 	 */
-	private int[] getRowCol(String rowLabel, String colLabel) {
+	public int[] getRowCol(String rowLabel, String colLabel) {
 		int[] rowCol = new int[2];
 		rowCol[0] = rowCol[1] = -1;
 

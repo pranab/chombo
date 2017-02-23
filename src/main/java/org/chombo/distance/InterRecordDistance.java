@@ -20,7 +20,9 @@ package org.chombo.distance;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.chombo.util.BasicUtils;
@@ -46,6 +48,10 @@ public class InterRecordDistance implements Serializable {
 	private Map<Integer, DynamicVectorSimilarity> textSimilarityStrategies = 
 			new HashMap<Integer, DynamicVectorSimilarity>();
 	private boolean doubleRange;
+	private boolean categoricalSet;
+	private int fieldOrd;
+	protected Map<Integer, Map<Pair<String, String>, Double>> valueDiffMetricDist = 
+			new HashMap<Integer, Map<Pair<String, String>, Double>>();
 	
 	/**
 	 * @param attrSchema
@@ -76,6 +82,56 @@ public class InterRecordDistance implements Serializable {
 		this.doubleRange = doubleRange;
 		return this;
 	}
+	
+	public InterRecordDistance withCategoricalSet(boolean categoricalSet) {
+		this.categoricalSet = categoricalSet;
+		return this;
+	}
+	
+	/**
+	 * @param records
+	 * @param idFieldLen
+	 * @return
+	 */
+	public InterRecordDistance withValueDiffMetricDist(List<String[]> records, int idFieldLen) {
+		for (String[] rec : records) {
+			int offset = idFieldLen;
+			int attrOrd = Integer.parseInt(rec[offset++]);
+			Map<Pair<String, String>, Double> valuePairDist = new HashMap<Pair<String, String>, Double>();
+			valueDiffMetricDist.put(attrOrd, valuePairDist);
+			
+			while (offset < rec.length) {
+				String firstAttrVal = rec[offset++];
+				String secAttrVal = rec[offset++];
+				Pair<String,String> valPair = distWithAttrVAluesSorted(firstAttrVal, secAttrVal);
+				Double dist = Double.parseDouble(rec[offset++]);
+				valuePairDist.put(valPair, dist);
+			}
+			
+		}
+		return this;
+	}
+	
+	private Pair<String,String> distWithAttrVAluesSorted(String firstAttrVal, String secAttrVal) {
+		Pair<String,String> valPair = null;
+		if (firstAttrVal.compareTo(secAttrVal) > 0) {
+			valPair = new Pair<String,String>(firstAttrVal, secAttrVal);
+		} else {
+			valPair = new Pair<String,String>(secAttrVal, firstAttrVal);
+		}
+		return valPair;
+	}
+	
+	/**
+	 * @param first
+	 * @param second
+	 * @return
+	 * @throws IOException 
+	 */
+	public double findDistance(String[] firstRec, String[] secondRec, int fieldOrd ) throws IOException {
+		this.fieldOrd = fieldOrd;
+		return findDistance(secondRec[fieldOrd], secondRec[fieldOrd]);
+	}	
 	
 	/**
 	 * @param first
@@ -158,9 +214,21 @@ public class InterRecordDistance implements Serializable {
 	private double categoricalDistance(RichAttribute richAttr, AttributeDistance attrDist) {
 		double dist = 0;
 		if (attrDist.getAlgorithm().equals("cardinality")) {
+			//cardinality
 			dist = firstItem.equals(secondItem) ? 0 : Math.sqrt(2) / richAttr.getCardinality().size();
-		} else {
-			dist = firstItem.equals(secondItem) ? 0 : 1;
+		} else if (attrDist.getAlgorithm().equals("valueDiffMetric")) {
+			//value difference metric
+			Pair<String,String> valPair = distWithAttrVAluesSorted(firstItem, secondItem);
+			dist = valueDiffMetricDist.get(fieldOrd).get(valPair);
+		}else {
+			//default equality or inclusion based
+			if (categoricalSet) {
+				List<String> firstList = BasicUtils.toList(firstItem.split(subFieldDelim));
+				List<String> secondList = BasicUtils.toList(secondItem.split(subFieldDelim));
+				dist = BasicUtils.listIncluded(firstList, secondList) ? 0 : 1;
+			}else {
+				dist = firstItem.equals(secondItem) ? 0 : 1;
+			}
 		}
 		return dist;
 	}
