@@ -1292,4 +1292,16 @@ public class BasicUtils {
         return AVERAGE_RADIUS_OF_EARTH * c;
 
     }    	
+    
+    /**
+     * @param obj
+     * @return
+     */
+    public static <T> int positiveHashCode(T obj) {
+    	int hashCode = obj.hashCode();
+    	if (hashCode < 0)
+    		hashCode = -hashCode;
+    	return hashCode;
+    }
+    
  }
