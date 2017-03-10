@@ -18,6 +18,8 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,6 +35,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.distance.AttributeDistanceSchema;
+import org.chombo.distance.InterRecordDistance;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.Tuple;
@@ -170,11 +174,24 @@ public class RecordSimilarity extends Configured implements Tool {
 	* @author pranab
   	*
   	*/
-	public static class SimilarityReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
+	public static class SimilarityReducer extends Reducer<Tuple, Text, NullWritable, Text> {
  		protected Text outVal = new Text();
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;
 		private int outputPrecision;
+		private InterRecordDistance recDistance;
+        private int idOrdinal;
+        private String fieldDelimRegex;
+        private String subFieldDelim;
+        private int distThreshold;
+        private List<String> valueList = new ArrayList<String>();
+        private boolean inFirstBucket;
+        private int firstBucketSize;
+        private int secondBucketSize;
+        private String firstId;
+        private String  secondId;
+        private int dist;
+        private boolean outputRecord;
 
 		
 		/* (non-Javadoc)
@@ -184,14 +201,98 @@ public class RecordSimilarity extends Configured implements Tool {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
         	outputPrecision = config.getInt("cacd.output.precision", 3);
+        	
+        	//inter record distance finer
+        	String shemaPath = Utility.assertStringConfigParam(config, "resi.schema.path", "missing shema file path");
+        	GenericAttributeSchema schema = BasicUtils.getGenericAttributeSchema(shemaPath);
+        	String distSchemaPath = Utility.assertStringConfigParam(config, "resi.dist.schema.path", "missing distance shema file path");
+        	AttributeDistanceSchema distSchema = BasicUtils.getDistanceSchema(distSchemaPath);
+        	recDistance = new InterRecordDistance(schema,distSchema,fieldDelim);
+        	
+            idOrdinal = schema.getIdField().getOrdinal();
+        	int scale = config.getInt("resi.distance.scale", 1000);
+        	recDistance.withScale(scale);
+        	subFieldDelim = config.get("sts.sub.field.delim.regex", "::");
+        	
+        	//distance threshold for output
+        	distThreshold = config.getInt("sts.dist.threshold", scale);
+        	
+        	//output whole record
+        	outputRecord =  config.getBoolean("sts.output.record", false);     
 		}
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
-		protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
+		protected void reduce(Tuple key, Iterable<Text> values, Context context)
 				throws IOException, InterruptedException {
+        	valueList.clear();
+        	inFirstBucket = true;
+        	firstBucketSize = secondBucketSize = 0;
+        	int secondPart = key.getInt(1);
+        	if (secondPart/1000 == secondPart%1000){
+        		//same hash bucket
+	        	for (Text value : values){
+	        		String valSt = value.toString();
+	        		valueList.add(valSt.substring(1));
+	        	}
+	        	firstBucketSize = secondBucketSize = valueList.size();
+	        	for (int i = 0;  i < valueList.size();  ++i){
+	        		String first = valueList.get(i);
+	        		firstId =  first.split(fieldDelimRegex)[idOrdinal];
+	        		for (int j = i+1;  j < valueList.size();  ++j) {
+	            		String second = valueList.get(j);
+	            		secondId =  second.split(fieldDelimRegex)[idOrdinal];
+	            		if (!firstId.equals(secondId)){
+		        			dist  = recDistance.findScaledDistance(first, second);
+		        			if (dist <= distThreshold) {
+		        				outVal.set(createValueField(first, first));
+		        				context.write(NullWritable.get(), outVal);
+		        			}
+	            		} 
+	   				}
+	        	}
+        	} else {
+        		//different hash bucket
+	        	for (Text value : values){
+	        		String valSt = value.toString();
+	        		if (valSt.startsWith("0")) {
+	        			valueList.add(valSt.substring(1));
+	        		} else {
+	        			if (inFirstBucket) {
+	        				firstBucketSize = valueList.size();
+	        				inFirstBucket = false;
+	        			}
+	        			++secondBucketSize;
+	        			String second = valSt.substring(1);
+	            		secondId =  second.split(fieldDelimRegex)[idOrdinal];
+	            		for (String first : valueList){
+	                		firstId =  first.split(fieldDelimRegex)[idOrdinal];
+		        			dist  = recDistance.findScaledDistance(first, second);
+		        			if (dist <= distThreshold) {
+		        				outVal.set(createValueField(first, second));
+		        			}
+	            		}
+	        		}
+	        	}
+        	}
 		}	
+		
+        /**
+         * generates output to emit
+         * @return
+         */
+        private String createValueField(String first, String second) {
+        	stBld.delete(0, stBld.length());
+        	stBld.append(firstId).append(fieldDelim).append(secondId).append(fieldDelim);
+        	if (outputRecord) {
+        		stBld.append(fieldDelim).append(first);
+        		stBld.append(fieldDelim).append(second);
+        	}
+        	stBld.append(dist);
+        	return stBld.toString();
+        }
+		
 		
 	}	
 	
