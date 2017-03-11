@@ -223,12 +223,20 @@ public class RecordSimilarity extends Configured implements Tool {
         	recDistance.withScale(scale);
         	
         	//faceted fields
-        	String facetedFieldValues =  config.get("sts.faceted.field.ordinal");
+        	String facetedFieldValues =  config.get("resi.faceted.field.ordinal");
         	if (!StringUtils.isBlank(facetedFieldValues)) {
         		int[] facetedFields = Utility.intArrayFromString(facetedFieldValues);
         		recDistance.withFacetedFields(facetedFields);
         	}
+        	
+        	//double range
+        	boolean doubleRange = config.getBoolean("resi.double.range", false);
+        	recDistance.withDoubleRange(doubleRange);
 
+        	//categorical set
+        	boolean categoricalSet = config.getBoolean("resi.categorical.set", false);
+        	recDistance.withCategoricalSet(categoricalSet);
+        	
         	subFieldDelim = config.get("sts.sub.field.delim.regex", "::");
         	
         	//distance threshold for output
