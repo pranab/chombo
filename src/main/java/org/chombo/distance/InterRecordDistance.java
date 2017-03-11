@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.chombo.util.Attribute;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.GenericAttributeSchema;
@@ -55,6 +56,7 @@ public class InterRecordDistance implements Serializable {
 	protected Map<Integer, Map<Pair<String, String>, Double>> valueDiffMetricDist = 
 			new HashMap<Integer, Map<Pair<String, String>, Double>>();
 	private int scale = 1;
+	private int[] facetedFields;
 	
 	/**
 	 * @param attrSchema
@@ -78,6 +80,15 @@ public class InterRecordDistance implements Serializable {
 	}
 	
 	/**
+	 * @param facetedFields
+	 * @return
+	 */
+	public InterRecordDistance withFacetedFields(int[] facetedFields) {
+		this.facetedFields = facetedFields;
+		return this;
+	}
+	
+	/**
 	 * @param subFieldDelim
 	 * @return
 	 */
@@ -95,6 +106,10 @@ public class InterRecordDistance implements Serializable {
 		return this;
 	}
 	
+	/**
+	 * @param categoricalSet
+	 * @return
+	 */
 	public InterRecordDistance withCategoricalSet(boolean categoricalSet) {
 		this.categoricalSet = categoricalSet;
 		return this;
@@ -124,6 +139,11 @@ public class InterRecordDistance implements Serializable {
 		return this;
 	}
 	
+	/**
+	 * @param firstAttrVal
+	 * @param secAttrVal
+	 * @return
+	 */
 	private Pair<String,String> distWithAttrVAluesSorted(String firstAttrVal, String secAttrVal) {
 		Pair<String,String> valPair = null;
 		if (firstAttrVal.compareTo(secAttrVal) > 0) {
@@ -171,10 +191,19 @@ public class InterRecordDistance implements Serializable {
 		
 		//attribute pair distances
 		for (Attribute attr : attrSchema.getAttributes()) {
+			ordinal = attr.getOrdinal();
+			//skip if ID
 			if (attr.isId())
 				continue;
 			
-			ordinal = attr.getOrdinal();
+			//skip if not faceted field
+			if (null != facetedFields) {
+				//if faceted set but field not included, then skip it
+				if (!ArrayUtils.contains(facetedFields, ordinal)) {
+					continue;
+				}
+			}
+			
 			AttributeDistance attrDist = attrDistSchema.findAttributeDistanceByOrdinal(ordinal);
 			firstItem = firstItems[ordinal];
 			secondItem = secondItems[ordinal];

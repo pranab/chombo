@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -47,6 +48,7 @@ import org.chombo.util.Utility;
  *
  */
 public class RecordSimilarity extends Configured implements Tool {
+	private static final int hashMultiplier = 1000;
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -95,8 +97,10 @@ public class RecordSimilarity extends Configured implements Tool {
    	 	private boolean interSetMatching;
    	 	private  boolean  isBaseSetSplit;
    	 	private GenericAttributeSchema schema;
-   	 	private static final int hashMultiplier = 1000;
         
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
@@ -164,6 +168,9 @@ public class RecordSimilarity extends Configured implements Tool {
             
         }  
         
+        /**
+         * 
+         */
         private void initKeyVal() {
 			outKey.initialize();
 			outVal.initialize();
@@ -174,7 +181,7 @@ public class RecordSimilarity extends Configured implements Tool {
 	* @author pranab
   	*
   	*/
-	public static class SimilarityReducer extends Reducer<Tuple, Text, NullWritable, Text> {
+	public static class SimilarityReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
  		protected Text outVal = new Text();
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;
@@ -210,8 +217,18 @@ public class RecordSimilarity extends Configured implements Tool {
         	recDistance = new InterRecordDistance(schema,distSchema,fieldDelim);
         	
             idOrdinal = schema.getIdField().getOrdinal();
+            
+            //scale
         	int scale = config.getInt("resi.distance.scale", 1000);
         	recDistance.withScale(scale);
+        	
+        	//faceted fields
+        	String facetedFieldValues =  config.get("sts.faceted.field.ordinal");
+        	if (!StringUtils.isBlank(facetedFieldValues)) {
+        		int[] facetedFields = Utility.intArrayFromString(facetedFieldValues);
+        		recDistance.withFacetedFields(facetedFields);
+        	}
+
         	subFieldDelim = config.get("sts.sub.field.delim.regex", "::");
         	
         	//distance threshold for output
@@ -224,17 +241,16 @@ public class RecordSimilarity extends Configured implements Tool {
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
-		protected void reduce(Tuple key, Iterable<Text> values, Context context)
+		protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
 				throws IOException, InterruptedException {
         	valueList.clear();
         	inFirstBucket = true;
         	firstBucketSize = secondBucketSize = 0;
         	int secondPart = key.getInt(1);
-        	if (secondPart/1000 == secondPart%1000){
+        	if (secondPart / hashMultiplier == secondPart % hashMultiplier){
         		//same hash bucket
-	        	for (Text value : values){
-	        		String valSt = value.toString();
-	        		valueList.add(valSt.substring(1));
+	        	for (Tuple value : values){
+	        		valueList.add(value.getString(1));
 	        	}
 	        	firstBucketSize = secondBucketSize = valueList.size();
 	        	for (int i = 0;  i < valueList.size();  ++i){
@@ -254,17 +270,16 @@ public class RecordSimilarity extends Configured implements Tool {
 	        	}
         	} else {
         		//different hash bucket
-	        	for (Text value : values){
-	        		String valSt = value.toString();
-	        		if (valSt.startsWith("0")) {
-	        			valueList.add(valSt.substring(1));
+	        	for (Tuple value : values){
+	        		if (value.getInt(0) == 0) {
+	        			valueList.add(value.getString(1));
 	        		} else {
 	        			if (inFirstBucket) {
 	        				firstBucketSize = valueList.size();
 	        				inFirstBucket = false;
 	        			}
 	        			++secondBucketSize;
-	        			String second = valSt.substring(1);
+	        			String second = value.getString(1);
 	            		secondId =  second.split(fieldDelimRegex)[idOrdinal];
 	            		for (String first : valueList){
 	                		firstId =  first.split(fieldDelimRegex)[idOrdinal];
