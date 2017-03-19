@@ -116,6 +116,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	val array = new Array[Any](size)
 	var cursor:Int = 0
 	var sortFields:Option[Array[Int]] = None
+	var secondaryKeySize = 1
 	
 	/**
 	 * @param size
@@ -191,6 +192,11 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 */
 	def withSortFields(sortFields : Array[Int]) : Record = {
 	  this.sortFields = Some(sortFields)
+	  this
+	}
+	
+	def withSecondaryKeySize(secondaryKeySize : Int) : Record = {
+	  this.secondaryKeySize = secondaryKeySize
 	  this
 	}
 
@@ -483,6 +489,17 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	override def hashCode() : Int = {
 	  var hashCode = 0
 	  array.foreach(a => hashCode += a.hashCode)
+	  hashCode
+	}
+	
+	/**
+	 * @return
+	 */
+	def baseHashCode() : Int = {
+	  var hashCode = 0
+	  for (i <- 0 to (size - 1 - secondaryKeySize)) {
+	    hashCode += array(i).hashCode
+	  }
 	  hashCode
 	}
 	
