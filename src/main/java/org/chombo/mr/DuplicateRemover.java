@@ -103,12 +103,24 @@ public class DuplicateRemover extends Configured implements Tool{
      *
      */
     public static class DuplicateReducer extends Reducer<Text, IntWritable, NullWritable, Text> {
+    	private String fieldDelim;
+    	private int count;
+    	private static String OUT_ALL = "all";
+    	private static String OUT_UNIQUE = "unique";
+    	private static String OUT_DUP = "duplicate";
+    	private boolean dupOnly;
+    	private boolean uniqueOnly;
+    	
  
     	/* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
+        	fieldDelim = config.get("field.delim", ",");
+        	String outputMode = config.get("dum.output.mode", "all");
+        	dupOnly = outputMode.equals(OUT_DUP);
+        	uniqueOnly = outputMode.equals(OUT_UNIQUE);
         }
    	
         /* (non-Javadoc)
@@ -116,7 +128,17 @@ public class DuplicateRemover extends Configured implements Tool{
          */
         protected void reduce(Text key, Iterable<IntWritable> values, Context context)
         throws IOException, InterruptedException {
-			context.write(NullWritable.get(), key);
+        	if (dupOnly || uniqueOnly) {
+        		count = 0;
+            	for(IntWritable value : values) {
+            		++count;
+            	}
+            	if (uniqueOnly && count == 1 || dupOnly && count > 1){
+            		context.write(NullWritable.get(), key);
+            	}
+        	} else {
+        		context.write(NullWritable.get(), key);
+        	}
         }
     }
     
