@@ -199,6 +199,7 @@ public class RecordSimilarity extends Configured implements Tool {
         private String  secondId;
         private int dist;
         private boolean outputRecord;
+        private boolean outputIdFirst;
 
 		
 		/* (non-Javadoc)
@@ -228,6 +229,10 @@ public class RecordSimilarity extends Configured implements Tool {
         		int[] facetedFields = Utility.intArrayFromString(facetedFieldValues);
         		recDistance.withFacetedFields(facetedFields);
         	}
+
+        	//output ID first
+        	outputIdFirst =   config.getBoolean("sts.output.id.first", true);      	
+        	
         	
         	//double range
         	boolean doubleRange = config.getBoolean("resi.double.range", false);
@@ -307,7 +312,9 @@ public class RecordSimilarity extends Configured implements Tool {
          */
         private String createValueField(String first, String second) {
         	stBld.delete(0, stBld.length());
-        	stBld.append(firstId).append(fieldDelim).append(secondId).append(fieldDelim);
+        	if (outputIdFirst) {
+        		stBld.append(firstId).append(fieldDelim).append(secondId).append(fieldDelim);
+        	}
         	if (outputRecord) {
         		stBld.append(fieldDelim).append(first);
         		stBld.append(fieldDelim).append(second);
