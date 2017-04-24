@@ -19,11 +19,13 @@
 package org.chombo.util;
 
 /**
+ * A range that can be expanded
  * @author pranab
  *
  */
-public class IntRange extends Pair<Integer, Integer>{
-	private boolean isPoint;
+public class IntRange  extends Pair<Integer, Integer> implements Domain {
+	private boolean isPoint; 
+	private String delim;
 	
 	/**
 	 * @param stVal
@@ -39,6 +41,7 @@ public class IntRange extends Pair<Integer, Integer>{
 			left = Integer.parseInt(items[0]);
 			right = Integer.parseInt(items[1]);
 		}
+		this.delim = delim;
 	}
 	
 	/**
@@ -52,18 +55,38 @@ public class IntRange extends Pair<Integer, Integer>{
 	
 	/**
 	 * @param value
+	 */
+	public void add(String value) {
+		int iValue = Integer.parseInt(value);
+		add(iValue);
+	}
+	
+	/**
+	 * @param value
 	 * @return
 	 */
 	private boolean modify(int value) {
 		boolean modified = true;
 		if (value < left) {
 			left = value;
-		} else if (value > left) {
+		} else if (value > right) {
 			right = value;
 		} else {
 			modified = false;
 		}
 		return modified;
 	}
+
+	@Override
+	public boolean isContained(String value) {
+		int iValue = Integer.parseInt(value);
+		return iValue >= left && iValue <= right;
+	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		return "" + left + delim + right;
+	}
 }

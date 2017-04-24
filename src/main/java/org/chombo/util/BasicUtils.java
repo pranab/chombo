@@ -857,6 +857,44 @@ public class BasicUtils {
     				generateSublists(list, biggerSubList, i, subLists, maxSubListSize);
     			}
     	}    	
+    } 
+
+    /**
+     * @param values
+     * @return
+     */
+    public static <T> List<T> generateUniqueList(List<T> values) {
+    	List<T> list = new ArrayList<T>();
+    	for (T item : values) {
+    		if (!list.contains(item)) {
+    			list.add(item);
+    		}
+    	}
+    	return list;
+    }
+    
+    /**
+     * @param values
+     * @return
+     */
+    public static <T> List<T> generateUniqueList(T[] values) {
+    	List<T> list = new ArrayList<T>();
+    	for (T item : values) {
+    		if (!list.contains(item)) {
+    			list.add(item);
+    		}
+    	}
+    	return list;
+    }
+    
+    /**
+     * @param list
+     * @param value
+     */
+    public static <T> void addToUniqueList(List<T> list, T value) {
+		if (!list.contains(value)) {
+			list.add(value);
+		}
     }
     
     /**
@@ -1159,6 +1197,18 @@ public class BasicUtils {
     	return set;
     }
     
+    /**
+     * @param arr
+     * @return
+     */
+    public static <T> Set<T> generateSetFromList(T[] array) {
+    	Set<T> set = new HashSet<T>();
+    	for (T obj : array) {
+    		set.add(obj);
+    	}
+    	return set;
+    }
+
     /**
      * @param conf
      * @param pathConfig
