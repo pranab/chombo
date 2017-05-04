@@ -1278,6 +1278,46 @@ public class Utility {
 	}	
 
 	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static int[] optionalIntArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	   	int[] data = null;
+	   	String stParamValue =  config.get(param);
+	   	if (null != stParamValue) {
+			String[] items = stParamValue.split(delimRegex);
+			data = new int[items.length];
+			for (int i = 0; i < items.length; ++i) {
+				data[i] = Integer.parseInt(items[i]);
+			}
+	   	}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static double[] optionalDoubleArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	   	double[] data = null;
+	   	String stParamValue =  config.get(param);
+	   	if (null != stParamValue) {
+			String[] items = stParamValue.split(delimRegex);
+			data = new double[items.length];
+			for (int i = 0; i < items.length; ++i) {
+				data[i] = Double.parseDouble(items[i]);
+			}
+	   	}
+    	return data;
+	}
+	
+	/**
 	 * @param list
 	 * @return
 	 */

@@ -1240,6 +1240,17 @@ public class BasicUtils {
 	 * @return
 	 * @throws IOException
 	 */
+	public static RichAttributeSchema getRichAttributeSchema(InputStream fs) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
+        return schema;
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
 	public static GenericAttributeSchema getGenericAttributeSchema(String path) throws IOException {
         InputStream fs = new FileInputStream(path);
         ObjectMapper mapper = new ObjectMapper();
@@ -1252,6 +1263,17 @@ public class BasicUtils {
 	 * @return
 	 * @throws IOException
 	 */
+	public static GenericAttributeSchema getGenericAttributeSchema(InputStream fs) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        GenericAttributeSchema schema = mapper.readValue(fs, GenericAttributeSchema.class);
+        return schema;
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
 	public static FeatureSchema getFeatureSchema(String path) throws IOException {
         InputStream fs = new FileInputStream(path);
         ObjectMapper mapper = new ObjectMapper();
@@ -1259,6 +1281,17 @@ public class BasicUtils {
         return schema;
 	}
 	
+	/**
+	 * @param fs
+	 * @return
+	 * @throws IOException
+	 */
+	public static FeatureSchema getFeatureSchema(InputStream fs) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        FeatureSchema schema = mapper.readValue(fs, FeatureSchema.class);
+        return schema;
+	}
+
 	/**
 	 * @param path
 	 * @return
@@ -1276,8 +1309,30 @@ public class BasicUtils {
 	 * @return
 	 * @throws IOException
 	 */
+	public static ProcessorAttributeSchema getProcessingSchema(InputStream fs) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        ProcessorAttributeSchema schema = mapper.readValue(fs, ProcessorAttributeSchema.class);
+        return schema;
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
 	public static AttributeDistanceSchema getDistanceSchema(String path) throws IOException {
         InputStream fs = new FileInputStream(path);
+        ObjectMapper mapper = new ObjectMapper();
+        AttributeDistanceSchema schema = mapper.readValue(fs, AttributeDistanceSchema.class);
+        return schema;
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static AttributeDistanceSchema getDistanceSchema(InputStream fs) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         AttributeDistanceSchema schema = mapper.readValue(fs, AttributeDistanceSchema.class);
         return schema;
