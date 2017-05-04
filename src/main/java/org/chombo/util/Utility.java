@@ -1069,12 +1069,8 @@ public class Utility {
 	 */
 	public static int[] assertIntArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
 	   	int[] data = null;
-	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
-		String[] items = stParamValue.split(delimRegex);
-		data = new int[items.length];
-		for (int i = 0; i < items.length; ++i) {
-			data[i] = Integer.parseInt(items[i]);
-		}
+	   	String stParamValue =  assertStringConfigParam(config, param,  msg); 
+	   	data = intArrayFromString(stParamValue, delimRegex);
     	return data;
 	}
 	
@@ -1100,11 +1096,7 @@ public class Utility {
 	public static double[] assertDoubleArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
 	   	double[] data = null;
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
-		String[] items = stParamValue.split(delimRegex);
-		data = new double[items.length];
-		for (int i = 0; i < items.length; ++i) {
-			data[i] = Double.parseDouble(items[i]);
-		}
+	   	data = doubleArrayFromString(stParamValue, delimRegex);
     	return data;
 	}
 
@@ -1284,15 +1276,27 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
-	public static int[] optionalIntArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	public static String[] optionalStringArrayConfigParam(Configuration config, String param, String delimRegex) {
+	   	String[] data = null;
+	   	String stParamValue =  config.get(param);
+	   	if (null != stParamValue) {
+		   	data = stParamValue.split(delimRegex);
+	   	}
+    	return data;
+	}
+	
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param msg
+	 * @return
+	 */
+	public static int[] optionalIntArrayConfigParam(Configuration config, String param, String delimRegex) {
 	   	int[] data = null;
 	   	String stParamValue =  config.get(param);
 	   	if (null != stParamValue) {
-			String[] items = stParamValue.split(delimRegex);
-			data = new int[items.length];
-			for (int i = 0; i < items.length; ++i) {
-				data[i] = Integer.parseInt(items[i]);
-			}
+		   	data = intArrayFromString(stParamValue, delimRegex);
 	   	}
     	return data;
 	}
@@ -1304,15 +1308,11 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
-	public static double[] optionalDoubleArrayConfigParam(Configuration config, String param, String delimRegex, String msg) {
+	public static double[] optionalDoubleArrayConfigParam(Configuration config, String param, String delimRegex) {
 	   	double[] data = null;
 	   	String stParamValue =  config.get(param);
 	   	if (null != stParamValue) {
-			String[] items = stParamValue.split(delimRegex);
-			data = new double[items.length];
-			for (int i = 0; i < items.length; ++i) {
-				data[i] = Double.parseDouble(items[i]);
-			}
+		   	data = doubleArrayFromString(stParamValue, delimRegex);
 	   	}
     	return data;
 	}
