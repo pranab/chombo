@@ -168,6 +168,10 @@ public class Normalizer extends Configured implements Tool {
         private int precision;
         private int ordinal;
 		private StringBuilder stBld = new StringBuilder();
+		private static final String NORM_MIN_MAX = "minmax";
+		private static final String NORM_ZSCORE = "zscore";
+		private static final String NORM_CENTER = "center";
+		private static final String NORM_UNIT_SUM = "unitSum";
 		
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -258,9 +262,13 @@ public class Normalizer extends Configured implements Tool {
     		
     		//normalize
     		normalizedValue = 0;
-    		if (normalizingStrategy.equals("minmax")) {
+    		if (normalizingStrategy.equals(NORM_MIN_MAX)) {
     			normalizedValue = ((value - stats.min) * stats.scale) / stats.range;
-    		} else if (normalizingStrategy.equals("zscore")) {
+    		} else if (normalizingStrategy.equals(NORM_CENTER)) {
+    			normalizedValue = (value - stats.mean) * stats.scale;
+    		} else if (normalizingStrategy.equals(NORM_UNIT_SUM)) {
+    			normalizedValue = (value / stats.sum) * stats.scale;
+    		} else if (normalizingStrategy.equals(NORM_ZSCORE)) {
     			if (stats.gotTransformer()) {
     				throw new IllegalStateException("can not apply zscore normalizer when data is transformed");
     			}
