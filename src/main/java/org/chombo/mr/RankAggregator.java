@@ -51,6 +51,7 @@ public class RankAggregator extends Configured implements Tool {
     private static final String AGGR_AVG = "average";
     private static final String AGGR_WTD_AVG = "weightedAverage";
     private static final String AGGR_MED = "median";
+    private static final String AGGR_MAX = "max";
     private static final String AGGR_PROD = "product";
 
 	@Override
@@ -96,6 +97,7 @@ public class RankAggregator extends Configured implements Tool {
         private double listWeight;
         private Map<String, Double> listWeights;
         private String aggregationStrategy;
+        private static final int  SPLIT_PREFIX_LEN = 4;
    
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -109,9 +111,9 @@ public class RankAggregator extends Configured implements Tool {
         	aggregationStrategy = config.get("raa.rank.agg.strategy", AGGR_PROD);
         	if (aggregationStrategy.equals(AGGR_WTD_AVG)) {
         		//map 4 alpha numeric split prefix and weight
-        		listWeights = Utility.OptionalStringDoubleMapConfigParam(config, "raa.list.weightl", 
-           			Utility.configDelim, Utility.configSubFieldDelim);
-        		String splitPrefix = ((FileSplit)context.getInputSplit()).getPath().getName().substring(0, 4);
+        		listWeights = Utility.assertStringDoubleMapConfigParam(config, "raa.list.weightl", 
+           			Utility.configDelim, Utility.configSubFieldDelim, "missing split prefix weight");
+        		String splitPrefix = ((FileSplit)context.getInputSplit()).getPath().getName().substring(0, SPLIT_PREFIX_LEN);
         		listWeight = listWeights.get(splitPrefix);
         	}
         }        
@@ -123,8 +125,8 @@ public class RankAggregator extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex, -1);
-            Utility.createStringTuple(items, idOrdinals, outKey);
             
+            Utility.createStringTuple(items, idOrdinals, outKey);
             outVal.initialize();
             outVal.add(Double.parseDouble(items[rankOrdinal]));
             if (aggregationStrategy.equals(AGGR_WTD_AVG)) {
@@ -204,6 +206,10 @@ public class RankAggregator extends Configured implements Tool {
 	    			} else {
 	    				aggrRank = (ranks.get(mid -1) + ranks.get(mid)) / 2 ;
 	    			}
+	    		} else if (aggregationStrategy.equals(AGGR_MAX)) {
+	    			//max
+	    			Collections.sort(ranks);
+	    			aggrRank = ranks.get(ranks.size() - 1);
 	    		} else if (aggregationStrategy.equals(AGGR_PROD)) {
 	    			//product
 	    			aggr = 1.0;
