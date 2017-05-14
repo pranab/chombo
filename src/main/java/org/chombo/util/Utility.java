@@ -1128,6 +1128,26 @@ public class Utility {
 	 * @param msg
 	 * @return
 	 */
+	public static Map<String, Double> assertStringDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim, String msg) {
+	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
+		String[] items = stParamValue.split(delimRegex);
+		Map<String, Double>  data = new HashMap<String, Double>() ;
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			data.put(parts[0], Double.parseDouble(parts[1]));
+		}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @return
+	 */
 	public static Map<Integer, Integer> assertIntIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg) {
 		return assertIntegerIntegerMapConfigParam(config, param, delimRegex, subFieldDelim, msg, true);
@@ -1313,6 +1333,28 @@ public class Utility {
 	   	String stParamValue =  config.get(param);
 	   	if (null != stParamValue) {
 		   	data = doubleArrayFromString(stParamValue, delimRegex);
+	   	}
+    	return data;
+	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static Map<String, Double> OptionalStringDoubleMapConfigParam(Configuration config, String param, String delimRegex, 
+			String subFieldDelim) {
+		Map<String, Double>  data = null;
+	   	String stParamValue =  config.get(param); 
+	   	if (null != stParamValue) {
+			String[] items = stParamValue.split(delimRegex);
+			data = new HashMap<String, Double>() ;
+			for (String item :  items) {
+				String[] parts  = item.split(subFieldDelim);
+				data.put(parts[0], Double.parseDouble(parts[1]));
+			}
 	   	}
     	return data;
 	}
