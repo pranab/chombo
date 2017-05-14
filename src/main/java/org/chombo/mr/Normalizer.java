@@ -36,6 +36,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.Triplet;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -187,7 +188,7 @@ public class Normalizer extends Configured implements Tool {
         	getAttributeProperties(numAttributes,attributeProperties, config);
         	
         	precision = config.getInt("nor.floating.precision", 3);
-        	normalizingStrategy = config.get("nor.normalizing.strategy", "minmax");
+        	normalizingStrategy = config.get("nor.normalizing.strategy", NORM_MIN_MAX);
         	outlierTruncationLevel = config.getFloat("nor.outlier.truncation.level", (float)-1.0);
         	for (int ord : attributeProperties.keySet()) {
         		Triplet<String, Integer, String> attrProp = attributeProperties.get(ord);
@@ -302,7 +303,7 @@ public class Normalizer extends Configured implements Tool {
     			long lValue = (long)normalizedValue;
     			value = "" + lValue;
     		} else if (dataType.equals("double")) {
-    			value = Utility.formatDouble(normalizedValue, precision);
+    			value = BasicUtils.formatDouble(normalizedValue, precision);
     		} else {
     			throw new IllegalStateException("invalid numeric data types");
     		}

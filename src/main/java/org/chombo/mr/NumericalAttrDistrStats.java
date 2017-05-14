@@ -92,13 +92,27 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         private int binIndex;
         private static final int ONE = 1;
         private GenericAttributeSchema schema;
+        private int[] idOrdinals;
+        private boolean needBinning;
+        private int binOrdinal;
+        private int binCount;
+        private int binCountOrdinal;
                
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	needBinning = config.getBoolean("nads.need.binning", true);
         	attrBinWidths = Utility.assertIntegerDoubleMapConfigParam(config, "nads.attr.bucket.width.list", Utility.configDelim, 
         			Utility.configSubFieldDelim, "missing attrubutes ordinals and bucket widths");
         	conditionedAttr = config.getInt("nads.conditioned.attr",-1);
+        	idOrdinals = Utility.optionalIntArrayConfigParam(config, "nads.id.field.ordinals", Utility.configDelim);
+        	if (!needBinning) {
+        		binOrdinal = Utility.assertIntConfigParam(config, "nads.bin.ordinal", "missing bin ordinal");
+        		binCountOrdinal = Utility.assertIntConfigParam(config, "nads.bin.countordinal", "missing bin ordinal");
+        	}
         	
         	//validate attributes
         	schema = Utility.getGenericAttributeSchema(config, "nads.schema.file.path");
@@ -122,22 +136,29 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         	for (int attr : attrBinWidths.keySet()) {
             	outKey.initialize();
             	outVal.initialize();
-            	outKey.add(attr, "0");
-            	fieldVal = Double.parseDouble(items[attr]);
-            	binIndex = (int)(fieldVal / attrBinWidths.get(attr));
-            	outVal.add(binIndex, ONE);
-            	context.write(outKey, outVal);
-
-            	//conditioned on another attribute
-            	if (conditionedAttr >= 0) {
-                	outKey.initialize();
-                	outVal.initialize();
-                	outKey.add(attr, items[conditionedAttr]);
-                	fieldVal = Double.parseDouble(items[attr]);
-                	binIndex = (int)(fieldVal / attrBinWidths.get(attr));
-                	outVal.add(binIndex, ONE);
-                	context.write(outKey, outVal);
+            	
+            	if (null != idOrdinals) {
+            		outKey.addFromArray(items, idOrdinals);
             	}
+            	
+            	if (needBinning) {
+            		outKey.add(attr);
+                	if (conditionedAttr >= 0) {
+                		//conditioned on another attribute
+                		outKey.add(items[conditionedAttr]);
+                	}   
+                	
+            		//data needs binning
+	            	fieldVal = Double.parseDouble(items[attr]);
+	            	binIndex = (int)(fieldVal / attrBinWidths.get(attr));
+	            	outVal.add(binIndex, ONE);
+            	} else {
+            		//data already has bin index and count
+            		binIndex = Integer.parseInt(items[binOrdinal]);
+            		binCount = Integer.parseInt(items[binCountOrdinal]);
+	            	outVal.add(binIndex, binCount);
+            	}
+            	context.write(outKey, outVal);
         	}
         }
  	}
@@ -193,6 +214,8 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         private Map<Integer, Double> attrBinWidths = new HashMap<Integer, Double>();
     	private int conditionedAttr;
         private GenericAttributeSchema schema;
+        private boolean outputNormalizedHist;
+        private int outputPrecision;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -213,6 +236,10 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
             if (null != schema) {
             	
             }
+            
+            outputPrecision = config.getInt("nads.output.precision", 3);
+            histogram.withOutputPrecision(outputPrecision).withFieldDelim(fieldDelim);
+            outputNormalizedHist = config.getBoolean("nads.output.normalized.hist", true);
 		}
 		
 		/* (non-Javadoc)
@@ -241,13 +268,16 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 		 */
 		protected  void emitOutput(Tuple key,  Context context) throws IOException, InterruptedException {
 			stBld.delete(0, stBld.length());
-			stBld.append(key.getInt(0)).append(fieldDelim);
-			if (conditionedAttr != -1) {
-				stBld.append(key.getString(1)).append(fieldDelim);
+			if (!fieldDelim.equals(",")) {
+				key.setDelim(fieldDelim);
 			}
-			Map<Double, Double> distr = histogram.getDistribution();
-			for (Double  value : distr.keySet() ) {
-				stBld.append(value).append(fieldDelim).append(distr.get(value)).append(fieldDelim);
+			stBld.append(key.toString());
+			if (outputNormalizedHist) {
+				//normalized
+				stBld.append(histogram.normalizedBinsToString());
+			} else {
+				//raw
+				stBld.append(histogram.binsToString());
 			}
 			stBld.append(histogram.getEntropy()) ;
 			stBld.append(fieldDelim).append(histogram.getMode()) ;

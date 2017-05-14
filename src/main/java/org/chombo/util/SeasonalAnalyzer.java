@@ -32,6 +32,8 @@ public class SeasonalAnalyzer {
     private boolean timeStampInMili;
     private long timeZoneShiftSec;
     private List<Pair<Integer, Integer>> timeRanges;
+    private long secToYear;
+    private int year;
     
     public  static final String QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
     public static final String  QUARTER_HOUR_OF_WEEK_DAY = "quarterHourOfWeekDay";
@@ -47,6 +49,7 @@ public class SeasonalAnalyzer {
     public static final String  WEEK_END_DAY_OF_WEEK  = "weekEndDayOfWeek";
     public static final String  HOUR_RANGE_OF_WEEK_DAY  = "hourRangeOfWeekDay";
     public static final String  HOUR_RANGE_OF_WEEK_END_DAY  = "hourRangeOfWeekEndDay";
+    public static final String  WEEK_OF_YEAR = "weekOfYear";
     public static final String  MONTH_OF_YEAR = "monthOfYear";
     public static final String  ANY_TIME_RANGE = "anyTimeRange";
     
@@ -184,6 +187,8 @@ public class SeasonalAnalyzer {
     		}
     	}  else  if (seasonalCycleType.equals(MONTH_OF_YEAR)) {
     		monthOfYearCycleIndex(timeStamp);
+    	} else  if (seasonalCycleType.equals(WEEK_OF_YEAR)) {
+    		weekOfYearCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(ANY_TIME_RANGE)) {
     		cycleIndex = -1;
     		int indx = 0;
@@ -201,36 +206,49 @@ public class SeasonalAnalyzer {
     	return cycleIndex;
     }
 
+	/**
+	 * @param hourRanges
+	 */
 	public void setHourRanges(Map<Integer, Integer> hourRanges) {
 		this.hourRanges = hourRanges;
 	}
 
+	/**
+	 * @param timeRanges
+	 */
 	public void setTimeRanges(List<Pair<Integer, Integer>> timeRanges) {
 		this.timeRanges = timeRanges;
 	}
 
+	/**
+	 * @param timeStampInMili
+	 */
 	public void setTimeStampInMili(boolean timeStampInMili) {
 		this.timeStampInMili = timeStampInMili;
 	}
 
+	/**
+	 * @param timeZoneShiftHours
+	 */
 	public void setTimeZoneShiftHours(long timeZoneShiftHours) {
 		this.timeZoneShiftSec = timeZoneShiftHours * secInHour ;
 	}
 
+	/**
+	 * @return
+	 */
 	public long getParentCycleIndex() {
 		return parentCycleIndex;
 	}
     
+	/**
+	 * @param timeStamp
+	 */
 	private  void  monthOfYearCycleIndex(long timeStamp) {
-		long secToYear = 0;
-		int year = 1971;
-		for (; secToYear < timeStamp; ++year) {
-			secToYear += secInYear;
-			if (year % 4 == 0) {
-				secToYear += secInDay;
-			}
-		}
+		//go up to year beginning
+		secToYearBeginning(timeStamp);
 		
+		//month index
 		long remSec =  timeStamp - secToYear;
 		daysInMonth[1] = year % 4 == 0 ? 29 : 28; 
 		long secIntoYear = 0;
@@ -241,6 +259,50 @@ public class SeasonalAnalyzer {
 				break;
 			}
 		}
+		parentCycleIndex = 0;
 	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private  void  weekOfYearCycleIndex(long timeStamp) {
+		//go up to year beginning
+		secToYearBeginning(timeStamp);
+		
+		//week into beginning of year
+		long secToWeekYear = 0;
+		long week = secToYear / secInWeek;
+		long remainder = secToYear % secInWeek;
+		week += (remainder > 0 ? 1 : 0);
+		secToWeekYear = week * secInWeek;
+		
+		//week index
+		cycleIndex = 0;
+		for (; secToWeekYear < timeStamp; ++cycleIndex) {
+			secToWeekYear += secInWeek;
+		}
+		parentCycleIndex = 0;
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void  secToYearBeginning(long timeStamp) {
+		//go upto year
+		secToYear = 0;
+		year = 1971;
+		long secInCurYear = 0;
+		for (; secToYear < timeStamp; ++year) {
+			secToYear += secInYear;
+			secInCurYear = secInYear;
+			if (year % 4 == 0) {
+				secToYear += secInDay;
+				secInCurYear += secInDay;
+			}
+		}
+		
+		//back up to beginning of year
+		secToYear -= secInCurYear;
+	}	
 	
 }

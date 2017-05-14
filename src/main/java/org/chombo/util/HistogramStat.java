@@ -41,6 +41,7 @@ public class HistogramStat implements Serializable {
 	protected boolean extendedOutput;
 	protected int outputPrecision = 3;
 	private boolean debugOn = false;
+	private String fieldDelim = ",";
 	
 	/**
 	 * @param binWidth
@@ -107,6 +108,15 @@ public class HistogramStat implements Serializable {
 		return this;
 	}
 	
+	/**
+	 * @param outputPrecision
+	 * @return
+	 */
+	public HistogramStat withFieldDelim(String fieldDelim) {
+		this.fieldDelim = fieldDelim;
+		return this;
+	}
+
 	/**
 	 * @param value
 	 */
@@ -441,22 +451,36 @@ public class HistogramStat implements Serializable {
 		return stBld.substring(0, stBld.length() - 1);
 	}
 	
-	/**
-	 * @return
-	 */
-	private String binsToString() {
+	public String normalizedBinsToString() {
 		StringBuilder stBld = new StringBuilder();
-		final String delim = ",";
+		if (!normalized) {
+			this.getDistribution();
+		}
 		
 		//formatting
     	String formatter = "%." + outputPrecision + "f";
 
 		//distribution
-		stBld.append(binMap.size()).append(delim);
+		stBld.append(histogram.size()).append(fieldDelim);
+		for(double x : histogram.keySet()) {
+			double y = histogram.get(x);
+			stBld.append(BasicUtils.formatDouble(x, formatter)).append(fieldDelim).
+				append(BasicUtils.formatDouble(y, formatter)).append(fieldDelim);
+		}
+		return stBld.substring(0, stBld.length() - 1);
+	}
+	
+	/**
+	 * @return
+	 */
+	public String binsToString() {
+		StringBuilder stBld = new StringBuilder();
+
+		//distribution
+		stBld.append(binMap.size()).append(fieldDelim);
 		for(int x : binMap.keySet()) {
 			Bin y = binMap.get(x);
-			stBld.append(BasicUtils.formatDouble(x, formatter)).append(delim).
-				append(BasicUtils.formatDouble(y.count, formatter)).append(delim);
+			stBld.append(x).append(fieldDelim).append(y.count).append(fieldDelim);
 		}
 		return stBld.substring(0, stBld.length() - 1);
 	}

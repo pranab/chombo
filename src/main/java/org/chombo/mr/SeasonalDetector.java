@@ -39,6 +39,7 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
+ * Detects seasonality by building histogram based on specified type of sesonality
  * @author pranab
  *
  */
