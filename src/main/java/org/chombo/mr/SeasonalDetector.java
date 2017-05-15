@@ -211,11 +211,11 @@ public class SeasonalDetector  extends Configured implements Tool {
         }
 	}
 	
-	   /**
-  * @author pranab
-  *
-  */
- public static class  AggregateReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
+    /**
+    * @author pranab
+    *
+    */
+    public static class  AggregateReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
  		protected Text outVal = new Text();
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;

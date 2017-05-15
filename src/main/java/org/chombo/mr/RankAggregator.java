@@ -47,7 +47,6 @@ import org.chombo.util.Utility;
  *
  */
 public class RankAggregator extends Configured implements Tool {
-	//private static String configDelim = ",";
     private static final String AGGR_AVG = "average";
     private static final String AGGR_WTD_AVG = "weightedAverage";
     private static final String AGGR_MED = "median";

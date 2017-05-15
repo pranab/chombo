@@ -216,6 +216,18 @@ public class HistogramStat implements Serializable {
 		}
 		bin.addCount(count);
 	}
+	
+	/**
+	 * @return
+	 */
+	public int getMeanCount() {
+		int sum = 0;
+		for (Integer index : binMap.keySet()) {
+			Bin bin = binMap.get(index);
+			sum += bin.count;
+		}
+		return sum / binMap.size();
+	}
 
 	/**
 	 * @param confidenceLimitPercent
@@ -297,6 +309,26 @@ public class HistogramStat implements Serializable {
 		return bins;
 	}
 	
+	/**
+	 * @return
+	 */
+	public HistogramStat.Bin[] getSortedBinsByCount() {
+		//sort by count
+		Map<Integer, HistogramStat.Bin> binSotredByCount = new TreeMap<Integer, HistogramStat.Bin>();
+		for (Integer index : binMap.keySet()) {
+			Bin bin = binMap.get(index);
+			binSotredByCount.put(bin.count, bin);
+		}
+		
+		Bin[] bins = new Bin[binMap.size()];
+		int i = 0;
+		for (Integer count : binSotredByCount.keySet()) {
+			Bin bin = binSotredByCount.get(count);
+			bins[i++] = bin;
+		}		
+		
+		return bins;
+	}
 
 	/**
 	 * @return
