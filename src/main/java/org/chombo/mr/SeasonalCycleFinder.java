@@ -87,11 +87,15 @@ public class SeasonalCycleFinder extends Configured implements Tool {
         private boolean entropyBasedFilter;
         private double maxEntropy;
         private int modeCount;
-        private int minPercentAboveaverage;
+        private int minPercentAboveAverage;
 		private HistogramStat histogram = new HistogramStat(1);
 		private boolean countBasedModeSel;
 		private int cycleIndx;
 		private int cycleValue;
+		private boolean toEmit;
+		private int indx;
+		private int numBins;
+		private double entropy;
 
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -110,7 +114,7 @@ public class SeasonalCycleFinder extends Configured implements Tool {
         	if (countBasedModeSel) {
         		modeCount = Utility.assertIntConfigParam(config, "scf.count.based.mode.sel", "missing top mode count");
         	} else {
-        		minPercentAboveaverage = Utility.assertIntConfigParam(config, "scf.min.percent.above.average", 
+        		minPercentAboveAverage = Utility.assertIntConfigParam(config, "scf.min.percent.above.average", 
         				"missing min percentage above average");
         	}
         }
@@ -122,8 +126,8 @@ public class SeasonalCycleFinder extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex, -1);
-            int indx = idOrdinals.length;
-            int numBins = BasicUtils.extractIntFromStringArray(items, indx);
+            indx = idOrdinals.length;
+            numBins = BasicUtils.extractIntFromStringArray(items, indx);
             ++indx;
             histogram.initialize();
             for (int i = indx; i < 2 * numBins; i += 2) {
@@ -133,10 +137,10 @@ public class SeasonalCycleFinder extends Configured implements Tool {
             }
             
             HistogramStat.Bin[] sortedBins = histogram.getSortedBins();
-            boolean toEmit = true;
+            toEmit = true;
             if (entropyBasedFilter) {
             	indx += 2 * numBins;
-            	double entropy = BasicUtils.extractDoubleFromStringArray(items, indx);
+            	entropy = BasicUtils.extractDoubleFromStringArray(items, indx);
             	toEmit = entropy < maxEntropy;
             }     
             
@@ -149,8 +153,7 @@ public class SeasonalCycleFinder extends Configured implements Tool {
 	            	}
 	            } else {
 	            	//modes with value above threshold
-	            	int meanCount = histogram.getMeanCount();
-	            	int thershold = (meanCount * minPercentAboveaverage) / 100;
+	            	int thershold = (histogram.getMeanCount() * minPercentAboveAverage) / 100;
 	            	for (int i = sortedBins.length -1; i >= 0; --i) {
 	            		 if (sortedBins[i].getCount() > thershold) {
 	 	            		HistogramStat.Bin bin = sortedBins[i];
