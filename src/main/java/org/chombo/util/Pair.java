@@ -26,33 +26,64 @@ package org.chombo.util;
  * @param <R>
  */
 public class Pair<L,R>  {
-	  protected  L left;
-	  protected  R right;
+	protected  L left;
+	protected  R right;
 
-	  public Pair() {
-	  }
+	/**
+	 * 
+	 */
+	public Pair() {
+	}
 	  
-	  public Pair(L left, R right) {
-	    this.left = left;
-	    this.right = right;
-	  }
+	/**
+	 * @param left
+	 * @param right
+	 */
+	public Pair(L left, R right) {
+	  this.left = left;
+	  this.right = right;
+	}
 
-	  public L getLeft() {
+	/**
+	 * @param left
+	 * @param right
+	 */
+	public void initialize(L left, R right) {
+		this.left = left;
+		this.right = right;
+	}
+	
+	/**
+	 * @return
+	 */
+	public L getLeft() {
 		return left;
 	}
 
+	/**
+	 * @param left
+	 */
 	public void setLeft(L left) {
 		this.left = left;
 	}
 
+	/**
+	 * @return
+	 */
 	public R getRight() {
 		return right;
 	}
 
+	/**
+	 * @param right
+	 */
 	public void setRight(R right) {
 		this.right = right;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() { 
 		return left.hashCode() ^ right.hashCode();

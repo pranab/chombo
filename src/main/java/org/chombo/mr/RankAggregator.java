@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,6 +34,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -45,7 +47,11 @@ import org.chombo.util.Utility;
  *
  */
 public class RankAggregator extends Configured implements Tool {
-	private static String configDelim = ",";
+    private static final String AGGR_AVG = "average";
+    private static final String AGGR_WTD_AVG = "weightedAverage";
+    private static final String AGGR_MED = "median";
+    private static final String AGGR_MAX = "max";
+    private static final String AGGR_PROD = "product";
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -63,7 +69,7 @@ public class RankAggregator extends Configured implements Tool {
         job.setReducerClass(RankAggregator.AggregationReducer.class);
         
         job.setMapOutputKeyClass(Tuple.class);
-        job.setMapOutputValueClass(DoubleWritable.class);
+        job.setMapOutputValueClass(Tuple.class);
 
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
@@ -80,13 +86,17 @@ public class RankAggregator extends Configured implements Tool {
 	 * @author pranab
 	 *
 	 */
-	public static class AggregateMapper extends Mapper<LongWritable, Text, Tuple, DoubleWritable> {
+	public static class AggregateMapper extends Mapper<LongWritable, Text, Tuple, Tuple> {
 		private Tuple outKey = new Tuple();
-		private DoubleWritable outVal = new DoubleWritable();
+		private Tuple outVal = new Tuple();
         private String fieldDelimRegex;
         private String[] items;
         private int[] idOrdinals;
         private int rankOrdinal;
+        private double listWeight;
+        private Map<String, Double> listWeights;
+        private String aggregationStrategy;
+        private static final int  SPLIT_PREFIX_LEN = 4;
    
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -94,16 +104,33 @@ public class RankAggregator extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	idOrdinals = Utility.assertIntArrayConfigParam(config, "raa.id.field.ordinals", configDelim, "missing id field ordinals");
+        	idOrdinals = Utility.assertIntArrayConfigParam(config, "raa.id.field.ordinals", Utility.configDelim, "missing id field ordinals");
            	rankOrdinal = Utility.assertIntConfigParam(config, "raa.rank.attr.ordinal", "missing rank attribute ordinal");
+           	
+        	aggregationStrategy = config.get("raa.rank.agg.strategy", AGGR_PROD);
+        	if (aggregationStrategy.equals(AGGR_WTD_AVG)) {
+        		//map 4 alpha numeric split prefix and weight
+        		listWeights = Utility.assertStringDoubleMapConfigParam(config, "raa.list.weightl", 
+           			Utility.configDelim, Utility.configSubFieldDelim, "missing split prefix weight");
+        		String splitPrefix = ((FileSplit)context.getInputSplit()).getPath().getName().substring(0, SPLIT_PREFIX_LEN);
+        		listWeight = listWeights.get(splitPrefix);
+        	}
         }        
         
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Mapper#map(KEYIN, VALUEIN, org.apache.hadoop.mapreduce.Mapper.Context)
+         */
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex, -1);
+            
             Utility.createStringTuple(items, idOrdinals, outKey);
-            outVal.set(Double.parseDouble(items[rankOrdinal]));
+            outVal.initialize();
+            outVal.add(Double.parseDouble(items[rankOrdinal]));
+            if (aggregationStrategy.equals(AGGR_WTD_AVG)) {
+            	outVal.add(listWeight);
+            }
         	context.write(outKey, outVal);
         }
 	}
@@ -112,18 +139,17 @@ public class RankAggregator extends Configured implements Tool {
      * @author pranab
      *
      */
-    public static class AggregationReducer extends Reducer<Tuple, DoubleWritable, NullWritable, Text> {
+    public static class AggregationReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
     	private Text outVal = new Text();
     	private StringBuilder stBld =  new StringBuilder();;
 		private String fieldDelim;
         private int outputPrecision ;
         private String aggregationStrategy;
         private List<Double> ranks = new ArrayList<Double>();
+        private List<Double> weights = new ArrayList<Double>();
         private double aggrRank;
         private double aggr;
-        private static final String AGGR_AVG = "average";
-        private static final String AGGR_MED = "median";
-        private static final String AGGR_PROD = "product";
+        private double weightSum;
 	
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -138,13 +164,17 @@ public class RankAggregator extends Configured implements Tool {
 	   	/* (non-Javadoc)
     	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
     	 */
-    	protected void reduce(Tuple key, Iterable<DoubleWritable> values, Context context)
+    	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
     		ranks.clear();
+    		weights.clear();
     		stBld.delete(0, stBld.length());
 
-    		for (DoubleWritable val : values) {
-    			ranks.add(val.get());
+    		for (Tuple val : values) {
+    			ranks.add(val.getDouble(0));
+    			if (aggregationStrategy.equals(AGGR_WTD_AVG)) {
+    				weights.add(val.getDouble(1));
+    			}
     		}
     		
     		if (ranks.size() == 1) {
@@ -157,6 +187,15 @@ public class RankAggregator extends Configured implements Tool {
 	    				aggr += rank;
 	    			}
 	    			aggrRank = aggr / ranks.size();
+	    		} if (aggregationStrategy.equals(AGGR_WTD_AVG)) {
+	    			//weighted average
+	    			aggr = 0;
+	    			weightSum = 0;
+	    			for (int i = 0; i < ranks.size(); ++i) {
+	    				aggr += ranks.get(i) * weights.get(i);
+	    				weightSum += weights.get(i); 
+	    			}
+	    			aggrRank = aggr / weightSum;
 	    		} else if (aggregationStrategy.equals(AGGR_MED)) {
 	    			//median
 	    			Collections.sort(ranks);
@@ -166,6 +205,10 @@ public class RankAggregator extends Configured implements Tool {
 	    			} else {
 	    				aggrRank = (ranks.get(mid -1) + ranks.get(mid)) / 2 ;
 	    			}
+	    		} else if (aggregationStrategy.equals(AGGR_MAX)) {
+	    			//max
+	    			Collections.sort(ranks);
+	    			aggrRank = ranks.get(ranks.size() - 1);
 	    		} else if (aggregationStrategy.equals(AGGR_PROD)) {
 	    			//product
 	    			aggr = 1.0;

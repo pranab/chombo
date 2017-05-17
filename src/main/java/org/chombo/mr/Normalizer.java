@@ -36,6 +36,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.Triplet;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -168,6 +169,10 @@ public class Normalizer extends Configured implements Tool {
         private int precision;
         private int ordinal;
 		private StringBuilder stBld = new StringBuilder();
+		private static final String NORM_MIN_MAX = "minmax";
+		private static final String NORM_ZSCORE = "zscore";
+		private static final String NORM_CENTER = "center";
+		private static final String NORM_UNIT_SUM = "unitSum";
 		
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -183,7 +188,7 @@ public class Normalizer extends Configured implements Tool {
         	getAttributeProperties(numAttributes,attributeProperties, config);
         	
         	precision = config.getInt("nor.floating.precision", 3);
-        	normalizingStrategy = config.get("nor.normalizing.strategy", "minmax");
+        	normalizingStrategy = config.get("nor.normalizing.strategy", NORM_MIN_MAX);
         	outlierTruncationLevel = config.getFloat("nor.outlier.truncation.level", (float)-1.0);
         	for (int ord : attributeProperties.keySet()) {
         		Triplet<String, Integer, String> attrProp = attributeProperties.get(ord);
@@ -258,9 +263,13 @@ public class Normalizer extends Configured implements Tool {
     		
     		//normalize
     		normalizedValue = 0;
-    		if (normalizingStrategy.equals("minmax")) {
+    		if (normalizingStrategy.equals(NORM_MIN_MAX)) {
     			normalizedValue = ((value - stats.min) * stats.scale) / stats.range;
-    		} else if (normalizingStrategy.equals("zscore")) {
+    		} else if (normalizingStrategy.equals(NORM_CENTER)) {
+    			normalizedValue = (value - stats.mean) * stats.scale;
+    		} else if (normalizingStrategy.equals(NORM_UNIT_SUM)) {
+    			normalizedValue = (value / stats.sum) * stats.scale;
+    		} else if (normalizingStrategy.equals(NORM_ZSCORE)) {
     			if (stats.gotTransformer()) {
     				throw new IllegalStateException("can not apply zscore normalizer when data is transformed");
     			}
@@ -294,7 +303,7 @@ public class Normalizer extends Configured implements Tool {
     			long lValue = (long)normalizedValue;
     			value = "" + lValue;
     		} else if (dataType.equals("double")) {
-    			value = Utility.formatDouble(normalizedValue, precision);
+    			value = BasicUtils.formatDouble(normalizedValue, precision);
     		} else {
     			throw new IllegalStateException("invalid numeric data types");
     		}

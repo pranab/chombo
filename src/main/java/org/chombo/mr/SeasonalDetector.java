@@ -39,6 +39,7 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
+ * Detects seasonality by building histogram based on specified type of sesonality
  * @author pranab
  *
  */
@@ -210,11 +211,11 @@ public class SeasonalDetector  extends Configured implements Tool {
         }
 	}
 	
-	   /**
-  * @author pranab
-  *
-  */
- public static class  AggregateReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
+    /**
+    * @author pranab
+    *
+    */
+    public static class  AggregateReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
  		protected Text outVal = new Text();
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;

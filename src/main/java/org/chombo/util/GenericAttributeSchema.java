@@ -90,4 +90,57 @@ public class GenericAttributeSchema extends AttributeSchema<Attribute>{
 		}
 		return valid;
 	}
+	
+	/**
+	 * @return
+	 */
+	public Attribute getIdField() {
+		Attribute idField = null;
+		for (Attribute field : attributes) {
+			if (field.isId()) {
+				idField = field;
+			}
+		}
+		return idField;
+	}
+
+	/**
+	 * @return
+	 */
+	public List<Attribute> getIdFields() {
+		List<Attribute> idFields = new ArrayList<Attribute>();
+		for (Attribute field : attributes) {
+			if (field.isId()) {
+				idFields.add(field);
+			}
+		}
+		return idFields;
+	}
+
+	/**
+	 * @return
+	 */
+	public Attribute getPartitionField() {
+		Attribute partitionField = null;
+		for (Attribute field : attributes) {
+			if (field.isPartitionAttribute()) {
+				partitionField = field;
+			}
+		}
+		return partitionField;
+	}
+	
+	/**
+	 * @return
+	 */
+	public List<Attribute> getPartitionFields() {
+		List<Attribute> partitionFields = new ArrayList<Attribute>();
+		for (Attribute field : attributes) {
+			if (field.isPartitionAttribute()) {
+				partitionFields.add(field);
+			}
+		}
+		return partitionFields;
+	}
+	
 }

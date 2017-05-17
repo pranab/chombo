@@ -25,7 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.chombo.util.Attribute;
 import org.chombo.util.BasicUtils;
+import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.Pair;
 import org.chombo.util.RichAttribute;
 import org.chombo.util.RichAttributeSchema;
@@ -35,7 +38,7 @@ import org.chombo.util.RichAttributeSchema;
  *
  */
 public class InterRecordDistance implements Serializable {
-	private RichAttributeSchema attrSchema;
+	private GenericAttributeSchema attrSchema;
 	private AttributeDistanceSchema attrDistSchema;
 	private String fieldDelim;
 	private String subFieldDelim = BasicUtils.DEF_SUB_FIELD_DELIM;
@@ -52,17 +55,37 @@ public class InterRecordDistance implements Serializable {
 	private int fieldOrd;
 	protected Map<Integer, Map<Pair<String, String>, Double>> valueDiffMetricDist = 
 			new HashMap<Integer, Map<Pair<String, String>, Double>>();
+	private int scale = 1;
+	private int[] facetedFields;
 	
 	/**
 	 * @param attrSchema
 	 * @param attrDistSchema
 	 * @param fieldDelim
 	 */
-	public InterRecordDistance(RichAttributeSchema attrSchema,
+	public InterRecordDistance(GenericAttributeSchema attrSchema,
 			AttributeDistanceSchema attrDistSchema, String fieldDelim) {
 		this.attrSchema = attrSchema;
 		this.attrDistSchema = attrDistSchema;
 		this.fieldDelim = fieldDelim;
+	}
+	
+	/**
+	 * @param scale
+	 * @return
+	 */
+	public InterRecordDistance withScale(int scale) {
+		this.scale = scale;
+		return this;
+	}
+	
+	/**
+	 * @param facetedFields
+	 * @return
+	 */
+	public InterRecordDistance withFacetedFields(int[] facetedFields) {
+		this.facetedFields = facetedFields;
+		return this;
 	}
 	
 	/**
@@ -83,6 +106,10 @@ public class InterRecordDistance implements Serializable {
 		return this;
 	}
 	
+	/**
+	 * @param categoricalSet
+	 * @return
+	 */
 	public InterRecordDistance withCategoricalSet(boolean categoricalSet) {
 		this.categoricalSet = categoricalSet;
 		return this;
@@ -112,6 +139,11 @@ public class InterRecordDistance implements Serializable {
 		return this;
 	}
 	
+	/**
+	 * @param firstAttrVal
+	 * @param secAttrVal
+	 * @return
+	 */
 	private Pair<String,String> distWithAttrVAluesSorted(String firstAttrVal, String secAttrVal) {
 		Pair<String,String> valPair = null;
 		if (firstAttrVal.compareTo(secAttrVal) > 0) {
@@ -120,6 +152,17 @@ public class InterRecordDistance implements Serializable {
 			valPair = new Pair<String,String>(secAttrVal, firstAttrVal);
 		}
 		return valPair;
+	}
+	
+	/**
+	 * @param first
+	 * @param second
+	 * @return
+	 * @throws IOException
+	 */
+	public int findScaledDistance(String first, String second) throws IOException {
+		int dist = (int)(scale * findDistance(first, second));
+		return dist;
 	}
 	
 	/**
@@ -147,20 +190,29 @@ public class InterRecordDistance implements Serializable {
 		secondItems = second.split(fieldDelim);
 		
 		//attribute pair distances
-		for (RichAttribute richAttr : attrSchema.getAttributes()) {
-			if (richAttr.isId())
+		for (Attribute attr : attrSchema.getAttributes()) {
+			ordinal = attr.getOrdinal();
+			//skip if ID
+			if (attr.isId())
 				continue;
 			
-			ordinal = richAttr.getOrdinal();
+			//skip if not faceted field
+			if (null != facetedFields) {
+				//if faceted set but field not included, then skip it
+				if (!ArrayUtils.contains(facetedFields, ordinal)) {
+					continue;
+				}
+			}
+			
 			AttributeDistance attrDist = attrDistSchema.findAttributeDistanceByOrdinal(ordinal);
 			firstItem = firstItems[ordinal];
 			secondItem = secondItems[ordinal];
 			
-			if (richAttr.isCategorical()) {
-				dist = categoricalDistance(richAttr, attrDist);
-			} else if (richAttr.isInteger()) {
+			if (attr.isCategorical()) {
+				dist = categoricalDistance(attr, attrDist);
+			} else if (attr.isInteger()) {
 				dist = numericDistance(Integer.parseInt(firstItem), Integer.parseInt(secondItem), attrDist);
-			} else if (richAttr.isDouble()) {
+			} else if (attr.isDouble()) {
 				if (doubleRange) {
 					DoubleRange firstItemRange = DoubleRange.create(firstItem, subFieldDelim);
 					if (null != firstItemRange) {
@@ -176,9 +228,9 @@ public class InterRecordDistance implements Serializable {
 				} else {
 					dist = numericDistance(Double.parseDouble(firstItem), Double.parseDouble(secondItem), attrDist);
 				}
-			} else if (richAttr.isText()) {
+			} else if (attr.isText()) {
 				dist = textDistance(attrDist);
-			} else if (richAttr.isGeoLocation()) {
+			} else if (attr.isGeoLocation()) {
 				dist = geoLocationDistance(attrDist);
 			}
 			
@@ -207,15 +259,15 @@ public class InterRecordDistance implements Serializable {
 	}
 	
 	/**
-	 * @param richAttr
+	 * @param attr
 	 * @param attrDist
 	 * @return
 	 */
-	private double categoricalDistance(RichAttribute richAttr, AttributeDistance attrDist) {
+	private double categoricalDistance(Attribute attr, AttributeDistance attrDist) {
 		double dist = 0;
 		if (attrDist.getAlgorithm().equals("cardinality")) {
 			//cardinality
-			dist = firstItem.equals(secondItem) ? 0 : Math.sqrt(2) / richAttr.getCardinality().size();
+			dist = firstItem.equals(secondItem) ? 0 : Math.sqrt(2) / attr.getCardinality().size();
 		} else if (attrDist.getAlgorithm().equals("valueDiffMetric")) {
 			//value difference metric
 			Pair<String,String> valPair = distWithAttrVAluesSorted(firstItem, secondItem);

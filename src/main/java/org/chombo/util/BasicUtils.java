@@ -857,6 +857,44 @@ public class BasicUtils {
     				generateSublists(list, biggerSubList, i, subLists, maxSubListSize);
     			}
     	}    	
+    } 
+
+    /**
+     * @param values
+     * @return
+     */
+    public static <T> List<T> generateUniqueList(List<T> values) {
+    	List<T> list = new ArrayList<T>();
+    	for (T item : values) {
+    		if (!list.contains(item)) {
+    			list.add(item);
+    		}
+    	}
+    	return list;
+    }
+    
+    /**
+     * @param values
+     * @return
+     */
+    public static <T> List<T> generateUniqueList(T[] values) {
+    	List<T> list = new ArrayList<T>();
+    	for (T item : values) {
+    		if (!list.contains(item)) {
+    			list.add(item);
+    		}
+    	}
+    	return list;
+    }
+    
+    /**
+     * @param list
+     * @param value
+     */
+    public static <T> void addToUniqueList(List<T> list, T value) {
+		if (!list.contains(value)) {
+			list.add(value);
+		}
     }
     
     /**
@@ -1160,6 +1198,18 @@ public class BasicUtils {
     }
     
     /**
+     * @param arr
+     * @return
+     */
+    public static <T> Set<T> generateSetFromList(T[] array) {
+    	Set<T> set = new HashSet<T>();
+    	for (T obj : array) {
+    		set.add(obj);
+    	}
+    	return set;
+    }
+
+    /**
      * @param conf
      * @param pathConfig
      * @return
@@ -1190,6 +1240,17 @@ public class BasicUtils {
 	 * @return
 	 * @throws IOException
 	 */
+	public static RichAttributeSchema getRichAttributeSchema(InputStream fs) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
+        return schema;
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
 	public static GenericAttributeSchema getGenericAttributeSchema(String path) throws IOException {
         InputStream fs = new FileInputStream(path);
         ObjectMapper mapper = new ObjectMapper();
@@ -1202,6 +1263,17 @@ public class BasicUtils {
 	 * @return
 	 * @throws IOException
 	 */
+	public static GenericAttributeSchema getGenericAttributeSchema(InputStream fs) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        GenericAttributeSchema schema = mapper.readValue(fs, GenericAttributeSchema.class);
+        return schema;
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
 	public static FeatureSchema getFeatureSchema(String path) throws IOException {
         InputStream fs = new FileInputStream(path);
         ObjectMapper mapper = new ObjectMapper();
@@ -1209,6 +1281,17 @@ public class BasicUtils {
         return schema;
 	}
 	
+	/**
+	 * @param fs
+	 * @return
+	 * @throws IOException
+	 */
+	public static FeatureSchema getFeatureSchema(InputStream fs) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        FeatureSchema schema = mapper.readValue(fs, FeatureSchema.class);
+        return schema;
+	}
+
 	/**
 	 * @param path
 	 * @return
@@ -1226,8 +1309,30 @@ public class BasicUtils {
 	 * @return
 	 * @throws IOException
 	 */
+	public static ProcessorAttributeSchema getProcessingSchema(InputStream fs) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        ProcessorAttributeSchema schema = mapper.readValue(fs, ProcessorAttributeSchema.class);
+        return schema;
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
 	public static AttributeDistanceSchema getDistanceSchema(String path) throws IOException {
         InputStream fs = new FileInputStream(path);
+        ObjectMapper mapper = new ObjectMapper();
+        AttributeDistanceSchema schema = mapper.readValue(fs, AttributeDistanceSchema.class);
+        return schema;
+	}
+
+	/**
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static AttributeDistanceSchema getDistanceSchema(InputStream fs) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         AttributeDistanceSchema schema = mapper.readValue(fs, AttributeDistanceSchema.class);
         return schema;
@@ -1292,4 +1397,16 @@ public class BasicUtils {
         return AVERAGE_RADIUS_OF_EARTH * c;
 
     }    	
+    
+    /**
+     * @param obj
+     * @return
+     */
+    public static <T> int positiveHashCode(T obj) {
+    	int hashCode = obj.hashCode();
+    	if (hashCode < 0)
+    		hashCode = -hashCode;
+    	return hashCode;
+    }
+    
  }
