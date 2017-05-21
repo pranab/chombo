@@ -215,6 +215,11 @@ public class HistogramStat implements Serializable {
 			binMap.put(index, bin);
 		}
 		bin.addCount(count);
+
+		this.count += count;
+		double value = index * binWidth;
+		sum += value * count;
+		sumSq += value * value * count;
 	}
 	
 	/**
