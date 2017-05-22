@@ -288,7 +288,7 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 				//raw
 				stBld.append(histogram.binsToString());
 			}
-			stBld.append(BasicUtils.formatDouble(histogram.getEntropy(), outputPrecision)) ;
+			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getEntropy(), outputPrecision)) ;
 			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getMode(), outputPrecision)) ;
 			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getQuantile(0.25), outputPrecision)) ;
 			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getQuantile(0.50), outputPrecision)) ;

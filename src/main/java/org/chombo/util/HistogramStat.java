@@ -18,8 +18,10 @@
 package org.chombo.util;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -319,17 +321,25 @@ public class HistogramStat implements Serializable {
 	 */
 	public HistogramStat.Bin[] getSortedBinsByCount() {
 		//sort by count
-		Map<Integer, HistogramStat.Bin> binSotredByCount = new TreeMap<Integer, HistogramStat.Bin>();
+		Map<Integer, List<HistogramStat.Bin>> binSotredByCount = new TreeMap<Integer, List<HistogramStat.Bin>>();
 		for (Integer index : binMap.keySet()) {
 			Bin bin = binMap.get(index);
-			binSotredByCount.put(bin.count, bin);
+			List<HistogramStat.Bin> binList = binSotredByCount.get(bin.count);
+			if (null == binList) {
+				binList = new ArrayList<HistogramStat.Bin>();
+				binSotredByCount.put(bin.count, binList);
+			}
+			binList.add(bin);
 		}
 		
+		//into an array
 		Bin[] bins = new Bin[binMap.size()];
 		int i = 0;
 		for (Integer count : binSotredByCount.keySet()) {
-			Bin bin = binSotredByCount.get(count);
-			bins[i++] = bin;
+			List<HistogramStat.Bin> binList = binSotredByCount.get(count);
+			for (HistogramStat.Bin bin : binList) {
+				bins[i++] = bin;
+			}
 		}		
 		
 		return bins;

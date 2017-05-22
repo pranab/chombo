@@ -136,7 +136,7 @@ public class SeasonalCycleFinder extends Configured implements Tool {
             	histogram.addBin(cycleIndx, cycleValue);
             }
             
-            HistogramStat.Bin[] sortedBins = histogram.getSortedBins();
+            HistogramStat.Bin[] sortedBins = histogram.getSortedBinsByCount();
             toEmit = true;
             if (entropyBasedFilter) {
             	indx += 2 * numBins;
@@ -154,7 +154,7 @@ public class SeasonalCycleFinder extends Configured implements Tool {
 	            } else {
 	            	//modes with value above threshold
 	            	int thershold = (histogram.getMeanCount() * minPercentAboveAverage) / 100;
-	            	for (int i = sortedBins.length -1; i >= 0; --i) {
+	            	for (int i = sortedBins.length -1;  i >= 0;  --i) {
 	            		 if (sortedBins[i].getCount() > thershold) {
 	 	            		HistogramStat.Bin bin = sortedBins[i];
 		            		emitOutput(bin, context);
@@ -190,15 +190,18 @@ public class SeasonalCycleFinder extends Configured implements Tool {
     *
     */
     public static class  FinderReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
- 		protected Text outVal = new Text();
-		protected String fieldDelim;
-		
+    	private Text outVal = new Text();
+ 		private String fieldDelim;
+		private boolean compactOutput;
+		private StringBuilder stBld =  new StringBuilder();;
+
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
+        	compactOutput = config.getBoolean("scf.compact.output", true);
  		}
 
         /* (non-Javadoc)
@@ -206,10 +209,23 @@ public class SeasonalCycleFinder extends Configured implements Tool {
          */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
+			if (compactOutput) {
+				stBld.delete(0, stBld.length());
+				stBld.append(key.toString());
+			}
     		for (Tuple val : values) {
-    			outVal.set(key.toString() + fieldDelim + val.toString());
-    			context.write(NullWritable.get(), outVal);
+    			if (compactOutput) {
+    				stBld.append(fieldDelim).append(val.toString());
+    			} else {
+    				outVal.set(key.toString() + fieldDelim + val.toString());
+    				context.write(NullWritable.get(), outVal);
+    			}
     		}
+			if (compactOutput) {
+				outVal.set(stBld.toString());
+				context.write(NullWritable.get(), outVal);
+			}    		
+    		
         }
     }
 
