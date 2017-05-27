@@ -1409,4 +1409,60 @@ public class BasicUtils {
     	return hashCode;
     }
     
+	/**
+	 * @param val1st
+	 * @param val2nd
+	 * @return
+	 */
+    public static  double max(double val1st, double val2nd) {
+		return val1st > val2nd ? val1st : val2nd;
+	}
+
+	/**
+	 * @param val1st
+	 * @param val2nd
+	 * @return
+	 */
+	public static  double min(double val1st, double val2nd) {
+		return val1st < val2nd ? val1st : val2nd;
+	}
+
+	/**
+	 * @param val
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static double between(double val, double min, double max) {
+		return val < min ? min : (val > max ? max : val);
+	}
+
+	/**
+	 * @param val1st
+	 * @param val2nd
+	 * @return
+	 */
+	public static int max(int val1st, int val2nd) {
+		return val1st > val2nd ? val1st : val2nd;
+	}
+
+	/**
+	 * @param val1st
+	 * @param val2nd
+	 * @return
+	 */
+	public static int min(int val1st, int val2nd) {
+		return val1st < val2nd ? val1st : val2nd;
+	}
+	
+	/**
+	 * @param val
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static int between(int val, int min, int max) {
+		return val < min ? min : (val > max ? max : val);
+	}
+    
  }

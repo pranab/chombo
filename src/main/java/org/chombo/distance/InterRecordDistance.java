@@ -130,7 +130,7 @@ public class InterRecordDistance implements Serializable {
 			while (offset < rec.length) {
 				String firstAttrVal = rec[offset++];
 				String secAttrVal = rec[offset++];
-				Pair<String,String> valPair = distWithAttrVAluesSorted(firstAttrVal, secAttrVal);
+				Pair<String,String> valPair = distWithAttrValuesSorted(firstAttrVal, secAttrVal);
 				Double dist = Double.parseDouble(rec[offset++]);
 				valuePairDist.put(valPair, dist);
 			}
@@ -144,7 +144,7 @@ public class InterRecordDistance implements Serializable {
 	 * @param secAttrVal
 	 * @return
 	 */
-	private Pair<String,String> distWithAttrVAluesSorted(String firstAttrVal, String secAttrVal) {
+	private Pair<String,String> distWithAttrValuesSorted(String firstAttrVal, String secAttrVal) {
 		Pair<String,String> valPair = null;
 		if (firstAttrVal.compareTo(secAttrVal) > 0) {
 			valPair = new Pair<String,String>(firstAttrVal, secAttrVal);
@@ -270,7 +270,7 @@ public class InterRecordDistance implements Serializable {
 			dist = firstItem.equals(secondItem) ? 0 : Math.sqrt(2) / attr.getCardinality().size();
 		} else if (attrDist.getAlgorithm().equals("valueDiffMetric")) {
 			//value difference metric
-			Pair<String,String> valPair = distWithAttrVAluesSorted(firstItem, secondItem);
+			Pair<String,String> valPair = distWithAttrValuesSorted(firstItem, secondItem);
 			dist = valueDiffMetricDist.get(fieldOrd).get(valPair);
 		}else {
 			//default equality or inclusion based
@@ -303,7 +303,7 @@ public class InterRecordDistance implements Serializable {
 		//apply threshold
 		if (attrDist.isUpperThresholdSet() && dist > attrDist.getUpperThreshold()) {
 			dist = 1;
-		} else if (attrDist.isLowerThresholdSet() && dist > attrDist.getLowerThreshold()) {
+		} else if (attrDist.isLowerThresholdSet() && dist < attrDist.getLowerThreshold()) {
 			dist = 0;
 		}
 		return dist;
