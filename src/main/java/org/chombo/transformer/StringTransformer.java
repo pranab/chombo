@@ -770,4 +770,36 @@ public class StringTransformer {
 		}
 	}	
 	
+	/**
+	 * Replaces categorical value with with set of dummy binary values
+	 * @author pranab
+	 *
+	 */
+	public static class CategoricalToBinaryTransformer extends AttributeTransformer {
+		private List<String> cardinality;
+		
+		public CategoricalToBinaryTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			cardinality  = prAttr.getCardinality();
+		}
+
+		public CategoricalToBinaryTransformer(List<String> cardinality) {
+			super(cardinality.size());
+			this.cardinality  = cardinality;
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			if (cardinality.contains(value)) {
+				for (int i = 0; i < cardinality.size(); ++i) {
+					transformed[i] = value.equals(cardinality.get(i)) ?  "1" : "0";
+				}
+			} else {
+				throw new IllegalStateException("illegal categorical attribute value");
+			}
+			return transformed;
+		}
+	}	
+	
+	
 }
