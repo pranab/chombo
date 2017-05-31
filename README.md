@@ -38,6 +38,7 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * https://pkghosh.wordpress.com/2016/10/04/simple-sanity-checks-for-data-correctness-with-spark/
 * https://pkghosh.wordpress.com/2016/12/06/json-to-relational-mapping-with-spark/
 * https://pkghosh.wordpress.com/2017/02/19/mobile-phone-usage-data-analytics-for-effective-marketing-campaign/
+* https://pkghosh.wordpress.com/2017/05/30/mining-seasonal-products-from-sales-data/
 
 
 ## Build
