@@ -1,0 +1,40 @@
+This tutorial is identifying products with seasonal demand. This result could be used
+to augment recommendation results with products with seasonal demand.
+
+You should should change the script and configuration property files according to 
+your need and environment.
+
+Dependent script
+================
+Checkout the project avenir. Take the script util.py and sampler.py from the project and 
+placeit in ../lib directory with respect the directory containing seasonal_xaction.py
+
+Generate input
+==============
+./sdem.sh <num_products> <num_xactions> <output_file>
+
+where
+num_products = number of products e.g. 100
+num_xactions = number of transactions e.g. 5000
+output_file = output file name
+
+Load input to HDFS
+==================
+./sdem.sh loadInp <file_generated-in_previous step>
+
+Run MR for seasonal cycle detection
+===================================
+./sdem.sh seasonalityDetector
+
+Run MR for histogram and other statistics
+=========================================
+./sdem.sh numDistStat
+
+Run MR to detect cycles corresponding to modes in distribution
+==============================================================
+./sdem.sh seasonalCycleFinder
+
+Configuration
+=============
+Configurations are defined in sdem.properties for all the map reduce jobs.
+Please feel free to change based on your needs
