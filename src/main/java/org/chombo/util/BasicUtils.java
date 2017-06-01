@@ -1345,7 +1345,7 @@ public class BasicUtils {
 	 */
 	public static String[] splitOnFirstOccurence(String value, String delim, boolean failOnDelimNotFound) {
 		int pos = value.indexOf(delim);
-		return splitOnPosition(value, pos, failOnDelimNotFound);
+		return splitOnPosition(value, pos, delim.length(),failOnDelimNotFound);
 	}
 	
 	/**
@@ -1355,7 +1355,7 @@ public class BasicUtils {
 	 */
 	public static String[] splitOnLastOccurence(String value, String delim, boolean failOnDelimNotFound) {
 		int pos = value.lastIndexOf(delim);
-		return splitOnPosition(value, pos, failOnDelimNotFound);
+		return splitOnPosition(value, pos, delim.length(), failOnDelimNotFound);
 	}
 	
 	/**
@@ -1364,10 +1364,20 @@ public class BasicUtils {
 	 * @return
 	 */
 	public static String[] splitOnPosition(String value, int pos, boolean failOnDelimNotFound) {
+		String[] items = splitOnPosition(value, pos, 1,  failOnDelimNotFound) ;
+		return items;
+	}
+
+	/**
+	 * @param value
+	 * @param pos
+	 * @return
+	 */
+	public static String[] splitOnPosition(String value, int pos, int delimLen,  boolean failOnDelimNotFound) {
 		String[] items = new String[2];
-		if (pos >= 0) {
+		if (pos >= 0 && pos < value.length()) {
 			items[0] = value.substring(0, pos);
-			items[1] = value.substring(pos + 1);
+			items[1] = value.substring(pos + delimLen);
 		} else {
 			if (failOnDelimNotFound) {
 				throw new IllegalArgumentException("delimiter not found");
@@ -1379,6 +1389,28 @@ public class BasicUtils {
 		return items;
 	}
 
+	/**
+	 * @param value
+	 * @param delim
+	 * @param numOccurence
+	 * @param failOnDelimNotFound
+	 * @return
+	 */
+	public static int findOccurencePosition(String value, String delim, int numOccurence, boolean failOnDelimNotFound) {
+		int delimLen = delim.length();
+		int pos = -1;
+		int from = 0;
+		for (int i = 0;  i < numOccurence; ++i ) {
+			pos = value.indexOf(delim, from);
+			if (pos == -1) {
+				throw new IllegalStateException("less than required number of occurences");
+			} else {
+				from += pos + delimLen;
+			}
+		}
+		return pos;
+	}
+	
     /**
      * geo location distance by Haversine formula
      * @param lat1

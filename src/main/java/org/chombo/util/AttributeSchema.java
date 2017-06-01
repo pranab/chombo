@@ -74,6 +74,22 @@ public class AttributeSchema<T extends BaseAttribute>  implements Serializable {
 	}
 
 	/**
+	 * @param ordinals
+	 * @return
+	 */
+	public List<T> findAttributesByOrdinals(int[] ordinals) {
+		List<T> attributes = new ArrayList<T>();
+		for (int ordinal : ordinals ) {
+			for (T attr :  attributes) {
+				if (attr.getOrdinal() == ordinal) {
+					attributes.add(attr);
+				}
+			}
+		}
+		return attributes;
+	}
+
+	/**
 	 * @param index
 	 * @return
 	 */

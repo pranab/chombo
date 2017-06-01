@@ -421,6 +421,19 @@ public class Utility {
     }
 
     /**
+     * @param conf
+     * @param filePathParam
+     * @return
+     * @throws IOException
+     */
+    public static List<String> assertFileLines(Configuration conf, String filePathParam, String msg) throws IOException {
+    	List<String> lines =  getFileLines( conf,  filePathParam);
+    	if (lines.isEmpty()) {
+    		throw new IllegalStateException(msg);
+    	}
+    	return lines;
+    }   
+    /**
      * @param filePath
      * @return
      * @throws IOException
