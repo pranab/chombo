@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -216,20 +217,28 @@ public class SeasonalDetector  extends Configured implements Tool {
     *
     */
     public static class  AggregateReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
- 		protected Text outVal = new Text();
-		protected StringBuilder stBld =  new StringBuilder();;
-		protected String fieldDelim;
-		protected double sum;
-		protected int totalCount;
+    	private Text outVal = new Text();
+ 		private StringBuilder stBld =  new StringBuilder();;
+		private String fieldDelim;
+		private double sum;
+		private int totalCount;
 		private double average;
 		private String aggregatorType;
+		private int outputPrecision;
 		
+		/* (non-Javadoc)
+		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
+		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
            	aggregatorType = config.get("sed.aggregator.type");
-		}
+           	outputPrecision = config.getInt("sed.output.precision", 3);
+ 		}
 
+        /* (non-Javadoc)
+         * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+         */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
     		sum = 0;
@@ -248,13 +257,25 @@ public class SeasonalDetector  extends Configured implements Tool {
         	if (aggregatorType.equals(AGGR_COUNT)) {
         		outVal.set(key.toString() + fieldDelim +  totalCount);
         	} else if (aggregatorType.equals(AGGR_SUM)) {
-        		outVal.set(key.toString() +fieldDelim  + String.format("%.3f", sum));
+        		 setOutput(key, sum); 
         	} else if (aggregatorType.equals(AGGR_AVG)) {
         		average = sum / totalCount;
-        		outVal.set(key.toString() +fieldDelim  + String.format("%.3f", average));
-        	}
+          		 setOutput(key, average); 
+            }
         	context.write(NullWritable.get(), outVal);
         }		
+        
+        /**
+         * @param key
+         * @param value
+         */
+        private void setOutput(Tuple  key, double value) {
+    		if (0 == outputPrecision) {
+        		outVal.set(key.toString() +fieldDelim  +(int)value);
+    		} else {
+        		outVal.set(key.toString() +fieldDelim  +BasicUtils.formatDouble(value, outputPrecision));
+    		}
+        }
  	}
  
 	/**

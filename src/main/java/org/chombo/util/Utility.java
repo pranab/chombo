@@ -52,6 +52,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.chombo.distance.AttributeDistanceSchema;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import com.amazonaws.auth.PropertiesCredentials;
@@ -420,6 +421,19 @@ public class Utility {
     	return lines;
     }
 
+    /**
+     * @param conf
+     * @param filePathParam
+     * @return
+     * @throws IOException
+     */
+    public static List<String> assertFileLines(Configuration conf, String filePathParam, String msg) throws IOException {
+    	List<String> lines =  getFileLines( conf,  filePathParam);
+    	if (lines.isEmpty()) {
+    		throw new IllegalStateException(msg);
+    	}
+    	return lines;
+    }   
     /**
      * @param filePath
      * @return
@@ -1497,12 +1511,12 @@ public class Utility {
 	 * @throws IOException
 	 */
 	public static RichAttributeSchema getRichAttributeSchema(Configuration conf, String pathParam) throws IOException {
-    	String filePath = conf.get(pathParam);
-        FileSystem dfs = FileSystem.get(conf);
-        Path src = new Path(filePath);
-        FSDataInputStream fs = dfs.open(src);
-        ObjectMapper mapper = new ObjectMapper();
-        RichAttributeSchema schema = mapper.readValue(fs, RichAttributeSchema.class);
+         RichAttributeSchema schema = null;
+		InputStream is = Utility.getFileStream(conf, pathParam);
+		if (null != is) {
+			ObjectMapper mapper = new ObjectMapper();
+			schema = mapper.readValue(is, RichAttributeSchema.class);
+		}
         return schema;
 	}
 
@@ -1545,9 +1559,12 @@ public class Utility {
 	 * @throws IOException
 	 */
 	public static ProcessorAttributeSchema getProcessingSchema(Configuration conf, String pathParam) throws IOException {
+		ProcessorAttributeSchema processingSchema = null;
 		InputStream is = Utility.getFileStream(conf,  pathParam);
-		ObjectMapper mapper = new ObjectMapper();
-		ProcessorAttributeSchema processingSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+		if (null != is) {
+			ObjectMapper mapper = new ObjectMapper();
+			processingSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+		}
 		return processingSchema;
 	}
 	
@@ -1557,10 +1574,28 @@ public class Utility {
 	 * @throws IOException
 	 */
 	public static ProcessorAttributeSchema getProcessingSchema( String filePath) throws IOException {
+		ProcessorAttributeSchema processingSchema = null;
 		InputStream is = Utility.getFileStream(filePath);
-		ObjectMapper mapper = new ObjectMapper();
-		ProcessorAttributeSchema processingSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+		if (null != is) {
+			ObjectMapper mapper = new ObjectMapper();
+			processingSchema = mapper.readValue(is, ProcessorAttributeSchema.class);
+		}
 		return processingSchema;
+	}
+
+	/**
+	 * @param filePath
+	 * @return
+	 * @throws IOException
+	 */
+	public static AttributeDistanceSchema getAttributeDistanceSchema(Configuration conf, String pathParam) throws IOException {
+		AttributeDistanceSchema  attrDistSchema = null;
+		InputStream is = Utility.getFileStream(conf, pathParam);
+		if (null != is) {
+			ObjectMapper mapper = new ObjectMapper();
+			attrDistSchema = mapper.readValue(is, AttributeDistanceSchema.class);
+		}
+		return attrDistSchema;
 	}
 
 	/**

@@ -36,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.HistogramStat;
 import org.chombo.util.Tuple;
@@ -111,7 +112,7 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         	idOrdinals = Utility.optionalIntArrayConfigParam(config, "nads.id.field.ordinals", Utility.configDelim);
         	if (!needBinning) {
         		binOrdinal = Utility.assertIntConfigParam(config, "nads.bin.ordinal", "missing bin ordinal");
-        		binCountOrdinal = Utility.assertIntConfigParam(config, "nads.bin.countordinal", "missing bin ordinal");
+        		binCountOrdinal = Utility.assertIntConfigParam(config, "nads.bin.count.ordinal", "missing bin ordinal");
         	}
         	
         	//validate attributes
@@ -216,6 +217,10 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         private GenericAttributeSchema schema;
         private boolean outputNormalizedHist;
         private int outputPrecision;
+        private int[] idOrdinals;
+        private boolean needBinning;
+        private int attr;
+        private int attrIndex;
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -224,12 +229,11 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
 			
-        	String[] items = config.get("nads.attr.list").split(",");
-        	for (String item : items) {
-        		String[] parts = item.split(":");
-        		attrBinWidths.put(Integer.parseInt(parts[0]), Double.parseDouble(parts[1]));
-        	}
+        	attrBinWidths = Utility.assertIntegerDoubleMapConfigParam(config, "nads.attr.bucket.width.list", Utility.configDelim, 
+        			Utility.configSubFieldDelim, "missing attrubutes ordinals and bucket widths");
         	conditionedAttr = config.getInt("nads.conditioned.attr",-1);
+        	needBinning = config.getBoolean("nads.need.binning", true);
+        	idOrdinals = Utility.optionalIntArrayConfigParam(config, "nads.id.field.ordinals", Utility.configDelim);
 
         	//validation with schema
            	schema = Utility.getGenericAttributeSchema(config, "nads.schema.file.path");
@@ -248,7 +252,12 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 		protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
      	throws IOException, InterruptedException {
 			histogram.initialize();
-			double binWidth = attrBinWidths.get(key.get(0));
+			attr = 0;
+			if (needBinning) {
+				attrIndex = null != idOrdinals ? idOrdinals.length  :  0;
+				attr = key.getInt(attrIndex);
+			}
+			double binWidth = attrBinWidths.get(attr);
 			histogram.setBinWidth(binWidth);
 			for (Tuple val : values) {
 				for (int i = 0; i < val.getSize(); i += 2) {
@@ -271,7 +280,7 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 			if (!fieldDelim.equals(",")) {
 				key.setDelim(fieldDelim);
 			}
-			stBld.append(key.toString());
+			stBld.append(key.toString()).append(fieldDelim);
 			if (outputNormalizedHist) {
 				//normalized
 				stBld.append(histogram.normalizedBinsToString());
@@ -279,11 +288,11 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 				//raw
 				stBld.append(histogram.binsToString());
 			}
-			stBld.append(histogram.getEntropy()) ;
-			stBld.append(fieldDelim).append(histogram.getMode()) ;
-			stBld.append(fieldDelim).append(histogram.getQuantile(0.25)) ;
-			stBld.append(fieldDelim).append(histogram.getQuantile(0.50)) ;
-			stBld.append(fieldDelim).append(histogram.getQuantile(0.75)) ;
+			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getEntropy(), outputPrecision)) ;
+			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getMode(), outputPrecision)) ;
+			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getQuantile(0.25), outputPrecision)) ;
+			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getQuantile(0.50), outputPrecision)) ;
+			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getQuantile(0.75), outputPrecision)) ;
 			outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
 		}
