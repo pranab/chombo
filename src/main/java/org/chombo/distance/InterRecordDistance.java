@@ -182,12 +182,24 @@ public class InterRecordDistance implements Serializable {
 	 * @return
 	 * @throws IOException 
 	 */
-	public double findDistance(String first, String second ) throws IOException {
+	public double findDistance(String  first, String second ) throws IOException {
+		String[] firstItems = first.split(fieldDelim);
+		String[] secondItems = second.split(fieldDelim);
+		return findDistance(firstItems, secondItems );
+	}
+	
+	/**
+	 * @param firstItems
+	 * @param secondItems
+	 * @return
+	 * @throws IOException 
+	 */
+	public double findDistance(String[]  firstItems, String[]  secondItems ) throws IOException {
+		this.firstItems =firstItems;
+		this.secondItems = secondItems;
 		double recDist = 0;
 		double dist = 0;
 		attrDistances.clear();
-		firstItems = first.split(fieldDelim);
-		secondItems = second.split(fieldDelim);
 		
 		//attribute pair distances
 		for (Attribute attr : attrSchema.getAttributes()) {
