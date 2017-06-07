@@ -21,6 +21,7 @@ package org.chombo.mr;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -120,14 +121,27 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	
         	if (null != jsonString && fieldExtractor.extractAllFields(jsonString, rawSchema.getJsonPaths())) {
         		//there will be multiple records if there are child objects and result are normalized
-        		List<String[]> records = fieldExtractor.getExtractedRecords();
-        		for (String[] record : records) {
-        			outVal.set(Utility.join(record, fieldDelimOut));
+        		if (normalize) {
+	        		List<String[]> records = fieldExtractor.getExtractedRecords();
+	        		for (String[] record : records) {
+	        			outVal.set(Utility.join(record, fieldDelimOut));
+	        			context.write(NullWritable.get(), outVal);
+	        		}
+        		}else  {
+        			//parent record
+        			String[] parentRec = fieldExtractor.getExtractedParentRecord();
+        			outVal.set(Utility.join(parentRec, fieldDelimOut));
         			context.write(NullWritable.get(), outVal);
-        		}
-        		
-        		if (!normalize) {
-        			//get child objects as separate sets of records
+        			
+        			//child records
+        			Map<String, List<String[]>> childRecMap = fieldExtractor.getExtractedChildRecords();
+        			for (String child : childRecMap.keySet()) {
+        				List<String[]> childRecs = childRecMap.get(child);
+    	        		for (String[] record : childRecs) {
+    	        			outVal.set(Utility.join(record, fieldDelimOut));
+    	        			context.write(NullWritable.get(), outVal);
+    	        		}
+        			}
         		}
         	}
         }        
