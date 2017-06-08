@@ -1,0 +1,1083 @@
+{
+	"dataUsage" : [
+		{
+			"acctID" : "5UAD44ZM",
+			"email" : "Q1831Q@yahoo.com",
+			"phoneNum" : "(305)6730550",
+  			"usages" : [ 
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 5627690,
+    			"startTime" : 1479223694295,
+    			"endTime" : 1479223727386
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 5059768,
+    			"startTime" : 1478562784891,
+    			"endTime" : 1478562859544
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 3693797,
+    			"startTime" : 1478741647986,
+    			"endTime" : 1478741719360
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 3649133,
+    			"startTime" : 1478889534448,
+    			"endTime" : 1478889579611
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 6182859,
+    			"startTime" : 1478992345974,
+    			"endTime" : 1478992428628
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 7532355,
+    			"startTime" : 1478830174600,
+    			"endTime" : 1478830232402
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 3973783,
+    			"startTime" : 1478916444069,
+    			"endTime" : 1478916466922
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 2726287,
+    			"startTime" : 1478578788465,
+    			"endTime" : 1478578881900
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 4137589,
+    			"startTime" : 1478772514153,
+    			"endTime" : 1478772581322
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 7317443,
+    			"startTime" : 1478553245061,
+    			"endTime" : 1478553271964
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 3507635,
+    			"startTime" : 1479106144273,
+    			"endTime" : 1479106214031
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 2151506,
+    			"startTime" : 1478550422830,
+    			"endTime" : 1478550434460
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 2143192,
+    			"startTime" : 1479167679140,
+    			"endTime" : 1479167691104
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 2898940,
+    			"startTime" : 1479151139022,
+    			"endTime" : 1479151199428
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 6147767,
+    			"startTime" : 1478462641670,
+    			"endTime" : 1478462731526
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 4033260,
+    			"startTime" : 1478706825010,
+    			"endTime" : 1478706878754
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "G1ZH8B33ERCT",
+    			"used" : 5069304,
+    			"startTime" : 1479026067693,
+    			"endTime" : 1479026130084
+  			}
+  			]
+		},
+		{
+			"acctID" : "U6J8QTH4",
+			"email" : "4WEIA9@yahoo.com",
+			"phoneNum" : "(650)2070155",
+  			"usages" : [ 
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 5260203,
+    			"startTime" : 1478677808227,
+    			"endTime" : 1478677852566
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 2699333,
+    			"startTime" : 1479207884617,
+    			"endTime" : 1479207914106
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 6592006,
+    			"startTime" : 1478779260111,
+    			"endTime" : 1478779286157
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 6031358,
+    			"startTime" : 1478606824205,
+    			"endTime" : 1478606886746
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 6607773,
+    			"startTime" : 1479180818790,
+    			"endTime" : 1479180868043
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 2228982,
+    			"startTime" : 1478562267221,
+    			"endTime" : 1478562327598
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 8187900,
+    			"startTime" : 1479070629035,
+    			"endTime" : 1479070646743
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 7663498,
+    			"startTime" : 1478472398349,
+    			"endTime" : 1478472493699
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 6560906,
+    			"startTime" : 1478824729569,
+    			"endTime" : 1478824761782
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 4298571,
+    			"startTime" : 1478843628530,
+    			"endTime" : 1478843717907
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 5991441,
+    			"startTime" : 1479007356721,
+    			"endTime" : 1479007442845
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 6528484,
+    			"startTime" : 1479018614058,
+    			"endTime" : 1479018704201
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 3906934,
+    			"startTime" : 1479247577143,
+    			"endTime" : 1479247669725
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 2051400,
+    			"startTime" : 1479051291587,
+    			"endTime" : 1479051316166
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 2595358,
+    			"startTime" : 1478605946203,
+    			"endTime" : 1478605970544
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "06WCVOIN22EH",
+    			"used" : 4226589,
+    			"startTime" : 1479174297345,
+    			"endTime" : 1479174349600
+  			}
+  			]
+		},
+		{
+			"acctID" : "JT3O8URU",
+			"email" : "674T43@gmail.com",
+			"phoneNum" : "(415)6780655",
+  			"usages" : [ 
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 5337999,
+    			"startTime" : 1479129386979,
+    			"endTime" : 1479129465338
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 5831338,
+    			"startTime" : 1478689810958,
+    			"endTime" : 1478689840886
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 6806676,
+    			"startTime" : 1478430443099,
+    			"endTime" : 1478430479640
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 3458792,
+    			"startTime" : 1478648390825,
+    			"endTime" : 1478648439765
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 6842086,
+    			"startTime" : 1478577230326,
+    			"endTime" : 1478577240536
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 7026412,
+    			"startTime" : 1479165005879,
+    			"endTime" : 1479165082442
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 2404737,
+    			"startTime" : 1478659045662,
+    			"endTime" : 1478659133027
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 2091186,
+    			"startTime" : 1478588955961,
+    			"endTime" : 1478589031927
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 7004001,
+    			"startTime" : 1478895037042,
+    			"endTime" : 1478895104545
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 3171553,
+    			"startTime" : 1479006754897,
+    			"endTime" : 1479006796187
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 6761951,
+    			"startTime" : 1479260403689,
+    			"endTime" : 1479260498350
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 3113893,
+    			"startTime" : 1479258738005,
+    			"endTime" : 1479258758913
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 3321202,
+    			"startTime" : 1478874164079,
+    			"endTime" : 1478874195753
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 5850088,
+    			"startTime" : 1478857912368,
+    			"endTime" : 1478857938366
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 4541997,
+    			"startTime" : 1479146027329,
+    			"endTime" : 1479146096694
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 3895611,
+    			"startTime" : 1479185786852,
+    			"endTime" : 1479185818213
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 6707715,
+    			"startTime" : 1478622041157,
+    			"endTime" : 1478622054753
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "J0D798W5HLE5",
+    			"used" : 6991370,
+    			"startTime" : 1479080971382,
+    			"endTime" : 1479080997878
+  			}
+  			]
+		},
+		{
+			"acctID" : "HP2FOJ4T",
+			"email" : "WR20IT@gmail.com",
+			"phoneNum" : "(620)3411272",
+  			"usages" : [ 
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 7622657,
+    			"startTime" : 1479253071874,
+    			"endTime" : 1479253105151
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 6959397,
+    			"startTime" : 1478717577773,
+    			"endTime" : 1478717632296
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 6424851,
+    			"startTime" : 1479130344119,
+    			"endTime" : 1479130412148
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 6893167,
+    			"startTime" : 1479102089275,
+    			"endTime" : 1479102102234
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 6653341,
+    			"startTime" : 1478815207672,
+    			"endTime" : 1478815251546
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 5699949,
+    			"startTime" : 1478561561955,
+    			"endTime" : 1478561601364
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 6388991,
+    			"startTime" : 1479054079869,
+    			"endTime" : 1479054149058
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 5608298,
+    			"startTime" : 1479233813497,
+    			"endTime" : 1479233870154
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 3392897,
+    			"startTime" : 1478670877661,
+    			"endTime" : 1478670902003
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "OO12WWQ7HJLJ",
+    			"used" : 6915457,
+    			"startTime" : 1478593106381,
+    			"endTime" : 1478593147949
+  			}
+  			]
+		},
+		{
+			"acctID" : "EIELN8I7",
+			"email" : "2T4996@hotmail.com",
+			"phoneNum" : "(574)0454284",
+  			"usages" : [ 
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 5690323,
+    			"startTime" : 1478802413474,
+    			"endTime" : 1478802484548
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 3162084,
+    			"startTime" : 1479134824982,
+    			"endTime" : 1479134867774
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 3878891,
+    			"startTime" : 1478795127822,
+    			"endTime" : 1478795168935
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 7429583,
+    			"startTime" : 1479228210832,
+    			"endTime" : 1479228264759
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 6424706,
+    			"startTime" : 1478771037221,
+    			"endTime" : 1478771094461
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 2755271,
+    			"startTime" : 1479174577277,
+    			"endTime" : 1479174646049
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 2132698,
+    			"startTime" : 1478952654999,
+    			"endTime" : 1478952733656
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 5933771,
+    			"startTime" : 1478566747590,
+    			"endTime" : 1478566766885
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 3725786,
+    			"startTime" : 1478596495196,
+    			"endTime" : 1478596584832
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 4435581,
+    			"startTime" : 1478492247220,
+    			"endTime" : 1478492269237
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UY3S12LSYR98",
+    			"used" : 3402950,
+    			"startTime" : 1478956779322,
+    			"endTime" : 1478956848887
+  			}
+  			]
+		},
+		{
+			"acctID" : "WT930YC4",
+			"email" : "19809W@gmail.com",
+			"phoneNum" : "(415)0043174",
+  			"usages" : [ 
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 8885933,
+    			"startTime" : 1478598522124,
+    			"endTime" : 1478598540800
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 3427181,
+    			"startTime" : 1478691095056,
+    			"endTime" : 1478691123368
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 5603214,
+    			"startTime" : 1479252184697,
+    			"endTime" : 1479252248927
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 7145122,
+    			"startTime" : 1478992882397,
+    			"endTime" : 1478992916636
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 5379650,
+    			"startTime" : 1479037749816,
+    			"endTime" : 1479037839555
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 5602486,
+    			"startTime" : 1479254268003,
+    			"endTime" : 1479254361252
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 3808295,
+    			"startTime" : 1478781843649,
+    			"endTime" : 1478781877744
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 6647159,
+    			"startTime" : 1478686800586,
+    			"endTime" : 1478686837450
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 3931637,
+    			"startTime" : 1478900745852,
+    			"endTime" : 1478900838440
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 7413717,
+    			"startTime" : 1479255947300,
+    			"endTime" : 1479255961403
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 2595132,
+    			"startTime" : 1479105232720,
+    			"endTime" : 1479105279098
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 5501891,
+    			"startTime" : 1478593586463,
+    			"endTime" : 1478593607862
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "0O8C85FC4K7V",
+    			"used" : 2400011,
+    			"startTime" : 1479282538671,
+    			"endTime" : 1479282628440
+  			}
+  			]
+		},
+		{
+			"acctID" : "06BYS0PT",
+			"email" : "9R3U8E@hotmail.com",
+			"phoneNum" : "(971)8975470",
+  			"usages" : [ 
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 2214931,
+    			"startTime" : 1479144291901,
+    			"endTime" : 1479144337667
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 8574721,
+    			"startTime" : 1478568834076,
+    			"endTime" : 1478568906464
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 2367250,
+    			"startTime" : 1478981719089,
+    			"endTime" : 1478981798302
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 4016551,
+    			"startTime" : 1479288269862,
+    			"endTime" : 1479288340825
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 2700787,
+    			"startTime" : 1478495359848,
+    			"endTime" : 1478495446095
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 8708841,
+    			"startTime" : 1478989214599,
+    			"endTime" : 1478989287552
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 2111782,
+    			"startTime" : 1478699507419,
+    			"endTime" : 1478699602568
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 4080997,
+    			"startTime" : 1478820665476,
+    			"endTime" : 1478820762271
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 2625848,
+    			"startTime" : 1479012213437,
+    			"endTime" : 1479012285247
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 8880484,
+    			"startTime" : 1479207646873,
+    			"endTime" : 1479207676672
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 3598676,
+    			"startTime" : 1478951626318,
+    			"endTime" : 1478951639676
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "G3PN2P8NYC4M",
+    			"used" : 7141619,
+    			"startTime" : 1478904001814,
+    			"endTime" : 1478904013797
+  			}
+  			]
+		},
+		{
+			"acctID" : "Z44QI5X1",
+			"email" : "4W89V8@hotmail.com",
+			"phoneNum" : "(620)2789923",
+  			"usages" : [ 
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 3802767,
+    			"startTime" : 1478453107821,
+    			"endTime" : 1478453186177
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 5627184,
+    			"startTime" : 1478919935859,
+    			"endTime" : 1478920012125
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 2718617,
+    			"startTime" : 1478921023230,
+    			"endTime" : 1478921063762
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 3476018,
+    			"startTime" : 1478800775044,
+    			"endTime" : 1478800857139
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 4842400,
+    			"startTime" : 1478784341258,
+    			"endTime" : 1478784367796
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 7209908,
+    			"startTime" : 1479091628267,
+    			"endTime" : 1479091654119
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 4674429,
+    			"startTime" : 1479169195294,
+    			"endTime" : 1479169214284
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 8054716,
+    			"startTime" : 1478644804459,
+    			"endTime" : 1478644862725
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 5205691,
+    			"startTime" : 1478604550976,
+    			"endTime" : 1478604590255
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 4148615,
+    			"startTime" : 1478954962516,
+    			"endTime" : 1478955045907
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 3664674,
+    			"startTime" : 1479253201269,
+    			"endTime" : 1479253289385
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 2118922,
+    			"startTime" : 1478790262243,
+    			"endTime" : 1478790354632
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "8RBCYG41458W",
+    			"used" : 7769305,
+    			"startTime" : 1479074702158,
+    			"endTime" : 1479074736887
+  			}
+  			]
+		},
+		{
+			"acctID" : "8XN4LK2L",
+			"email" : "LQ7115@hotmail.com",
+			"phoneNum" : "(415)5624380",
+  			"usages" : [ 
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 2805730,
+    			"startTime" : 1478942479543,
+    			"endTime" : 1478942548702
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 8738642,
+    			"startTime" : 1478944350544,
+    			"endTime" : 1478944427910
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 5433085,
+    			"startTime" : 1479256425988,
+    			"endTime" : 1479256475019
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 4257619,
+    			"startTime" : 1478841300377,
+    			"endTime" : 1478841356501
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 7291162,
+    			"startTime" : 1478846758203,
+    			"endTime" : 1478846857669
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 6152122,
+    			"startTime" : 1478898633240,
+    			"endTime" : 1478898710877
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 8467643,
+    			"startTime" : 1478959819784,
+    			"endTime" : 1478959887654
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 7634744,
+    			"startTime" : 1479138249370,
+    			"endTime" : 1479138325861
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 4785798,
+    			"startTime" : 1478632100890,
+    			"endTime" : 1478632193084
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 5453672,
+    			"startTime" : 1478474429940,
+    			"endTime" : 1478474508854
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 3034955,
+    			"startTime" : 1478992544714,
+    			"endTime" : 1478992604532
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 7123966,
+    			"startTime" : 1478638571073,
+    			"endTime" : 1478638626276
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 4973520,
+    			"startTime" : 1478496684687,
+    			"endTime" : 1478496704058
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 8483596,
+    			"startTime" : 1478900756811,
+    			"endTime" : 1478900839468
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 2618178,
+    			"startTime" : 1478649467642,
+    			"endTime" : 1478649490929
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 2644164,
+    			"startTime" : 1478450740460,
+    			"endTime" : 1478450806472
+  			},
+  			{
+    			"plan" : "super",
+    			"deviceID" : "68XC2G7I2LO9",
+    			"used" : 7605508,
+    			"startTime" : 1479217190997,
+    			"endTime" : 1479217216615
+  			}
+  			]
+		},
+		{
+			"acctID" : "9VR9CFNJ",
+			"email" : "NTN199@gmail.com",
+			"phoneNum" : "(941)7602205",
+  			"usages" : [ 
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 3614625,
+    			"startTime" : 1478748117336,
+    			"endTime" : 1478748144714
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 4049326,
+    			"startTime" : 1478871480872,
+    			"endTime" : 1478871547406
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 7349569,
+    			"startTime" : 1478886296025,
+    			"endTime" : 1478886368541
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 3137480,
+    			"startTime" : 1479020367356,
+    			"endTime" : 1479020384208
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 2890911,
+    			"startTime" : 1478666666121,
+    			"endTime" : 1478666699068
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 8407623,
+    			"startTime" : 1479110941539,
+    			"endTime" : 1479110989382
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 5404217,
+    			"startTime" : 1478828702847,
+    			"endTime" : 1478828797093
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 4393934,
+    			"startTime" : 1478784818157,
+    			"endTime" : 1478784855882
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 4111216,
+    			"startTime" : 1478595659603,
+    			"endTime" : 1478595688598
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 3654911,
+    			"startTime" : 1478578578431,
+    			"endTime" : 1478578647777
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 5297159,
+    			"startTime" : 1478959389018,
+    			"endTime" : 1478959470515
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 5658121,
+    			"startTime" : 1478839956303,
+    			"endTime" : 1478839970780
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 2114399,
+    			"startTime" : 1479280133709,
+    			"endTime" : 1479280174404
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 4824314,
+    			"startTime" : 1478836668577,
+    			"endTime" : 1478836735454
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 2402786,
+    			"startTime" : 1479286633429,
+    			"endTime" : 1479286719564
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 5303330,
+    			"startTime" : 1478563199692,
+    			"endTime" : 1478563269514
+  			},
+  			{
+    			"plan" : "standard plus",
+    			"deviceID" : "UA87F9327884",
+    			"used" : 3600908,
+    			"startTime" : 1478610808762,
+    			"endTime" : 1478610889894
+  			}
+  			]
+		}
+	]
+}
+
