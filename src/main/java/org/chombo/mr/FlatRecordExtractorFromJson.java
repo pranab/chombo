@@ -97,7 +97,9 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         private JsonFieldExtractor fieldExtractor;
         private MultiLineJsonFlattener flattener;
         private boolean normalize;
-        private static final String[] NORM_KEYS = {"IY7HG5NU3L", "U8801127KC", "91E2646B00", "PR00L08GL2"};
+        private  String baseKey = BasicUtils.generateId();
+        private int keyIndex = 1000000;
+        private String thisKey;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -107,7 +109,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim", ",");
         	
         	//schema
-        	InputStream is = Utility.getFileStream(config,  "frej.raw.schema.file.path");
+        	InputStream is = Utility.getFileStream(config,  "frej.schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
         	rawSchema = mapper.readValue(is, RawAttributeSchema.class);
         	
@@ -150,9 +152,11 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         		//there will be multiple records if there are child objects and result are normalized
         		if (!normalize) {
         			//de normalized
+        			++keyIndex;
+        			thisKey = baseKey + "-" + keyIndex;
 	        		List<String[]> records = fieldExtractor.getExtractedRecords();
 	        		for (String[] record : records) {
-	        			outKey.set(BasicUtils.selectRandom(NORM_KEYS));
+	        			outKey.set(thisKey);
 	        			outVal.set(BasicUtils.join(record, fieldDelimOut));
 	        			context.write(outKey, outVal);
 	        		}
