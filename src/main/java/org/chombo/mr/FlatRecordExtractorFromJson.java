@@ -107,7 +107,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim", ",");
         	
         	//schema
-        	InputStream is = Utility.getFileStream(config,  "frej.raw.schema.file.path");
+        	InputStream is = Utility.getFileStream(config,  "frej.schema.file.path");
         	ObjectMapper mapper = new ObjectMapper();
         	rawSchema = mapper.readValue(is, RawAttributeSchema.class);
         	
