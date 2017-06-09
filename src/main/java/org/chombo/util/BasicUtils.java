@@ -515,6 +515,24 @@ public class BasicUtils {
     
     /**
      * @param arr
+     * @param begIndex
+     * @return
+     */
+    public static <T> String join(T[] arr, int begIndex) {
+    	return join(arr,  begIndex, arr.length, ",");
+    }
+
+    /**
+     * @param arr
+     * @param begIndex
+     * @return
+     */
+    public static <T> String join(T[] arr, int begIndex, String delim) {
+    	return join(arr,  begIndex, arr.length, delim);
+    }
+
+    /**
+     * @param arr
      * @param indexes
      * @param delim
      * @return
@@ -655,6 +673,15 @@ public class BasicUtils {
 		return list.get(index);
 	}
 	
+	/**
+	 * @param list
+	 * @return
+	 */
+	public static <T> T selectRandom(T[] arr) {
+   		int index = (int)(Math.random() * arr.length);
+		return arr[index];
+	}
+
 	/**
 	 * @param record
 	 * @param numFields
