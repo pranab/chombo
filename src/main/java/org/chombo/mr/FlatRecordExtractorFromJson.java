@@ -31,14 +31,19 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Level;
 import org.chombo.transformer.JsonFieldExtractor;
 import org.chombo.transformer.MultiLineFlattener;
 import org.chombo.transformer.MultiLineJsonFlattener;
 import org.chombo.transformer.RawAttributeSchema;
+import org.chombo.util.BasicUtils;
+import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -61,8 +66,18 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
 
         Utility.setConfiguration(job.getConfiguration());
         job.setMapperClass(FlatRecordExtractorFromJson.ExtractionMapper.class);
+    	job.setReducerClass(FlatRecordExtractorFromJson.ExtractionReducer.class);
+
+    	job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(Text.class);
+        
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
+        
+        
+        int numReducer = job.getConfiguration().getInt("frej.num.reducer", -1);
+        numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
+        job.setNumReduceTasks(numReducer);
         
         int status =  job.waitForCompletion(true) ? 0 : 1;
         return status;
@@ -73,7 +88,8 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
 	 * @author pranab
 	 *
 	 */
-	public static class ExtractionMapper extends Mapper<LongWritable, Text, NullWritable, Text> {
+	public static class ExtractionMapper extends Mapper<LongWritable, Text, Text, Text> {
+		private Text outKey = new Text();
 		private Text outVal = new Text();
         private String fieldDelimOut;
         private RawAttributeSchema rawSchema;
@@ -81,7 +97,8 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         private JsonFieldExtractor fieldExtractor;
         private MultiLineJsonFlattener flattener;
         private boolean normalize;
-
+        private static final String[] NORM_KEYS = {"IY7HG5NU3L", "U8801127KC", "91E2646B00", "PR00L08GL2"};
+        
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
          */
@@ -97,6 +114,16 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	boolean failOnInvalid = config.getBoolean("frej.fail.on.invalid", true);
         	normalize = config.getBoolean("frej.normalize.output", true);
         	fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalize);
+        	
+        	//ID field
+        	String idFieldPath = config.get("frej.id.attr.path");
+        	if (null != idFieldPath) {
+        		fieldExtractor.withIdFieldPath(idFieldPath);
+        	} else {
+        		if (normalize) {
+        			fieldExtractor.withAutoIdGeneration();
+        		}
+        	}
         	
         	//record type
         	if (rawSchema.getRecordType().equals(RawAttributeSchema.REC_MULTI_LINE_JSON)) {
@@ -121,31 +148,71 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	
         	if (null != jsonString && fieldExtractor.extractAllFields(jsonString, rawSchema.getJsonPaths())) {
         		//there will be multiple records if there are child objects and result are normalized
-        		if (normalize) {
+        		if (!normalize) {
+        			//de normalized
 	        		List<String[]> records = fieldExtractor.getExtractedRecords();
 	        		for (String[] record : records) {
-	        			outVal.set(Utility.join(record, fieldDelimOut));
-	        			context.write(NullWritable.get(), outVal);
+	        			outKey.set(BasicUtils.selectRandom(NORM_KEYS));
+	        			outVal.set(BasicUtils.join(record, fieldDelimOut));
+	        			context.write(outKey, outVal);
 	        		}
-        		}else  {
-        			//parent record
+        		} else  {
+        			//parent record, use first field which is entity type as key
         			String[] parentRec = fieldExtractor.getExtractedParentRecord();
-        			outVal.set(Utility.join(parentRec, fieldDelimOut));
-        			context.write(NullWritable.get(), outVal);
+        			outKey.set(parentRec[0]);
+        			outVal.set(BasicUtils.join(parentRec, 1, fieldDelimOut));
+        			context.write(outKey, outVal);
         			
-        			//child records
+        			//all child records, use first field which is entity type as key
         			Map<String, List<String[]>> childRecMap = fieldExtractor.getExtractedChildRecords();
         			for (String child : childRecMap.keySet()) {
         				List<String[]> childRecs = childRecMap.get(child);
     	        		for (String[] record : childRecs) {
-    	        			outVal.set(Utility.join(record, fieldDelimOut));
-    	        			context.write(NullWritable.get(), outVal);
+    	        			outKey.set(record[0]);
+    	        			outVal.set(BasicUtils.join(record, 1, fieldDelimOut));
+    	        			context.write(outKey, outVal);
     	        		}
         			}
         		}
         	}
         }        
 	}
+	
+    /**
+     * @author pranab
+     *
+     */
+    public static class ExtractionReducer extends Reducer<Text, Text, NullWritable, Text> {
+		private Text outVal = new Text();
+		private String fieldDelim;
+		private boolean outputEntityName;
+		
+        @Override
+        protected void setup(Context context) throws IOException, InterruptedException {
+        	Configuration config = context.getConfiguration();
+            fieldDelim = config.get("field.delim.out", ",");
+            boolean normalize = config.getBoolean("frej.normalize.output", true);
+            if (normalize) {
+            	outputEntityName = config.getBoolean("frej.output.entity.name", false);
+            }
+        }	
+        
+    	/* (non-Javadoc)
+    	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
+    	 */
+    	protected void reduce(Text key, Iterable<Text> values, Context context)
+        	throws IOException, InterruptedException {
+    		if (outputEntityName) {
+    			outVal.set(key.toString());
+    			context.write(NullWritable.get(), outVal);
+    		}
+    		
+        	for (Text value : values){
+    			outVal.set(value.toString());
+    			context.write(NullWritable.get(), outVal);
+        	}
+    	}		
+    }	
 	
 	/**
 	 * @param args
