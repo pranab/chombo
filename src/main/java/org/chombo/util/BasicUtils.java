@@ -1523,5 +1523,22 @@ public class BasicUtils {
 	public static int between(int val, int min, int max) {
 		return val < min ? min : (val > max ? max : val);
 	}
+	
+	/**
+	 * @param max
+	 * @return
+	 */
+	public static int sampleUniform(int max) {
+		return (int)(Math.random() * max);
+	}
     
+	/**
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static int sampleUniform(int min, int max) {
+		double val = min + Math.random() * (max - min);
+		return (int)val;
+	}
  }
