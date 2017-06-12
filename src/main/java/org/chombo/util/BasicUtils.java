@@ -1201,6 +1201,22 @@ public class BasicUtils {
     }
    
     /**
+     * @param values
+     * @param value
+     * @return
+     */
+    public static boolean contains(String[] values, String value) {
+    	boolean doesContain = false;
+    	for (String thisValue : values) {
+    		if (thisValue.equals(value)) {
+    			doesContain = true;
+    			break;
+    		}
+    	}
+    	return doesContain;
+    }
+
+    /**
      * @param arr
      * @return
      */
