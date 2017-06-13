@@ -1557,4 +1557,14 @@ public class BasicUtils {
 		double val = min + Math.random() * (max - min);
 		return (int)val;
 	}
+	
+	/**
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static double sampleUniform(double min, double max) {
+		double val = min + Math.random() * (max - min);
+		return val;
+	}
  }
