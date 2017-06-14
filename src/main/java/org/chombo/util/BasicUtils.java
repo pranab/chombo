@@ -1201,6 +1201,22 @@ public class BasicUtils {
     }
    
     /**
+     * @param values
+     * @param value
+     * @return
+     */
+    public static boolean contains(String[] values, String value) {
+    	boolean doesContain = false;
+    	for (String thisValue : values) {
+    		if (thisValue.equals(value)) {
+    			doesContain = true;
+    			break;
+    		}
+    	}
+    	return doesContain;
+    }
+
+    /**
      * @param arr
      * @return
      */
@@ -1523,5 +1539,32 @@ public class BasicUtils {
 	public static int between(int val, int min, int max) {
 		return val < min ? min : (val > max ? max : val);
 	}
+	
+	/**
+	 * @param max
+	 * @return
+	 */
+	public static int sampleUniform(int max) {
+		return (int)(Math.random() * max);
+	}
     
+	/**
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static int sampleUniform(int min, int max) {
+		double val = min + Math.random() * (max - min);
+		return (int)val;
+	}
+	
+	/**
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static double sampleUniform(double min, double max) {
+		double val = min + Math.random() * (max - min);
+		return val;
+	}
  }

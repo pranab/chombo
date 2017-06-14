@@ -28,6 +28,15 @@ public class DoubleRange extends Pair<Double, Double> implements Domain {
 	private int outputPrecision;
 	
 	/**
+	 * @param min
+	 * @param max
+	 */
+	public DoubleRange(double min, double max) {
+		left = min;
+		right = max;
+	}
+	
+	/**
 	 * @param stVal
 	 * @param delim
 	 */
