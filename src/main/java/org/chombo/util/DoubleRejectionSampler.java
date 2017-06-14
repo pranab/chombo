@@ -29,7 +29,6 @@ public class DoubleRejectionSampler extends RejectionSampler<DoubleRange> {
 	private Map<Integer, DoubleRange> bins = new HashMap<Integer, DoubleRange>();
 	private double min; 
 	private double max; 
-	private int binCount;
 	private double binWidth;
 			
 	/**
@@ -40,7 +39,6 @@ public class DoubleRejectionSampler extends RejectionSampler<DoubleRange> {
 	public DoubleRejectionSampler(double min, double max, int binCount){
 		this.min = min;
 		this.max = max;
-		this.binCount = binCount;
 		binWidth = (max - min) / binCount;
 	}
 	
@@ -64,9 +62,8 @@ public class DoubleRejectionSampler extends RejectionSampler<DoubleRange> {
 	 * @return
 	 */
 	public double sampleDouble() {
-		double sampled = 0;
 		DoubleRange range = sample();
-		sampled = BasicUtils.sampleUniform(range.getLeft(), range.getRight());
+		double sampled = BasicUtils.sampleUniform(range.getLeft(), range.getRight());
 		return sampled;
 	}
 }

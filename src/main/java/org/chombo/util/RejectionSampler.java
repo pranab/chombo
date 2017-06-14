@@ -57,18 +57,15 @@ public class RejectionSampler<T> {
 	 * normalize
 	 */
 	public void normalize() {
-		double maxVal = Double.MIN_VALUE;
-		
+		double sum = 0;
 		for (T obj : distr.keySet()) {
 			Double curVal = distr.get(obj);
-			if (curVal > maxVal) {
-				maxVal = curVal;
-			}
+			sum += curVal;
 		}
 		
 		for (T obj : distr.keySet()) {
 			Double curVal = distr.get(obj);
-			distr.put(obj, curVal / maxVal);
+			distr.put(obj, curVal / sum);
 		}		
 	}
 	
