@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @param <T>
  */
-public class NonParametricDistrRejectionSampler<T> {
+public class NonParametricDistrRejectionSampler<T>  implements RejectionSampler<T> {
 	protected Map<T, Double> distr = new HashMap<T, Double>();
 	private List<T> values;
 	
