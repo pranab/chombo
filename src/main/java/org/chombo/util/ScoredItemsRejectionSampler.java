@@ -24,7 +24,7 @@ import java.util.List;
  *
  * @param <T>
  */
-public class ScoredItemsRejectionSampler<T> extends RejectionSampler<T> {
+public class ScoredItemsRejectionSampler<T> extends NonParametricDistrRejectionSampler<T> {
 	
 	/**
 	 * @param values

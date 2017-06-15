@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @param <T>
  */
-public class RankedItemsRejectionSampler<T> extends  RejectionSampler<T> {
+public class RankedItemsRejectionSampler<T> extends  NonParametricDistrRejectionSampler<T> {
 
 	/**
 	 * @param items

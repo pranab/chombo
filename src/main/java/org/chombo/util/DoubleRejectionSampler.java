@@ -25,7 +25,7 @@ import java.util.Map;
  * @author pranab
  *
  */
-public class DoubleRejectionSampler extends RejectionSampler<DoubleRange> {
+public class DoubleRejectionSampler extends NonParametricDistrRejectionSampler<DoubleRange> {
 	private Map<Integer, DoubleRange> bins = new HashMap<Integer, DoubleRange>();
 	private double min; 
 	private double max; 
