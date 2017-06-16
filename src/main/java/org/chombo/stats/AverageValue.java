@@ -16,7 +16,7 @@
  */
 
 
-package org.chombo.util;
+package org.chombo.stats;
 
 /**
  * @author pranab

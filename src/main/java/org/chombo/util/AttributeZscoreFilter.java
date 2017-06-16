@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.chombo.stats.NumericalAttrStatsManager;
 
 /**
  * Zscore based outlier detector 

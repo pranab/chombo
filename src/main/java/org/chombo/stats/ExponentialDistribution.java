@@ -15,18 +15,24 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.stats;
 
-/**
- * @author pranab
- *
- * @param <T>
- */
-public interface RejectionSampler<T> {
 
+public class ExponentialDistribution implements ProbabilityDistribution{
+	private double beta;
+	
 	/**
-	 * get a sample based on a distribution
-	 * @return
+	 * @param mean
 	 */
-	public T sample();
+	public ExponentialDistribution(double mean) {
+		beta = 1.0 / mean;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.chombo.util.ProbabilityDistribution#getDistr(double)
+	 */
+	public double getDistr(double ord) {
+		double distr = 1.0 - Math.exp(-beta * ord);
+		return distr;
+	}	
 }

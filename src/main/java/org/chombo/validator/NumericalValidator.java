@@ -19,9 +19,9 @@ package org.chombo.validator;
 
 import java.util.Map;
 
+import org.chombo.stats.MedianStatsManager;
+import org.chombo.stats.NumericalAttrStatsManager;
 import org.chombo.util.AttributeSchema;
-import org.chombo.util.MedianStatsManager;
-import org.chombo.util.NumericalAttrStatsManager;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.Utility;
 

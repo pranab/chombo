@@ -35,12 +35,12 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.stats.NumericalAttrStatsManager;
+import org.chombo.stats.StatsParameters;
 import org.chombo.util.Attribute;
 import org.chombo.util.GenericAttributeSchema;
-import org.chombo.util.NumericalAttrStatsManager;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
-import org.chombo.util.StatsParameters;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 

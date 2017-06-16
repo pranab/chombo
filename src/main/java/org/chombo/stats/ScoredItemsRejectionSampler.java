@@ -15,33 +15,36 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.stats;
+
+import java.util.List;
+
+import org.chombo.util.Pair;
 
 /**
  * @author pranab
  *
+ * @param <T>
  */
-public class SimpleStat implements AverageValue {
-	private double sum;
-	private long count;
+public class ScoredItemsRejectionSampler<T> extends NonParametricDistrRejectionSampler<T> {
 	
-	public void add(double value) {
-		sum +=  value;
-		++count;
-	}
-	
-	public double getMean() {
-		return sum / count;
+	/**
+	 * @param values
+	 */
+	public ScoredItemsRejectionSampler(List<Pair<T, Double>> values) {
+		for (Pair<T, Double> val : values) {
+			add(val.getLeft(), val.getRight());
+		}
+		normalize();
 	}
 
-	@Override
-	public double getAvgValue() {
-		return sum / count;
-	}
-
-	@Override
-	public void setAvgValue(double avgValue) {
-		sum = avgValue;
-		count = 1;
+	/**
+	 * @param values
+	 */
+	public ScoredItemsRejectionSampler(Pair<T, Double>[] values) {
+		for (Pair<T, Double> val : values) {
+			add(val.getLeft(), val.getRight());
+		}
+		normalize();
 	}
 }

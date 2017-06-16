@@ -16,10 +16,13 @@
  */
 
 
-package org.chombo.util;
+package org.chombo.stats;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.chombo.util.BasicUtils;
+import org.chombo.util.DoubleRange;
 
 /**
  * @author pranab

@@ -15,36 +15,18 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.stats;
 
 /**
  * @author pranab
  *
  */
-public class RecencyWeightedStat implements AverageValue {
-	private double avgValue;
-	private long count;
-	private double stepSize;
+public interface ProbabilityDistribution {
 	
-	public RecencyWeightedStat(double stepSize) {
-		super();
-		this.stepSize = stepSize;
-	}
-
-	@Override
-	public void add(double value) {
-		++count;
-		avgValue += stepSize * (value - avgValue);
-	}
-
-	@Override
-	public double getAvgValue() {
-		return avgValue;
-	}
-
-	@Override
-	public void setAvgValue(double avgValue) {
-		this.avgValue = avgValue;
-	}
+	/**
+	 * @param ord
+	 * @return probability of x less than ord
+	 */
+	public double getDistr(double ord);
 
 }
