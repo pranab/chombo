@@ -16,16 +16,19 @@
  */
 
 
-package org.chombo.util;
+package org.chombo.stats;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.chombo.util.BasicUtils;
+import org.chombo.util.DoubleRange;
 
 /**
  * @author pranab
  *
  */
-public class DoubleRejectionSampler extends RejectionSampler<DoubleRange> {
+public class DoubleRejectionSampler extends NonParametricDistrRejectionSampler<DoubleRange> {
 	private Map<Integer, DoubleRange> bins = new HashMap<Integer, DoubleRange>();
 	private double min; 
 	private double max; 

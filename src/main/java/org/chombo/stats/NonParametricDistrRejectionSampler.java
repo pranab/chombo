@@ -15,7 +15,7 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.stats;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @param <T>
  */
-public class RejectionSampler<T> {
+public class NonParametricDistrRejectionSampler<T>  implements RejectionSampler<T> {
 	protected Map<T, Double> distr = new HashMap<T, Double>();
 	private List<T> values;
 	

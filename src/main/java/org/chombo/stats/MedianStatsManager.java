@@ -16,7 +16,7 @@
  */
 
 
-package org.chombo.util;
+package org.chombo.stats;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
+import org.chombo.util.Utility;
 
 /**
  * Loads median related stats from HDFS

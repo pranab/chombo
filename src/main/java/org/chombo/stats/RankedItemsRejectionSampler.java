@@ -15,7 +15,7 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.stats;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @param <T>
  */
-public class RankedItemsRejectionSampler<T> extends  RejectionSampler<T> {
+public class RankedItemsRejectionSampler<T> extends  NonParametricDistrRejectionSampler<T> {
 
 	/**
 	 * @param items

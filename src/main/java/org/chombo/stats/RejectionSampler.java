@@ -15,18 +15,18 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.stats;
 
 /**
  * @author pranab
  *
+ * @param <T>
  */
-public interface ProbabilityDistribution {
-	
-	/**
-	 * @param ord
-	 * @return probability of x less than ord
-	 */
-	public double getDistr(double ord);
+public interface RejectionSampler<T> {
 
+	/**
+	 * get a sample based on a distribution
+	 * @return
+	 */
+	public T sample();
 }

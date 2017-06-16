@@ -15,7 +15,7 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.util;
+package org.chombo.stats;
 
 /**
  * Running stats for a field

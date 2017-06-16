@@ -21,7 +21,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.chombo.util.MedianStatsManager;
+import org.chombo.stats.MedianStatsManager;
 import org.chombo.util.RichAttribute;
 import org.chombo.util.RichAttributeSchema;
 import org.chombo.util.SeasonalAnalyzer;

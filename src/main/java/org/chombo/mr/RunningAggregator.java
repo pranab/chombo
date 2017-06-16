@@ -37,7 +37,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.chombo.util.LongRunningStats;
+import org.chombo.stats.LongRunningStats;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 

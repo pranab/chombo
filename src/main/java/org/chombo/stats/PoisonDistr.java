@@ -16,7 +16,9 @@
  */
 
 
-package org.chombo.util;
+package org.chombo.stats;
+
+import org.chombo.util.BasicUtils;
 
 /**
  * Poison distribution

@@ -15,18 +15,24 @@
  * permissions and limitations under the License.
  */
 
+package org.chombo.stats;
 
-package org.chombo.util;
 
-/**
- * @author pranab
- *
- */
-public interface AverageValue {
+public class ExponentialDistribution implements ProbabilityDistribution{
+	private double beta;
 	
-	public void add(double value);
+	/**
+	 * @param mean
+	 */
+	public ExponentialDistribution(double mean) {
+		beta = 1.0 / mean;
+	}
 	
-	public double getAvgValue();
-	
-	public void setAvgValue(double avgValue);
+	/* (non-Javadoc)
+	 * @see org.chombo.util.ProbabilityDistribution#getDistr(double)
+	 */
+	public double getDistr(double ord) {
+		double distr = 1.0 - Math.exp(-beta * ord);
+		return distr;
+	}	
 }
