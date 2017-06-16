@@ -27,6 +27,7 @@ public class NormalDistrRejectionSampler  implements RejectionSampler<Double>{
 	private double stdDev;
 	private double min;
 	private double max;
+	private double con;
 	
 	/**
 	 * @param mean
@@ -38,6 +39,7 @@ public class NormalDistrRejectionSampler  implements RejectionSampler<Double>{
 		this.stdDev = stdDev;
 		min = mean - rangeStdDev * stdDev;
 		max = mean + rangeStdDev * stdDev;
+		con = stdDev * Math.pow(2 * Math.PI, 0.5);
 	}
 	
 	/* (non-Javadoc)
@@ -48,7 +50,7 @@ public class NormalDistrRejectionSampler  implements RejectionSampler<Double>{
 		while(true) {
 			double base = BasicUtils.sampleUniform(min, max);
 			double temp = (base - mean) / stdDev;
-			double distr = Math.exp(-0.5 * temp * temp) / (stdDev *  Math.pow(2 * base, 0.5));
+			double distr = Math.exp(-0.5 * temp * temp) / con;
 			if (Math.random() < distr) {
 				sampled = base;
 				break;
