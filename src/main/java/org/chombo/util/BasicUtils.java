@@ -1576,4 +1576,23 @@ public class BasicUtils {
 		double val = min + Math.random() * (max - min);
 		return val;
 	}
+	
+	/**
+	 * @param src
+	 * @param srcBeg
+	 * @param srcEnd
+	 * @param dest
+	 * @param destbeg
+	 */
+	public static <T> void arrayCopy(T[] src, int srcBeg, int srcEnd, T[] dest, int destbeg) {
+		//end index is exclusive
+		int copySize = srcEnd - srcBeg;
+		if (copySize > 0 && dest.length >= copySize)  {
+			for (int i = 0; i < copySize; ++i) {
+				dest[destbeg + i] = src[srcBeg + i];
+			}
+		} else {
+			throw new IllegalStateException("destination array too small or invalid array index");
+		}
+	}
  }
