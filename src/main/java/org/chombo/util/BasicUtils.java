@@ -923,7 +923,16 @@ public class BasicUtils {
 			list.add(value);
 		}
     }
-    
+
+    /**
+     * @param val
+     * @param prec
+     * @return
+     */
+    public static String formatDouble(double val) {
+    	return formatDouble(val, 3);
+    }
+   
     /**
      * @param val
      * @param prec
@@ -1545,7 +1554,7 @@ public class BasicUtils {
 	 * @return
 	 */
 	public static int sampleUniform(int max) {
-		return (int)(Math.random() * max);
+		return sampleUniform(0,  max);
 	}
     
 	/**
@@ -1554,7 +1563,7 @@ public class BasicUtils {
 	 * @return
 	 */
 	public static int sampleUniform(int min, int max) {
-		double val = min + Math.random() * (max - min);
+		long val = min + Math.round(Math.random() * (max - min));
 		return (int)val;
 	}
 	
