@@ -1558,12 +1558,35 @@ public class BasicUtils {
 	}
     
 	/**
-	 * @param min
 	 * @param max
+	 * @param excludes
+	 * @return
+	 */
+	public static int sampleUniform(int max,Set<Integer> excludes) {
+		return sampleUniform(0, max, excludes);
+	}
+
+	/**
+	 * @param min inclusive
+	 * @param max inclusive
 	 * @return
 	 */
 	public static int sampleUniform(int min, int max) {
 		long val = min + Math.round(Math.random() * (max - min));
+		return (int)val;
+	}
+	
+	/**
+	 * @param min
+	 * @param max
+	 * @param excludes
+	 * @return
+	 */
+	public static int sampleUniform(int min, int max, Set<Integer> excludes) {
+		long val = min + Math.round(Math.random() * (max - min));
+		while (excludes.contains(val)) {
+			val = min + Math.round(Math.random() * (max - min));
+		}
 		return (int)val;
 	}
 	
