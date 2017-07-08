@@ -38,10 +38,16 @@ public class FeatureSchema {
 	private List<FeatureField> fields;
 	private FeatureFieldCollection fieldCollection;
 
+	/**
+	 * @return
+	 */
 	public List<FeatureField> getFields() {
 		return fields;
 	}
 
+	/**
+	 * @param fields
+	 */
 	public void setFields(List<FeatureField> fields) {
 		this.fields = fields;
 	}
@@ -125,7 +131,7 @@ public class FeatureSchema {
 	}
 	
 	/**
-	 * returns ordinals of feature fields
+	 * returns sorted ordinals of feature fields
 	 * @return
 	 */
 	public int[] getFeatureFieldOrdinals() {

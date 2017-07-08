@@ -460,6 +460,34 @@ public class BasicUtils {
 
     /**
      * @param arr
+     * @param delim
+     * @return
+     */
+    public static  String join(double[] arr, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (double val : arr) {
+    		stBld.append(val).append(delim);
+    	}
+    	
+    	return stBld.substring(0, stBld.length() -1);
+    }
+    
+    /**
+     * @param arr
+     * @param delim
+     * @return
+     */
+    public static  String join(int[] arr, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (int val : arr) {
+    		stBld.append(val).append(delim);
+    	}
+    	
+    	return stBld.substring(0, stBld.length() -1);
+    }
+
+    /**
+     * @param arr
      * @param begIndex
      * @param endIndex
      * @param delim
