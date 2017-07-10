@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -240,6 +241,31 @@ public class BasicUtils {
     public static double[] doubleArrayFromString(String record) {
     	return doubleArrayFromString(record, DEF_FIELD_DELIM);
     }
+
+	/**
+	 * @param record
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static Map<String, Object> stringObjectMapFromString(String record, String delimRegex, 
+			String subFieldDelim) {
+		Map<String, Object> data = new HashMap<String, Object>();
+		String[] items = record.split(delimRegex);
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			String key = parts[0];
+			Object val = asInt(parts[1]);
+			if (null == val) {
+				val = asDouble(parts[1]);
+			}
+			if (null == val) {
+				val = parts[1];
+			}
+			data.put(key, val);
+		}
+    	return data;
+	}
 
     /**
      * @param items
@@ -1131,6 +1157,19 @@ public class BasicUtils {
      * @param val
      * @return
      */
+    public static Integer asInt(String val) {
+    	Integer iVal = null;
+		try {
+			iVal = Integer.parseInt(val);
+		} catch (Exception ex) {
+		}
+    	return iVal;
+    }
+
+    /**
+     * @param val
+     * @return
+     */
     public static boolean isLong(String val) {
     	boolean valid = true;
 		try {
@@ -1139,6 +1178,19 @@ public class BasicUtils {
 			valid = false;
 		}
     	return valid;
+    }
+
+    /**
+     * @param val
+     * @return
+     */
+    public static Long asLong(String val) {
+    	Long lVal = null;
+		try {
+			lVal = Long.parseLong(val);
+		} catch (Exception ex) {
+		}
+    	return lVal;
     }
 
     /**
@@ -1155,6 +1207,19 @@ public class BasicUtils {
     	return valid;
     }
     
+    /**
+     * @param val
+     * @return
+     */
+    public static Double asDouble(String val) {
+    	Double dVal = null;
+		try {
+			dVal = Double.parseDouble(val);
+		} catch (Exception ex) {
+		}
+    	return dVal;
+    }
+
     /**
      * @param val
      * @return
@@ -1645,5 +1710,19 @@ public class BasicUtils {
 		} else {
 			throw new IllegalStateException("destination array too small or invalid array index");
 		}
+	}
+	
+	/**
+	 * @param items
+	 * @return
+	 */
+	public static int missingFieldCount(String[] items) {
+    	int count = 0;
+    	for (int i = 0 ; i < items.length; ++i) {
+    		if (items[i].isEmpty()) {
+    			++count;
+    		}
+    	} 
+		return count;
 	}
  }

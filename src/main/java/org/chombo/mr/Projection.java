@@ -42,6 +42,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.redis.RedisCache;
 import org.chombo.util.AttributeFilter;
+import org.chombo.util.BaseAttributeFilter;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.RowColumnFilter;
 import org.chombo.util.SecondarySort;
@@ -115,6 +116,7 @@ public class Projection extends Configured implements Tool {
         private RowColumnFilter rowColFilter = new RowColumnFilter();
         private boolean idIncluded;
 
+        @Override
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	keyField = config.getInt("pro.key.field", 0);
@@ -175,7 +177,7 @@ public class Projection extends Configured implements Tool {
         private int orderByField;
         private boolean groupBy;
         private boolean isOrderByFieldNumeric;
-        private AttributeFilter attrFilter;
+        private BaseAttributeFilter attrFilter;
         private RowColumnFilter rowColFilter = new RowColumnFilter();
         
         /* (non-Javadoc)
@@ -203,12 +205,36 @@ public class Projection extends Configured implements Tool {
         	String selectFilter = config.get("pro.select.filter");
         	if (null != selectFilter) {
         		String notInSetName = config.get("pro.operator.notin.set.name");
-        		if (null == notInSetName) {
-        			attrFilter = new AttributeFilter(selectFilter);
+        		String inSetName = config.get("pro.operator.in.set.name");
+        		if (null == notInSetName && null == inSetName) {
+        			if (AttributeFilter.isConjuctivePredicate(selectFilter)) {
+        				//conjunction of predicates
+        				attrFilter = new AttributeFilter(selectFilter);
+        			} else {
+        				//custom filter or udf
+        				String udf = selectFilter.substring(0, selectFilter.length()-2);
+        				String key = "pro.filter.udf.class." + udf;
+        				String udfClassName = Utility.assertStringConfigParam(config, key, "missing filter UDF class name");
+        				try {
+							Class<?> cls = Class.forName(udfClassName);
+							attrFilter = (BaseAttributeFilter)cls.newInstance();
+							key = "pro.filter.udf.context." + udf;
+			        		Map<String, Object> filtContext = BasicUtils.stringObjectMapFromString(
+			        			config.get(key), BasicUtils.configDelim, BasicUtils.configSubFieldDelim);
+			        		attrFilter.withContext(filtContext);
+						} catch (Exception ex) {
+							throw new IOException("failed create filter udf object "+ ex.getMessage());
+						}
+        			}
         		} else {
-               		//bulk data for in or notin operator
-        			attrFilter =  new AttributeFilter();
-            		createExcludedRowsContext( config,  rowColFilter,attrFilter, selectFilter);
+        			if (null != notInSetName) {
+	               		//bulk data from external source for in or notin operator
+	        			attrFilter =  new AttributeFilter();
+	            		createExcludedRowsContext( config,  rowColFilter,attrFilter, selectFilter);
+        			} else {
+	               		//bulk data from external source for in or in operator
+        				
+        			}
             	}
         	}
        }
@@ -233,7 +259,7 @@ public class Projection extends Configured implements Tool {
 	            	//group by
 	            	outKey.add(items[keyField]);
 	            }
-	        	outVal.set( Utility.extractFields(items , projectionFields, fieldDelimOut, false));
+	        	outVal.set(BasicUtils.extractFields(items , projectionFields, fieldDelimOut, false));
 	        	context.write(outKey, outVal);
             }
         }
@@ -528,7 +554,7 @@ public class Projection extends Configured implements Tool {
      * @throws IOException
      */
     public static void createExcludedRowsContext(Configuration config, RowColumnFilter rowColFilter, 
-    		AttributeFilter attrFilter, String selectFilter) throws IOException {
+    		BaseAttributeFilter attrFilter, String selectFilter) throws IOException {
     	String fileterFieldDelimRegex = config.get("pro.filter.field.delim.regex", ",");
 		String notInSetName = config.get("pro.operator.notin.set.name");
 		

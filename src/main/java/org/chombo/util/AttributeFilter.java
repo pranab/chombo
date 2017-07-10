@@ -25,9 +25,9 @@ import java.util.Map;
  * @author pranab
  *
  */
-public class AttributeFilter {
+public class AttributeFilter extends BaseAttributeFilter {
 	private List<AttributePredicate> predicates = new ArrayList<AttributePredicate>();
-	private Map<String, Object> context;
+	//private Map<String, Object> context;
 	public static final String COND_SEP = ",";
 	private static String condSeparator;
 	
@@ -70,11 +70,6 @@ public class AttributeFilter {
 		}
 	}
 	
-	public AttributeFilter withContext(Map<String, Object> context) {
-		this.context = context;
-		return this;
-	}
-	
 	/**
 	 * @param record
 	 * @return
@@ -92,12 +87,28 @@ public class AttributeFilter {
 		return status;
 	}
 	
+	/**
+	 * @return
+	 */
 	public static String getCondSeparator() {
 		return condSeparator != null ? condSeparator : COND_SEP;
 	}
 
+	/**
+	 * @param condSeparator
+	 */
 	public static void setCondSeparator(String condSeparator) {
 		AttributeFilter.condSeparator = condSeparator;
+	}
+	
+	/**
+	 * @param filter
+	 * @return
+	 */
+	public static boolean isConjuctivePredicate(String filter) {
+		String[] preds = filter.split(getCondSeparator());
+		String[] predParts = preds[0].trim().split(AttributePredicate.PREDICATE_SEP);
+		return predParts.length == 3;
 	}
 	
 }
