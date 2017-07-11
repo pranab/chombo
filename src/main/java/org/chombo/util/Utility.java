@@ -238,9 +238,7 @@ public class Utility {
      * @param val
      */
     public static <T> void initializeArray(T[] vec, T val)  {
-    	for(int i = 0; i < vec.length; ++i) {
-    		vec[i] = val;
-    	}
+    	BasicUtils.initializeArray(vec, val);
     }
     
     /**
@@ -248,9 +246,7 @@ public class Utility {
      * @param array
      */
     public static <T> void toList(List<T> list, T[] array) {
-    	for (T val : array) {
-    		list.add(val);
-    	}
+    	BasicUtils.toList(list, array);
     }
     
     /**
@@ -260,11 +256,7 @@ public class Utility {
      * @return
      */
     public static <K,V> String serializeMap(Map<K, V> map, String itemDelim, String keyDelim) {
-    	StringBuilder stBld = new StringBuilder();
-    	for (K key : map.keySet()) {
-    		stBld.append(key).append(keyDelim).append(map.get(key)).append(itemDelim);
-    	}
-    	return stBld.substring(0, stBld.length() -1);    
+    	return BasicUtils.serializeMap(map, itemDelim, keyDelim);
     }
    
     /**
@@ -274,13 +266,7 @@ public class Utility {
      * @return
      */
     public static   Map<String,String> deserializeMap(String data, String itemDelim, String keyDelim) {
-    	Map<String,String> map = new HashMap<String,String>();
-    	String[] items = data.split(itemDelim);
-    	for (String item : items) {
-    		String[] fields = item.split(keyDelim) ;
-    		map.put(fields[0], fields[1]);
-    	}
-    	return map;
+    	return BasicUtils.deserializeMap(data, itemDelim, keyDelim);
     }
     
     /**
@@ -459,16 +445,7 @@ public class Utility {
      * @throws IOException
      */
     public static List<String> tokenize(String text, Analyzer analyzer) throws IOException {
-        TokenStream stream = analyzer.tokenStream("contents", new StringReader(text));
-        List<String> tokens = new ArrayList<String>();
-
-        CharTermAttribute termAttribute = (CharTermAttribute)stream.getAttribute(CharTermAttribute.class);
-        while (stream.incrementToken()) {
-    		String token = termAttribute.toString();
-    		tokens.add(token);
-    	} 
-    	
-    	return tokens;
+    	return BasicUtils.tokenize(text, analyzer);
     }
     
     /**
@@ -476,8 +453,7 @@ public class Utility {
      * @return
      */
     public static String normalize(String data) {
-    	String[] items = data.toLowerCase().split("\\s+");
-    	return items.length > 0 ? StringUtils.join(items, " ") : items[0];
+    	return BasicUtils.normalize(data);
     }
  
     /**
@@ -487,20 +463,7 @@ public class Utility {
      * @return
      */
     public static String removeField(String record, int[] remFieldOrdinal, String delimRegex, String delim) {
-    	StringBuilder stBld = new StringBuilder();
-    	String[] items = record.split(delimRegex);
-    	boolean first = true;
-    	for (int i = 0; i < items.length; ++i) {
-    		if (!ArrayUtils.contains(remFieldOrdinal, i)) {
-    			if (first) {
-    				stBld.append(items[i]);
-    				first = false;
-    			} else {
-    				stBld.append(delim).append(items[i]);
-    			}
-    		}
-    	}
-    	return stBld.toString();
+    	return BasicUtils.removeField(record, remFieldOrdinal, delimRegex, delim);
     }
 
     /** creates tuple
@@ -611,15 +574,7 @@ public class Utility {
      * @return
      */
     public static int[] intArrayFromString(String record, String delimRegex ) {
-    	int[] data = null;
-    	if (null != record) {
-	    	String[] items = record.split(delimRegex);
-	    	data = new int[items.length];
-	    	for (int i = 0; i < items.length; ++i) {
-	    		data[i] = Integer.parseInt(items[i]);
-	    	}
-    	}
-    	return data;
+    	return BasicUtils.intArrayFromString(record, delimRegex);
     }
 
     /**
@@ -627,7 +582,7 @@ public class Utility {
      * @return
      */
     public static int[] intArrayFromString(String record) {
-    	return intArrayFromString(record, DEF_FIELD_DELIM);
+    	return BasicUtils.intArrayFromString(record, DEF_FIELD_DELIM);
     }
     
     /**
@@ -636,12 +591,7 @@ public class Utility {
      * @return
      */
     public static double[] doubleArrayFromString(String record, String delimRegex ) {
-    	String[] items = record.split(delimRegex);
-    	double[] data = new double[items.length];
-    	for (int i = 0; i < items.length; ++i) {
-    		data[i] = Double.parseDouble(items[i]);
-    	}
-    	return data;
+    	return BasicUtils.doubleArrayFromString(record, delimRegex);
     }
     
     /**
@@ -649,20 +599,17 @@ public class Utility {
      * @return
      */
     public static double[] doubleArrayFromString(String record) {
-    	return doubleArrayFromString(record, DEF_FIELD_DELIM);
+    	return BasicUtils.doubleArrayFromString(record, DEF_FIELD_DELIM);
     }
 
+   
     /**
      * @param items
      * @param fields
      * @return
      */
     public static String[]  extractFieldsAsStringArray(String[] items , int[] fields) {
-    	String[] fieldValues = new String[fields.length];
-    	for (int i = 0; i < fields.length; ++i) {
-    		fieldValues[i] = items[fields[i]];
-    	}
-    	return fieldValues;
+    	return BasicUtils.extractFieldsAsStringArray(items, fields);
     }
   
     /**
@@ -671,11 +618,7 @@ public class Utility {
      * @return
      */
     public static int[]  extractFieldsAsIntArray(String[] items , int[] fields) {
-    	int[] fieldValues = new int[fields.length];
-    	for (int i = 0; i < fields.length; ++i) {
-    		fieldValues[i] = Integer.parseInt((items[fields[i]]));
-    	}
-    	return fieldValues;
+    	return BasicUtils.extractFieldsAsIntArray(items ,fields);
     }
     
     /**
@@ -686,27 +629,7 @@ public class Utility {
      * @return
      */
     public static String extractFields(String[] items , int[] fields, String delim, boolean sortKeyFields) {
-    	StringBuilder stBld = new StringBuilder();
-    	List<String> keyFields = new ArrayList<String>();
-    	
-    	for (int i = 0; i < fields.length; ++i) {
-    		keyFields.add(items[fields[i]]);
-    	}
-
-    	if  (sortKeyFields) {
-    		Collections.sort(keyFields);
-    	}
-    	
-    	boolean first = true;
-    	for (String key : keyFields) {
-    		if (first) {
-    			stBld.append(key);
-    			first = false;
-    		} else {
-    			stBld.append(delim).append(key);
-    		}
-    	}
-    	return stBld.toString();
+    	return BasicUtils.extractFields(items ,fields, delim, sortKeyFields);
     }
 
     /**
@@ -715,14 +638,7 @@ public class Utility {
      * @return
      */
     public static String[] filterOutFields(String[] items , int[] filteredFields) {
-    	String[] extractedFields = new String[items.length - filteredFields.length ]; 
-    	
-    	for (int i = 0, j=0; i < items.length; ++i) {
-    		if (!ArrayUtils.contains(filteredFields, i)) {
-    			extractedFields[j++] = items[i];
-    		}
-    	}
-    	return extractedFields;
+    	return BasicUtils.filterOutFields(items , filteredFields);
     }
     
     /**
@@ -730,18 +646,8 @@ public class Utility {
      * @param toBeRemoved
      * @return
      */
-    public static  int[] removeItems(int[] from, int[] toBeRemoved) {
-    	int[] subtracted = null;
-    	List<Integer> subtractedList = new ArrayList<Integer>();
-    	
-    	for (int i = 0; i < from.length; ++i) {
-    		int item = from[i];
-    		if (!ArrayUtils.contains(toBeRemoved, item)) {
-    			subtractedList.add(item);
-    		}
-    	}
-    	subtracted = fromListToIntArray(subtractedList);
-    	return subtracted;
+    public static int[] removeItems(int[] from, int[] toBeRemoved) {
+    	return BasicUtils.removeItems(from, toBeRemoved);
     }
   
     /**
@@ -749,11 +655,7 @@ public class Utility {
      * @return
      */
     public static int[] fromListToIntArray(List<Integer> valueList) {
-		int[] values = new int[valueList.size()];
-		for (int i = 0; i < valueList.size(); ++i) {
-			values[i] = valueList.get(i);
-		}
-		return values;
+    	return BasicUtils.fromListToIntArray(valueList);
     }
     
     /**
@@ -761,11 +663,7 @@ public class Utility {
      * @return
      */
     public static List<Integer> fromIntArrayToList( int[] values) {
-    	List<Integer> valueList  = new  ArrayList<Integer>();  
-		for (int value :  values) {
-			valueList.add(value);;
-		}
-		return valueList;
+    	return BasicUtils.fromIntArrayToList(values);
     }
 
     /**
@@ -773,18 +671,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(List<T> list, String delim) {
-    	String joined = null;
-    	if (list.size() == 1) {
-    		joined = list.get(0).toString();
-    	} else {
-	    	StringBuilder stBld = new StringBuilder();
-	    	for (T obj : list) {
-	    		stBld.append(obj).append(delim);
-	    	}
-	    	
-	    	joined =  stBld.substring(0, stBld.length() -1);
-    	}
-    	return joined;
+    	return BasicUtils.join(list, delim);
     }
   
     /**
@@ -795,11 +682,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(List<T> list, int begIndex, int endIndex, String delim) {
-    	StringBuilder stBld = new StringBuilder();
-    	for (int i = begIndex; i < endIndex; ++i) {
-    		stBld.append(list.get(i)).append(delim);
-    	}
-    	return stBld.substring(0, stBld.length() -1);
+    	return BasicUtils.join(list, begIndex, endIndex, delim);
     }
 
     /**
@@ -807,7 +690,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(List<T> list) {
-    	return join(list, ",");
+    	return BasicUtils.join(list, ",");
     }
     
     /**
@@ -816,12 +699,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(T[] arr, String delim) {
-    	StringBuilder stBld = new StringBuilder();
-    	for (T obj : arr) {
-    		stBld.append(obj).append(delim);
-    	}
-    	
-    	return stBld.substring(0, stBld.length() -1);
+    	return BasicUtils.join(arr, delim);
     }
 
     /**
@@ -832,12 +710,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(T[] arr, int begIndex, int endIndex, String delim) {
-    	StringBuilder stBld = new StringBuilder();
-    	for (int i = begIndex; i < endIndex; ++i) {
-    		stBld.append(arr[i]).append(delim);
-    	}
-    	
-    	return stBld.substring(0, stBld.length() -1);
+    	return BasicUtils.join(arr, begIndex, endIndex, delim);
     }
 
     /**
@@ -846,19 +719,7 @@ public class Utility {
      * @return
      */
     public static <T> int getIndex(T[] arr, T obj) {
-    	int i = 0;
-    	boolean found = false;
-    	for (T thisObj : arr) {
-    		if (thisObj.equals(obj)) {
-    			found = true;
-    			break;
-    		}
-    		++i;
-    	}
-    	if (!found) {
-    		throw new IllegalArgumentException("object not found in array");
-    	}
-    	return i;
+    	return BasicUtils.getIndex(arr, obj);
     }
     
     /**
@@ -866,7 +727,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(T[] arr) {
-    	return join(arr, ",");
+    	return BasicUtils.join(arr, ",");
     }
 
     /**
@@ -876,7 +737,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(T[] arr, int begIndex, int endIndex) {
-    	return join(arr,  begIndex, endIndex, ",");
+    	return BasicUtils.join(arr,  begIndex, endIndex, ",");
     }
     
     /**
@@ -886,11 +747,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(T[] arr, int[]  indexes, String delim) {
-    	StringBuilder stBld = new StringBuilder();
-    	for (int index  : indexes) {
-    		stBld.append(arr[index]).append(delim);
-    	}
-    	return stBld.substring(0, stBld.length() -1);
+    	return BasicUtils.join(arr,  indexes, delim);
     }
     
     /**
@@ -899,7 +756,7 @@ public class Utility {
      * @return
      */
     public static <T> String join(T[] arr, int[]  indexes) {
-    	return  join(arr,  indexes, ",");
+    	return  BasicUtils.join(arr,  indexes, ",");
     }
 
     /**
@@ -910,14 +767,7 @@ public class Utility {
 	 * @param numCol
 	 */
 	public static void deseralizeTableRow(double[][] table, String data, String delim, int row, int numCol) {
-		String[] items = data.split(delim);
-		if (items.length != numCol) {
-			throw new IllegalArgumentException(
-					"Row serialization failed, number of tokens in string does not match with number of columns");
-		}
-		for (int c = 0; c < numCol; ++c) {
-				table[row][c]  = Double.parseDouble(items[c]);
-		}
+		BasicUtils.deseralizeTableRow(table, data, delim, row, numCol);
 	}
 	
 	/**
@@ -928,11 +778,7 @@ public class Utility {
 	 * @param numCol
 	 */
 	public static void deseralizeTableRow(int[][] table, String data, String delim, int row, int numCol) {
-		String[] items = data.split(delim);
-		int k = 0;
-		for (int c = 0; c < numCol; ++c) {
-				table[row][c]  = Integer.parseInt(items[k++]);
-		}
+		BasicUtils.deseralizeTableRow(table, data, delim, row, numCol);
 	}
 	
 	/**
@@ -942,8 +788,7 @@ public class Utility {
 	 * @return
 	 */
 	public static String getSiblingPath(String path, String sibling) {
-		int pos = path.lastIndexOf('/');
-		return path.substring(0, pos + 1) + sibling;
+		return  BasicUtils.getSiblingPath( path, sibling);
 	}
 	
 	/**
@@ -951,7 +796,7 @@ public class Utility {
 	 * @return
 	 */
 	public static boolean isBlank(String data) {
-		return data == null || data.isEmpty();
+		return  BasicUtils.isBlank(data);
 	}
 	
 	/**
@@ -961,14 +806,7 @@ public class Utility {
 	 * @return
 	 */
 	public static List<Pair<Integer, Integer>> getIntPairList(String record, String fieldDelim, String subFieldDelim) {
-		List<Pair<Integer, Integer>> intPairs = new ArrayList<Pair<Integer, Integer>>();
-		String[] items = record.split(fieldDelim);
-		for (String item : items) {
-			String[] subItems = item.split(subFieldDelim);
-			Pair<Integer, Integer> pair = new Pair<Integer, Integer>(Integer.parseInt(subItems[0]),  Integer.parseInt(subItems[1]));
-			intPairs.add(pair);
-		}
-		return intPairs;
+		return  BasicUtils.getIntPairList(record, fieldDelim, subFieldDelim);
 	}
 	
 	/**
@@ -978,14 +816,7 @@ public class Utility {
 	 * @return
 	 */
 	public static List<Pair<Integer, String>> getIntStringList(String record, String fieldDelim, String subFieldDelim) {
-		List<Pair<Integer, String>> intStringPairs = new ArrayList<Pair<Integer, String>>();
-		String[] items = record.split(fieldDelim);
-		for (String item : items) {
-			String[] subItems = item.split(subFieldDelim);
-			Pair<Integer, String> pair = new Pair<Integer, String>(Integer.parseInt(subItems[0]),  subItems[1]);
-			intStringPairs.add(pair);
-		}
-		return intStringPairs;
+		return  BasicUtils.getIntStringList(record, fieldDelim, subFieldDelim);
 	}
 	
 	/**
@@ -995,21 +826,14 @@ public class Utility {
 	 * @return
 	 */
 	public static List<Pair<String, String>> getStringPairList(String record, String fieldDelim, String subFieldDelim) {
-		List<Pair<String, String>> stringStringPairs = new ArrayList<Pair<String, String>>();
-		String[] items = record.split(fieldDelim);
-		for (String item : items) {
-			String[] subItems = item.split(subFieldDelim);
-			Pair<String, String> pair = new Pair<String, String>(subItems[0],  subItems[1]);
-			stringStringPairs.add(pair);
-		}
-		return stringStringPairs;
+		return  BasicUtils.getStringPairList(record, fieldDelim, subFieldDelim);
 	}
 	
 	/**
 	 * @return
 	 */
 	public static String generateId() {
-		return UUID.randomUUID().toString().replaceAll("-", "");
+		return  BasicUtils.generateId();
 	}
 	
 	/**
@@ -1378,8 +1202,7 @@ public class Utility {
 	 * @return
 	 */
 	public static <T> T selectRandom(List<T> list) {
-   		int index = (int)(Math.random() * list.size());
-		return list.get(index);
+		return BasicUtils.selectRandom(list);
 	}
 	
 	/**
@@ -1389,14 +1212,7 @@ public class Utility {
 	 * @return
 	 */
 	public static boolean isFieldCountValid(String[] record, int numFields, boolean failOnInvalid) {
-		boolean valid = true;
-		if (record.length != numFields) {
-			valid = false;
-			if (failOnInvalid) {
-				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + record.length);
-			}
-		}
-		return valid;
+		return BasicUtils.isFieldCountValid(record, numFields, failOnInvalid);
 	}
 	
 	/**
@@ -1407,37 +1223,7 @@ public class Utility {
 	 * @return
 	 */
 	public static String[] splitFields(String record, String fieldDelim, int numFields, boolean failOnInvalid) {
-		String[] items = record.split(fieldDelim, -1);
-		if (items.length != numFields) {
-			if (items.length < numFields) {
-				//check if trailing blank fields
-				int delimCount = StringUtils.countMatches(record, fieldDelim);
-				if (delimCount == numFields - 1) {
-					//trailing blank fields
-					String[] extItems = new String[numFields];
-					for (int i = 0; i < numFields; ++i) {
-						if (i < items.length) {
-							extItems[i] = items[i];
-						} else {
-							//fill trailing fields with blanks
-							extItems[i] = "";
-						}
-					}
-					items = extItems;
-				} else {
-					//got too few fields
-					items = null;
-				}
-			} else {
-				//got too many fields
-				items = null;
-			}
-			
-			if (null == items && failOnInvalid) {
-				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + items.length);
-			}
-		}
-		return items;
+		return BasicUtils.splitFields(record, fieldDelim, numFields, failOnInvalid);
 	}
 	
 	/**
@@ -1448,14 +1234,7 @@ public class Utility {
 	 * @return
 	 */
 	public static String[] getFields(String record, String fieldDelem, int numFields, boolean failOnInvalid) {
-		String[] fields = record.split(fieldDelem);
-		if (fields.length != numFields) {
-			if (failOnInvalid) {
-				throw new IllegalArgumentException("invalid field count expected " + numFields + " found " + fields.length);
-			}
-			fields = null;
-		}
-		return fields;
+		return BasicUtils.getFields(record, fieldDelem, numFields, failOnInvalid);
 	}
 	
 	/**
@@ -1463,14 +1242,7 @@ public class Utility {
 	 * @return
 	 */
 	public static boolean anyEmptyField(String[] items) {
-		boolean isEmpty = false;
-		for (String item : items) {
-			if (item.isEmpty()) {
-				isEmpty = true;
-				break;
-			}
-		}
-		return isEmpty;
+		return BasicUtils.anyEmptyField(items);
 	}
 	
 	/**
@@ -1573,7 +1345,7 @@ public class Utility {
 	 * @return
 	 * @throws IOException
 	 */
-	public static ProcessorAttributeSchema getProcessingSchema( String filePath) throws IOException {
+	public static ProcessorAttributeSchema getProcessingSchema(String filePath) throws IOException {
 		ProcessorAttributeSchema processingSchema = null;
 		InputStream is = Utility.getFileStream(filePath);
 		if (null != is) {
@@ -1617,21 +1389,7 @@ public class Utility {
      * @return
      */
     public static <T> List<T> selectRandomFromList(List<T> list, int count) {
-    	List<T> selList = null;
-    	if (count > list.size()) {
-    		throw new IllegalArgumentException("new list size is larget than source list size");
-    	} else if (count == list.size()) {
-    		selList  = list;
-    	} else {
-    		selList = new ArrayList<T>();
-           	Set<T> selSet = new  HashSet<T>();
-           	while (selSet.size() != count) {
-           		int index = (int)(Math.random() * list.size());
-           		selSet.add(list.get(index));
-           	}
-           	selList.addAll(selSet);	
-    	}
-    	return selList;
+    	return BasicUtils.selectRandomFromList(list, count);
     }
     
     /**
@@ -1639,9 +1397,7 @@ public class Utility {
      * @return
      */
     public static <T>  List<T> cloneList(List<T> curList) {
-    	List<T> newList = new ArrayList<T>();
-    	newList.addAll(curList);
-    	return newList;
+    	return BasicUtils.cloneList(curList);
     }
  
     /**
@@ -1650,13 +1406,7 @@ public class Utility {
      * @return
      */
     public static <T> List<T> listDifference(List<T> list, List<T> subList) {
-    	List<T> diff = new ArrayList<T>();
-    	for (T item : list) {
-    		if (!subList.contains(item)) {
-    			diff.add(item);
-    		}
-    	}
-    	return diff;
+    	return BasicUtils.listDifference(list, subList);
     }
 
     /**
@@ -1665,16 +1415,7 @@ public class Utility {
      * @return
      */
     public static <T> List<List<T>>  generateSublists(List<T> list,   int maxSubListSize) {
-    	 List<List<T>> subLists = new ArrayList<List<T>>();
-    	 
-    	 //for each  item  in list generate sublists up to max length
-    	 for (int i = 0; i < list.size();  ++i) {
-    		 List<T> subList = new ArrayList<T>();
-    		 subList.add(list.get(i));
-    		 subLists.add(subList);
-    		 generateSublists(list, subList, i, subLists, maxSubListSize);
-    	 }
-    	 return subLists;
+    	return BasicUtils.generateSublists( list,  maxSubListSize);
     }   
     
     
@@ -1686,16 +1427,7 @@ public class Utility {
      */
     public static <T> void  generateSublists(List<T> list, List<T> subList, int lastIndex, 
     	List<List<T>> subLists, int maxSubListSize) {
-    	for (int i = lastIndex + 1; i < list.size(); ++i) {
-    			List<T> biggerSubList = new ArrayList<T>();
-    			biggerSubList.addAll(subList);
-    			biggerSubList.add(list.get(i));
-    			subLists.add(biggerSubList);
-    			if (biggerSubList.size() < maxSubListSize) {
-    				//recurse
-    				generateSublists(list, biggerSubList, i, subLists, maxSubListSize);
-    			}
-    	}    	
+    	BasicUtils.generateSublists(list, subList, lastIndex, subLists, maxSubListSize);
     }
     
     /**
@@ -1769,8 +1501,7 @@ public class Utility {
      * @return
      */
     public static String formatDouble(double val, int prec) {
-    	String formatter = "%." + prec + "f";
-    	return String.format(formatter, val);
+    	return BasicUtils.formatDouble(val, prec);
     }
     
     /**
@@ -1779,8 +1510,7 @@ public class Utility {
      * @return
      */
     public static String formatInt(int val, int size) {
-    	String formatter = "%0" + size + "d";
-    	return String.format(formatter, val);
+    	return BasicUtils.formatInt(val, size);
     }
 
     /**
@@ -1789,8 +1519,7 @@ public class Utility {
      * @return
      */
     public static String formatLong(long val, int size) {
-    	String formatter = "%0" + size + "d";
-    	return String.format(formatter, val);
+    	return BasicUtils.formatLong(val, size);
     }
 
     /**
@@ -1800,18 +1529,7 @@ public class Utility {
      * @throws IOException
      */
     public static  String analyze(String text, Analyzer analyzer) throws IOException {
-        TokenStream stream = analyzer.tokenStream("contents", new StringReader(text));
-        StringBuilder stBld = new StringBuilder();
-
-        stream.reset();
-        CharTermAttribute termAttribute = (CharTermAttribute)stream.getAttribute(CharTermAttribute.class);
-        while (stream.incrementToken()) {
-    		String token = termAttribute.toString();
-    		stBld.append(token).append(" ");
-    	} 
-    	stream.end();
-    	stream.close();
-    	return stBld.toString();
+    	return BasicUtils.analyze(text, analyzer);
     }
 
     /**
@@ -1821,7 +1539,7 @@ public class Utility {
      * @throws ParseException
      */
     public static long getEpochTime(String dateTimeStamp, SimpleDateFormat dateFormat) throws ParseException {
-    	return getEpochTime(dateTimeStamp, false, dateFormat,0);
+    	return BasicUtils.getEpochTime(dateTimeStamp, false, dateFormat,0);
     }
 
     /**
@@ -1832,7 +1550,7 @@ public class Utility {
      * @throws ParseException
      */
     public static long getEpochTime(String dateTimeStamp, boolean isEpochTime, SimpleDateFormat dateFormat) throws ParseException {
-    	return getEpochTime(dateTimeStamp, isEpochTime, dateFormat,0);
+    	return BasicUtils.getEpochTime(dateTimeStamp, isEpochTime, dateFormat,0);
     }
     
     /**
@@ -1845,15 +1563,7 @@ public class Utility {
      */
     public static long getEpochTime(String dateTimeStamp, boolean isEpochTime, SimpleDateFormat dateFormat, 
     	int timeZoneShiftHour) throws ParseException {
-    	long epochTime = 0;
-    	if (isEpochTime) {
-    		epochTime = Long.parseLong(dateTimeStamp);
-    	} else {
-    		epochTime = dateFormat.parse(dateTimeStamp).getTime();
-        	epochTime += timeZoneShiftHour * MILISEC_PER_HOUR;
-    	}
-    	
-    	return epochTime;
+    	return BasicUtils.getEpochTime(dateTimeStamp, isEpochTime, dateFormat, timeZoneShiftHour);
     }
     
     /**
@@ -1879,15 +1589,7 @@ public class Utility {
      * @return
      */
     public static long convertTimeUnit(long epochTime, String timeUnit) {
-    	long modTime = epochTime;
-		if (timeUnit.equals("hour")) {
-			modTime /= MILISEC_PER_HOUR;
-		} else if (timeUnit.equals("day")) {
-			modTime /= MILISEC_PER_DAY;
-		} else {
-			throw new IllegalArgumentException("invalid time unit");
-		}
-    	return modTime;
+    	return BasicUtils.convertTimeUnit(epochTime, timeUnit);
     }
     
     /**
@@ -1896,15 +1598,7 @@ public class Utility {
      * @return
      */
     public static double dotProduct(double[] thisVector, double[] thatVector) {
-    	double product = 0;
-    	if (thisVector.length != thatVector.length) {
-    		throw new IllegalArgumentException("mismatched size for vector dot product");
-    	}
-    	
-    	for (int i = 0; i < thisVector.length; ++i) {
-    		product += thisVector[i] * thatVector[i];
-    	}
-    	return product;
+    	return BasicUtils.dotProduct(thisVector, thatVector);
     }
    
     /**
