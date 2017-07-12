@@ -55,10 +55,16 @@ public class StringAttributePredicate extends AttributePredicate {
 		this.attribute = attribute;
 		this.operator = operator;
 		this.value = value;
+		
 		if (null != context) {
-			//large value set
-			valueSet = (Set<String>)context.get(value);
-		} else {
+			//large value set from external source
+			if (null != context.get(value)) {
+				valueSet = (Set<String>)context.get(value);
+			}
+		} 
+		
+		if (null == valueSet) {
+			//set defined
 			String[] valueItems = value.split(VALUE_LIST_SEP);
 			if (valueItems.length > 1) {
 				//create value set
@@ -102,5 +108,11 @@ public class StringAttributePredicate extends AttributePredicate {
 			throw new IllegalArgumentException("invalid operator");
 		}
 		return status;
+	}
+
+	@Override
+	public void build(String predicate) {
+		// TODO Auto-generated method stub
+		
 	}
 }

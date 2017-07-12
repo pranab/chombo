@@ -1,4 +1,3 @@
-
 /*
  * chombo: Hadoop Map Reduce utility
  * Author: Pranab Ghosh
@@ -20,45 +19,55 @@ package org.chombo.custom;
 
 import java.util.Map;
 
-import org.chombo.util.BaseAttributeFilter;
+
 import org.chombo.util.BasePredicate;
 import org.chombo.util.BasicUtils;
 
 /**
+ * Specified fields can not be empty
  * @author pranab
  *
  */
-public class MaxMissingFieldFilter extends BasePredicate {
-	private int maxMissingFields;
-	private static final String maxMissingFieldsLabel = "pro.filter.udf.max.missing.fields";
-	
-	public MaxMissingFieldFilter() {
+public class NoMissingFieldFilter extends BasePredicate {
+	private int[] fieldOrdinals;
+	private static final String fieldOrdinalsLabel = "pro.filter.udf.max.missing.field.ordinals";
+
+	/**
+	 * 
+	 */
+	public NoMissingFieldFilter() {
 	}
 	
 	/**
 	 * @param context
 	 */
-	public MaxMissingFieldFilter(Map<String, Object> context) {
+	public NoMissingFieldFilter(Map<String, Object> context) {
 		super(context);
-		maxMissingFields = BasicUtils.asInt((String)context.get(maxMissingFieldsLabel));
+		fieldOrdinals = BasicUtils.intArrayFromString((String)context.get(fieldOrdinalsLabel));
 	}
 
 	@Override
 	public BasePredicate withContext(Map<String, Object> context) {
 		super.withContext(context);
-		maxMissingFields = BasicUtils.asInt((String)context.get(maxMissingFieldsLabel));
+		fieldOrdinals = BasicUtils.intArrayFromString((String)context.get(fieldOrdinalsLabel));
 		return this;
+	}
+	
+	@Override
+	public void build(String predicate) {
+		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public boolean evaluate(String[] record) {
-		int count = BasicUtils.missingFieldCount(record);
-		return count <= maxMissingFields;
-	}
-
-	@Override
-	public void build(String filter) {
-		// TODO Auto-generated method stub
+		boolean valid = true;
+		for (int i : fieldOrdinals) {
+			if (BasicUtils.isBlank(record[i])) {
+				valid = false;
+				break;
+			}
+		}
+		return valid;
 	}
 
 }

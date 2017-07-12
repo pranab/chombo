@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,7 @@ import java.util.Map;
  *
  */
 public class AttributeFilter extends BaseAttributeFilter {
-	private List<AttributePredicate> predicates = new ArrayList<AttributePredicate>();
-	//private Map<String, Object> context;
+	private List<BasePredicate> predicates = new ArrayList<BasePredicate>();
 	public static final String COND_SEP = ",";
 	private static String condSeparator;
 	
@@ -49,24 +49,44 @@ public class AttributeFilter extends BaseAttributeFilter {
 		String[] preds = filter.split(getCondSeparator());
 		for (String pred : preds) {
 			String[] predParts = pred.trim().split(AttributePredicate.PREDICATE_SEP);
-			int attr = Integer.parseInt(predParts[0]);
-			String[] valueParts  = predParts[2].split(AttributePredicate.DATA_TYPE_SEP);
-			
-			if (valueParts[0].equals(BaseAttribute.DATA_TYPE_INT)) {
-				predicate = new IntAttributePredicate(attr, predParts[1], valueParts[1]);
-			} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
-				predicate = new DoubleAttributePredicate(attr, predParts[1], valueParts[1]);
-			} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_STRING)) {
-				if (null != context) {
-					predicate = new StringAttributePredicate();
-					predicate.withContext(context).build(attr, predParts[1], valueParts[1]);
+			int compSize = predParts.length;
+			if (compSize == 3) {
+				//relational predicate
+				int attr = Integer.parseInt(predParts[0]);
+				String[] valueParts  = predParts[2].split(AttributePredicate.DATA_TYPE_SEP);
+				
+				if (valueParts[0].equals(BaseAttribute.DATA_TYPE_INT)) {
+					predicate = new IntAttributePredicate(attr, predParts[1], valueParts[1]);
+				} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+					predicate = new DoubleAttributePredicate(attr, predParts[1], valueParts[1]);
+				} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_STRING)) {
+					if (null != context) {
+						predicate = new StringAttributePredicate();
+						predicate.withContext(context);
+						predicate.build(attr, predParts[1], valueParts[1]);
+					} else {
+						predicate = new StringAttributePredicate(attr, predParts[1], valueParts[1]);
+					}
 				} else {
-					predicate = new StringAttributePredicate(attr, predParts[1], valueParts[1]);
+					throw new IllegalArgumentException("invalid data type");
 				}
+				predicates.add(predicate);
+			} else if (compSize == 1) {
+				//udf
+				String udf = pred.substring(0, pred.length()-2);
+				String key = "pro.filter.udf.class." + udf;
+				String udfClassName = (String)context.get(key);
+				try {
+					Class<?> cls = Class.forName(udfClassName);
+					BasePredicate udfPredicate = (BasePredicate)cls.newInstance();
+					udfPredicate.withContext(context);
+				} catch (Exception ex) {
+					throw new IllegalStateException("failed create filter udf object "+ ex.getMessage());
+				}
+				predicates.add(predicate);
 			} else {
-				throw new IllegalArgumentException("invalid data type");
+				throw new IllegalStateException("invalid predicate");
 			}
-			predicates.add(predicate);
 		}
 	}
 	
@@ -76,7 +96,7 @@ public class AttributeFilter extends BaseAttributeFilter {
 	 */
 	public boolean evaluate(String[] record) {
 		boolean status = true;
-		for (AttributePredicate  predicate : predicates) {
+		for (BasePredicate  predicate : predicates) {
 			status = status & predicate.evaluate(record);
 			if (!status) {
 				//predicates and connected
