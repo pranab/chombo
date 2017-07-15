@@ -20,7 +20,6 @@ package org.chombo.custom;
 
 import java.util.Map;
 
-import org.chombo.util.BaseAttributeFilter;
 import org.chombo.util.BasePredicate;
 import org.chombo.util.BasicUtils;
 
