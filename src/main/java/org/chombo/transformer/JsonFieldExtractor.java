@@ -149,6 +149,7 @@ public class JsonFieldExtractor implements Serializable {
 	 * @return
 	 */
 	public AttributeList extractField(String path) {
+		//may have multiple column values for this path because of 1 to many parent child relationship
 		extField = new AttributeList();
 		if (null != map) {
 			String[] pathElements = path.split("\\.");
@@ -270,6 +271,8 @@ public class JsonFieldExtractor implements Serializable {
 		numAttributes = paths.size();
 		if (null != map) {
 			int i = 0;
+			
+			//each path corresponds to a column in flattened data
 			for (String path : paths) {
 				if (debugOn)
 					System.out.println("next path: " + path);
@@ -285,6 +288,7 @@ public class JsonFieldExtractor implements Serializable {
 				}
 			}
 			
+			//post process
 			if (!normalize) {
 				deNormalize(paths);
 			} else {
@@ -305,6 +309,7 @@ public class JsonFieldExtractor implements Serializable {
 		
 		//all paths
 		for (String path : paths) {
+			//one to many child
 			if (isChildObject(path)) {
 				String childPath = getChildPath(path);
 				fieldTypes.put(index, childPath);
