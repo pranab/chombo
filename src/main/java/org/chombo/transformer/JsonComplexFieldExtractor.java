@@ -47,6 +47,11 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 	@Override
 	public boolean extractAllFields(String record, List<String> paths) {
 		this.paths = paths;
+		
+		//initialize
+		initialize();
+		
+		//parse json
 		parse(record);
 		
 		//extract fields
@@ -65,6 +70,14 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * 
+	 */
+	private void initialize() {
+		//clear all data
+		clearData(flattenerRoot);
 	}
 	
 	/**
@@ -158,6 +171,23 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		}
 	}
 
+	/**
+	 * @param node
+	 * @param parent
+	 */
+	private void clearData(DataFlatenerNode node) {
+		//depth first traversal
+		Map<String, DataFlatenerNode[]> children =  node.getChildren();
+		for (String key : children.keySet()) {
+			for (DataFlatenerNode child :  children.get(key)) {
+				clearData(child);
+			}
+		}
+		
+		//clear data
+		node.getData().clear();
+	}
+	
 	/**
 	 * @param node
 	 * @param parent

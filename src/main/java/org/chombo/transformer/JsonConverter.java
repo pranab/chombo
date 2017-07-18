@@ -20,6 +20,7 @@ package org.chombo.transformer;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -33,13 +34,13 @@ import org.codehaus.jackson.type.TypeReference;
  * @author pranab
  *
  */
-public abstract class JsonConverter {
+public abstract class JsonConverter implements Serializable {
 	protected  ObjectMapper mapper;
 	protected Map<String, Object> map;
 	protected boolean failOnInvalid;
 	protected boolean normalize;
 	protected static String listChild = "@a";
-	private static int  listChildLen = 2;
+	protected static int  listChildLen = 2;
 	protected List<String> paths;
 	protected boolean debugOn;
 ;
