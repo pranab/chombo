@@ -18,6 +18,7 @@
 
 package org.chombo.transformer;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,7 +70,7 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 			collectData(flattenerRoot, null);
 		}
 		
-		return false;
+		return true;
 	}
 	
 	/**
@@ -106,7 +107,7 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		if (null == obj) {
 			//invalid key
 			if (failOnInvalid) {
-				throw new IllegalArgumentException("field not reachable with json path");
+				throw new IllegalArgumentException("field not reachable with json path key:" + key);
 			} else {
 				//TODO
 			}
@@ -120,6 +121,8 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 					throw new IllegalArgumentException("got map at end of json path");
 				}
 				DataFlatenerNode childFlattener = flattener.getChild(fullKey);
+				if (debugOn)
+					System.out.println("flattener for obj fullKey: " + fullKey + " flattener " + childFlattener);
 				extractField((Map<String, Object>)obj, pathElements, index + 1, childFlattener);
 			} else if (obj instanceof List<?>) { 
 				if (debugOn)
@@ -154,6 +157,8 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 						int i = 0;
 						for (Object item : listObj) {
 							DataFlatenerNode childFlattener = flattener.getChild(fullKey, i, listObj.size());
+							if (debugOn)
+								System.out.println("flattener obj in array fullKey: " + fullKey + " index:" + i + " list size:" + listObj.size());
 							extractField((Map<String, Object>)item, pathElements, index + 1, childFlattener);
 							++i;
 						}
@@ -223,15 +228,28 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 			
 		} else {
 			int size = -1;
+			List<List<String>> columns = new ArrayList<List<String>>();
 			for (String path : paths) {
 				List<String> column = flattenerRoot.getData(path);
+				columns.add(column);
 				if (size < 0) {
 					size = column.size();
 				} else if (column.size() != size) {
-					throw new IllegalStateException("invalid denormalization");
+					throw new IllegalStateException("invalid denormalization, unequal column size");
 				}
-				String[] colArray = column.toArray(new String[size]);
-				table.add(colArray);
+			}
+			
+			//create row and add to table
+			int numRow = size;
+			int numCol = paths.size();
+			if(debugOn)
+					System.out.println("numRow:" + numRow + " numCol:" + numCol);
+			for (int i = 0; i < numRow; ++i) {
+				String[] row = new String[numCol];
+				for (int j = 0; j < numCol; ++j) {
+					row[j] = columns.get(j).get(i);
+				}
+				table.add(row);
 			}
 		}
 		return table;
@@ -241,7 +259,7 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 	 * @author pranab
 	 *
 	 */
-	private static class DataFlatenerNode {
+	private static class DataFlatenerNode implements Serializable {
 		private Map <String, DataFlatenerNode[]> children = new HashMap <String, DataFlatenerNode[]>();
 		private DataFlatenerNode parent;
 		private String key;
@@ -301,6 +319,9 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 				child = theseChildren[0];
 			}
 			
+			if (null == child) {
+				System.out.println("** got null flattener");
+			}
 			return child;
 		}
 		
@@ -313,18 +334,30 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		public DataFlatenerNode getChild(String key, int childIndex, int numChildren) {
 			DataFlatenerNode child = null;
 			DataFlatenerNode[] theseChildren = children.get(key);
+			
+			//invalidate array
+			if (null != theseChildren && theseChildren.length != numChildren) {
+				theseChildren = null;
+			}
+			
+			//create child array 
 			if (null == theseChildren) {
 				theseChildren = new DataFlatenerNode[numChildren];
 				for (int i = 0; i < numChildren; ++i) {
 					theseChildren[i] = null;
 				}
 				children.put(key, theseChildren);
+			} 
+			
+			child = theseChildren[childIndex];
+			if (null == child) {
 				child = new DataFlatenerNode(key, this);
 				theseChildren[childIndex] = child;
-			} else {
-				child = theseChildren[childIndex];
 			}
 			
+			//if (null == child) {
+			//	System.out.println("** got null flattener");
+			//}
 			return child;
 		}
 		
@@ -336,8 +369,9 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 			List<String> values = data.get(key);
 			if (null == values) {
 				values = new ArrayList<String>();
-				values.add(value);
+				data.put(key, values);
 			}
+			values.add(value);
 		}
 
 		

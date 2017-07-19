@@ -20,6 +20,7 @@ package org.chombo.mr;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -118,9 +119,11 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalize);
         	
         	//ID field
-        	String idFieldPath = config.get("frej.id.attr.path");
-        	if (null != idFieldPath) {
-        		fieldExtractor.withIdFieldPath(idFieldPath);
+        	//String idFieldPath = config.get("frej.id.attr.path");
+        	String[] idFieldPaths = Utility.optionalStringArrayConfigParam(config, "frej.id.attr.paths", Utility.configDelim);
+        	if (null != idFieldPaths) {
+        		List<String> idFieldPathList = Arrays.asList(idFieldPaths);
+        		fieldExtractor.withIdFieldPaths(idFieldPathList);
         	} else {
         		if (normalize) {
         			fieldExtractor.withAutoIdGeneration();

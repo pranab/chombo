@@ -1,0 +1,8 @@
+{
+	"recordType" : "multiLineJson",
+	"jsonPaths" : [
+        "data.campaignInstanceId",
+	    "data.eventData@a.eventCode",
+	    "data.eventData@a.masterAccountId"
+	]
+}

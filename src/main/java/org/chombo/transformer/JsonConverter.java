@@ -35,7 +35,7 @@ import org.codehaus.jackson.type.TypeReference;
  *
  */
 public abstract class JsonConverter implements Serializable {
-	protected  ObjectMapper mapper;
+	protected ObjectMapper mapper;
 	protected Map<String, Object> map;
 	protected boolean failOnInvalid;
 	protected boolean normalize;
@@ -43,7 +43,9 @@ public abstract class JsonConverter implements Serializable {
 	protected static int  listChildLen = 2;
 	protected List<String> paths;
 	protected boolean debugOn;
-;
+	protected boolean autoIdGeneration;
+	protected List<String> idFieldPaths;
+
 
 	/**
 	 * @param failOnInvalid
@@ -61,7 +63,25 @@ public abstract class JsonConverter implements Serializable {
 		this.debugOn = debugOn;
 	}
 
+	/**
+	 * @return
+	 */
+	public JsonConverter withAutoIdGeneration() {
+		this.autoIdGeneration = true;
+		if (debugOn) {
+			System.out.println("parent id auto generated");
+		}
+		return this;
+	}
 
+	/**
+	 * @param idFieldPath
+	 * @return
+	 */
+	public JsonConverter withIdFieldPaths(List<String> idFieldPaths) {
+		this.idFieldPaths = idFieldPaths;
+		return this;
+	}
 	/**
 	 * @param record
 	 */

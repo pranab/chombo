@@ -44,7 +44,6 @@ public class JsonFieldExtractor  extends JsonConverter  {
 	private static final String ROOT_ENTITY = "root";
 	private String idFieldPath;
 	private int idFieldIndex;
-	private boolean autoIdGeneration;
 
 	/**
 	 * @param failOnInvalid
@@ -57,36 +56,20 @@ public class JsonFieldExtractor  extends JsonConverter  {
 	 * @param idFieldPath
 	 * @return
 	 */
-	public JsonFieldExtractor withIdFieldPath(String idFieldPath) {
-		this.idFieldPath = idFieldPath;
+	@Override
+	public JsonConverter withIdFieldPaths(List<String> idFieldPaths) {
+		this.idFieldPath = idFieldPaths.get(0);
 		if (debugOn) {
 			System.out.println("parent id field defined");
 		}
 		return this;
 	}
 	
-	/**
-	 * @param autoIdGeneration
-	 * @return
-	 */
-	public JsonFieldExtractor withAutoIdGeneration() {
-		this.autoIdGeneration = true;
-		if (debugOn) {
-			System.out.println("parent id auto generated");
-		}
-		return this;
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.chombo.transformer.JsonConverter#setDebugOn(boolean)
-	 */
-	public void setDebugOn(boolean debugOn) {
-		this.debugOn = debugOn;
-	}
 
 	/* (non-Javadoc)
 	 * @see org.chombo.transformer.JsonConverter#getExtractedRecords()
 	 */
+	@Override
 	public List<String[]> getExtractedRecords() {
 		return extractedRecords;
 	}
@@ -211,6 +194,7 @@ public class JsonFieldExtractor  extends JsonConverter  {
 	 * @param items
 	 * @return
 	 */
+	@Override
 	public boolean extractAllFields(String record, List<String> paths) {
 		boolean valid = true;
 		records = new AttributeList[paths.size()];

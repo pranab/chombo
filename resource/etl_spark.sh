@@ -2,7 +2,7 @@
 
 PROJECT_HOME=/Users/pranab/Projects
 JAR_NAME=$PROJECT_HOME/bin/chombo/uber-chombo-spark-1.0.jar
-MASTER=spark://akash.local:7077
+MASTER=spark://akash:7077
 
 case "$1" in
 
@@ -34,6 +34,16 @@ case "$1" in
 	INPUT=hdfs:///etl/input/jex/usage.json
 	OUTPUT=hdfs:///etl/output/jex
 	hdfs dfs -rm -r $OUTPUT
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
+;;
+
+"cmplxJsonExtractor")
+	echo "running FlatRecordExtractorFromJson"
+	CLASS_NAME=org.chombo.spark.etl.FlatRecordExtractorFromJson
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/jex/smEvents.json
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/jex
+	rm -rf ./output/jex
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;

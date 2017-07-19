@@ -24,8 +24,8 @@ import org.chombo.validator.ValidatorFactory
 import com.typesafe.config.Config
 import org.chombo.validator.Validator
 import org.chombo.util.ProcessorAttributeSchema
-import org.chombo.util.NumericalAttrStatsManager
-import org.chombo.util.MedianStatsManager
+import org.chombo.stats.NumericalAttrStatsManager
+import org.chombo.stats.MedianStatsManager
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashMap
 import org.chombo.util.BasicUtils
