@@ -122,10 +122,9 @@ public class Projection extends Configured implements Tool {
         	keyField = config.getInt("pro.key.field", 0);
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim", ",");
-        	String fileterDelim = config.get("pro.filter.delim");
-        	if (null != fileterDelim) {
-        		AttributeFilter.setCondSeparator(fileterDelim);
-        	}
+        	
+        	//filter expression delimetrs
+           	setFilterExprDelimeter(config);
         	
         	//projection
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
@@ -187,10 +186,8 @@ public class Projection extends Configured implements Tool {
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim.out", ",");
         	
-        	String fileterDelim = config.get("pro.filter.delim");
-        	if (null != fileterDelim) {
-        		AttributeFilter.setCondSeparator(fileterDelim);
-        	}
+        	//filter expression delimetrs
+        	setFilterExprDelimeter(config);
         	
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
         	if (null == projectionFields) {
@@ -501,6 +498,20 @@ public class Projection extends Configured implements Tool {
     
     /**
      * @param config
+     */
+    private static void setFilterExprDelimeter(Configuration config) {
+    	String filterConjunctDelim = config.get("pro.filter.conjunct.delim");
+    	if (null != filterConjunctDelim) {
+    		AttributeFilter.setConjunctSeparator(filterConjunctDelim);
+    	}
+    	String filterDisjunctDelim = config.get("pro.filter.disjunct.delim");
+    	if (null != filterDisjunctDelim) {
+    		AttributeFilter.setDisjunctSeparator(filterDisjunctDelim);
+    	}
+    }
+    
+    /**
+     * @param config
      * @param selectFilter
      * @param rowColFilter
      * @return
@@ -512,19 +523,17 @@ public class Projection extends Configured implements Tool {
 		String notInSetName = config.get("pro.operator.notin.set.name");
 		String inSetName = config.get("pro.operator.in.set.name");
 		if (null == notInSetName && null == inSetName) {
-			//conjunction of predicates
-			attrFilter = new AttributeFilter(selectFilter);
+			//dnf expression
 			Map<String, Object> udfContext = getUdfConfiguration (config);
-			if (null != udfContext) {
-				attrFilter.withContext(udfContext);
-			}
+			attrFilter = udfContext == null ? new AttributeFilter(selectFilter) : 
+				new AttributeFilter(selectFilter, udfContext);
 		} else {
 			if (null != notInSetName) {
-           		//bulk data from external source for in or notin operator
+           		//bulk data from external source for notin operator
     			attrFilter =  new AttributeFilter();
         		createExcludedRowsContext(config,  rowColFilter, attrFilter, selectFilter);
 			} else {
-           		//bulk data from external source for in or in operator
+           		//bulk data from external source for in operator
 				
 			}
     	}

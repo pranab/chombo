@@ -27,9 +27,11 @@ import java.util.Map;
  *
  */
 public class AttributeFilter extends BaseAttributeFilter {
-	private List<BasePredicate> predicates = new ArrayList<BasePredicate>();
-	public static final String COND_SEP = ",";
-	private static String condSeparator;
+	private List<List<BasePredicate>> disjunctPredicates = new ArrayList<List<BasePredicate>>();
+	public static final String CONJUNCT_SEP = " and ";
+	public static final String DISJUNCT_SEP = " or ";
+	private static String conjunctSeparator;
+	private static String disjunctSeparator;
 	
 	public AttributeFilter(){
 	}
@@ -44,9 +46,30 @@ public class AttributeFilter extends BaseAttributeFilter {
 	/**
 	 * @param filter
 	 */
+	public AttributeFilter(String filter, Map<String, Object> context) {
+		this.context = context;
+		build(filter);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.chombo.util.BaseAttributeFilter#build(java.lang.String)
+	 */
 	public void build(String filter) {
+		String[] conjuctPreds = filter.split(getDisjunctSeparator());
+		
+		//all conjunctive predicates
+		for (String conjuctPred : conjuctPreds) {
+			disjunctPredicates.add(buildConjuctPredicate(conjuctPred.trim()));
+		}
+	}
+	
+	/**
+	 * @param filter
+	 */
+	private List<BasePredicate> buildConjuctPredicate(String filter) {
+		List<BasePredicate> predicates = new ArrayList<BasePredicate>();
 		AttributePredicate  predicate = null;
-		String[] preds = filter.split(getCondSeparator());
+		String[] preds = filter.split(getConjunctSeparator());
 		for (String pred : preds) {
 			String[] predParts = pred.trim().split(AttributePredicate.PREDICATE_SEP);
 			int compSize = predParts.length;
@@ -88,13 +111,32 @@ public class AttributeFilter extends BaseAttributeFilter {
 				throw new IllegalStateException("invalid predicate");
 			}
 		}
+		
+		return predicates;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.chombo.util.BaseAttributeFilter#evaluate(java.lang.String[])
+	 */
+	public boolean evaluate(String[] record) {
+		boolean status = false;
+		for (List<BasePredicate> predicates : disjunctPredicates) {
+			status = status || evaluateConjuctPredicates(record, predicates);
+			if (status) {
+				//conjunctive predicates or connected
+				break;
+			}
+		}
+		
+		return status;
 	}
 	
 	/**
+	 * evaluate conjunctive predicates
 	 * @param record
 	 * @return
 	 */
-	public boolean evaluate(String[] record) {
+	private boolean evaluateConjuctPredicates(String[] record, List<BasePredicate> predicates) {
 		boolean status = true;
 		for (BasePredicate  predicate : predicates) {
 			status = status & predicate.evaluate(record);
@@ -110,23 +152,37 @@ public class AttributeFilter extends BaseAttributeFilter {
 	/**
 	 * @return
 	 */
-	public static String getCondSeparator() {
-		return condSeparator != null ? condSeparator : COND_SEP;
+	public static String getConjunctSeparator() {
+		return conjunctSeparator != null ? conjunctSeparator : CONJUNCT_SEP;
 	}
 
 	/**
-	 * @param condSeparator
+	 * @param conjunctSeparator
 	 */
-	public static void setCondSeparator(String condSeparator) {
-		AttributeFilter.condSeparator = condSeparator;
+	public static void setConjunctSeparator(String conjunctSeparator) {
+		AttributeFilter.conjunctSeparator = conjunctSeparator;
 	}
 	
+	/**
+	 * @return
+	 */
+	public static String getDisjunctSeparator() {
+		return disjunctSeparator != null ? disjunctSeparator : DISJUNCT_SEP;
+	}
+
+	/**
+	 * @param disjunctSeparator
+	 */
+	public static void setDisjunctSeparator(String disjunctSeparator) {
+		AttributeFilter.disjunctSeparator = disjunctSeparator;
+	}
+
 	/**
 	 * @param filter
 	 * @return
 	 */
 	public static boolean isConjuctivePredicate(String filter) {
-		String[] preds = filter.split(getCondSeparator());
+		String[] preds = filter.split(getConjunctSeparator());
 		String[] predParts = preds[0].trim().split(AttributePredicate.PREDICATE_SEP);
 		return predParts.length == 3;
 	}
