@@ -36,6 +36,8 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.stats.ValueCounter;
+import org.chombo.stats.ValueCounters;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
 import org.chombo.util.Tuple;
@@ -47,6 +49,9 @@ import org.chombo.util.Utility;
  *
  */
 public class MissingValueCounter extends Configured implements Tool {
+	private static String OP_ROW = "row";
+	private static String OP_COL = "col";
+	private static String OP_DISTR = "distr";
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -60,7 +65,8 @@ public class MissingValueCounter extends Configured implements Tool {
 
         Utility.setConfiguration(job.getConfiguration(), "chombo");
         job.setMapperClass(MissingValueCounter.CounterMapper.class);
-        if (job.getConfiguration().get("mvc.counting.dimension", "column").equals("column")) { 
+        String operation = job.getConfiguration().get("mvc.counting.dimension", "column");
+        if (operation.equals("column") || operation.equals("summary")) { 
             job.setCombinerClass(MissingValueCounter.CounterCombiner.class);
         }
     	job.setReducerClass(MissingValueCounter.CounterReducer.class);
@@ -86,7 +92,7 @@ public class MissingValueCounter extends Configured implements Tool {
         private String[] items;
         private String fieldDelimRegex;
         private int[] idOrdinals;
-        private String dimension;
+        private String operation;
         private int count;
 
         /* (non-Javadoc)
@@ -96,7 +102,7 @@ public class MissingValueCounter extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = Utility.getFieldDelimiter(config, "mvc.field.delim.regex", "field.delim.regex", ",");
         	idOrdinals = Utility.intArrayFromString(config.get("mvc.id.field.ordinals"));
-        	dimension = config.get("mvc.counting.dimension", "column");
+        	operation = config.get("mvc.counting.dimension", "column");
         }    
         
         @Override
@@ -104,15 +110,10 @@ public class MissingValueCounter extends Configured implements Tool {
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex, -1);
             
-            if (dimension.equals("row")) {
+            if (operation.equals(OP_ROW)) {
             	//row wise
-            	int i = idOrdinals.length;
-            	count = 0;
-            	for ( ; i < items.length; ++i) {
-            		if (items[i].isEmpty()) {
-            			++count;
-            		}
-            	} 
+            	int beg = null != idOrdinals ? idOrdinals.length : 0;
+            	count = BasicUtils.missingFieldCount(items, beg);
             	if (count > 0) {
                 	//descending order of count
 	       			outKey.initialize();
@@ -126,23 +127,53 @@ public class MissingValueCounter extends Configured implements Tool {
 	       			outVal.add(rec);
 	            	context.write(outKey, outVal);
             	}
-            } else {
+            } else if (operation.equals(OP_COL)) {
             	//column wise
-            	int i = idOrdinals.length;
-            	for ( ; i < items.length; ++i) {
-            		if (items[i].isEmpty()) {
-            			//column ordinal
-            			outKey.initialize();
-            			outKey.add(i);
-            			
-            			//count
-            			outVal.initialize();
-            			outVal.add(1);
-                    	context.write(outKey, outVal);
-            		}
-            	}
+            	emiMissingColumn(context, null);
+            } else if (operation.equals(OP_DISTR)) {
+            	//row wise
+            	int beg = null != idOrdinals ? idOrdinals.length : 0;
+            	count = BasicUtils.missingFieldCount(items, beg);
+       			outKey.initialize();
+       			outKey.add("row", count);
+    			
+       			outVal.initialize();
+    			outVal.add(1);
+            	context.write(outKey, outVal);
+            	
+            	//column wise
+            	emiMissingColumn(context, "col");
+            	
+            } else {
+            	throw new IllegalStateException("invalid operation");
             }
-        }        
+        }
+        
+        /**
+         * @param context
+         * @param keyPrefix
+         * @throws IOException
+         * @throws InterruptedException
+         */
+        private void emiMissingColumn(Context context, String keyPrefix) throws IOException, InterruptedException {
+        	int i =  null != idOrdinals ? idOrdinals.length : 0;
+        	for ( ; i < items.length; ++i) {
+        		if (items[i].isEmpty()) {
+        			//column ordinal
+        			outKey.initialize();
+        			if (null != keyPrefix) {
+        				outKey.add(keyPrefix);
+        			}
+        			outKey.add(i);
+        			
+        			//count
+        			outVal.initialize();
+        			outVal.add(1);
+                	context.write(outKey, outVal);
+        		}
+        	}
+        	
+        }
 	}	
 
 	/**
@@ -176,11 +207,14 @@ public class MissingValueCounter extends Configured implements Tool {
 		protected Text outVal = new Text();
 		protected StringBuilder stBld =  new StringBuilder();;
 		protected String fieldDelim;
-        private String dimension;
+        private String operation;
         private int count;
-        private List<MissingColumnCounter> colCounters = new ArrayList<MissingColumnCounter>();
+        //private List<MissingColumnCounter> colCounters = new ArrayList<MissingColumnCounter>();
         private int colMissingCountMin;
         private int rowMissingCountMin;
+        private ValueCounters<Integer> colCounters = new ValueCounters<Integer>(false);
+        private ValueCounters<String> distrRowCounters = new ValueCounters<String>(false);
+        private ValueCounters<String> distrColCounters = new ValueCounters<String>(false);
         
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -188,34 +222,30 @@ public class MissingValueCounter extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
-        	dimension = config.get("mvc.counting.dimension", "column");
+        	operation = config.get("mvc.counting.dimension", "column");
         	colMissingCountMin = config.getInt("mvc.col.missing.count.min", -1);
         	rowMissingCountMin = config.getInt("mvc.row.missing.count.min", -1);
 		}
 		
 		@Override
 		protected void cleanup(Context context) throws IOException, InterruptedException {
-            if (dimension.equals("column")) {
-            	//sort by descending order of count
-            	Collections.sort(colCounters);
-            	
-            	for (MissingColumnCounter colCnt : colCounters) {
-            		//only if the count is above threshold if specified
-            		if (colMissingCountMin == -1  || colCnt.getRight() > colMissingCountMin) {
-            			outVal.set("" + colCnt.getLeft() + fieldDelim + colCnt.getRight());
-            			context.write(NullWritable.get(), outVal);
-            		}
-            	}
+            if (operation.equals(OP_COL)) {
+            	//column wise missing value count
+            	emitCounters(colCounters, colMissingCountMin, context);
+            } else if (operation.equals(OP_DISTR)) {
+            	//missing field count distribution
+            	emitCounters(distrRowCounters, rowMissingCountMin, context);
+               	emitCounters(distrColCounters, colMissingCountMin, context);
             }
 			super.cleanup(context);
-		}
+		}		
 		
 		/* (non-Javadoc)
     	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
-            if (dimension.equals("row")) {
+            if (operation.equals(OP_ROW)) {
             	count = Integer.MAX_VALUE - key.getInt(0);
         		//only if the count is above threshold if specified
             	if (rowMissingCountMin == -1 || count > rowMissingCountMin) {
@@ -224,15 +254,52 @@ public class MissingValueCounter extends Configured implements Tool {
 	            		context.write(NullWritable.get(), outVal);
 	        		} 
             	}
-            } else {
-            	count = 0;
-        		for (Tuple val : values) {
-        			count += val.getInt(0);
-        		}
-        		MissingColumnCounter colCnt = new MissingColumnCounter(key.getInt(0), count);
-        		colCounters.add(colCnt);
+            } else if (operation.equals(OP_COL)) {
+        		getCount(values);
+        		colCounters.add(key.getInt(0), count);
+            } else if (operation.equals(OP_DISTR)) {
+        		String obj = key.toString();
+        		getCount(values);
+        		String type = key.getString(0);
+            	if (type.equals(OP_ROW)) {
+            		distrRowCounters.add(obj, count);
+            	} else {
+            		distrColCounters.add(obj, count);
+            	}
             }
-    	}		
+    	}	
+    	
+    	/**
+    	 * @param values
+    	 */
+    	private void getCount(Iterable<Tuple> values) {
+        	count = 0;
+    		for (Tuple val : values) {
+    			count += val.getInt(0);
+    		}
+    	}
+    	
+		/**
+		 * @param colCounters
+		 * @param minCount
+		 * @param context
+		 * @throws IOException
+		 * @throws InterruptedException
+		 */
+		private <T> void emitCounters(ValueCounters<T> counters, int minCount, Context context) 
+			throws IOException, InterruptedException {
+        	List<ValueCounter<T>> sortedcounters = counters.getSorted();
+        	for (ValueCounter<T> counter : sortedcounters) {
+        		int count = counter.getCount();
+        		if (minCount == -1  || count > minCount) {
+        			outVal.set("" + counter.getObj() + fieldDelim +count);
+        			context.write(NullWritable.get(), outVal);
+        		} else {
+        			break;
+        		}
+        	}
+		}
+    	
 	}	
 	
 	/**

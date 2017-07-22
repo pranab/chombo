@@ -1716,13 +1716,21 @@ public class BasicUtils {
 	 * @param items
 	 * @return
 	 */
-	public static int missingFieldCount(String[] items) {
+	public static int missingFieldCount(String[] items, int beg) {
     	int count = 0;
-    	for (int i = 0 ; i < items.length; ++i) {
+    	for (int i = beg ; i < items.length; ++i) {
     		if (items[i].isEmpty()) {
     			++count;
     		}
     	} 
 		return count;
+	}
+	
+	/**
+	 * @param items
+	 * @return
+	 */
+	public static int missingFieldCount(String[] items) {
+		return missingFieldCount(items, 0);
 	}
  }
