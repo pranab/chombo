@@ -65,8 +65,8 @@ public class MissingValueCounter extends Configured implements Tool {
 
         Utility.setConfiguration(job.getConfiguration(), "chombo");
         job.setMapperClass(MissingValueCounter.CounterMapper.class);
-        String operation = job.getConfiguration().get("mvc.counting.dimension", "column");
-        if (operation.equals("column") || operation.equals("summary")) { 
+        String operation = job.getConfiguration().get("mvc.counting.operation", "column");
+        if (operation.equals(OP_COL) || operation.equals(OP_DISTR)) { 
             job.setCombinerClass(MissingValueCounter.CounterCombiner.class);
         }
     	job.setReducerClass(MissingValueCounter.CounterReducer.class);
@@ -102,7 +102,7 @@ public class MissingValueCounter extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = Utility.getFieldDelimiter(config, "mvc.field.delim.regex", "field.delim.regex", ",");
         	idOrdinals = Utility.intArrayFromString(config.get("mvc.id.field.ordinals"));
-        	operation = config.get("mvc.counting.dimension", "column");
+        	operation = config.get("mvc.counting.operation", "column");
         }    
         
         @Override
@@ -134,12 +134,14 @@ public class MissingValueCounter extends Configured implements Tool {
             	//row wise
             	int beg = null != idOrdinals ? idOrdinals.length : 0;
             	count = BasicUtils.missingFieldCount(items, beg);
-       			outKey.initialize();
-       			outKey.add("row", count);
-    			
-       			outVal.initialize();
-    			outVal.add(1);
-            	context.write(outKey, outVal);
+            	if (count > 0) {
+	       			outKey.initialize();
+	       			outKey.add("row", count);
+	    			
+	       			outVal.initialize();
+	    			outVal.add(1);
+	            	context.write(outKey, outVal);
+	            }
             	
             	//column wise
             	emiMissingColumn(context, "col");
@@ -209,7 +211,6 @@ public class MissingValueCounter extends Configured implements Tool {
 		protected String fieldDelim;
         private String operation;
         private int count;
-        //private List<MissingColumnCounter> colCounters = new ArrayList<MissingColumnCounter>();
         private int colMissingCountMin;
         private int rowMissingCountMin;
         private ValueCounters<Integer> colCounters = new ValueCounters<Integer>(false);
@@ -222,7 +223,7 @@ public class MissingValueCounter extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
-        	operation = config.get("mvc.counting.dimension", "column");
+        	operation = config.get("mvc.counting.operation", "column");
         	colMissingCountMin = config.getInt("mvc.col.missing.count.min", -1);
         	rowMissingCountMin = config.getInt("mvc.row.missing.count.min", -1);
 		}
@@ -230,12 +231,19 @@ public class MissingValueCounter extends Configured implements Tool {
 		@Override
 		protected void cleanup(Context context) throws IOException, InterruptedException {
             if (operation.equals(OP_COL)) {
-            	//column wise missing value count
+            	//column index and  missing value count
             	emitCounters(colCounters, colMissingCountMin, context);
             } else if (operation.equals(OP_DISTR)) {
-            	//missing field count distribution
+            	//row wiae missing field count distribution
             	emitCounters(distrRowCounters, rowMissingCountMin, context);
-               	emitCounters(distrColCounters, colMissingCountMin, context);
+            	
+               	//column wise missing field count distribution
+            	for(Integer key :  colCounters.getCounters().keySet()){
+            		int count = colCounters.getCounters().get(key).getCount();
+            		String colKey = "col" + BasicUtils.configDelim + count;
+            		distrColCounters.add(colKey, 1);
+            	}
+            	 emitCounters(distrColCounters, colMissingCountMin, context);
             }
 			super.cleanup(context);
 		}		
@@ -250,6 +258,7 @@ public class MissingValueCounter extends Configured implements Tool {
         		//only if the count is above threshold if specified
             	if (rowMissingCountMin == -1 || count > rowMissingCountMin) {
 	        		for (Tuple val : values) {
+	        			//record or record key followed by count
 	            		outVal.set("" + val.getString(0) +  fieldDelim + count);
 	            		context.write(NullWritable.get(), outVal);
 	        		} 
@@ -264,7 +273,8 @@ public class MissingValueCounter extends Configured implements Tool {
             	if (type.equals(OP_ROW)) {
             		distrRowCounters.add(obj, count);
             	} else {
-            		distrColCounters.add(obj, count);
+            		colCounters.add(key.getInt(1), count);
+            		//distrColCounters.add(obj, count);
             	}
             }
     	}	

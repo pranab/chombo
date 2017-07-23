@@ -40,15 +40,15 @@ for i in range(num_surveys):
 	hold_time = int(hold_time_distr[tod].sample())
 	
 	num_prev_calls = int(num_prev_calls_distr.sample())
-	num_prev_calls = range_limit(num_prev_calls, 0, 5)
+	num_prev_calls = rangeLimit(num_prev_calls, 0, 5)
 
 	num_reroute = randint(0, 3)
 	
 	cs_friendly_score = int(csr_friendly_distr.sample())
-	cs_friendly_score = range_limit(cs_friendly_score, 1, 10)
+	cs_friendly_score = rangeLimit(cs_friendly_score, 1, 10)
 	
 	veri_process_score = int(veri_process_distr.sample())
-	veri_process_score = range_limit(veri_process_score, 1, 10)
+	veri_process_score = rangeLimit(veri_process_score, 1, 10)
 	
 	if (num_prev_calls > 1):
 		if (randint(0, 100) < 80):

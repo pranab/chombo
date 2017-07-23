@@ -40,6 +40,13 @@ public class ValueCounters<T> {
 	}
 	
 	/**
+	 * @return
+	 */
+	public Map<T, ValueCounter<T>> getCounters() {
+		return counters;
+	}
+
+	/**
 	 * @param obj
 	 * @param count
 	 */
