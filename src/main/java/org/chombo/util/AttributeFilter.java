@@ -96,17 +96,19 @@ public class AttributeFilter extends BaseAttributeFilter {
 				predicates.add(predicate);
 			} else if (compSize == 1) {
 				//udf
-				String udf = pred.substring(0, pred.length()-2);
+				String udf = predParts[0].substring(0, predParts[0].length()-2);
 				String key = "pro.filter.udf.class." + udf;
 				String udfClassName = (String)context.get(key);
+				//System.out.println("udf:" +udf + "  class:" +udfClassName );
+				BasePredicate udfPredicate = null;
 				try {
 					Class<?> cls = Class.forName(udfClassName);
-					BasePredicate udfPredicate = (BasePredicate)cls.newInstance();
+					udfPredicate = (BasePredicate)cls.newInstance();
 					udfPredicate.withContext(context);
 				} catch (Exception ex) {
 					throw new IllegalStateException("failed create filter udf object "+ ex.getMessage());
 				}
-				predicates.add(predicate);
+				predicates.add(udfPredicate);
 			} else {
 				throw new IllegalStateException("invalid predicate");
 			}

@@ -593,6 +593,7 @@ public class Projection extends Configured implements Tool {
     		udfContext = new HashMap<String, Object>();
 	    	for (String key : keys) {
 	    		String value = config.get(key);
+	    		//System.out.println("udf  key:" + key + " value:" + value);
 	    		udfContext.put(key, value);
 	    	}
     	}
