@@ -20,6 +20,7 @@ package org.chombo.mr;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +39,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Level;
+import org.chombo.transformer.JsonComplexFieldExtractor;
 import org.chombo.transformer.JsonFieldExtractor;
 import org.chombo.transformer.MultiLineFlattener;
 import org.chombo.transformer.MultiLineJsonFlattener;
@@ -94,7 +96,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         private String fieldDelimOut;
         private RawAttributeSchema rawSchema;
         private String jsonString;
-        private JsonFieldExtractor fieldExtractor;
+        private JsonComplexFieldExtractor fieldExtractor;
         private MultiLineJsonFlattener flattener;
         private boolean normalize;
         private  String baseKey = BasicUtils.generateId();
@@ -115,12 +117,14 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	
         	boolean failOnInvalid = config.getBoolean("frej.fail.on.invalid", true);
         	normalize = config.getBoolean("frej.normalize.output", true);
-        	fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalize);
+        	fieldExtractor = new JsonComplexFieldExtractor(failOnInvalid, normalize);
         	
         	//ID field
-        	String idFieldPath = config.get("frej.id.attr.path");
-        	if (null != idFieldPath) {
-        		fieldExtractor.withIdFieldPath(idFieldPath);
+        	//String idFieldPath = config.get("frej.id.attr.path");
+        	String[] idFieldPaths = Utility.optionalStringArrayConfigParam(config, "frej.id.attr.paths", Utility.configDelim);
+        	if (null != idFieldPaths) {
+        		List<String> idFieldPathList = Arrays.asList(idFieldPaths);
+        		fieldExtractor.withIdFieldPaths(idFieldPathList);
         	} else {
         		if (normalize) {
         			fieldExtractor.withAutoIdGeneration();

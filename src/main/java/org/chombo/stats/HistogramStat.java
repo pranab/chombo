@@ -17,6 +17,8 @@
 
 package org.chombo.stats;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,6 +73,9 @@ public class HistogramStat implements Serializable {
 		this.binWidth = binWidth;
 	}
 
+	/**
+	 * 
+	 */
 	public void initialize() {
 		binMap.clear();
 		histogram.clear();
@@ -80,6 +85,24 @@ public class HistogramStat implements Serializable {
 		normalized = false;
 	}
 
+	/**
+	 * @throws IOException 
+	 * 
+	 */
+	public void initialize(InputStream inStr, int keyLen) throws IOException {
+		initialize();
+		List<String> lines = BasicUtils.getFileLines(inStr);
+		for (String line : lines) {
+			String[] items = line.split(fieldDelim);
+			String[] key = Arrays.copyOfRange(items, 0, keyLen);
+			
+			int histSize = Integer.parseInt(items[keyLen]);
+			for (int i = 0; i < histSize; ++i) {
+				
+			}
+		}
+	}
+	
 	/**
 	 * @param binWidth
 	 */

@@ -53,14 +53,13 @@ public class RowColumnFilter {
 	 * @throws IOException
 	 */
 	public void processRows(InputStream rowStream, String delim) throws IOException {
-		//row Keys
+		//row Keys to be excluded
 		List<String> rows = BasicUtils.getFileLines(rowStream);
 		rowKeys = new String[rows.size()];
 		int i = 0;
-		int pos = 0;
 		for (String row : rows) {
-			pos = row.lastIndexOf(delim);
-			rowKeys[i++] = row.substring(0, pos);
+			String[] items = BasicUtils.splitOnFirstOccurence(row, delim, true);
+			rowKeys[i++] = items[0];
 		}
 	}
 	
@@ -70,14 +69,13 @@ public class RowColumnFilter {
 	 * @throws IOException
 	 */
 	public void processColumns(InputStream colStream, String delim) throws IOException {
-		//column ordinals
+		//column ordinals of columns to be excluded
 		List<String> cols = BasicUtils.getFileLines(colStream);
 		colOrdinals = new int[cols.size()];
 		int i = 0;
-		int pos = 0;
 		for (String col : cols) {
-			pos = col.indexOf(delim);
-			colOrdinals[i++] = Integer.parseInt(col.substring(0, pos));
+			String[] items = BasicUtils.splitOnFirstOccurence(col, delim, true);
+			colOrdinals[i++] = Integer.parseInt(items[0]);
 		}
 		
 	}
@@ -91,6 +89,7 @@ public class RowColumnFilter {
 		int j = 0;
 		Arrays.sort(colOrdinals);
 		for (int i = 0; i < numCols; ++i) {
+			 //exclude columns
 			 if(Arrays.binarySearch(colOrdinals, i) < 0) {
 				 inclCols[j++] = i; 
 			 }

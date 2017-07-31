@@ -189,6 +189,55 @@ public class Tuple  implements WritableComparable<Tuple>  {
 	}
 
 	/**
+	 * @param vec
+	 */
+	public void fromArray(double[] vec) {
+		for (double val : vec) {
+			add(val);
+		}
+	}
+	
+	/**
+	 * @return
+	 */
+	public double[] toDoubleArray() {
+		double[] vec = new double[fields.size()];
+		for (int i = 0; i < vec.length; ++i) {
+			vec[i] = getDouble(i);
+		}
+		return vec;
+	}
+	
+	/**
+	 * @param vec
+	 */
+	public void fromArray(int[] vec) {
+		for (double val : vec) {
+			add(val);
+		}
+	}
+	
+	/**
+	 * @return
+	 */
+	public int[] toIntArray() {
+		int[] vec = new int[fields.size()];
+		for (int i = 0; i < vec.length; ++i) {
+			vec[i] = getInt(i);
+		}
+		return vec;
+	}
+
+	/**
+	 * @param items
+	 * @param start
+	 * @param end
+	 */
+	public <T> void addFromArray(T[] items) {
+		addFromArray(items, 0, items.length);
+	}
+
+	/**
 	 * @param items
 	 * @param start
 	 * @param end

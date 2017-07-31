@@ -1,0 +1,38 @@
+This tutorial for analysis of missing data. first, we analyze data to get some statistics on 
+missing fields. Next, using the statistics we filter out rows and columns from the data.
+
+
+Dependent script
+================
+Checkout the project avenir. Take the script util.py and sampler.py from the project and placeit
+in ../lib directory with respect the directory containing store_order.py
+
+Deployment
+==========
+Please refer to building_uber_jar.txt
+
+Generate input data
+===================
+./cs_survey.py  <num_of_surveys>  > <output_file>
+
+where
+num_of_surveys = number of surveys
+
+Copy the output file to HDFS input directory
+
+Run missing value counting Map Reduce
+=====================================
+./etl.sh missingValueCount
+
+Run filtering Map Reduce
+========================
+./etl.sh missingValueFilter
+
+Script
+======
+The script etl.sh should be changed as necessary depending on your environment
+
+Configuration
+=============
+Configuration parameters are etl.properties. Make changes as necessary
+

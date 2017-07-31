@@ -23,10 +23,10 @@ import java.util.Map;
  * @author pranab
  *
  */
-public abstract class AttributePredicate {
+public abstract class AttributePredicate extends BasePredicate{
 	protected int attribute;
 	protected String operator;
-	protected Map<String, Object> context;
+	//protected Map<String, Object> context;
 
 	public static final String GREATER_THAN = "gt";
 	public static final String LESS_THAN = "lt";
@@ -37,9 +37,16 @@ public abstract class AttributePredicate {
 	public static final String DATA_TYPE_SEP = ":";
 	public static final String VALUE_LIST_SEP = "\\|";
 	
+	/**
+	 * 
+	 */
 	public AttributePredicate() {
 	}
 	
+	/**
+	 * @param attribute
+	 * @param operator
+	 */
 	public AttributePredicate(int attribute, String operator) {
 		super();
 		this.attribute = attribute;
@@ -72,7 +79,8 @@ public abstract class AttributePredicate {
 		} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_STRING)) {
 			if (null != context) {
 				predicate = new StringAttributePredicate();
-				predicate.withContext(context).build(attr, predParts[1], valueParts[1]);
+				predicate.withContext(context);
+				predicate.build(attr, predParts[1], valueParts[1]);
 			} else {
 				predicate = new StringAttributePredicate(attr, predParts[1], valueParts[1]);
 			}
@@ -82,16 +90,21 @@ public abstract class AttributePredicate {
 		return predicate;
 	}
 	
+	/**
+	 * @param attribute
+	 * @param operator
+	 * @param value
+	 */
 	public abstract void build(int attribute, String operator, String value);
 
 	/**
 	 * @param context
 	 * @return
 	 */
-	public AttributePredicate withContext(Map<String, Object> context) {
-		this.context = context;
-		return this;
-	}
+	//public AttributePredicate withContext(Map<String, Object> context) {
+	//	this.context = context;
+	//	return this;
+	//}
 
 	
 	/**
@@ -99,7 +112,7 @@ public abstract class AttributePredicate {
 	 * @param record
 	 * @return
 	 */
-	public abstract boolean evaluate(String[] record);
+	//public abstract boolean evaluate(String[] record);
 
 	/**
 	 * evaluates predicate 

@@ -317,6 +317,28 @@ case "$1" in
 	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
 ;;
 
+"missingValueCount")
+	echo "running mr MissingValueCounter for missing value stats"
+	CLASS_NAME=org.chombo.mr.MissingValueCounter
+	IN_PATH=/user/pranab/mvco/input
+	OUT_PATH=/user/pranab/mvco/output
+	echo "input $IN_PATH output $OUT_PATH"
+	hadoop fs -rmr $OUT_PATH
+	echo "removed output dir"
+	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
+;;
+
+"missingValueFilter")
+	echo "running mr Projection for filtering row and columns for with missing values"
+	CLASS_NAME=org.chombo.mr.Projection
+	IN_PATH=/user/pranab/mvco/input
+	OUT_PATH=/user/pranab/mvfi/output
+	echo "input $IN_PATH output $OUT_PATH"
+	hadoop fs -rmr $OUT_PATH
+	echo "removed output dir"
+	hadoop jar $JAR_NAME  $CLASS_NAME -Dconf.path=$PROP_FILE  $IN_PATH  $OUT_PATH
+;;
+
 *) 
 	echo "unknown operation $1"
 	;;

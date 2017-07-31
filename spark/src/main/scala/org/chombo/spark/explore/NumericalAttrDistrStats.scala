@@ -1,5 +1,5 @@
 /*
- * chombo-spark: etl on spark
+ `* chombo-spark: etl on spark
  * Author: Pranab Ghosh
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -22,7 +22,7 @@ import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
-import org.chombo.util.HistogramStat
+import org.chombo.stats.HistogramStat
 
 object NumericalAttrDistrStats extends JobConfiguration {
   

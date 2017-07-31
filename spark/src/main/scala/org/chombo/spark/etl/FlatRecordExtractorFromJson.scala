@@ -28,6 +28,7 @@ import org.chombo.transformer.JsonFieldExtractor
 import org.chombo.transformer.MultiLineJsonFlattener
 import scala.collection.JavaConverters._
 import org.chombo.util.BasicUtils
+import org.chombo.transformer.JsonComplexFieldExtractor
 
 
 object FlatRecordExtractorFromJson extends JobConfiguration {
@@ -53,17 +54,20 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
 	   val failOnInvalid = appConfig.getBoolean("fail.on.invalid")
 	   val normalizeOutput = appConfig.getBoolean("normalize.output")
 	   val idFieldPath = getOptionalStringParam(appConfig, "id.attr.path")
+	   val idFieldPaths = getOptionalStringListParam(config, "id.attr.path")
 	   val entityList = getOptionalStringListParam(appConfig, "entity.list")
-	   val fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalizeOutput);
+	   val fieldExtractor = new JsonComplexFieldExtractor(failOnInvalid, normalizeOutput);
        fieldExtractor.setDebugOn(debugOn)
-       idFieldPath match {
-         case Some(path:String) => {
-           fieldExtractor.withIdFieldPath(path)
+       idFieldPaths match {
+         case Some(paths:java.util.List[String]) => {
+           fieldExtractor.withIdFieldPaths(paths)
            if (debugOn)
-        	   System.out.println("id path:" + path)
+        	   System.out.println("id path:" + paths)
          }
-         case None if normalizeOutput => {
-           fieldExtractor.withAutoIdGeneration()
+         case None => {
+           if (normalizeOutput) {
+        	   fieldExtractor.withAutoIdGeneration()
+           }
            if(debugOn)
              System.out.println("no id path defined")
          }
@@ -110,8 +114,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
     	             getDeNormalizedRecords(fieldExtractor, fieldDelimOut)
     	           }
     	           case true => {
-    	             getNormalizedParentRecord(fieldExtractor, fieldDelimOut) ::
-    	               getNormalizedChildRecords(fieldExtractor, fieldDelimOut)
+    	             getNormalizedRecords(fieldExtractor, fieldDelimOut)
     	           }
     	         }
     	         allRecs
@@ -171,7 +174,7 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
    * @param fieldDelimOut
    * @return
    */
-   def getDeNormalizedRecords(fieldExtractor : JsonFieldExtractor, fieldDelimOut:String) : 
+   def getDeNormalizedRecords(fieldExtractor : JsonComplexFieldExtractor, fieldDelimOut:String) : 
      List[String] = {
      val listOfArr = fieldExtractor.getExtractedRecords()
     	         
@@ -180,9 +183,24 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
        a.mkString(fieldDelimOut)
      })
      recs.toList
-     //List[String](recs:_*)
    }
    
+   /**
+   * @param fieldExtractor
+   * @param fieldDelimOut
+   * @return
+   */
+   def getNormalizedRecords(fieldExtractor : JsonComplexFieldExtractor, fieldDelimOut:String) : 
+     List[String] = {
+     val listOfArr = fieldExtractor.getExtractedRecords()
+    	         
+     //list of fields to list of records
+     val recs = listOfArr.asScala.map(a => {
+       a.mkString(fieldDelimOut)
+     })
+     recs.toList
+   }
+
    /**
    * @param fieldExtractor
    * @param fieldDelimOut

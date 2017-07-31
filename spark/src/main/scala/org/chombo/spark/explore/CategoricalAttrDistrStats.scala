@@ -22,7 +22,7 @@ import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
-import org.chombo.util.CategoricalHistogramStat
+import org.chombo.stats.CategoricalHistogramStat
 
 object CategoricalAttrDistrStats extends JobConfiguration {
   

@@ -61,4 +61,10 @@ public class IntAttributePredicate  extends AttributePredicate {
 		}
 		return status;
 	}
+
+	@Override
+	public void build(String predicate) {
+		// TODO Auto-generated method stub
+		
+	}
 }

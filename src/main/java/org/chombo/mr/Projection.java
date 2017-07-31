@@ -42,6 +42,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.redis.RedisCache;
 import org.chombo.util.AttributeFilter;
+import org.chombo.util.BaseAttributeFilter;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.RowColumnFilter;
 import org.chombo.util.SecondarySort;
@@ -115,12 +116,15 @@ public class Projection extends Configured implements Tool {
         private RowColumnFilter rowColFilter = new RowColumnFilter();
         private boolean idIncluded;
 
+        @Override
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	keyField = config.getInt("pro.key.field", 0);
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim", ",");
-        	String fileterFieldDelimRegex = config.get("pro.filter.field.delim.regex", ",");
+        	
+        	//filter expression delimetrs
+           	setFilterExprDelimeter(config);
         	
         	//projection
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
@@ -130,18 +134,10 @@ public class Projection extends Configured implements Tool {
         	}
         	idIncluded = config.getBoolean("pro.id.incuded.in.projection", true);
         	
-        	
         	//selection
         	String selectFilter = config.get("pro.select.filter");
         	if (null != selectFilter) {
-        		String notInSetName = config.get("pro.operator.notin.set.name");
-        		if (null == notInSetName) {
-        			attrFilter = new AttributeFilter(selectFilter);
-        		} else {
-               		//bulk data for in or notin operator
-        			attrFilter =  new AttributeFilter();
-            		createExcludedRowsContext( config,  rowColFilter,attrFilter, selectFilter);
-            	}
+           		attrFilter = buildSelectFilter(config, selectFilter,  rowColFilter);
         	} 
        }
         
@@ -175,7 +171,7 @@ public class Projection extends Configured implements Tool {
         private int orderByField;
         private boolean groupBy;
         private boolean isOrderByFieldNumeric;
-        private AttributeFilter attrFilter;
+        private BaseAttributeFilter attrFilter;
         private RowColumnFilter rowColFilter = new RowColumnFilter();
         
         /* (non-Javadoc)
@@ -189,6 +185,10 @@ public class Projection extends Configured implements Tool {
         	keyField = config.getInt("pro.key.field", 0);
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim.out", ",");
+        	
+        	//filter expression delimetrs
+        	setFilterExprDelimeter(config);
+        	
         	projectionFields = Utility.intArrayFromString(config.get("pro.projection.field"),fieldDelimRegex );
         	if (null == projectionFields) {
         		//projected field from the output of another MR
@@ -202,15 +202,8 @@ public class Projection extends Configured implements Tool {
         	//selection
         	String selectFilter = config.get("pro.select.filter");
         	if (null != selectFilter) {
-        		String notInSetName = config.get("pro.operator.notin.set.name");
-        		if (null == notInSetName) {
-        			attrFilter = new AttributeFilter(selectFilter);
-        		} else {
-               		//bulk data for in or notin operator
-        			attrFilter =  new AttributeFilter();
-            		createExcludedRowsContext( config,  rowColFilter,attrFilter, selectFilter);
-            	}
-        	}
+        		attrFilter = buildSelectFilter(config, selectFilter,  rowColFilter);
+         	}
        }
 
         /* (non-Javadoc)
@@ -233,7 +226,7 @@ public class Projection extends Configured implements Tool {
 	            	//group by
 	            	outKey.add(items[keyField]);
 	            }
-	        	outVal.set( Utility.extractFields(items , projectionFields, fieldDelimOut, false));
+	        	outVal.set(BasicUtils.extractFields(items , projectionFields, fieldDelimOut, false));
 	        	context.write(outKey, outVal);
             }
         }
@@ -502,6 +495,50 @@ public class Projection extends Configured implements Tool {
 			}
     	}
     }
+    
+    /**
+     * @param config
+     */
+    private static void setFilterExprDelimeter(Configuration config) {
+    	String filterConjunctDelim = config.get("pro.filter.conjunct.delim");
+    	if (null != filterConjunctDelim) {
+    		AttributeFilter.setConjunctSeparator(filterConjunctDelim);
+    	}
+    	String filterDisjunctDelim = config.get("pro.filter.disjunct.delim");
+    	if (null != filterDisjunctDelim) {
+    		AttributeFilter.setDisjunctSeparator(filterDisjunctDelim);
+    	}
+    }
+    
+    /**
+     * @param config
+     * @param selectFilter
+     * @param rowColFilter
+     * @return
+     * @throws IOException
+     */
+    private static AttributeFilter buildSelectFilter(Configuration config, String selectFilter, RowColumnFilter rowColFilter) 
+    	throws IOException {
+    	AttributeFilter attrFilter = null;
+		String notInSetName = config.get("pro.operator.notin.set.name");
+		String inSetName = config.get("pro.operator.in.set.name");
+		if (null == notInSetName && null == inSetName) {
+			//dnf expression
+			Map<String, Object> udfContext = getUdfConfiguration (config);
+			attrFilter = udfContext == null ? new AttributeFilter(selectFilter) : 
+				new AttributeFilter(selectFilter, udfContext);
+		} else {
+			if (null != notInSetName) {
+           		//bulk data from external source for notin operator
+    			attrFilter =  new AttributeFilter();
+        		createExcludedRowsContext(config,  rowColFilter, attrFilter, selectFilter);
+			} else {
+           		//bulk data from external source for in operator
+				
+			}
+    	}
+    	return attrFilter;
+    }
  
     /**
      * @param config
@@ -509,7 +546,7 @@ public class Projection extends Configured implements Tool {
      * @return
      * @throws IOException
      */
-    public static int[] findIncludedColumns(Configuration config, RowColumnFilter rowColFilter) throws IOException {
+    private static int[] findIncludedColumns(Configuration config, RowColumnFilter rowColFilter) throws IOException {
 		//projected field from the output of another MR
     	String fileterFieldDelimRegex = config.get("pro.filter.field.delim.regex", ",");
 		InputStream colStream = Utility.getFileStream(config, "pro.exclude.columns.file");
@@ -527,8 +564,8 @@ public class Projection extends Configured implements Tool {
      * @param attrFilter
      * @throws IOException
      */
-    public static void createExcludedRowsContext(Configuration config, RowColumnFilter rowColFilter, 
-    		AttributeFilter attrFilter, String selectFilter) throws IOException {
+    private static void createExcludedRowsContext(Configuration config, RowColumnFilter rowColFilter, 
+    		BaseAttributeFilter attrFilter, String selectFilter) throws IOException {
     	String fileterFieldDelimRegex = config.get("pro.filter.field.delim.regex", ",");
 		String notInSetName = config.get("pro.operator.notin.set.name");
 		
@@ -543,6 +580,25 @@ public class Projection extends Configured implements Tool {
 		setOpContext.put(notInSetName, BasicUtils.generateSetFromArray(exclRowKeys));
 		attrFilter.withContext(setOpContext).build(selectFilter);;
     }    
+    
+    /**
+     * @param config
+     * @return
+     * @throws IOException
+     */
+    private static Map<String, Object> getUdfConfiguration (Configuration config) throws IOException {
+		Map<String, Object> udfContext = null;
+    	String[] keys = config.getStrings("pro.udf.config.params");
+    	if (null != keys) {
+    		udfContext = new HashMap<String, Object>();
+	    	for (String key : keys) {
+	    		String value = config.get(key);
+	    		//System.out.println("udf  key:" + key + " value:" + value);
+	    		udfContext.put(key, value);
+	    	}
+    	}
+    	return udfContext;
+    }
     
 	/**
 	 * @param args

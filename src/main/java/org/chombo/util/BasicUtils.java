@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -240,6 +241,31 @@ public class BasicUtils {
     public static double[] doubleArrayFromString(String record) {
     	return doubleArrayFromString(record, DEF_FIELD_DELIM);
     }
+
+	/**
+	 * @param record
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static Map<String, Object> stringObjectMapFromString(String record, String delimRegex, 
+			String subFieldDelim) {
+		Map<String, Object> data = new HashMap<String, Object>();
+		String[] items = record.split(delimRegex);
+		for (String item :  items) {
+			String[] parts  = item.split(subFieldDelim);
+			String key = parts[0];
+			Object val = asInt(parts[1]);
+			if (null == val) {
+				val = asDouble(parts[1]);
+			}
+			if (null == val) {
+				val = parts[1];
+			}
+			data.put(key, val);
+		}
+    	return data;
+	}
 
     /**
      * @param items
@@ -453,6 +479,34 @@ public class BasicUtils {
     	StringBuilder stBld = new StringBuilder();
     	for (T obj : arr) {
     		stBld.append(obj).append(delim);
+    	}
+    	
+    	return stBld.substring(0, stBld.length() -1);
+    }
+
+    /**
+     * @param arr
+     * @param delim
+     * @return
+     */
+    public static  String join(double[] arr, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (double val : arr) {
+    		stBld.append(val).append(delim);
+    	}
+    	
+    	return stBld.substring(0, stBld.length() -1);
+    }
+    
+    /**
+     * @param arr
+     * @param delim
+     * @return
+     */
+    public static  String join(int[] arr, String delim) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (int val : arr) {
+    		stBld.append(val).append(delim);
     	}
     	
     	return stBld.substring(0, stBld.length() -1);
@@ -923,7 +977,16 @@ public class BasicUtils {
 			list.add(value);
 		}
     }
-    
+
+    /**
+     * @param val
+     * @param prec
+     * @return
+     */
+    public static String formatDouble(double val) {
+    	return formatDouble(val, 3);
+    }
+   
     /**
      * @param val
      * @param prec
@@ -1094,6 +1157,19 @@ public class BasicUtils {
      * @param val
      * @return
      */
+    public static Integer asInt(String val) {
+    	Integer iVal = null;
+		try {
+			iVal = Integer.parseInt(val);
+		} catch (Exception ex) {
+		}
+    	return iVal;
+    }
+
+    /**
+     * @param val
+     * @return
+     */
     public static boolean isLong(String val) {
     	boolean valid = true;
 		try {
@@ -1102,6 +1178,19 @@ public class BasicUtils {
 			valid = false;
 		}
     	return valid;
+    }
+
+    /**
+     * @param val
+     * @return
+     */
+    public static Long asLong(String val) {
+    	Long lVal = null;
+		try {
+			lVal = Long.parseLong(val);
+		} catch (Exception ex) {
+		}
+    	return lVal;
     }
 
     /**
@@ -1118,6 +1207,19 @@ public class BasicUtils {
     	return valid;
     }
     
+    /**
+     * @param val
+     * @return
+     */
+    public static Double asDouble(String val) {
+    	Double dVal = null;
+		try {
+			dVal = Double.parseDouble(val);
+		} catch (Exception ex) {
+		}
+    	return dVal;
+    }
+
     /**
      * @param val
      * @return
@@ -1545,16 +1647,39 @@ public class BasicUtils {
 	 * @return
 	 */
 	public static int sampleUniform(int max) {
-		return (int)(Math.random() * max);
+		return sampleUniform(0,  max);
 	}
     
 	/**
-	 * @param min
 	 * @param max
+	 * @param excludes
+	 * @return
+	 */
+	public static int sampleUniform(int max,Set<Integer> excludes) {
+		return sampleUniform(0, max, excludes);
+	}
+
+	/**
+	 * @param min inclusive
+	 * @param max inclusive
 	 * @return
 	 */
 	public static int sampleUniform(int min, int max) {
-		double val = min + Math.random() * (max - min);
+		long val = min + Math.round(Math.random() * (max - min));
+		return (int)val;
+	}
+	
+	/**
+	 * @param min
+	 * @param max
+	 * @param excludes
+	 * @return
+	 */
+	public static int sampleUniform(int min, int max, Set<Integer> excludes) {
+		long val = min + Math.round(Math.random() * (max - min));
+		while (excludes.contains(val)) {
+			val = min + Math.round(Math.random() * (max - min));
+		}
 		return (int)val;
 	}
 	
@@ -1566,5 +1691,46 @@ public class BasicUtils {
 	public static double sampleUniform(double min, double max) {
 		double val = min + Math.random() * (max - min);
 		return val;
+	}
+	
+	/**
+	 * @param src
+	 * @param srcBeg
+	 * @param srcEnd
+	 * @param dest
+	 * @param destbeg
+	 */
+	public static <T> void arrayCopy(T[] src, int srcBeg, int srcEnd, T[] dest, int destbeg) {
+		//end index is exclusive
+		int copySize = srcEnd - srcBeg;
+		if (copySize > 0 && dest.length >= copySize)  {
+			for (int i = 0; i < copySize; ++i) {
+				dest[destbeg + i] = src[srcBeg + i];
+			}
+		} else {
+			throw new IllegalStateException("destination array too small or invalid array index");
+		}
+	}
+	
+	/**
+	 * @param items
+	 * @return
+	 */
+	public static int missingFieldCount(String[] items, int beg) {
+    	int count = 0;
+    	for (int i = beg ; i < items.length; ++i) {
+    		if (items[i].isEmpty()) {
+    			++count;
+    		}
+    	} 
+		return count;
+	}
+	
+	/**
+	 * @param items
+	 * @return
+	 */
+	public static int missingFieldCount(String[] items) {
+		return missingFieldCount(items, 0);
 	}
  }

@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -25,11 +26,12 @@ import java.util.Map;
  * @author pranab
  *
  */
-public class AttributeFilter {
-	private List<AttributePredicate> predicates = new ArrayList<AttributePredicate>();
-	private Map<String, Object> context;
-	public static final String COND_SEP = ",";
-	private static String condSeparator;
+public class AttributeFilter extends BaseAttributeFilter {
+	private List<List<BasePredicate>> disjunctPredicates = new ArrayList<List<BasePredicate>>();
+	public static final String CONJUNCT_SEP = " and ";
+	public static final String DISJUNCT_SEP = " or ";
+	private static String conjunctSeparator;
+	private static String disjunctSeparator;
 	
 	public AttributeFilter(){
 	}
@@ -44,44 +46,101 @@ public class AttributeFilter {
 	/**
 	 * @param filter
 	 */
+	public AttributeFilter(String filter, Map<String, Object> context) {
+		this.context = context;
+		build(filter);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.chombo.util.BaseAttributeFilter#build(java.lang.String)
+	 */
 	public void build(String filter) {
-		AttributePredicate  predicate = null;
-		String[] preds = filter.split(getCondSeparator());
-		for (String pred : preds) {
-			String[] predParts = pred.trim().split(AttributePredicate.PREDICATE_SEP);
-			int attr = Integer.parseInt(predParts[0]);
-			String[] valueParts  = predParts[2].split(AttributePredicate.DATA_TYPE_SEP);
-			
-			if (valueParts[0].equals(BaseAttribute.DATA_TYPE_INT)) {
-				predicate = new IntAttributePredicate(attr, predParts[1], valueParts[1]);
-			} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
-				predicate = new DoubleAttributePredicate(attr, predParts[1], valueParts[1]);
-			} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_STRING)) {
-				if (null != context) {
-					predicate = new StringAttributePredicate();
-					predicate.withContext(context).build(attr, predParts[1], valueParts[1]);
-				} else {
-					predicate = new StringAttributePredicate(attr, predParts[1], valueParts[1]);
-				}
-			} else {
-				throw new IllegalArgumentException("invalid data type");
-			}
-			predicates.add(predicate);
+		String[] conjuctPreds = filter.split(getDisjunctSeparator());
+		
+		//all conjunctive predicates
+		for (String conjuctPred : conjuctPreds) {
+			disjunctPredicates.add(buildConjuctPredicate(conjuctPred.trim()));
 		}
 	}
 	
-	public AttributeFilter withContext(Map<String, Object> context) {
-		this.context = context;
-		return this;
+	/**
+	 * @param filter
+	 */
+	private List<BasePredicate> buildConjuctPredicate(String filter) {
+		List<BasePredicate> predicates = new ArrayList<BasePredicate>();
+		AttributePredicate  predicate = null;
+		String[] preds = filter.split(getConjunctSeparator());
+		for (String pred : preds) {
+			String[] predParts = pred.trim().split(AttributePredicate.PREDICATE_SEP);
+			int compSize = predParts.length;
+			if (compSize == 3) {
+				//relational predicate
+				int attr = Integer.parseInt(predParts[0]);
+				String[] valueParts  = predParts[2].split(AttributePredicate.DATA_TYPE_SEP);
+				
+				if (valueParts[0].equals(BaseAttribute.DATA_TYPE_INT)) {
+					predicate = new IntAttributePredicate(attr, predParts[1], valueParts[1]);
+				} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+					predicate = new DoubleAttributePredicate(attr, predParts[1], valueParts[1]);
+				} else if (valueParts[0].equals(BaseAttribute.DATA_TYPE_STRING)) {
+					if (null != context) {
+						predicate = new StringAttributePredicate();
+						predicate.withContext(context);
+						predicate.build(attr, predParts[1], valueParts[1]);
+					} else {
+						predicate = new StringAttributePredicate(attr, predParts[1], valueParts[1]);
+					}
+				} else {
+					throw new IllegalArgumentException("invalid data type");
+				}
+				predicates.add(predicate);
+			} else if (compSize == 1) {
+				//udf
+				String udf = predParts[0].substring(0, predParts[0].length()-2);
+				String key = "pro.filter.udf.class." + udf;
+				String udfClassName = (String)context.get(key);
+				//System.out.println("udf:" +udf + "  class:" +udfClassName );
+				BasePredicate udfPredicate = null;
+				try {
+					Class<?> cls = Class.forName(udfClassName);
+					udfPredicate = (BasePredicate)cls.newInstance();
+					udfPredicate.withContext(context);
+				} catch (Exception ex) {
+					throw new IllegalStateException("failed create filter udf object "+ ex.getMessage());
+				}
+				predicates.add(udfPredicate);
+			} else {
+				throw new IllegalStateException("invalid predicate");
+			}
+		}
+		
+		return predicates;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.chombo.util.BaseAttributeFilter#evaluate(java.lang.String[])
+	 */
+	public boolean evaluate(String[] record) {
+		boolean status = false;
+		for (List<BasePredicate> predicates : disjunctPredicates) {
+			status = status || evaluateConjuctPredicates(record, predicates);
+			if (status) {
+				//conjunctive predicates or connected
+				break;
+			}
+		}
+		
+		return status;
 	}
 	
 	/**
+	 * evaluate conjunctive predicates
 	 * @param record
 	 * @return
 	 */
-	public boolean evaluate(String[] record) {
+	private boolean evaluateConjuctPredicates(String[] record, List<BasePredicate> predicates) {
 		boolean status = true;
-		for (AttributePredicate  predicate : predicates) {
+		for (BasePredicate  predicate : predicates) {
 			status = status & predicate.evaluate(record);
 			if (!status) {
 				//predicates and connected
@@ -92,12 +151,42 @@ public class AttributeFilter {
 		return status;
 	}
 	
-	public static String getCondSeparator() {
-		return condSeparator != null ? condSeparator : COND_SEP;
+	/**
+	 * @return
+	 */
+	public static String getConjunctSeparator() {
+		return conjunctSeparator != null ? conjunctSeparator : CONJUNCT_SEP;
 	}
 
-	public static void setCondSeparator(String condSeparator) {
-		AttributeFilter.condSeparator = condSeparator;
+	/**
+	 * @param conjunctSeparator
+	 */
+	public static void setConjunctSeparator(String conjunctSeparator) {
+		AttributeFilter.conjunctSeparator = conjunctSeparator;
+	}
+	
+	/**
+	 * @return
+	 */
+	public static String getDisjunctSeparator() {
+		return disjunctSeparator != null ? disjunctSeparator : DISJUNCT_SEP;
+	}
+
+	/**
+	 * @param disjunctSeparator
+	 */
+	public static void setDisjunctSeparator(String disjunctSeparator) {
+		AttributeFilter.disjunctSeparator = disjunctSeparator;
+	}
+
+	/**
+	 * @param filter
+	 * @return
+	 */
+	public static boolean isConjuctivePredicate(String filter) {
+		String[] preds = filter.split(getConjunctSeparator());
+		String[] predParts = preds[0].trim().split(AttributePredicate.PREDICATE_SEP);
+		return predParts.length == 3;
 	}
 	
 }

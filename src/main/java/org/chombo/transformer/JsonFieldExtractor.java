@@ -15,123 +15,77 @@
  * permissions and limitations under the License.
  */
 
-
 package org.chombo.transformer;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.chombo.util.BasicUtils;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
+import org.chombo.util.Pair;
 
 /**
  * @author pranab
  *
  */
-public class JsonFieldExtractor implements Serializable {
-	private  ObjectMapper mapper;
-	private Map<String, Object> map;
+public class JsonFieldExtractor  extends JsonConverter  {
 	private AttributeList extField = null;
-	private boolean failOnInvalid;
-	private boolean normalize;
 	private AttributeList[] records;
 	private Map<Integer, String> fieldTypes = new HashMap<Integer, String>();
 	private Map<String, Integer> childObjectPaths = new HashMap<String, Integer>();
 	private int numChildObjects;
 	private List<String[]> extractedRecords = new ArrayList<String[]>();
 	private int numAttributes;
-	private String listChild = "@a";
-	private int  listChildLen = 2;
 	private Map<String, List<Integer>> entityColumnIndexes = new HashMap<String, List<Integer>>();
 	private String[] extractedParentRecord;
 	private Map<String, List<String[]>> extractedChildRecords = new HashMap<String, List<String[]>>();
 	private int numParentFields;
-	private boolean debugOn;
 	private static final String ROOT_ENTITY = "root";
 	private String idFieldPath;
 	private int idFieldIndex;
-	private boolean autoIdGeneration;
 
 	/**
 	 * @param failOnInvalid
 	 */
 	public JsonFieldExtractor(boolean failOnInvalid, boolean normalize) {
-		//mapper = new ObjectMapper();
-		this.failOnInvalid = failOnInvalid;
-		this.normalize = normalize;
+		super(failOnInvalid,  normalize);
 	}
 	
 	/**
 	 * @param idFieldPath
 	 * @return
 	 */
-	public JsonFieldExtractor withIdFieldPath(String idFieldPath) {
-		this.idFieldPath = idFieldPath;
+	@Override
+	public JsonConverter withIdFieldPaths(List<String> idFieldPaths) {
+		this.idFieldPath = idFieldPaths.get(0);
 		if (debugOn) {
 			System.out.println("parent id field defined");
 		}
 		return this;
 	}
 	
-	/**
-	 * @param autoIdGeneration
-	 * @return
-	 */
-	public JsonFieldExtractor withAutoIdGeneration() {
-		this.autoIdGeneration = true;
-		if (debugOn) {
-			System.out.println("parent id auto generated");
-		}
-		return this;
-	}
-	
-	public void setDebugOn(boolean debugOn) {
-		this.debugOn = debugOn;
-	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.chombo.transformer.JsonConverter#getExtractedRecords()
 	 */
+	@Override
 	public List<String[]> getExtractedRecords() {
 		return extractedRecords;
 	}
 
+	/**
+	 * @return
+	 */
 	public String[] getExtractedParentRecord() {
 		return extractedParentRecord;
 	}
 
+	/**
+	 * @return
+	 */
 	public Map<String, List<String[]>> getExtractedChildRecords() {
 		return extractedChildRecords;
-	}
-	
-	/**
-	 * @param record
-	 */
-	public void parse(String record) {
-		try {
-			if (null == mapper) {
-				mapper = new ObjectMapper();
-			}
-			InputStream is = new ByteArrayInputStream(record.getBytes());
-			map = mapper.readValue(is, new TypeReference<Map<String, Object>>() {});
-		} catch (JsonParseException ex) {
-			handleParseError(ex);
-		} catch (JsonMappingException ex) {
-			handleParseError(ex);
-		} catch (IOException ex) {
-			handleParseError(ex);
-		}		
 	}
 	
 	/**
@@ -149,6 +103,7 @@ public class JsonFieldExtractor implements Serializable {
 	 * @return
 	 */
 	public AttributeList extractField(String path) {
+		//may have multiple column values for this path because of 1 to many parent child relationship
 		extField = new AttributeList();
 		if (null != map) {
 			String[] pathElements = path.split("\\.");
@@ -164,33 +119,10 @@ public class JsonFieldExtractor implements Serializable {
 	 */
 	public void extractField(Map<String, Object> map, String[] pathElements, int index) {
 		//extract index in case current path element point to list
-		String key = null;
-		int keyIndex = 0;
 		String pathElem = pathElements[index];
-		int pos = pathElem.indexOf(listChild);
-		if (pos == -1) {
-			//scalar
-			key = pathElem;
-			if (debugOn)
-				System.out.println("non array key: " + key);
-		} else {
-			//array
-			key = pathElem.substring(0, pos);
-			if (debugOn)
-				System.out.println("array key: " + key);
-			
-			//whole list if no index provided
-			String indexPart = pathElem.substring(pos + listChildLen);
-			if (debugOn)
-				System.out.println("indexPart: " + indexPart);
-			if (!indexPart.isEmpty()) {
-				keyIndex = Integer.parseInt(indexPart.substring(1));
-			} else {
-				keyIndex = -1;
-			}
-			if (debugOn)
-				System.out.println("keyIndex: " + keyIndex);
-		}
+		Pair<String, Integer> keyObj = extractKeyAndIndex(pathElem);
+		String key = keyObj.getLeft();
+		int keyIndex = keyObj.getRight();		
 		
 		Object obj = map.get(key);
 		if (null == obj) {
@@ -262,6 +194,7 @@ public class JsonFieldExtractor implements Serializable {
 	 * @param items
 	 * @return
 	 */
+	@Override
 	public boolean extractAllFields(String record, List<String> paths) {
 		boolean valid = true;
 		records = new AttributeList[paths.size()];
@@ -270,6 +203,8 @@ public class JsonFieldExtractor implements Serializable {
 		numAttributes = paths.size();
 		if (null != map) {
 			int i = 0;
+			
+			//each path corresponds to a column in flattened data
 			for (String path : paths) {
 				if (debugOn)
 					System.out.println("next path: " + path);
@@ -285,6 +220,7 @@ public class JsonFieldExtractor implements Serializable {
 				}
 			}
 			
+			//post process
 			if (!normalize) {
 				deNormalize(paths);
 			} else {
@@ -305,6 +241,7 @@ public class JsonFieldExtractor implements Serializable {
 		
 		//all paths
 		for (String path : paths) {
+			//one to many child
 			if (isChildObject(path)) {
 				String childPath = getChildPath(path);
 				fieldTypes.put(index, childPath);
