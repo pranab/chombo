@@ -160,5 +160,16 @@ public abstract class JsonConverter implements Serializable {
 	 * @return
 	 */
 	public abstract  List<String[]> getExtractedRecords();
+	
+	/**
+	 * @return
+	 */
+	public abstract String[] getExtractedParentRecord();
+	
+	/**
+	 * @return
+	 */
+	public abstract Map<String, List<String[]>> getExtractedChildRecords();
+	
 
 }

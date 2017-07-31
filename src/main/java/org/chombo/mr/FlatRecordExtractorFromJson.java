@@ -39,6 +39,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Level;
+import org.chombo.transformer.JsonComplexFieldExtractor;
 import org.chombo.transformer.JsonFieldExtractor;
 import org.chombo.transformer.MultiLineFlattener;
 import org.chombo.transformer.MultiLineJsonFlattener;
@@ -95,7 +96,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         private String fieldDelimOut;
         private RawAttributeSchema rawSchema;
         private String jsonString;
-        private JsonFieldExtractor fieldExtractor;
+        private JsonComplexFieldExtractor fieldExtractor;
         private MultiLineJsonFlattener flattener;
         private boolean normalize;
         private  String baseKey = BasicUtils.generateId();
@@ -116,7 +117,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	
         	boolean failOnInvalid = config.getBoolean("frej.fail.on.invalid", true);
         	normalize = config.getBoolean("frej.normalize.output", true);
-        	fieldExtractor = new JsonFieldExtractor(failOnInvalid, normalize);
+        	fieldExtractor = new JsonComplexFieldExtractor(failOnInvalid, normalize);
         	
         	//ID field
         	//String idFieldPath = config.get("frej.id.attr.path");

@@ -421,4 +421,16 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		}
 	}
 
+	@Override
+	public String[] getExtractedParentRecord() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<String, List<String[]>> getExtractedChildRecords() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
