@@ -469,6 +469,7 @@ public class DateTransformer  {
 		private String[] fields;
 		private int timeUnitColOrd;
 		private int refDateColOrd;
+		private boolean epochTime;
 		
 		/**
 		 * @param prAttr
@@ -503,15 +504,19 @@ public class DateTransformer  {
 		private void intialize(String dateFormatStr, String timeZone, int timeUnitColOrd, String timeUnit, 
 			boolean failOnInvalid, int refDateColOrd, String refDateStr) {
 			try {
-				dateFormat = new SimpleDateFormat(dateFormatStr);
-				if (!Utility.isBlank(timeZone)) {
-					dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+				//date format
+				if (dateFormatStr.equals("epochTime")) {
+					epochTime = true;
+				} else {
+					dateFormat = new SimpleDateFormat(dateFormatStr);
+					if (!Utility.isBlank(timeZone)) {
+						dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+					}
 				}
 				
-				//set reference time
+				//set configured reference time
 				if (null != refDateStr) {
-					Date refDate = dateFormat.parse(refDateStr);
-					refTime = refDate.getTime();
+					refTime = BasicUtils.getEpochTime(refDateStr,  dateFormat);
 				} 
 				this.timeUnit = timeUnit;
 				this.timeUnitColOrd = timeUnitColOrd;
@@ -527,9 +532,10 @@ public class DateTransformer  {
 				//reference date
 				long thisRefTime = 0;
 				if (refDateColOrd >= 0) {
-					Date refDate = dateFormat.parse(fields[refDateColOrd]);
-					thisRefTime = refDate.getTime();
+					//from a field in data
+					thisRefTime = BasicUtils.getEpochTime(fields[refDateColOrd],  dateFormat);
 				} else if (refTime > 0) {
+					//from configuration
 					thisRefTime = refTime;
 				} else {
 					throw new IllegalStateException("either reference date column index or global ref date must be provided");
@@ -547,7 +553,7 @@ public class DateTransformer  {
 				
 				//roll forward
 				Calendar date = Calendar.getInstance();
-				date.setTime(dateFormat.parse(value));
+				date.setTimeInMillis(BasicUtils.getEpochTime(value, dateFormat));
 				for (long time = date.getTimeInMillis(); time < thisRefTime; time = date.getTimeInMillis()) {
 					if (thisTimeUnit.equals(BasicUtils.TIME_UNIT_MONTH)) {
 						date.add(Calendar.MONTH, 1);
@@ -559,7 +565,8 @@ public class DateTransformer  {
 						throw new IllegalStateException("invalid time cycle unit for time shift");
 					}
 				}
-				transformed[0] = dateFormat.format(date.getTime());
+				transformed[0] = null != dateFormat ? dateFormat.format(date.getTime()) : 
+					"" + date.getTimeInMillis();
 			} catch (ParseException ex) {
 				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
 			}

@@ -1054,7 +1054,9 @@ public class BasicUtils {
      * @throws ParseException
      */
     public static long getEpochTime(String dateTimeStamp, SimpleDateFormat dateFormat) throws ParseException {
-    	return getEpochTime(dateTimeStamp, false, dateFormat,0);
+    	long epochTime = (null != dateFormat) ? getEpochTime(dateTimeStamp, false, dateFormat,0) :
+    		getEpochTime(dateTimeStamp, true, dateFormat,0);
+    	return epochTime;
     }
 
     /**
@@ -1083,12 +1085,14 @@ public class BasicUtils {
     		epochTime = Long.parseLong(dateTimeStamp);
     	} else {
     		epochTime = dateFormat.parse(dateTimeStamp).getTime();
-        	epochTime += timeZoneShiftHour * MILISEC_PER_HOUR;
+    		if (0 != timeZoneShiftHour) {
+    			epochTime += timeZoneShiftHour * MILISEC_PER_HOUR;
+    		}
     	}
     	
     	return epochTime;
     }
-    
+
     /**
      * @param epochTime
      * @param timeUnit
