@@ -47,7 +47,7 @@ public class HistogramStat implements Serializable {
 	protected boolean extendedOutput;
 	protected int outputPrecision = 3;
 	private boolean debugOn = false;
-	private String fieldDelim = ",";
+	public static String fieldDelim = ",";
 	
 	/**
 	 * @param binWidth
@@ -86,21 +86,40 @@ public class HistogramStat implements Serializable {
 	}
 
 	/**
+	 * @param items
+	 * @param offset
+	 * @param normalized
+	 */
+	public void initialize(String[] items, int offset, boolean normalized)  {
+		int histSize = Integer.parseInt(items[offset]);
+		for (int i = ++offset; i < 2 * histSize; ) {
+			double base = Double.parseDouble(items[i++]);
+			double value = Double.parseDouble(items[i++]);
+			histogram.put(base, value);
+		}
+		this.normalized = normalized;
+	}	
+	
+	/**
 	 * @throws IOException 
 	 * 
 	 */
-	public void initialize(InputStream inStr, int keyLen) throws IOException {
-		initialize();
+	public static Map<String[], HistogramStat> createHiostograms(InputStream inStr, int keyLen, boolean normalized) 
+			throws IOException {
+		Map<String[], HistogramStat> histStats = new HashMap<String[], HistogramStat>();
+
+		//one histogram per line of data
 		List<String> lines = BasicUtils.getFileLines(inStr);
 		for (String line : lines) {
+			HistogramStat stat = new HistogramStat();
 			String[] items = line.split(fieldDelim);
 			String[] key = Arrays.copyOfRange(items, 0, keyLen);
 			
-			int histSize = Integer.parseInt(items[keyLen]);
-			for (int i = 0; i < histSize; ++i) {
-				
-			}
+			stat.initialize(items, keyLen, normalized);
+			histStats.put(key, stat);
 		}
+		
+		return histStats;
 	}
 	
 	/**
@@ -140,7 +159,7 @@ public class HistogramStat implements Serializable {
 	 * @return
 	 */
 	public HistogramStat withFieldDelim(String fieldDelim) {
-		this.fieldDelim = fieldDelim;
+		HistogramStat.fieldDelim = fieldDelim;
 		return this;
 	}
 
@@ -491,7 +510,7 @@ public class HistogramStat implements Serializable {
 		StringBuilder stBld = new StringBuilder();
 		final String delim = ",";
 		if (!normalized) {
-			this.getDistribution();
+			getDistribution();
 		}
 		
 		//formatting
