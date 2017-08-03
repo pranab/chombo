@@ -118,6 +118,12 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	boolean failOnInvalid = config.getBoolean("frej.fail.on.invalid", true);
         	normalize = config.getBoolean("frej.normalize.output", true);
         	fieldExtractor = new JsonComplexFieldExtractor(failOnInvalid, normalize);
+        	if (!failOnInvalid) {
+        		String defaultValue = config.get("frej.default.value");
+        		if (null != defaultValue) {
+        			fieldExtractor.withDefaultValue(defaultValue);
+        		}
+        	}
         	
         	//ID field
         	//String idFieldPath = config.get("frej.id.attr.path");
