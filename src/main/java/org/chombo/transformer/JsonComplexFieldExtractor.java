@@ -59,18 +59,24 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		if (null != map) {
 			for (String path : paths) {
 				extractfield(path);
+				if (skipped) {
+					break;
+				}
+					
 			}
 		}
 		
-		//collect data
-		if (normalize) {
-			//TODO
-			
-		} else {
-			collectData(flattenerRoot, null);
+		if (!skipped) {
+			//collect data
+			if (normalize) {
+				//TODO
+				
+			} else {
+				collectData(flattenerRoot, null);
+			}
 		}
 		
-		return true;
+		return skipped;
 	}
 	
 	/**
@@ -79,6 +85,8 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 	private void initialize() {
 		//clear all data
 		clearData(flattenerRoot);
+		
+		skipped = false;
 	}
 	
 	/**
@@ -102,16 +110,26 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		int keyIndex = keyObj.getRight();
 		String fullKey = BasicUtils.join(pathElements, 0, index+1, ".");
 		
-		
 		Object obj = map.get(key);
+		
+		//handle missing field
 		if (null == obj) {
 			//invalid key
 			if (failOnInvalid) {
 				throw new IllegalArgumentException("field not reachable with json path key:" + key);
 			} else {
-				//TODO
+				//if last element in path apply default if provided else skip this json record
+				if (index == pathElements.length - 1 && null != defaultValue) {
+					obj = defaultValue;
+				} else {
+					//move to next record
+					skipped = true;
+					return;
+				}
 			}
-		} else {
+		} 
+		
+		if (null != obj) {
 			//traverse further
 			if (obj instanceof Map<?,?>) {
 				if (debugOn)

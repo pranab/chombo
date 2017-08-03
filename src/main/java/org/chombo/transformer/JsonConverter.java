@@ -45,6 +45,8 @@ public abstract class JsonConverter implements Serializable {
 	protected boolean debugOn;
 	protected boolean autoIdGeneration;
 	protected List<String> idFieldPaths;
+	protected String defaultValue;
+	protected boolean skipped;
 
 
 	/**
@@ -82,6 +84,16 @@ public abstract class JsonConverter implements Serializable {
 		this.idFieldPaths = idFieldPaths;
 		return this;
 	}
+	
+	/**
+	 * @param defaultValue
+	 * @return
+	 */
+	public JsonConverter withDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
+		return this;
+	}
+
 	/**
 	 * @param record
 	 */
