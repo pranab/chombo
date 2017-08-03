@@ -60,9 +60,9 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 			for (String path : paths) {
 				extractfield(path);
 				if (skipped) {
+					++skippedRecordsCount;
 					break;
 				}
-					
 			}
 		}
 		
@@ -76,6 +76,7 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 			}
 		}
 		
+		++totalRecordsCount;
 		return skipped;
 	}
 	
