@@ -47,6 +47,8 @@ public abstract class JsonConverter implements Serializable {
 	protected List<String> idFieldPaths;
 	protected String defaultValue;
 	protected boolean skipped;
+	protected int skippedRecordsCount;
+	protected int totalRecordsCount;
 
 
 	/**
@@ -92,6 +94,20 @@ public abstract class JsonConverter implements Serializable {
 	public JsonConverter withDefaultValue(String defaultValue) {
 		this.defaultValue = defaultValue;
 		return this;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getSkippedRecordsCount() {
+		return skippedRecordsCount;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getTotalRecordsCount() {
+		return totalRecordsCount;
 	}
 
 	/**

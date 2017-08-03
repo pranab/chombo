@@ -102,6 +102,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         private  String baseKey = BasicUtils.generateId();
         private int keyIndex = 1000000;
         private String thisKey;
+        private boolean failOnInvalid;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -115,7 +116,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	ObjectMapper mapper = new ObjectMapper();
         	rawSchema = mapper.readValue(is, RawAttributeSchema.class);
         	
-        	boolean failOnInvalid = config.getBoolean("frej.fail.on.invalid", true);
+        	failOnInvalid = config.getBoolean("frej.fail.on.invalid", true);
         	normalize = config.getBoolean("frej.normalize.output", true);
         	fieldExtractor = new JsonComplexFieldExtractor(failOnInvalid, normalize);
         	if (!failOnInvalid) {
@@ -144,6 +145,15 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
 
         }
         
+		@Override
+		protected void cleanup(Context context) throws IOException, InterruptedException {
+			super.cleanup(context);
+			if (!failOnInvalid) {
+				System.out.println("**num of records:" + fieldExtractor.getTotalRecordsCount());
+				System.out.println("**num of skipped records:" + fieldExtractor.getSkippedRecordsCount());
+			}
+		}
+
 		/* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#map(KEYIN, VALUEIN, org.apache.hadoop.mapreduce.Mapper.Context)
          */
