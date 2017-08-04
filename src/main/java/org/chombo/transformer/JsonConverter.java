@@ -49,6 +49,7 @@ public abstract class JsonConverter implements Serializable {
 	protected boolean skipped;
 	protected int skippedRecordsCount;
 	protected int totalRecordsCount;
+	protected int defaultValueCount;
 
 
 	/**
@@ -101,6 +102,13 @@ public abstract class JsonConverter implements Serializable {
 	 */
 	public int getSkippedRecordsCount() {
 		return skippedRecordsCount;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getDefaultValueCount() {
+		return defaultValueCount;
 	}
 
 	/**
