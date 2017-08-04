@@ -103,6 +103,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         private int keyIndex = 1000000;
         private String thisKey;
         private boolean failOnInvalid;
+        private String defaultValue;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -120,7 +121,7 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
         	normalize = config.getBoolean("frej.normalize.output", true);
         	fieldExtractor = new JsonComplexFieldExtractor(failOnInvalid, normalize);
         	if (!failOnInvalid) {
-        		String defaultValue = config.get("frej.default.value");
+        		defaultValue = config.get("frej.default.value");
         		if (null != defaultValue) {
         			fieldExtractor.withDefaultValue(defaultValue);
         		}
@@ -151,6 +152,9 @@ public class FlatRecordExtractorFromJson extends Configured implements Tool {
 			if (!failOnInvalid) {
 				System.out.println("**num of records:" + fieldExtractor.getTotalRecordsCount());
 				System.out.println("**num of skipped records:" + fieldExtractor.getSkippedRecordsCount());
+				if (null != defaultValue) {
+					System.out.println("**num cases with default values:" + fieldExtractor.getDefaultValueCount());
+				} 
 			}
 		}
 

@@ -122,6 +122,7 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 				//if last element in path apply default if provided else skip this json record
 				if (index == pathElements.length - 1 && null != defaultValue) {
 					obj = defaultValue;
+					++defaultValueCount;
 				} else {
 					//move to next record
 					skipped = true;
