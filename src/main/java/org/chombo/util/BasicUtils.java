@@ -79,6 +79,9 @@ public class BasicUtils {
     public static final String TIME_UNIT_QUARTER = "quarter";
     public static final String TIME_UNIT_SEMI_ANNUAL = "semiAnnual";
     public static final String TIME_UNIT_YEAR = "year";
+    
+    public static final String EPOCH_TIME = "epochTime";
+    public static final String EPOCH_TIME_SEC = "epochTimeSec";
    
 	public final static double AVERAGE_RADIUS_OF_EARTH = 6371;
     

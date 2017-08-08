@@ -177,7 +177,8 @@ object FlatRecordExtractorFromJson extends JobConfiguration {
    def getDeNormalizedRecords(fieldExtractor : JsonComplexFieldExtractor, fieldDelimOut:String) : 
      List[String] = {
      val listOfArr = fieldExtractor.getExtractedRecords()
-    	         
+     println("num of flat records:" + listOfArr.size())
+     
      //list of fields to list of records
      val recs = listOfArr.asScala.map(a => {
        a.mkString(fieldDelimOut)

@@ -14,6 +14,7 @@ Hadoop based ETL and various utility classes for Hadoop and Storm
 * Data validation ETL with configurable rules and statistical parameters 
 * Data profiling ETL with various techniques
 * Data transformation ETL with configurable transformation rules
+* Various statistical data exploration solutions
 * Data normalization
 * Seasonal data analysis
 * Various statistical parameter  calculation 
@@ -39,6 +40,7 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * https://pkghosh.wordpress.com/2016/12/06/json-to-relational-mapping-with-spark/
 * https://pkghosh.wordpress.com/2017/02/19/mobile-phone-usage-data-analytics-for-effective-marketing-campaign/
 * https://pkghosh.wordpress.com/2017/05/30/mining-seasonal-products-from-sales-data/
+* https://pkghosh.wordpress.com/2017/07/26/processing-missing-values-with-hadoop/
 
 
 ## Build
@@ -60,7 +62,7 @@ For spark
 * Build chombo-spark in  chombo/spark directory
 	* sbt clean package
 
-## Help
+## Need help?
 Please feel free to email me at pkghosh99@gmail.com
 
 ## Contribution
