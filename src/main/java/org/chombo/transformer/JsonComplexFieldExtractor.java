@@ -72,12 +72,12 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 				//TODO
 				
 			} else {
-				collectData(flattenerRoot, null);
+				denormalize();
 			}
 		}
 		
 		++totalRecordsCount;
-		return skipped;
+		return !skipped;
 	}
 	
 	/**
@@ -88,6 +88,7 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		clearData(flattenerRoot);
 		
 		skipped = false;
+		flattenerRoot.setDebugOn(debugOn);
 	}
 	
 	/**
@@ -105,6 +106,11 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 	 * @param flattener
 	 */
 	public void extractField(Map<String, Object> map, String[] pathElements, int index, DataFlatenerNode flattener) {
+		if(skipped) {
+			//already skipped because of missing attribute
+			return;
+		}
+		
 		String pathElem = pathElements[index];
 		Pair<String, Integer> keyObj = extractKeyAndIndex(pathElem);
 		String key = keyObj.getLeft();
@@ -214,6 +220,17 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 	}
 	
 	/**
+	 * 
+	 */
+	private void denormalize() {
+		//propagate all data to root node
+		collectData(flattenerRoot, null);
+		
+		//denormaize data in root node
+		flattenerRoot.denormalize();
+	}
+	
+	/**
 	 * @param node
 	 * @param parent
 	 */
@@ -225,9 +242,6 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 				collectData(child, node);
 			}
 		}
-		
-		//replicate parent data due to de normalization
-		node.replicate();
 		
 		//propagate child data to parent
 		if (null != parent) {
@@ -284,6 +298,7 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 		private DataFlatenerNode parent;
 		private String key;
 		private Map<String, List<String>> data = new HashMap<String, List<String>>();
+		private boolean debugOn;
 		
 		/**
 		 * @param key
@@ -438,6 +453,113 @@ public class JsonComplexFieldExtractor extends JsonConverter {
 					values.addAll(childValues);
 				}
 			}			
+		}
+		
+		/**
+		 * 
+		 */
+		public void denormalize() {
+			boolean needDenormalize = false;
+			if (data.size() > 1) {
+				for (String key : data.keySet()) {
+					if (data.get(key).size() > 1) {
+						needDenormalize = true;
+						break;
+					}
+				}
+			}
+			
+			if (needDenormalize) {
+				String[] keys = new String[data.size()];
+				keys = data.keySet().toArray(keys);
+				
+				//de normalize one column at a time
+				List<Column> leftColumns = new ArrayList<Column>();
+				Column leftColumn = new Column(keys[0], data.get(keys[0]));
+				leftColumns.add(leftColumn);
+				for (int i = 1; i < data.size(); ++i) {
+					System.out.println("next denormalization:" + keys[i]);
+					Column rightColumn = new Column(keys[i], data.get(keys[i]));
+					leftColumns = cartesianJoin(leftColumns, rightColumn);
+				}
+				
+				//write back to map
+				for (Column col : leftColumns) {
+					System.out.println("after denormalization column name:" + col.getName() + " column size:" + col.getValues().size());
+					data.put(col.getName(), col.getValues());
+				}
+			}
+		}
+		
+		/**
+		 * @param denormColumns
+		 * @param column
+		 * @return
+		 */
+		private List<Column> cartesianJoin(List<Column> leftColumns, Column rightColumn) {
+			List<Column> updateColumns = new ArrayList<Column>();
+			
+			//cartesian join
+			int leftDepth = leftColumns.get(0).getValues().size();
+			int leftWidth = leftColumns.size();
+			String[] leftRow = new String[leftWidth];
+			int rightDepth = rightColumn.getValues().size();
+			
+			//initialize new de normalized columns
+			for (Column col : leftColumns) {
+				Column newCol = new Column(col.getName(), new ArrayList<String>());
+				updateColumns.add(newCol);
+			}
+			Column newCol = new Column(rightColumn.getName(), new ArrayList<String>());
+			updateColumns.add(newCol);
+			
+			//all elements of left columns
+			for (int i = 0; i < leftDepth; ++i) {
+				//row for left columns
+				for (int c = 0; c < leftWidth; ++c) {
+					leftRow[c] = leftColumns.get(c).getColValue(i);
+				}
+				
+				//all elements of right column
+				for (int j = 0; j < rightDepth; ++j) {
+					//repeat left column values
+					for (int c = 0; c < leftWidth; ++c) {
+						updateColumns.get(c).addColValue(leftRow[c]);
+					}
+					updateColumns.get(leftWidth).addColValue(rightColumn.getColValue(j));
+				}
+			}
+			return updateColumns;
+		}
+
+		public void setDebugOn(boolean debugOn) {
+			this.debugOn = debugOn;
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	private static class Column extends Pair<String, List<String>> {
+		public Column(String name, List<String> values) {
+			super(name, values);
+		}
+		
+		public String getName() {
+			return left;
+		}
+		
+		public List<String> getValues() {
+			return right;
+		}
+		
+		public String getColValue(int pos) {
+			return right.get(pos);
+		}
+		
+		public void addColValue(String value) {
+			right.add(value);
 		}
 	}
 
