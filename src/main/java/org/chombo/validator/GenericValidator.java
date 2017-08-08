@@ -98,14 +98,32 @@ public class GenericValidator {
 	 */
 	public static class EnsureDateValidator extends Validator {
 		private SimpleDateFormat dateFormatter;
+		boolean epochTimeMs;
+		
 		public EnsureDateValidator(String tag, ProcessorAttribute prAttr) {
 			super(tag,  prAttr);
-			dateFormatter = new SimpleDateFormat(prAttr.getDatePattern());
+			String datePattern = prAttr.getDatePattern();
+			if (datePattern.equals(BasicUtils.EPOCH_TIME)) {
+				epochTimeMs = true;
+			} else if (datePattern.equals(BasicUtils.EPOCH_TIME_SEC)) {
+				epochTimeMs = false;
+			} else {
+				dateFormatter = new SimpleDateFormat(prAttr.getDatePattern());
+			}
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			return BasicUtils.isDate(value, dateFormatter);
+			boolean valid = false;
+			if (null != dateFormatter) {
+				valid =  BasicUtils.isDate(value, dateFormatter);
+			} else if (epochTimeMs) {
+				valid = BasicUtils.isLong(value) && value.length() >= 13;
+			} else {
+				valid = BasicUtils.isLong(value) && value.length() >= 10;
+			}
+			
+			return valid;
 		}
 	}
 	
