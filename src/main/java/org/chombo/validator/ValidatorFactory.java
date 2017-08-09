@@ -120,7 +120,13 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	public static Validator create(String validatorType, Map<String, Object> validatorContext) {
-		return create(validatorType, null, validatorContext, null);
+		Validator validator = null;
+		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
+			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorContext);
+		} else {
+			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
+		}
+		return validator;
 	}
 	
 	/**
@@ -130,7 +136,13 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	public static Validator create(String validatorType,  Config validatorConfig) {
-		return create(validatorType, null, null, validatorConfig);
+		Validator validator = null;
+		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
+			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
+		} else {
+			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
+		}
+		return validator;
 	}
 	
 	/**
@@ -174,12 +186,6 @@ public class ValidatorFactory {
 			}
 		} else if (validatorType.equals(NOT_MISSING_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingValidator(validatorType, prAttr);
-		} else if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
-			if (null != validatorContext) {
-				validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorContext);
-			} else {
-				validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
-			}
 		} else if (validatorType.equals(PATTERN_VALIDATOR)) {
 			if (prAttr.isString()) {
 				validator = new  StringValidator.PatternValidator(validatorType, prAttr);
@@ -216,7 +222,7 @@ public class ValidatorFactory {
 			}
 
 			if (null == validator) {
-				throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType +  " ordinal:" + 
+				throw new IllegalArgumentException("invalid validator type   validator:" + validatorType +  " ordinal:" + 
 						prAttr.getOrdinal() + " data type:" + prAttr.getDataType());
 			}
 		}

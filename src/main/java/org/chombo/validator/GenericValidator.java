@@ -56,13 +56,13 @@ public class GenericValidator {
 		private List<int[]> fieldGroups;
 		
 		public NotMissingGroupValidator(String tag,Map<String, Object> validatorContext) {
-			super(tag, null);
+			super(tag);
 			fieldGroups = (List<int[]>)validatorContext.get("fieldGroups");
 		}
 
 		public NotMissingGroupValidator(String tag,Config validatorConfig) {
 			//TODO
-			super(tag, null);
+			super(tag);
 		}
 		
 		@Override
@@ -144,27 +144,19 @@ public class GenericValidator {
 	 *
 	 */
 	public static class EnsureDateValidator extends Validator {
-		private SimpleDateFormat dateFormatter;
-		boolean epochTimeMs;
+		private DateValidatorHelper helper;
 		
 		public EnsureDateValidator(String tag, ProcessorAttribute prAttr) {
 			super(tag,  prAttr);
-			String datePattern = prAttr.getDatePattern();
-			if (datePattern.equals(BasicUtils.EPOCH_TIME)) {
-				epochTimeMs = true;
-			} else if (datePattern.equals(BasicUtils.EPOCH_TIME_SEC)) {
-				epochTimeMs = false;
-			} else {
-				dateFormatter = new SimpleDateFormat(prAttr.getDatePattern());
-			}
+			helper = new DateValidatorHelper(prAttr);
 		}
 
 		@Override
 		public boolean isValid(String value) {
 			boolean valid = false;
-			if (null != dateFormatter) {
-				valid =  BasicUtils.isDate(value, dateFormatter);
-			} else if (epochTimeMs) {
+			if (null != helper.getDateFormatter()) {
+				valid =  BasicUtils.isDate(value, helper.getDateFormatter());
+			} else if (helper.isEpochTimeMs()) {
 				valid = BasicUtils.isLong(value) && value.length() >= 13;
 			} else {
 				valid = BasicUtils.isLong(value) && value.length() >= 10;

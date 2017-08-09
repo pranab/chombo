@@ -46,7 +46,10 @@ public class Attribute extends BaseAttribute{
 	protected String minString;
 	protected String maxString;
 	protected int length;
+	protected String earliestDate;
+	protected String latestDate;
 	private int settings;
+	
 	
 	public boolean isPartitionAttribute() {
 		return partitionAttribute;
@@ -160,6 +163,18 @@ public class Attribute extends BaseAttribute{
 	}
 	public void setLength(int length) {
 		this.length = length;
+	}
+	public String getEarliestDate() {
+		return earliestDate;
+	}
+	public void setEarliestDate(String earliestDate) {
+		this.earliestDate = earliestDate;
+	}
+	public String getLatestDate() {
+		return latestDate;
+	}
+	public void setLatestDate(String latestDate) {
+		this.latestDate = latestDate;
 	}
 	public boolean isMinDefined() {
 		return (settings & 1) == 1;
