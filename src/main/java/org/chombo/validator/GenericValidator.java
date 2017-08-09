@@ -18,9 +18,13 @@
 package org.chombo.validator;
 
 import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Map;
 
 import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
+
+import com.typesafe.config.Config;
 
 /**
  * @author pranab
@@ -41,6 +45,49 @@ public class GenericValidator {
 		@Override
 		public boolean isValid(String value) {
 			return !value.isEmpty();
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class NotMissingGroupValidator extends Validator {
+		private List<int[]> fieldGroups;
+		
+		public NotMissingGroupValidator(String tag,Map<String, Object> validatorContext) {
+			super(tag, null);
+			fieldGroups = (List<int[]>)validatorContext.get("fieldGroups");
+		}
+
+		public NotMissingGroupValidator(String tag,Config validatorConfig) {
+			//TODO
+			super(tag, null);
+		}
+		
+		@Override
+		public boolean isValid(String value) {
+			boolean isValid = true;
+			String[] items = value.split(fieldDelim);
+			
+			//all groups
+			for (int[] group : fieldGroups) {
+				boolean grIsValid = false;
+				for (int ord : group) {
+					//at least one non empty in a group
+					if (!items[ord].isEmpty()) {
+						grIsValid = true;
+						break;
+					}
+				}
+				
+				//all group validity
+				isValid = isValid && grIsValid;
+				if (!isValid) {
+					break;
+				}
+			}
+			return isValid;
 		}
 	}
 	

@@ -38,6 +38,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.stats.MedianStatsManager;
 import org.chombo.stats.NumericalAttrStatsManager;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.Utility;
@@ -101,7 +102,7 @@ public class ValidationChecker extends Configured implements Tool {
         private int[] idOrdinals;
         private NumericalAttrStatsManager statsManager;
         private ProcessorAttributeSchema validationSchema;      
-        
+        private List<Validator> rowValidators = new ArrayList<Validator>();
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -122,26 +123,37 @@ public class ValidationChecker extends Configured implements Tool {
             //validator config
             Config validatorConfig = Utility.getHoconConfig(config, "vac.validator.config.file.path");
             
-        	//intialize transformer factory
-        	ValidatorFactory.initialize( config.get( "vac.custom.valid.factory.class"), validatorConfig );
+        	//initialize validator factory
+        	ValidatorFactory.initialize( config.get("vac.custom.valid.factory.class"), validatorConfig );
 
         	//build validator objects
             int[] ordinals  = validationSchema.getAttributeOrdinals();
 
             //validators from try prop file configuration
             boolean foundInPropConfig = false;
+            
+            //field wise validators
             for (int ord : ordinals ) {
             	String key = "vac.validator." + ord;
             	String validatorString = config.get(key);
             	if (null != validatorString ) {
             		String[] valTags = validatorString.split(fieldDelimOut);
-            		createValidators( config,  valTags,  ord, null );
+            		createValidators(config, valTags, ord, null);
             		foundInPropConfig = true;
+            	}
+            }
+            //row level validators
+            if (foundInPropConfig) {
+            	//row wise validators
+            	String[] rowValidatorTags = Utility.optionalStringArrayConfigParam(config, "vac.row.validator", Utility.configDelim);
+            	if (null != rowValidatorTags) {
+            		createRowValidators(config, rowValidatorTags,  validatorConfig);
             	}
             }
             
             //validators from hconf
             if (!foundInPropConfig) {
+                //field wise validators
            		for (ProcessorAttribute prAttr : validationSchema.getAttributes()) {
 	        		List<String> validatorTags =  prAttr.getValidators();
 	        		if (null != validatorTags) {
@@ -155,12 +167,11 @@ public class ValidationChecker extends Configured implements Tool {
         /**
          * @param config
          * @param valTags
-         * @param statsIntialized
          * @param ord
-         * @param validatorList
+         * @param validatorConfig
          * @throws IOException
          */
-        private void createValidators( Configuration config, String[] valTags,   int ord, Config validatorConfig ) 
+        private void createValidators(Configuration config, String[] valTags,  int ord, Config validatorConfig) 
         		throws IOException {
         	//create all validator for  a field
     		List<Validator> validatorList = new ArrayList<Validator>();  
@@ -181,6 +192,45 @@ public class ValidationChecker extends Configured implements Tool {
     			}
     		}
     		validators.put(ord, validatorList);
+        }
+        
+        /**
+         * @param config
+         * @param valTags
+         * @param validatorConfig
+         * @throws IOException
+         */
+        private void createRowValidators(Configuration config, String[] valTags, Config validatorConfig ) 
+        		throws IOException {
+        	Validator validator =  null;
+        	for (String valTag : valTags) {
+        		if (null == validatorConfig) {
+        			createRowValidatorContext(config, valTag);
+        			validator = ValidatorFactory.create(valTag, validatorContext);
+        		} else {
+        			validator = ValidatorFactory.create(valTag, validatorConfig);
+        		}
+        		
+        		rowValidators.add(validator);
+        	}
+        }   
+        
+        /**
+         * @param config
+         * @param valTag
+         */
+        private void createRowValidatorContext(Configuration config, String valTag) {
+    		if (valTag.equals("notMissingGroup")) {
+    			String[] groups = Utility.assertStringArrayConfigParam(config, "vac.missing.value.field.gropus", 
+    					Utility.configDelim, "missing missing value field gropus");
+    			List<int[]> fieldGroups = new ArrayList<int[]>();
+    			for (String group : groups) {
+    				int[] groupItems = BasicUtils.intArrayFromString(group, ":");
+    				fieldGroups.add(groupItems);
+    			}
+    			validatorContext.clear();
+    			validatorContext.put("fieldGroups", fieldGroups);
+    		}
         }
         
         /**
@@ -261,6 +311,19 @@ public class ValidationChecker extends Configured implements Tool {
             	}
             }
             
+            //whole row validator
+            for (Validator validator : rowValidators) {
+            	valid = validator.isValid(value.toString());
+            	if (!valid) {
+					if (null == invalidData) {
+						invalidData = new InvalidData(value.toString());
+						invalidDataList.add(invalidData);
+					}
+					invalidData.addRowValidationFailure(validator.getTag());
+            	}
+           }
+            
+            //valid or all records
             if (null == invalidData || !filterInvalidRecords ) {
             	outVal.set(value.toString());
             	context.write(NullWritable.get(), outVal);

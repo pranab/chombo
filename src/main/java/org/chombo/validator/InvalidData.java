@@ -32,6 +32,7 @@ public class InvalidData implements Serializable {
 	private static final long serialVersionUID = -1431597725642210827L;
 	private String record;
 	private Map<Integer, List<String>> invalidFields  = new HashMap<Integer, List<String>>();
+	private List<String> invalidRow = new ArrayList<String>();
 	
 	/**
 	 * @param record
@@ -53,6 +54,13 @@ public class InvalidData implements Serializable {
 		}
 		validationTypes.add(validationType);
 	}
+
+	/**
+	 * @param validationType
+	 */
+	public void addRowValidationFailure(String validationType) {
+		invalidRow.add(validationType);
+	}
 	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
@@ -60,13 +68,25 @@ public class InvalidData implements Serializable {
 	public String toString() {
 		StringBuilder stBld = new StringBuilder();
 		stBld.append(record).append("\n");
+		
+		//field validator
 		for (int ord : invalidFields.keySet()) {
-			stBld.append("field:" + ord).append("\n");
+			stBld.append("field failed validations:" + ord).append("\n");
 			for (String valType : invalidFields.get(ord)) {
 				stBld.append(valType).append("  ");
 			}
 			stBld.append("\n");
 		}
+		
+		//row validator
+		if (!invalidRow.isEmpty()) {
+			stBld.append("row failed validations:");
+			for (String valType : invalidRow) {
+				stBld.append(valType).append("  ");
+			}
+			stBld.append("\n");
+		}
+		
 		
 		return stBld.toString();
 	}

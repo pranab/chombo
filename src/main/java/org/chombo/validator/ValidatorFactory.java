@@ -46,6 +46,7 @@ public class ValidatorFactory {
 	public static final String ENSURE_DATE_VALIDATOR = "ensureDate";
 	public static final String ZCORE_BASED_RANGE_VALIDATOR = "zscoreBasedRange";
 	public static final String ROBUST_ZCORE_BASED_RANGE_VALIDATOR = "robustZscoreBasedRange";
+	public static final String NOT_MISSING_GROUP_VALIDATOR = "notMissingGroup";
 	
 	private static Map<String,String> custValidatorClasses = new HashMap<String,String>();
 	private static Map<String,Validator> custValidators = new HashMap<String,Validator>();
@@ -89,7 +90,7 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	public static Validator create(String validatorType, ProcessorAttribute prAttr) {
-		return create(validatorType,   prAttr, null, null);
+		return create(validatorType, prAttr, null, null);
 	}
 	
 	/**
@@ -99,7 +100,7 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	public static Validator create(String validatorType, ProcessorAttribute prAttr, Map<String, Object> validatorContext) {
-		return create(validatorType,   prAttr, validatorContext, null);
+		return create(validatorType, prAttr, validatorContext, null);
 	}
 
 	/**
@@ -109,9 +110,29 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	public static Validator create(String validatorType, ProcessorAttribute prAttr, Config validatorConfig) {
-		return create(validatorType,   prAttr, null, validatorConfig);
+		return create(validatorType, prAttr, null, validatorConfig);
 	}
 
+	/**
+	 * row level validator
+	 * @param validatorType
+	 * @param validatorContext
+	 * @return
+	 */
+	public static Validator create(String validatorType, Map<String, Object> validatorContext) {
+		return create(validatorType, null, validatorContext, null);
+	}
+	
+	/**
+	 * row level validator
+	 * @param validatorType
+	 * @param validatorConfig
+	 * @return
+	 */
+	public static Validator create(String validatorType,  Config validatorConfig) {
+		return create(validatorType, null, null, validatorConfig);
+	}
+	
 	/**
 	 * @param validatorType
 	 * @param prAttr
@@ -153,6 +174,12 @@ public class ValidatorFactory {
 			}
 		} else if (validatorType.equals(NOT_MISSING_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingValidator(validatorType, prAttr);
+		} else if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
+			if (null != validatorContext) {
+				validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorContext);
+			} else {
+				validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
+			}
 		} else if (validatorType.equals(PATTERN_VALIDATOR)) {
 			if (prAttr.isString()) {
 				validator = new  StringValidator.PatternValidator(validatorType, prAttr);
