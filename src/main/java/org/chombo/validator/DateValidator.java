@@ -31,7 +31,7 @@ public class DateValidator {
 	 * @author pranab
 	 *
 	 */
-	public class DateMinValidator extends Validator {
+	public static class DateMinValidator extends Validator {
 		private DateValidatorHelper helper;
 		
 		public DateMinValidator(String tag, ProcessorAttribute prAttr) {
@@ -64,7 +64,7 @@ public class DateValidator {
 	 * @author pranab
 	 *
 	 */
-	public class DateMaxValidator extends Validator {
+	public static class DateMaxValidator extends Validator {
 		private DateValidatorHelper helper;
 		
 		public DateMaxValidator(String tag, ProcessorAttribute prAttr) {

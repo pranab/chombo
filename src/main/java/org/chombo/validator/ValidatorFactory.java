@@ -163,6 +163,10 @@ public class ValidatorFactory {
 				validator = new  NumericalValidator.DoubleMinValidator(validatorType, prAttr);
 			} else if (prAttr.isString()) {
 				validator = new  StringValidator.MinValidator(validatorType, prAttr);
+			} else if (prAttr.isDate()) {
+				validator = new DateValidator.DateMinValidator(validatorType, prAttr);
+			} else {
+				throw new IllegalStateException("invalid data type for min validator");
 			}
 		} else if (validatorType.equals(MAX_VALIDATOR)) {
 			if (prAttr.isInteger()) {
@@ -171,6 +175,10 @@ public class ValidatorFactory {
 				validator = new  NumericalValidator.DoubleMaxValidator(validatorType, prAttr);
 			} else if (prAttr.isString()) {
 				validator = new  StringValidator.MaxValidator(validatorType, prAttr);
+			} else if (prAttr.isDate()) {
+				validator = new DateValidator.DateMaxValidator(validatorType, prAttr);
+			} else {
+				throw new IllegalStateException("invalid data type for max validator");
 			}
 		} else if (validatorType.equals(MIN_LENGTH_VALIDATOR)) {
 			if (prAttr.isString()) {
