@@ -68,7 +68,7 @@ public class GenericValidator {
 		@Override
 		public boolean isValid(String value) {
 			boolean isValid = true;
-			String[] items = value.split(fieldDelim);
+			String[] items = value.split(fieldDelim, -1);
 			
 			//all groups
 			for (int[] group : fieldGroups) {

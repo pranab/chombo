@@ -287,13 +287,14 @@ public class ValidationChecker extends Configured implements Tool {
             stBld.delete(0, stBld.length());
             valid = true;
             InvalidData invalidData = null;
+            
+            //field wise validation
             for (int i = 0; i < items.length; ++i) {
             	List<Validator> validatorList = validators.get(i);
             	fieldValue = items[i]; 
             	if(null != validatorList) {
             		for (Validator validator : validatorList) {
-            			if (ValidatorFactory.isCustomValidator(validator.getTag()) || 
-            					ValidatorFactory.isStatBasedValidator(validator.getTag())) {
+            			if (ValidatorFactory.isCustomValidator(validator.getTag())) {
             				//custom validator, pass whole record
             				valid = validator.isValid(value.toString());
             			} else {
