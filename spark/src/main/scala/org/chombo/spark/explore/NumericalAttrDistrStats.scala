@@ -56,6 +56,8 @@ object NumericalAttrDistrStats extends JobConfiguration {
 
 	   //val keyFieldOrdinals = getMandatoryIntListParam(appConfig, "id.field.ordinals").asScala.toArray
 	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals", "").asScala.toArray
+	   
+	   
 	   val binWidths = numAttrOrdinals.map(ord => {
 	     //attribute bin width tuple
 	     val key = "attrBinWidth." + ord
@@ -73,15 +75,20 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	   //key with record key and attr ordinal and value map of counts
 	   val pairedData = data.flatMap(line => {
 		   val items = line.split(fieldDelimIn, -1)
-		   //val keyRec = Record(items, keyFieldOrdinals)
-		   val keyRec = keyFieldOrdinals match {
-		     case Some(fields:Array[Integer]) => Record(keyLen, items, fields)
-		     case None => Record(keyLen)
-		   }
 		   val attrValCount = binWidths.map(ord => {
-		     val attrKeyRec = Record(keyRec.size + 1 ,keyRec)
-		     attrKeyRec.addInt(ord._1)
+		     //key
+			 val attrKeyRec = keyFieldOrdinals match {
+			     //with partition key and field ordinal
+			     case Some(fields:Array[Integer]) => {
+			       val rec = Record(keyLen, items, fields)
+			       rec.addInt(ord._1)
+			       rec
+			     }
+			     //filed ordinal only
+			     case None => Record(1, ord._1)
+			 }
 		     
+			 //value is histogram
 		     val attrValRec =new HistogramStat(ord._2)
 		     attrValRec.
 		     	withExtendedOutput(extendedOutput).
@@ -119,8 +126,8 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	       case Some(stats:Map[Record,HistogramStat]) => {
 	         val key = v._1
 	         val refDistr = stats.get(key).get
-	         val thidDistr = v._2
-	         val diverge = HistogramUtility.findKullbackLeiblerDivergence(refDistr, thidDistr)
+	         val thisDistr = v._2
+	         val diverge = HistogramUtility.findKullbackLeiblerDivergence(refDistr, thisDistr)
 	         (v._1, v._2, diverge)
 	       }
 	       case None => (v._1, v._2, 0.0)

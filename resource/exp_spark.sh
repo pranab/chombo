@@ -9,9 +9,9 @@ case "$1" in
 "numStat")
 	echo "running NumericalAttrDistrStats"
 	CLASS_NAME=org.chombo.spark.explore.NumericalAttrDistrStats
-	INPUT=hdfs:///projects/expl/nad/input/call_records.txt
-	OUTPUT=hdfs:///projects/expl/nad/output
-	hdfs dfs -rm -r $OUTPUT
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/nad/conv4.txt
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/nad
+	rm -rf ./output/nad
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT exp.conf
 ;;
