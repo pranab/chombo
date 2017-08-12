@@ -47,6 +47,7 @@ public class ValidatorFactory {
 	public static final String ZCORE_BASED_RANGE_VALIDATOR = "zscoreBasedRange";
 	public static final String ROBUST_ZCORE_BASED_RANGE_VALIDATOR = "robustZscoreBasedRange";
 	public static final String NOT_MISSING_GROUP_VALIDATOR = "notMissingGroup";
+	public static final String VALUE_DEPENDENCY_VALIDATOR = "valueDependency";
 	
 	private static Map<String,String> custValidatorClasses = new HashMap<String,String>();
 	private static Map<String,Validator> custValidators = new HashMap<String,Validator>();
@@ -120,7 +121,15 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	public static Validator create(String validatorType, Map<String, Object> validatorContext) {
-		return create(validatorType, null, validatorContext, null);
+		Validator validator = null;
+		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
+			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorContext);
+		} else if (validatorType.equals(VALUE_DEPENDENCY_VALIDATOR)) {
+			throw new IllegalArgumentException("this validator requires hconf based configuration validator:" + validatorType);
+		}else {
+			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
+		}
+		return validator;
 	}
 	
 	/**
@@ -130,7 +139,15 @@ public class ValidatorFactory {
 	 * @return
 	 */
 	public static Validator create(String validatorType,  Config validatorConfig) {
-		return create(validatorType, null, null, validatorConfig);
+		Validator validator = null;
+		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
+			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
+		} else if (validatorType.equals(VALUE_DEPENDENCY_VALIDATOR)) {
+			validator = new  GenericValidator.ValueDependencyValidator(validatorType, validatorConfig);
+		} else {
+			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
+		}
+		return validator;
 	}
 	
 	/**
@@ -151,6 +168,10 @@ public class ValidatorFactory {
 				validator = new  NumericalValidator.DoubleMinValidator(validatorType, prAttr);
 			} else if (prAttr.isString()) {
 				validator = new  StringValidator.MinValidator(validatorType, prAttr);
+			} else if (prAttr.isDate()) {
+				validator = new DateValidator.DateMinValidator(validatorType, prAttr);
+			} else {
+				throw new IllegalStateException("invalid data type for min validator");
 			}
 		} else if (validatorType.equals(MAX_VALIDATOR)) {
 			if (prAttr.isInteger()) {
@@ -159,6 +180,10 @@ public class ValidatorFactory {
 				validator = new  NumericalValidator.DoubleMaxValidator(validatorType, prAttr);
 			} else if (prAttr.isString()) {
 				validator = new  StringValidator.MaxValidator(validatorType, prAttr);
+			} else if (prAttr.isDate()) {
+				validator = new DateValidator.DateMaxValidator(validatorType, prAttr);
+			} else {
+				throw new IllegalStateException("invalid data type for max validator");
 			}
 		} else if (validatorType.equals(MIN_LENGTH_VALIDATOR)) {
 			if (prAttr.isString()) {
@@ -174,12 +199,6 @@ public class ValidatorFactory {
 			}
 		} else if (validatorType.equals(NOT_MISSING_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingValidator(validatorType, prAttr);
-		} else if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
-			if (null != validatorContext) {
-				validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorContext);
-			} else {
-				validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
-			}
 		} else if (validatorType.equals(PATTERN_VALIDATOR)) {
 			if (prAttr.isString()) {
 				validator = new  StringValidator.PatternValidator(validatorType, prAttr);
@@ -216,7 +235,7 @@ public class ValidatorFactory {
 			}
 
 			if (null == validator) {
-				throw new IllegalArgumentException("invalid val;idator type   validator:" + validatorType +  " ordinal:" + 
+				throw new IllegalArgumentException("invalid validator type   validator:" + validatorType +  " ordinal:" + 
 						prAttr.getOrdinal() + " data type:" + prAttr.getDataType());
 			}
 		}

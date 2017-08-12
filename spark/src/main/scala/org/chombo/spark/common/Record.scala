@@ -87,6 +87,19 @@ object Record {
   def apply(size: Int, fields: Array[String], fieldOrdinals: Array[Integer]) : Record = new Record(size, fields, fieldOrdinals)
 
   /**
+   * @param size
+   * @param intVal
+   * @return
+  */
+  def apply(size:Int, intVal:Int) : Record = new Record(size, intVal)
+  
+  /**
+   * @param strVal
+   * @return
+  */
+  def apply(strVal:String) : Record = new Record(strVal)
+
+  /**
    * @param fields
    * @param fieldOrdinals
    * @return
@@ -200,6 +213,22 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  })
 	}
 	
+	/**
+	* @param intVal
+	*/
+	def this(size:Int, intVal:Int) {
+	  this(1)
+	  array(cursor) = intVal
+	}
+	
+	/**
+	* @param strVal
+	*/
+	def this(strVal:String) {
+	  this(1)
+	  array(cursor) = strVal
+	}
+
 	/**
 	 * @param sortFields
 	 */

@@ -34,6 +34,7 @@ public abstract class Validator  implements Serializable {
 	protected Map<String,String> configParams;
 	protected String fieldDelim = ",";
 	protected ProcessorAttribute prAttr;
+	
 	/**
 	 * @param tag
 	 * @param ordinal
@@ -43,6 +44,14 @@ public abstract class Validator  implements Serializable {
 		super();
 		this.tag = tag;
 		this.prAttr = prAttr;
+	}
+	
+	/**
+	 * @param tag
+	 */
+	public Validator(String tag) {
+		super();
+		this.tag = tag;
 	}
 	
 	public abstract boolean isValid(String value);

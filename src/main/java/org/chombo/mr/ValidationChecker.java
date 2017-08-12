@@ -124,35 +124,31 @@ public class ValidationChecker extends Configured implements Tool {
             Config validatorConfig = Utility.getHoconConfig(config, "vac.validator.config.file.path");
             
         	//initialize validator factory
-        	ValidatorFactory.initialize( config.get("vac.custom.valid.factory.class"), validatorConfig );
+        	ValidatorFactory.initialize(config.get("vac.custom.valid.factory.class"), validatorConfig );
 
         	//build validator objects
             int[] ordinals  = validationSchema.getAttributeOrdinals();
 
-            //validators from try prop file configuration
-            boolean foundInPropConfig = false;
+            //validators cpnfig prop file 
+            boolean validatorInPropConfig = config.getBoolean("vac.validator.config.present", true);
             
-            //field wise validators
-            for (int ord : ordinals ) {
-            	String key = "vac.validator." + ord;
-            	String validatorString = config.get(key);
-            	if (null != validatorString ) {
-            		String[] valTags = validatorString.split(fieldDelimOut);
-            		createValidators(config, valTags, ord, null);
-            		foundInPropConfig = true;
-            	}
-            }
-            //row level validators
-            if (foundInPropConfig) {
+            if (validatorInPropConfig) {
+	            //field wise validators
+	            for (int ord : ordinals ) {
+	            	String key = "vac.validator." + ord;
+	            	String validatorString = config.get(key);
+	            	if (null != validatorString ) {
+	            		String[] valTags = validatorString.split(fieldDelimOut);
+	            		createValidators(config, valTags, ord, null);
+	            	}
+	            }
+	            
             	//row wise validators
             	String[] rowValidatorTags = Utility.optionalStringArrayConfigParam(config, "vac.row.validator", Utility.configDelim);
             	if (null != rowValidatorTags) {
             		createRowValidators(config, rowValidatorTags,  validatorConfig);
             	}
-            }
-            
-            //validators from hconf
-            if (!foundInPropConfig) {
+            } else  {
                 //field wise validators
            		for (ProcessorAttribute prAttr : validationSchema.getAttributes()) {
 	        		List<String> validatorTags =  prAttr.getValidators();
@@ -161,6 +157,13 @@ public class ValidationChecker extends Configured implements Tool {
 	        			createValidators( config,  valTags,  prAttr.getOrdinal(), validatorConfig);
 	        		}
 	           	}
+           		
+           		//row wise validators
+           		List<String> rowValidatorTagList = validationSchema.getRowValidators();
+           		if (null != rowValidatorTagList) {
+        			String[] rowValidatorTags = rowValidatorTagList.toArray(new String[rowValidatorTagList.size()]);
+            		createRowValidators(config, rowValidatorTags,  validatorConfig);
+           		}
             }
        }
         
@@ -208,7 +211,8 @@ public class ValidationChecker extends Configured implements Tool {
         			createRowValidatorContext(config, valTag);
         			validator = ValidatorFactory.create(valTag, validatorContext);
         		} else {
-        			validator = ValidatorFactory.create(valTag, validatorConfig);
+        			Config thisValidatorConfig = validatorConfig.getConfig(valTag);
+        			validator = ValidatorFactory.create(valTag, thisValidatorConfig);
         		}
         		
         		rowValidators.add(validator);
@@ -220,6 +224,7 @@ public class ValidationChecker extends Configured implements Tool {
          * @param valTag
          */
         private void createRowValidatorContext(Configuration config, String valTag) {
+			validatorContext.clear();
     		if (valTag.equals("notMissingGroup")) {
     			String[] groups = Utility.assertStringArrayConfigParam(config, "vac.missing.value.field.gropus", 
     					Utility.configDelim, "missing missing value field gropus");
@@ -228,7 +233,6 @@ public class ValidationChecker extends Configured implements Tool {
     				int[] groupItems = BasicUtils.intArrayFromString(group, ":");
     				fieldGroups.add(groupItems);
     			}
-    			validatorContext.clear();
     			validatorContext.put("fieldGroups", fieldGroups);
     		}
         }

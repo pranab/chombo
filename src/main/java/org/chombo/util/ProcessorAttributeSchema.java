@@ -18,6 +18,7 @@
 package org.chombo.util;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -30,6 +31,7 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ProcessorAttributeSchema extends AttributeSchema<ProcessorAttribute> {
 	private List<ProcessorAttribute> attributeGenerators;
+	private List<String> rowValidators = new ArrayList<String>();
 
 	/**
 	 * @return
@@ -45,6 +47,14 @@ public class ProcessorAttributeSchema extends AttributeSchema<ProcessorAttribute
 		this.attributeGenerators = attributeGenerators;
 	}
 	
+	public List<String> getRowValidators() {
+		return rowValidators;
+	}
+
+	public void setRowValidators(List<String> rowValidators) {
+		this.rowValidators = rowValidators;
+	}
+
 	/**
 	 * gets dervived attribute counts from tramsformers and generators
 	 * @return

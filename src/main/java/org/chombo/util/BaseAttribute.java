@@ -84,6 +84,10 @@ public class BaseAttribute  implements Serializable {
 		return dataType.equals(DATA_TYPE_TEXT );
 	}
 
+	public boolean isDate() {
+		return dataType.equals(DATA_TYPE_DATE);
+	}
+
 	public boolean isGeoLocation() {
 		return dataType.equals(DATA_TYPE_GEO_LOCATION );
 	}
