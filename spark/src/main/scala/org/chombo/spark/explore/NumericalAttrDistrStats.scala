@@ -113,7 +113,10 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	     case Some(path:String) => {
 	       val refStats = HistogramUtility.createHiostograms(new FileInputStream(path), keyLen, true)
 	       val stats = refStats.asScala.map(kv => {
-	         (Record(kv._1), kv._2)
+	         //last element of key is field ordinal
+	         val rec = Record(kv._1)
+	         rec.addInt(keyLen-1, kv._1(keyLen-1).toInt)
+	         (rec, kv._2)
 	       })
 	       Some(stats)
 	     }

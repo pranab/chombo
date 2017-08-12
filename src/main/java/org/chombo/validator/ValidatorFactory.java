@@ -47,6 +47,7 @@ public class ValidatorFactory {
 	public static final String ZCORE_BASED_RANGE_VALIDATOR = "zscoreBasedRange";
 	public static final String ROBUST_ZCORE_BASED_RANGE_VALIDATOR = "robustZscoreBasedRange";
 	public static final String NOT_MISSING_GROUP_VALIDATOR = "notMissingGroup";
+	public static final String VALUE_DEPENDENCY_VALIDATOR = "valueDependency";
 	
 	private static Map<String,String> custValidatorClasses = new HashMap<String,String>();
 	private static Map<String,Validator> custValidators = new HashMap<String,Validator>();
@@ -123,7 +124,9 @@ public class ValidatorFactory {
 		Validator validator = null;
 		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorContext);
-		} else {
+		} else if (validatorType.equals(VALUE_DEPENDENCY_VALIDATOR)) {
+			throw new IllegalArgumentException("this validator requires hconf based configuration validator:" + validatorType);
+		}else {
 			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
 		}
 		return validator;
@@ -139,6 +142,8 @@ public class ValidatorFactory {
 		Validator validator = null;
 		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
+		} else if (validatorType.equals(VALUE_DEPENDENCY_VALIDATOR)) {
+			validator = new  GenericValidator.ValueDependencyValidator(validatorType, validatorConfig);
 		} else {
 			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
 		}

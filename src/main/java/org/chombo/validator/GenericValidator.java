@@ -17,7 +17,7 @@
 
 package org.chombo.validator;
 
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -61,8 +61,14 @@ public class GenericValidator {
 		}
 
 		public NotMissingGroupValidator(String tag,Config validatorConfig) {
-			//TODO
 			super(tag);
+			fieldGroups = new ArrayList<int[]>();
+			
+			List<? extends Config> groups = validatorConfig.getConfigList("fieldGroups");
+			for(Config group : groups) {
+				List<Integer> colOrdinals = group.getIntList("group");
+				fieldGroups.add(BasicUtils.fromListToIntArray(colOrdinals));
+			}
 		}
 		
 		@Override
@@ -165,5 +171,67 @@ public class GenericValidator {
 			return valid;
 		}
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class ValueDependencyValidator extends Validator {
+		private List<ValueDependency> valueDependencies = new ArrayList<ValueDependency>();
+		
+		public ValueDependencyValidator(String tag,Config validatorConfig) {
+			super(tag);
+			
+			List<? extends Config> dependencies = validatorConfig.getConfigList("valueDependencies");
+			for (Config dependency : dependencies) {
+				ValueDependency valueDependency = new ValueDependency();
+				valueDependency.sourceField = dependency.getInt("sourceField");
+				valueDependency.targetField = dependency.getInt("targetField");
+				valueDependency.valueMap = dependency.getConfig("valueMap");
+				valueDependencies.add(valueDependency);
+			}
+		}	
+		
+		@Override
+		public boolean isValid(String value) {
+			boolean isValid = true;
+			String[] items = value.split(fieldDelim, -1);
+			
+			for (ValueDependency dependency : valueDependencies) {
+				String source = items[dependency.sourceField];
+				String target = items[dependency.targetField];
+				if (dependency.valueMap.hasPath(source)) {
+					List<String> expectedTargets = dependency.valueMap.getStringList(source);
+					if (expectedTargets.size() == 1 && expectedTargets.get(0).isEmpty()) {
+						//target should be empty
+						isValid = target.isEmpty();
+					} else if (expectedTargets.size() == 1 && expectedTargets.get(0).equals("*")) {
+						//target should be non empty
+						isValid = !target.isEmpty();
+					} else {
+						//target should match one item in list
+						isValid = expectedTargets.contains(target);
+					}
+				} 
+				
+				if (!isValid) {
+					break;
+				}
+			}
+			
+			return isValid;
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	private static class ValueDependency {
+		public  int sourceField;
+		public  int targetField;
+		public Config valueMap;
+	}
+	
 	
 }
