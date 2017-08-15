@@ -81,11 +81,11 @@ object NumericalAttrDistrStats extends JobConfiguration {
 			     //with partition key and field ordinal
 			     case Some(fields:Array[Integer]) => {
 			       val rec = Record(keyLen, items, fields)
-			       rec.addInt(ord._1)
+			       rec.addInt(ord._1.toInt)
 			       rec
 			     }
 			     //filed ordinal only
-			     case None => Record(1, ord._1)
+			     case None => Record(1, ord._1.toInt)
 			 }
 		     
 			 //value is histogram
@@ -131,9 +131,9 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	         val refDistr = stats.get(key).get
 	         val thisDistr = v._2
 	         val diverge = HistogramUtility.findKullbackLeiblerDivergence(refDistr, thisDistr)
-	         (v._1, v._2, diverge)
+	         (v._1, v._2, diverge.getLeft().toDouble, diverge.getRight().toInt)
 	       }
-	       case None => (v._1, v._2, 0.0)
+	       case None => (v._1, v._2, 0.0, 0)
 	     }
 	     stat
 	   })
@@ -142,7 +142,7 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	     modStats.foreach(s => {
 	       println("id:" + s._1)
 	       println("distr:" + s._2)
-	       println("dvergence:" + s._3)
+	       println("dvergence:" + s._3 + " " + s._4)
 	     })
 	   }
 	   

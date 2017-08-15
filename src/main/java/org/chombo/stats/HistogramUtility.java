@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.chombo.util.BasicUtils;
+import org.chombo.util.Pair;
 
 /**
  * @author pranab
@@ -45,6 +46,9 @@ public class HistogramUtility {
 		//one histogram per line of data
 		List<String> lines = BasicUtils.getFileLines(inStr);
 		for (String line : lines) {
+			if (line.startsWith("(")) {
+				line = line.substring(1, line.length()-1);
+			}
 			HistogramStat stat = new HistogramStat();
 			String[] items = line.split(HistogramStat.fieldDelim);
 			String[] key = Arrays.copyOfRange(items, 0, keyLen);
@@ -61,26 +65,34 @@ public class HistogramUtility {
 	 * @param secondStat
 	 * @return
 	 */
-	public static double findKullbackLeiblerDivergence(HistogramStat firstStat, HistogramStat secondStat) {
+	public static Pair<Double, Integer> findKullbackLeiblerDivergence(HistogramStat firstStat, HistogramStat secondStat) {
 		double divergence = 0;
 		Map<Integer, Double> firstDistr = roundfOffKey(firstStat.getDistribution());
 		Map<Integer, Double> secondDistr = roundfOffKey(secondStat.getDistribution());
 		
 		double prSum = 0;
+		int keyMatched = 0;
 		for (Integer key : firstDistr.keySet()) {
 			Double firstVal = firstDistr.get(key);
 			Double secondVal = secondDistr.get(key);
 			if (null != secondVal) {
 				divergence += firstVal * Math.log(firstVal /secondVal);
 				prSum += firstVal;
+				++keyMatched;
 			}
-			
 		}
 		
-		//correct for missing value in the second distr
-		divergence /= prSum;
+		Pair<Double, Integer> result = new Pair<Double, Integer>();
+		if (keyMatched < firstDistr.size() / 2) {
+			result.setLeft(0.0);
+			result.setRight(keyMatched);
+		} else {
+			divergence /= prSum;
+			result.setLeft(divergence);
+			result.setRight(keyMatched);
+		}
 		
-		return divergence;
+		return result;
 	}
 
 	
@@ -91,7 +103,7 @@ public class HistogramUtility {
 	private static Map<Integer, Double> roundfOffKey(Map<Double, Double> distr) {
 		Map<Integer, Double> newDistr = new TreeMap<Integer, Double>();
 		for (Double key : distr.keySet()) {
-			newDistr.put((int)Math.round(key), distr.get(key));
+			newDistr.put((int)Math.round(key * 100), distr.get(key));
 		}
 		return newDistr;
 	}
