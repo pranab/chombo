@@ -1,0 +1,54 @@
+This tutorial is for analyzing campaign effectiveness. Conversion lag time data is analyzed 
+to measure campaign effectiveness. Please modify the script and the configuration files to fit your need
+
+Build
+=====
+Please refer to building_spark_uber_jar.txt file
+
+Dependent script
+================
+Checkout the project avenir. Take the script util.py and sampler.py from the project and place it
+in ../lib directory with respect the directory containing cust_conversion.py
+
+Generate old conversion data
+============================
+./cust_conversion.py <num_of_customers> 3 > conv3.txt
+num_of_customers = number of customers
+
+Copy the data file to the input directory
+
+Run Spark job
+=============
+Edit the exp_spark.sh so that it points to the right input file
+Comment out reference.distr.file.path in exp.conf
+
+Run
+./exp_spark.sh numStat
+
+Copy the output file to the directory as defined by the configuration parameter 
+reference.distr.file.path
+
+Generate new conversion data
+============================
+./cust_conversion.py <num_of_customers> 2 > conv2.txt
+num_of_customers = number of customers
+
+Copy the data file to the input directory
+
+Run Spark job
+=============
+Edit the exp_spark.sh so that it points to the right input file
+Uncomment out reference.distr.file.path in exp.conf
+
+Run
+./exp_spark.sh numStat
+
+Configuration
+=============
+The configuration is in exp.conf. Make changes as necessary
+
+
+
+
+
+

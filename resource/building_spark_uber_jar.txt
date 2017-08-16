@@ -1,0 +1,15 @@
+Build chombo
+============
+In  directory .../chombo
+mvn clean install
+sbt publishLocal
+
+Build chombo/spark
+==================
+In  directory .../chombo/spark
+sbt package
+
+Build uber jar
+==============
+ant -f chomo_spark.xml
+
