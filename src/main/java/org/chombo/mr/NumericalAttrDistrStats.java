@@ -19,7 +19,9 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,8 +39,10 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.stats.HistogramStat;
+import org.chombo.stats.HistogramUtility;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.GenericAttributeSchema;
+import org.chombo.util.Pair;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -221,6 +225,8 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
         private boolean needBinning;
         private int attr;
         private int attrIndex;
+        private String fieldDelimIn;
+        private Map<Tuple, HistogramStat> refDistr = new HashMap<Tuple, HistogramStat>();
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -228,6 +234,7 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
+        	fieldDelimIn = config.get("field.delim.regex", ",");
 			
         	attrBinWidths = Utility.assertIntegerDoubleMapConfigParam(config, "nads.attr.bucket.width.list", Utility.configDelim, 
         			Utility.configSubFieldDelim, "missing attrubutes ordinals and bucket widths");
@@ -244,6 +251,10 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
             outputPrecision = config.getInt("nads.output.precision", 3);
             histogram.withOutputPrecision(outputPrecision).withFieldDelim(fieldDelim);
             outputNormalizedHist = config.getBoolean("nads.output.normalized.hist", true);
+            
+            //reference distr for KL divergence
+            buildRefDistr(config);
+            
 		}
 		
 		/* (non-Javadoc)
@@ -270,6 +281,28 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 		}
  	
 		/**
+		 * @param config
+		 * @throws IOException
+		 */
+		private void buildRefDistr(Configuration config) throws IOException {
+			InputStream inStr =  Utility.getFileStream(config, "nads.ref.distr.file.path");
+			if (null != inStr) {
+				int keyLen = null != idOrdinals ? idOrdinals.length : 0;
+				++keyLen;
+				Map<String[], HistogramStat> distrMap = HistogramUtility.createHiostograms(inStr, keyLen, true);
+				for (String[] key : distrMap.keySet()) {
+					HistogramStat hist = distrMap.get(key);
+					Tuple keyTuple = new Tuple();
+					for (int i = 0; i < keyLen - 1; ++i) {
+						keyTuple.add(key[i]);
+					}
+					keyTuple.add(Integer.parseInt(key[keyLen - 1]));
+					refDistr.put(keyTuple, hist);
+				}
+			}
+		}
+		 
+		/**
 		 * @param key
 		 * @param context
 		 * @throws IOException
@@ -293,6 +326,18 @@ public class NumericalAttrDistrStats extends Configured implements Tool {
 			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getQuantile(0.25), outputPrecision)) ;
 			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getQuantile(0.50), outputPrecision)) ;
 			stBld.append(fieldDelim).append(BasicUtils.formatDouble(histogram.getQuantile(0.75), outputPrecision)) ;
+			
+			//KL divergence 
+			if (!refDistr.isEmpty()) {
+				HistogramStat refHist = refDistr.get(key);
+				if (null == refHist) {
+					throw new IllegalStateException("missing referenec distribution for key " + key);
+				}
+				Pair<Double, Integer> diverge = HistogramUtility.findKullbackLeiblerDivergence(refHist, histogram);
+				stBld.append(fieldDelim).append(BasicUtils.formatDouble(diverge.getLeft(), outputPrecision)) ;
+				stBld.append(fieldDelim).append(diverge.getRight());
+			}
+			
 			outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
 		}

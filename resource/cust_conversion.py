@@ -17,10 +17,10 @@ num_year = int(cur_time / sec_per_year)
 time_beg_year = (num_year - num_years_back) * sec_per_year
 #print time_beg_year
 
-referrers =["paid search", "search"]
+referrers =["paid search", "organic search", "direct", "social"]
 conv_delay_distr = {}
-conv_delay_distr["campaign1"] = NonParamRejectSampler(0,1,0.60,0.80,1.00,0.80,0.65,0.53,0.44,0.36,0.28,0.20,0.14,0.10)
-conv_delay_distr["campaign2"] = NonParamRejectSampler(0,1,0.80,1.00,0.90,0.80,0.72,0.66,0.60,0.54,0.48,0.42,0.36,0.30)
+conv_delay_distr["campaign1"] = NonParamRejectSampler(0,1,60,80,90,99,86,70,56,46,34,22,14,8)
+conv_delay_distr["campaign2"] = NonParamRejectSampler(0,1,92,99,88,70,62,50,42,32,24,16,8,4)
 
 campaign = "campaign2"
 if num_years_back > 2:
