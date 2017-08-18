@@ -24,15 +24,35 @@ import java.util.Map;
  *
  */
 public abstract class BasePredicate {
+	protected int attribute;
+	protected String operator;
 	protected Map<String, Object> context;
 	
+	/**
+	 * 
+	 */
 	public BasePredicate(){
 	}
 
+	/**
+	 * @param attribute
+	 * @param operator
+	 */
+	public BasePredicate(int attribute, String operator){
+		this.attribute = attribute;
+		this.operator = operator;
+	}
+
+	/**
+	 * @param context
+	 */
 	public BasePredicate(Map<String, Object> context){
 		this.context = context;
 	}
 	
+	/**
+	 * @param predicate
+	 */
 	public abstract void build(String predicate);
 	
 	/**
@@ -45,10 +65,25 @@ public abstract class BasePredicate {
 	}
 
 	/**
+	 * @param attribute
+	 * @param operator
+	 * @param value
+	 */
+	public abstract void build(int attribute, String operator, String value);
+
+	/**
 	 * evaluates predicate 
 	 * @param record
 	 * @return
 	 */
 	public abstract boolean evaluate(String[] record);
+	
+	/**
+	 * evaluates predicate 
+	 * @param field
+	 * @return
+	 */
+	public abstract boolean evaluate(String field);
+	
 
 }

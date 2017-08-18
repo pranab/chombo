@@ -24,9 +24,6 @@ import java.util.Map;
  *
  */
 public abstract class AttributePredicate extends BasePredicate{
-	protected int attribute;
-	protected String operator;
-	//protected Map<String, Object> context;
 
 	public static final String GREATER_THAN = "gt";
 	public static final String LESS_THAN = "lt";
@@ -48,9 +45,7 @@ public abstract class AttributePredicate extends BasePredicate{
 	 * @param operator
 	 */
 	public AttributePredicate(int attribute, String operator) {
-		super();
-		this.attribute = attribute;
-		this.operator = operator;
+		super(attribute, operator);
 	}
 
 	/**
@@ -95,18 +90,8 @@ public abstract class AttributePredicate extends BasePredicate{
 	 * @param operator
 	 * @param value
 	 */
-	public abstract void build(int attribute, String operator, String value);
+	//public abstract void build(int attribute, String operator, String value);
 
-	/**
-	 * @param context
-	 * @return
-	 */
-	//public AttributePredicate withContext(Map<String, Object> context) {
-	//	this.context = context;
-	//	return this;
-	//}
-
-	
 	/**
 	 * evaluates predicate 
 	 * @param record
@@ -119,6 +104,6 @@ public abstract class AttributePredicate extends BasePredicate{
 	 * @param field
 	 * @return
 	 */
-	public abstract boolean evaluate(String field);
+	//public abstract boolean evaluate(String field);
 	
 }

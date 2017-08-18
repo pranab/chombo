@@ -59,12 +59,13 @@ public class StringAttributePredicate extends AttributePredicate {
 		if (null != context) {
 			//large value set from external source
 			if (null != context.get(value)) {
+				//value is the name of the set
 				valueSet = (Set<String>)context.get(value);
 			}
 		} 
 		
 		if (null == valueSet) {
-			//set defined
+			//set defined directly
 			String[] valueItems = value.split(VALUE_LIST_SEP);
 			if (valueItems.length > 1) {
 				//create value set

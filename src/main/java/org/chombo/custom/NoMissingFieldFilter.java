@@ -19,7 +19,6 @@ package org.chombo.custom;
 
 import java.util.Map;
 
-
 import org.chombo.util.BasePredicate;
 import org.chombo.util.BasicUtils;
 
@@ -68,6 +67,16 @@ public class NoMissingFieldFilter extends BasePredicate {
 			}
 		}
 		return valid;
+	}
+	
+	@Override
+	public boolean evaluate(String field) {
+		return true;
+	}
+
+	@Override
+	public void build(int attribute, String operator, String value) {
+		// TODO Auto-generated method stub
 	}
 
 }
