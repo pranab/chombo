@@ -35,6 +35,7 @@ public class ParseTreeBuilder {
 		root = new Expression(null, null, "root");
 		current = root;
 		
+		//iterate through each token and build parse tree
 		String[] tokens = exprStr.split(TOKEN_SEP);
 		for (String token : tokens) {
 			Expression thisExpr = create(null, token);
@@ -54,14 +55,19 @@ public class ParseTreeBuilder {
 			expr.setParent(current);
 			current.addChild(expr);
 		} else {
-			//walk upwards until a node is found with lower precedence
+			//walk upwards until a node is found with lower precedence and insert below
 			Expression next = current;
-			for ( ; next != root && prec <= next.getPrecedence(); next = next.getParent()) {
-			}
+			Expression prev = null;
+			for ( ; next != root && prec <= next.getPrecedence(); prev = next, next = next.getParent()) {}
 			expr.setParent(next);
 			next.addChild(expr);
-			current = next;
+			if (null != prev) {
+				next.removeChild(prev);
+				prev.setParent(expr);
+				expr.addChild(prev);
+			}
 		}
+		current = expr;
 	}
 	
 	/**
