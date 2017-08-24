@@ -17,6 +17,8 @@
 
 package org.chombo.rules;
 
+import org.chombo.util.BaseAttribute;
+
 /**
  * @author pranab
  *
@@ -34,8 +36,49 @@ public class MultiplicativeOperator extends Operator {
 	
 	@Override
 	public Object evaluate() {
-		// TODO Auto-generated method stub
-		return null;
+		if (children.size() != 2) {
+			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
+		}
+		
+		Expression left = children.get(0);
+		Expression right = children.get(1);
+		Object leftVal = left.evaluate();
+		Object rightVal = right.evaluate();
+		
+		value = null;
+		if (left.type.equals(BaseAttribute.DATA_TYPE_INT) && right.type.equals(BaseAttribute.DATA_TYPE_INT)) {
+			if (token.equals(MULTIPLY_OP)) {
+				value = (Integer)leftVal * (Integer)rightVal;
+			} else if (token.equals(DIVIDE_OP)) {
+				value = (Integer)leftVal / (Integer)rightVal;
+			}
+			type = promotedType = BaseAttribute.DATA_TYPE_INT;
+		} else if (left.type.equals(BaseAttribute.DATA_TYPE_DOUBLE) && right.type.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+			if (token.equals(MULTIPLY_OP)) {
+				value = (Double)leftVal * (Double)rightVal;
+			} else if (token.equals(DIVIDE_OP)) {
+				value = (Double)leftVal / (Double)rightVal;
+			}
+			type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
+		} else if (left.type.equals(BaseAttribute.DATA_TYPE_INT) && right.type.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+			if (token.equals(MULTIPLY_OP)) {
+				value = (Integer)leftVal * (Double)rightVal;
+			} else if (token.equals(DIVIDE_OP)) {
+				value = (Integer)leftVal / (Double)rightVal;
+			}
+			type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
+		} else if (left.type.equals(BaseAttribute.DATA_TYPE_DOUBLE) && right.type.equals(BaseAttribute.DATA_TYPE_INT)) {
+			if (token.equals(MULTIPLY_OP)) {
+				value = (Double)leftVal * (Integer)rightVal;
+			} else if (token.equals(DIVIDE_OP)) {
+				value = (Double)leftVal / (Integer)rightVal;
+			}
+			type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
+		}
+		if (null == value) {
+			throw new IllegalStateException("evaluation for additive operator");
+		}
+		return value;
 	}
 
 	@Override

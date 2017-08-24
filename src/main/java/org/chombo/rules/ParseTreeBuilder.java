@@ -86,23 +86,13 @@ public class ParseTreeBuilder {
 			expr = new OrOperator(root, parent, token);
 		} else if (token.equals(Operator.AND_OP)) {
 			expr = new AndOperator(root, parent, token);
-		} else if (token.equals(Operator.EQUAL_TO_OP)) {
+		} else if (token.equals(Operator.EQUAL_TO_OP) || token.equals(Operator.EQUAL_TO_STRING_OP) || 
+			token.equals(Operator.LESS_THAN_OP) || token.equals(Operator.LESS_THAN_EQUAL_TO_OP) ||
+			token.equals(Operator.GREATER_THAN_OP)	|| token.equals(Operator.GREATER_THAN_EQUAL_TO_OP)) {
 			expr = new RelationalOperator(root, parent, token);
-		} else if (token.equals(Operator.LESS_THAN_OP)) {
-			expr = new RelationalOperator(root, parent, token);
-		} else if (token.equals(Operator.LESS_THAN_EQUAL_TO_OP)) {
-			expr = new RelationalOperator(root, parent, token);
-		} else if (token.equals(Operator.GREATER_THAN_OP)) {
-			expr = new RelationalOperator(root, parent, token);
-		} else if (token.equals(Operator.GREATER_THAN_EQUAL_TO_OP)) {
-			expr = new RelationalOperator(root, parent, token);
-		} else if (token.equals(Operator.PLUS_OP)) {
+		} else if (token.equals(Operator.PLUS_OP) || token.equals(Operator.MINUS_OP)) {
 			expr = new AdditiveOperator(root, parent, token);
-		} else if (token.equals(Operator.MINUS_OP)) {
-			expr = new AdditiveOperator(root, parent, token);
-		} else if (token.equals(Operator.MULTIPLY_OP)) {
-			expr = new MultiplicativeOperator(root, parent, token);
-		} else if (token.equals(Operator.DIVIDE_OP)) {
+		} else if (token.equals(Operator.MULTIPLY_OP) || token.equals(Operator.DIVIDE_OP)) {
 			expr = new MultiplicativeOperator(root, parent, token);
 		} else if (token.equals(Operator.PARENTHESIS_OP)) {
 			expr = new ParenthesisOperator(root, parent, token);

@@ -18,6 +18,10 @@
 
 package org.chombo.rules;
 
+import javax.naming.directory.BasicAttribute;
+
+import org.chombo.util.BaseAttribute;
+
 /**
  * @author pranab
  *
@@ -30,13 +34,24 @@ public class LiteralTerm extends Term {
 	 * @param token
 	 */
 	public LiteralTerm(Expression root, Expression parent, String token) {
-		super(root,  parent,  token);
+		super(root, parent, token);
 	}
 	
 	@Override
 	public Object evaluate() {
-		// TODO Auto-generated method stub
-		return null;
+		try {
+			value = Integer.parseInt(token);
+			type = promotedType = BaseAttribute.DATA_TYPE_INT;
+		} catch (Exception iEx) {
+			try {
+				value = Double.parseDouble(token);
+				type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
+			} catch (Exception dEx) {
+				value = token;
+				type = promotedType = BaseAttribute.DATA_TYPE_STRING;
+			}
+		}
+		return value;
 	}
 	
 	@Override

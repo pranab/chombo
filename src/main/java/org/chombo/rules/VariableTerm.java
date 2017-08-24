@@ -17,6 +17,8 @@
 
 package org.chombo.rules;
 
+import org.chombo.util.BaseAttribute;
+
 /**
  * @author pranab
  *
@@ -34,7 +36,29 @@ public class VariableTerm extends Term {
 	
 	@Override
 	public Object evaluate() {
-		// TODO Auto-generated method stub
+		BaseAttribute attr = root.getAttribute(token);
+		
+		if (null == attr) {
+			throw new IllegalStateException("undefined variable " + token);
+		}
+
+		//string value
+		int fieldOrd = attr.getOrdinal();
+		String stVal = root.input[fieldOrd];
+		
+		//typed value
+		if (attr.isInteger()) {
+			value = Integer.parseInt(stVal);
+			type = promotedType = BaseAttribute.DATA_TYPE_INT;
+		} else if (attr.isDouble()) {
+			value = Double.parseDouble(stVal);
+			type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
+		} else if (attr.isString()) {
+			value = stVal;
+			type = promotedType = BaseAttribute.DATA_TYPE_STRING;
+		} else {
+			throw new IllegalStateException("unsupported data type");
+		}
 		return null;
 	}
 	

@@ -33,6 +33,7 @@ public class Operator extends Expression {
 	public static final String GREATER_THAN_OP = ">";
 	public static final String GREATER_THAN_EQUAL_TO_OP = ">=";
 	public static final String EQUAL_TO_OP = "=";
+	public static final String EQUAL_TO_STRING_OP = "eq";
 	public static final String PLUS_OP = "+";
 	public static final String MINUS_OP = "-";
 	public static final String MULTIPLY_OP = "*";

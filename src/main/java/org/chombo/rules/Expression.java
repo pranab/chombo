@@ -33,6 +33,9 @@ public  class Expression {
 	protected String token;
 	protected List<? extends BaseAttribute> attributes;
 	protected String[] input;
+	protected Object value;
+	protected String type;
+	protected String promotedType;
 	
 	public final int RULE_PREC = 1;
 	public final int IF_THEN_PREC = 2;
@@ -136,6 +139,24 @@ public  class Expression {
 		children.remove(child);
 	}
 
+	/**
+	 * @param name
+	 * @return
+	 */
+	protected BaseAttribute getAttribute(String name) {
+		if (null == attributes) {
+			throw new IllegalStateException("missing attribute schena");
+		}
+		BaseAttribute foundAttr = null;
+		for (BaseAttribute attr : attributes) {
+			if (name.equals(attr.getName())) {
+				foundAttr = attr;
+				break;
+			}
+		}
+		return foundAttr;
+	}
+	
 	/**
 	 * @return
 	 */
