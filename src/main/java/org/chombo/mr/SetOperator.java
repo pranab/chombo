@@ -47,8 +47,7 @@ import org.chombo.util.Utility;
  * @author pranab
  *
  */
-public class SetMerger extends Configured implements Tool {
-	//private static String configDelim = ",";
+public class SetOperator extends Configured implements Tool {
 	private static String OP_INTERSECT = "intersect";
 	private static String OP_UNION = "union";
 	private static String OP_FIRST_MINUS_SECOND = "firstMinusSecond";
@@ -60,15 +59,15 @@ public class SetMerger extends Configured implements Tool {
         String jobName = "SetMerger  MR";
         job.setJobName(jobName);
         
-        job.setJarByClass(SetMerger.class);
+        job.setJarByClass(SetOperator.class);
 
         FileInputFormat.addInputPaths(job, args[0]);
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration());
         
-        job.setMapperClass(SetMerger.MergerMapper.class);
-        job.setReducerClass(SetMerger.MergerReducer.class);
+        job.setMapperClass(SetOperator.MergerMapper.class);
+        job.setReducerClass(SetOperator.MergerReducer.class);
 
         job.setMapOutputKeyClass(Tuple.class);
         job.setMapOutputValueClass(Tuple.class);
@@ -79,7 +78,7 @@ public class SetMerger extends Configured implements Tool {
         job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
         job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
         
-        int numReducer = job.getConfiguration().getInt("sem.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("seo.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
         
@@ -95,7 +94,6 @@ public class SetMerger extends Configured implements Tool {
 		private Tuple outKey = new Tuple();
 		private Tuple outVal = new Tuple();
         private String fieldDelimRegex;
-        //private String fieldDelimOut;
         private boolean isFirstTypeSplit;
         private int subKey;
         private int[]  keyFieldFirst;
@@ -109,16 +107,15 @@ public class SetMerger extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	//fieldDelimOut = config.get("field.delim", ",");
-        	String firstTypePrefix = config.get("sem.first.type.prefix", "first");
+        	String firstTypePrefix = config.get("seo.first.type.prefix", "first");
         	isFirstTypeSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(firstTypePrefix);
         	subKey = isFirstTypeSplit ? 0 : 1;
-        	keyFieldFirst = Utility.assertIntArrayConfigParam(config, "sem.key.field.first", Utility.DEF_FIELD_DELIM, 
+        	keyFieldFirst = Utility.assertIntArrayConfigParam(config, "seo.key.field.first", Utility.DEF_FIELD_DELIM, 
         			"missing key field ordinal for first dataset");
-        	keyFieldSecond = Utility.assertIntArrayConfigParam(config, "sem.key.field.second", Utility.DEF_FIELD_DELIM, 
+        	keyFieldSecond = Utility.assertIntArrayConfigParam(config, "seo.key.field.second", Utility.DEF_FIELD_DELIM, 
         			"missing key field ordinal for second dataset");
-        	valFieldFirst = Utility.intArrayFromString(config, "sem.value.field.first");
-        	valFieldSecond = Utility.intArrayFromString(config, "sem.value.field.second");
+        	valFieldFirst = Utility.intArrayFromString(config, "seo.value.field.first");
+        	valFieldSecond = Utility.intArrayFromString(config, "seo.value.field.second");
         }   
         
         @Override
@@ -179,11 +176,11 @@ public class SetMerger extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim", ",");
-        	operation = Utility.assertStringConfigParam(config, "sem.merge.operation", "missing set merge operation");
-        	orderByFirst = config.getBoolean("sem.order.by.first.set", true);
-        	retainCount = config.getInt("sem.retain.count", -1);
-        	outputFormatCompact = config.getBoolean("sem.output.format.compact", false);
-        	matchByKey = config.getBoolean("sem.mtach.by.key", true);
+        	operation = Utility.assertStringConfigParam(config, "seo.merge.operation", "missing set merge operation");
+        	orderByFirst = config.getBoolean("seo.order.by.first.set", true);
+        	retainCount = config.getInt("seo.retain.count", -1);
+        	outputFormatCompact = config.getBoolean("seo.output.format.compact", false);
+        	matchByKey = config.getBoolean("seo.mtach.by.key", true);
         }	
         
         /* (non-Javadoc)
@@ -323,7 +320,7 @@ public class SetMerger extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-        int exitCode = ToolRunner.run(new SetMerger(), args);
+        int exitCode = ToolRunner.run(new SetOperator(), args);
         System.exit(exitCode);
 	}
     
