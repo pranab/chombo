@@ -221,8 +221,11 @@ public class SetOperator extends Configured implements Tool {
         	}
         	
         	//emit
-        	key.setDelim(fieldDelimOut);
-        	String keyStr = key.toStringEnd(key.getSize()-1);
+        	String keyStr = null;
+        	if (outputKey) {
+        		key.setDelim(fieldDelimOut);
+        		keyStr = key.toStringEnd(key.getSize()-1);
+        	}
         	if (!reatinedResult.isEmpty()) {
 	        	if (outputFormatCompact) {
 	        		if (outputKey) {
