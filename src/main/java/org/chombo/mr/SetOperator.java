@@ -168,6 +168,7 @@ public class SetOperator extends Configured implements Tool {
 		private boolean outputFormatCompact;
 		private boolean matchByKey;
 		private int subKey;
+		private boolean outputKey;
 		
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -181,6 +182,7 @@ public class SetOperator extends Configured implements Tool {
         	retainCount = config.getInt("seo.retain.count", -1);
         	outputFormatCompact = config.getBoolean("seo.output.format.compact", false);
         	matchByKey = config.getBoolean("seo.mtach.by.key", true);
+        	boolean outputKey = config.getBoolean("seo.output.key", false);
         }	
         
         /* (non-Javadoc)
@@ -219,14 +221,23 @@ public class SetOperator extends Configured implements Tool {
         	}
         	
         	//emit
+        	key.setDelim(fieldDelimOut);
         	String keyStr = key.toStringEnd(key.getSize()-1);
         	if (!reatinedResult.isEmpty()) {
 	        	if (outputFormatCompact) {
-	        		outVal.set(keyStr + fieldDelimOut + Utility.join(reatinedResult, fieldDelimOut));
+	        		if (outputKey) {
+	        			outVal.set(keyStr + fieldDelimOut + BasicUtils.join(reatinedResult, fieldDelimOut));
+	        		} else {
+	        			outVal.set(BasicUtils.join(reatinedResult, fieldDelimOut));
+	        		}
 	    			context.write(NullWritable.get(), outVal);
 	        	} else {
 	        		for (String val : reatinedResult) {
-	            		outVal.set(keyStr + fieldDelimOut + val);
+	        			if (outputKey) {
+	        				outVal.set(keyStr + fieldDelimOut + val);
+	        			} else {
+	        				outVal.set(val);
+	        			}
 	        			context.write(NullWritable.get(), outVal);
 	        		}
 	        	}
