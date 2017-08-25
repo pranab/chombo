@@ -35,8 +35,9 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
-import org.chombo.util.TextInt;
+import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -47,9 +48,11 @@ import org.chombo.util.Utility;
  *
  */
 public class SetMerger extends Configured implements Tool {
-	private static String configDelim = ",";
+	//private static String configDelim = ",";
 	private static String OP_INTERSECT = "intersect";
 	private static String OP_UNION = "union";
+	private static String OP_FIRST_MINUS_SECOND = "firstMinusSecond";
+	private static String OP_SECOND_MINUS_FIRST = "secondMinusFirst";
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -73,6 +76,9 @@ public class SetMerger extends Configured implements Tool {
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
 
+        job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
+        job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
+        
         int numReducer = job.getConfiguration().getInt("sem.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
@@ -88,11 +94,14 @@ public class SetMerger extends Configured implements Tool {
 	public static class MergerMapper extends Mapper<LongWritable, Text, Tuple, Tuple> {
 		private Tuple outKey = new Tuple();
 		private Tuple outVal = new Tuple();
-		private int  keyLen;
         private String fieldDelimRegex;
-        private String fieldDelimOut;
+        //private String fieldDelimOut;
         private boolean isFirstTypeSplit;
         private int subKey;
+        private int[]  keyFieldFirst;
+        private int[]  keyFieldSecond;
+        private int[]  valFieldFirst;
+        private int[]  valFieldSecond;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -100,11 +109,16 @@ public class SetMerger extends Configured implements Tool {
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	fieldDelimOut = config.get("field.delim", ",");
+        	//fieldDelimOut = config.get("field.delim", ",");
         	String firstTypePrefix = config.get("sem.first.type.prefix", "first");
         	isFirstTypeSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(firstTypePrefix);
         	subKey = isFirstTypeSplit ? 0 : 1;
-        	keyLen = Utility.assertIntConfigParam(config, "sem.key.length", "missing key length");
+        	keyFieldFirst = Utility.assertIntArrayConfigParam(config, "sem.key.field.first", Utility.DEF_FIELD_DELIM, 
+        			"missing key field ordinal for first dataset");
+        	keyFieldSecond = Utility.assertIntArrayConfigParam(config, "sem.key.field.second", Utility.DEF_FIELD_DELIM, 
+        			"missing key field ordinal for second dataset");
+        	valFieldFirst = Utility.intArrayFromString(config, "sem.value.field.first");
+        	valFieldSecond = Utility.intArrayFromString(config, "sem.value.field.second");
         }   
         
         @Override
@@ -112,10 +126,27 @@ public class SetMerger extends Configured implements Tool {
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex, -1);
             
-            //beginning keyLen fields constitute key
-            Utility.createStringTupleFromBegining(items, keyLen, outKey);
+            //key
+            if (isFirstTypeSplit) {
+            	Utility.createStringTuple(items, keyFieldFirst, outKey, true);
+        	} else {
+            	Utility.createStringTuple(items, keyFieldSecond, outKey, true);
+        	}
             outKey.add(subKey);
-            Utility.createStringTupleFromEnd(items, keyLen, outVal);
+            
+            //value
+            String rec = null;
+            if (null != valFieldFirst && null != valFieldSecond) {
+            	//selected fields
+            	rec = isFirstTypeSplit ? BasicUtils.extractFields(items, valFieldFirst, BasicUtils.configDelim) :
+            		BasicUtils.extractFields(items, valFieldSecond, BasicUtils.configDelim);
+            } else {
+            	//full record
+            	rec = value.toString();
+            }
+            outVal.initialize();
+            outVal.add(subKey, rec);
+            
             context.write(outKey, outVal);
         }        
 	}
@@ -124,7 +155,7 @@ public class SetMerger extends Configured implements Tool {
      * @author pranab
      *
      */
-    public static class MergerReducer extends Reducer<TextInt, Tuple, NullWritable, Text> {
+    public static class MergerReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
 		private Text outVal = new Text();
         private String fieldDelimRegex;
 		private String fieldDelimOut;
@@ -138,6 +169,8 @@ public class SetMerger extends Configured implements Tool {
 		private int retainCount;
 		private List<String> reatinedResult;
 		private boolean outputFormatCompact;
+		private boolean matchByKey;
+		private int subKey;
 		
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -149,30 +182,27 @@ public class SetMerger extends Configured implements Tool {
         	operation = Utility.assertStringConfigParam(config, "sem.merge.operation", "missing set merge operation");
         	orderByFirst = config.getBoolean("sem.order.by.first.set", true);
         	retainCount = config.getInt("sem.retain.count", -1);
-        	outputFormatCompact = config.getBoolean("sem.output.format.compact", true);
+        	outputFormatCompact = config.getBoolean("sem.output.format.compact", false);
+        	matchByKey = config.getBoolean("sem.mtach.by.key", true);
         }	
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
          */
-        protected void reduce(TextInt key, Iterable<Tuple> values, Context context)
+        protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
         	result.clear();
         	records.getLeft().clear();
         	records.getRight().clear();
-        	int count = 0;
         	for (Tuple value : values){
-        		if (count == 0) {
-        			value.tupleAsList(records.getLeft());
+        		subKey = value.getInt(0);
+        		if (subKey == 0) {
+        			records.getLeft().add(value.getString(1));
         		} else {
-        			value.tupleAsList(records.getRight());
+        			records.getRight().add(value.getString(1));
         		}
-        		++count;
         	}
-        	if (count > 2) {
-        		throw new IllegalStateException("can operate on 2 sets only");
-        	}
-        	
+
         	//primary and secondary list
     		if(orderByFirst) {
     			primary = records.getLeft();
@@ -180,12 +210,59 @@ public class SetMerger extends Configured implements Tool {
     		} else {
     			primary = records.getRight();
     			secondary = records.getLeft();
-    		}
+    		}     
     		
+    		//set operation
+        	if (matchByKey) {
+        		//maximum one record per key from each data set
+        		matchByKey();
+        	} else {
+        		//any number of records per partition from each data set
+        		matchByPartition();
+        	}
+        	
+        	//emit
+        	String keyStr = key.toStringEnd(key.getSize()-1);
+        	if (!reatinedResult.isEmpty()) {
+	        	if (outputFormatCompact) {
+	        		outVal.set(keyStr + fieldDelimOut + Utility.join(reatinedResult, fieldDelimOut));
+	    			context.write(NullWritable.get(), outVal);
+	        	} else {
+	        		for (String val : reatinedResult) {
+	            		outVal.set(keyStr + fieldDelimOut + val);
+	        			context.write(NullWritable.get(), outVal);
+	        		}
+	        	}
+        	}
+        }
+        
+        /**
+         * 
+         */
+        private void matchByPartition() {
     		//operation
-        	if (operation.equals(OP_INTERSECT)) {
+        	if (operation.equals(OP_INTERSECT) ) {
+        		//intersection
         		for (String val : primary) {
         			if (secondary.contains(val)) {
+        				result.add(val);
+        			}
+        		}
+        		//truncate by retain count
+        		reatinedResult = retainCount > 0 ? result.subList(0, retainCount) : result;
+        	} else if (operation.equals(OP_FIRST_MINUS_SECOND) ) {
+        		//first minus second
+        		for (String val : primary) {
+        			if (!secondary.contains(val)) {
+        				result.add(val);
+        			}
+        		}
+        		//truncate by retain count
+        		reatinedResult = retainCount > 0 ? result.subList(0, retainCount) : result;
+        	} else if (operation.equals(OP_SECOND_MINUS_FIRST) ) {
+        		//second minus first
+        		for (String val : secondary) {
+        			if (!primary.contains(val)) {
         				result.add(val);
         			}
         		}
@@ -206,21 +283,42 @@ public class SetMerger extends Configured implements Tool {
         	} else {
         		throw new IllegalStateException("invalid set operation");
         	}
-        	
-        	//emit
-        	String keyStr = key.toString();
-        	if (outputFormatCompact) {
-        		outVal.set(keyStr + fieldDelimOut + Utility.join(reatinedResult, fieldDelimOut));
-    			context.write(NullWritable.get(), outVal);
-        	} else {
-        		for (String val : reatinedResult) {
-            		outVal.set(keyStr + fieldDelimOut + val);
-        			context.write(NullWritable.get(), outVal);
-        		}
-        	}
+       	
         }
+        
+        /**
+         * 
+         */
+        private void matchByKey() {
+    		//operation
+        	if (operation.equals(OP_INTERSECT) ) {
+        		//intersection
+        		if (primary.size() == 1 && secondary.size() == 1) {
+        			result.add(primary.get(0));
+        		}
+        	} else if (operation.equals(OP_FIRST_MINUS_SECOND) ) {
+        		//first minus second
+        		if (primary.size() == 1 && secondary.size() == 0) {
+        			result.add(primary.get(0));
+        		}
+        	} else if (operation.equals(OP_SECOND_MINUS_FIRST) ) {
+        		//second minus first
+        		if (primary.size() == 0 && secondary.size() == 1) {
+        			result.add(secondary.get(0));
+        		}
+        	} else if (operation.equals(OP_UNION)) {
+    			result.addAll(primary);
+    			result.addAll(secondary);
+        	} else {
+        		throw new IllegalStateException("invalid set operation");
+        	}
+    		//truncate by retain count
+    		reatinedResult = result;
+        }
+        
     }
-
+    
+    
 	/**
 	 * @param args
 	 */

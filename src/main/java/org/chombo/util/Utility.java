@@ -567,7 +567,26 @@ public class Utility {
 			tuple.add(record[i]);
 		}
 	}
+	
+    /**
+     * @param config
+     * @param param
+     * @param delimRegex
+     * @return
+     */
+    public static int[] intArrayFromString(Configuration config, String param, String delimRegex ) {
+    	return BasicUtils.intArrayFromString(config.get(param), delimRegex);
+    }
     
+    /**
+     * @param config
+     * @param param
+     * @return
+     */
+    public static int[] intArrayFromString(Configuration config, String param ) {
+    	return BasicUtils.intArrayFromString(config.get(param), DEF_FIELD_DELIM);
+    }
+
     /**
      * @param record
      * @param delimRegex

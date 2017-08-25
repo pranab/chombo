@@ -76,7 +76,7 @@ public class MultiplicativeOperator extends Operator {
 			type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
 		}
 		if (null == value) {
-			throw new IllegalStateException("evaluation for additive operator");
+			throw new IllegalStateException("failed evaluation for multiplicative operator");
 		}
 		return value;
 	}
