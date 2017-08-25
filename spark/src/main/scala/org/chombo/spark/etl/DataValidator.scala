@@ -80,10 +80,11 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	   val validationSchema = BasicUtils.getProcessingSchema(
 	       getMandatoryStringParam(appConfig, "schema.file.path", "missing schema file path configuration"))
 	   val validatorConfig = appConfig
-	   val configClass = if (appConfig.hasPath("custom.valid.factory.class"))
-	     appConfig.getString("custom.valid.factory.class")
-	   else
-	     null
+	   val configClass = 
+	     if (appConfig.hasPath("custom.valid.factory.class"))
+	       appConfig.getString("custom.valid.factory.class")
+	     else
+	       null
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
 
@@ -110,44 +111,19 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	     case None =>
 	   }
 	   
-	   //simple validators  
-	   var foundPropConfigBasedValidators = false
+	  //create field validators
+      validationSchema.getAttributes().asScala.foreach( attr  => {
+    	  	if (null != attr.getValidators()) {
+    	  		val validatorTags =  attr.getValidators().asScala.toArray
+    	  		createValidators(appConfig, validatorTags, attr.getOrdinal(), validationSchema, mutValidators)
+    	  	}
+      })
+      
+      //create row validators
+      val rowValidatorTags = validationSchema.getRowValidators().asScala.toArray
+      val rowValidators = createRowValidators(config, rowValidatorTags)
 	   
-	   ordinals.foreach(ord => {
-		   val  key = "validator." + ord
-		   val validatorTagList = getOptionalStringListParam(appConfig, key)
-		   validatorTagList match {
-		     case Some(li:java.util.List[String]) => {
-		    	 val valTags = BasicUtils.fromListToStringArray(li)
-		    	 createValidators(appConfig, valTags, ord, validationSchema, mutValidators)
-		    	 foundPropConfigBasedValidators = true
-		     }
-		     case None =>
-		   }  		     
-	   })
-	   
-	   //complex validators
-	   var foundSchemaBasedValidators = false
-	   if (!foundPropConfigBasedValidators) {
-	      validationSchema.getAttributes().asScala.foreach( attr  => {
-	    	  	if (null != attr.getValidators()) {
-	    	  		val validatorTags =  attr.getValidators().asScala.toArray
-	    	  		createValidators(appConfig, validatorTags, attr.getOrdinal(), validationSchema, mutValidators)
-	    	  		foundSchemaBasedValidators = true
-	    	  	}
-	      })
-	   }
-	   
-	   //custom validators
-	   if (!foundPropConfigBasedValidators && !foundSchemaBasedValidators) {
-         val bulderClassName = getMandatoryStringParam(appConfig, "validatorBuilderClass", 
-             "missing validator builder class name")
-         val obj = Class.forName(bulderClassName).newInstance()
-         val builder = obj.asInstanceOf[ValidatorBuilder]
-         builder.createValidators(appConfig, this)
-	   }
-	   
-	   if (debugOn) {
+	  if (debugOn) {
 	     validators.foreach(kv => {
 	       println("field: " + kv._1 + " num validators:" + kv._2.length )
 	     })
@@ -155,8 +131,12 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	   
 	   //broadcast validator
 	   val brValidators = sparkCntxt.broadcast(validators)
+	   
+	   //broadcast row validators
+	   val brRowValidators = sparkCntxt.broadcast(rowValidators)
 
-	  val data = sparkCntxt.textFile(inputPath)
+	   //input
+	   val data = sparkCntxt.textFile(inputPath)
 
 	   //apply validators to each field in each line to create RDD of tagged records
 	   val taggedData = data.map(line => {
@@ -189,7 +169,7 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	    	       	if (failedValidators.isEmpty)
 	    	    	   z._1
 	    	    	 else 
-	    			   z._1 + valTagSeparator + failedValidators.mkString(fieldDelimOut)
+	    			   z._1 + valTagSeparator + failedValidators.mkString(valTagSeparator)
 	    	    field
 	    	  }
 	    	  
@@ -197,9 +177,29 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	    	}
 	    })
 	 
-	    taggedItems.mkString(fieldDelimOut)
+	    val rec = taggedItems.mkString(fieldDelimOut)
+	    
+	    //apply row validators
+	    val rowValidators = brRowValidators.value
+	    val rowValStatuses = rowValidators.map(validator => {
+	      val status = validator.isValid(line)
+	      (validator.getTag(), status)
+	    })
+	    val failedRowValidators = rowValStatuses.filter(s => {
+	    	!s._2
+	    	}).map(vs => vs._1)
+	    	
+	    val taggedRec = 
+	    	if (failedRowValidators.isEmpty)
+	    		rec
+	    	else 
+	    		rec + valTagSeparator + valTagSeparator + failedRowValidators.mkString(valTagSeparator)
+	    	
+	    taggedRec
 	  })
-	 taggedData.cache
+	  
+	  //failed validator annotated record
+	  taggedData.cache
 
 	 //filter valid data
 	 if (filterInvalidRecords) {
@@ -228,11 +228,10 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
    * @param validatorConfig
    * @param validationSchema
    */
-   private  def createValidators( config : Config , valTags : Array[String],   ord : Int,
+   private  def createValidators(config : Config, valTags : Array[String], ord : Int,
        validationSchema :  ProcessorAttributeSchema, mutValidators : scala.collection.mutable.HashMap[Int, Array[Validator]])  {
 	   val validatorList =  List[Validator]()
 	   val  prAttr = validationSchema.findAttributeByOrdinal(ord)
-	   val validatorConfig = config.atPath("app")
 	   val validators = valTags.map(tag => {
 		    val validator = tag match {
 		     case "zscoreBasedRange" => {
@@ -247,6 +246,11 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 		     }
 		    
 		     case tag:String => {
+		       val validatorConfig = 
+		         if (config.hasPath(tag))
+		        	 config.getConfig(tag)
+		         else 
+		        	 null
 		       ValidatorFactory.create(tag, prAttr,  validatorConfig)
 		     }
 		   }
@@ -256,7 +260,32 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	   //add validators to map
 	   mutValidators += ord -> validators
    }
+   
+  /**
+  * @param config
+  * @param valTags
+  * @return
+  */
+  private def createRowValidators(config : Config, valTags : Array[String]) : Array[Validator] = {
+     val validators = valTags.map(valTag => {
+       config.hasPath(valTag) match {
+         case true => {
+           ValidatorFactory.create(valTag, config.getConfig(valTag));
+         }
+         case false => {
+           createRowValidatorContext(config, valTag)
+           ValidatorFactory.create(valTag, validationContext)
+         }
+         
+       }
+     })
+     validators
+   }
 
+   private def createRowValidatorContext(config : Config, valTag : String) {
+     throw new IllegalStateException("missing context for row validator " + valTag)
+   }
+   
   /**
  * @param statsFilePath
  * @return

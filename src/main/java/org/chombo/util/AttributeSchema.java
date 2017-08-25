@@ -74,6 +74,22 @@ public class AttributeSchema<T extends BaseAttribute>  implements Serializable {
 	}
 
 	/**
+	 * @param ordinal
+	 * @return
+	 */
+	public T findAttributeByName(String name) {
+		T attribute = null;
+		for (T attr :  attributes) {
+			if (name.equals(attr.getName())) {
+				attribute = attr;
+				break;
+			}
+		}
+		
+		return attribute;
+	}
+
+	/**
 	 * @param ordinals
 	 * @return
 	 */

@@ -234,6 +234,8 @@ public class ValidationChecker extends Configured implements Tool {
     				fieldGroups.add(groupItems);
     			}
     			validatorContext.put("fieldGroups", fieldGroups);
+    		} else {
+    		     throw new IllegalStateException("missing context for row validator " + valTag);
     		}
         }
         

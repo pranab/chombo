@@ -41,6 +41,7 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * https://pkghosh.wordpress.com/2017/02/19/mobile-phone-usage-data-analytics-for-effective-marketing-campaign/
 * https://pkghosh.wordpress.com/2017/05/30/mining-seasonal-products-from-sales-data/
 * https://pkghosh.wordpress.com/2017/07/26/processing-missing-values-with-hadoop/
+* https://pkghosh.wordpress.com/2017/08/15/measuring-campaign-effectiveness-for-an-online-service-on-spark/
 
 
 ## Build

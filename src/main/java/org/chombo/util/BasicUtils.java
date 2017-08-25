@@ -295,6 +295,16 @@ public class BasicUtils {
     	}
     	return fieldValues;
     }
+   
+    /**
+     * @param items
+     * @param fields
+     * @param delim
+     * @return
+     */
+    public static String extractFields(String[] items , int[] fields, String delim) {
+    	return extractFields(items , fields, delim, false);
+    }
     
     /**
      * @param items

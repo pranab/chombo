@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,6 +26,8 @@ import java.util.Map;
  */
 public abstract class BaseAttributeFilter {
 	protected Map<String, Object> context;
+	protected GenericAttributeSchema schema;
+	protected List<? extends BaseAttribute> attributes;
 	
 	/**
 	 * 
@@ -48,6 +51,33 @@ public abstract class BaseAttributeFilter {
 		return this;
 	}
 	
+	/**
+	 * @param schema
+	 * @return
+	 */
+	public BaseAttributeFilter withAttributes(List<? extends BaseAttribute> attributes){
+		this.attributes = attributes;
+		return this;
+	}
+	
+	/**
+	 * @param name
+	 * @return
+	 */
+	protected BaseAttribute getAttribute(String name) {
+		if (null == attributes) {
+			throw new IllegalStateException("missing attribute schena");
+		}
+		BaseAttribute foundAttr = null;
+		for (BaseAttribute attr : attributes) {
+			if (name.equals(attr.getName())) {
+				foundAttr = attr;
+				break;
+			}
+		}
+		return foundAttr;
+	}
+
 	/**
 	 * @param filter
 	 */

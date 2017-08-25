@@ -74,10 +74,11 @@ public class ValidatorFactory {
 		
 		//custom validaor classes
 		if (null == customValidatorFactory && null != validatorConfig) {
-			if (validatorConfig.hasPath("validators.customValidators")) {
-				List <? extends Config> customValidConfigs = validatorConfig.getConfigList("validators.customValidators");
+			if (validatorConfig.hasPath("customValidators")) {
+				List <? extends Config> customValidConfigs = validatorConfig.getConfigList("customValidators");
 				for (Config customValidConfig : customValidConfigs ) {
-					custValidatorClasses.put("custom.validator.class." + customValidConfig.getString("tag"), customValidConfig.getString("class"));
+					custValidatorClasses.put("custom.validator.class." + customValidConfig.getString("tag"), 
+							customValidConfig.getString("class"));
 				}
 			}
 		}
@@ -227,11 +228,11 @@ public class ValidatorFactory {
 			Config valConfig =  getValidatorConfig(validatorConfig ,validatorType, prAttr);
 
 			//custom validator with configured validator class names
-			validator = createCustomValidator(validatorType, prAttr,  valConfig);
+			validator = createCustomValidator(validatorType, prAttr, valConfig);
 			
 			//custom validator factory
 			if (null == validator && null != customValidatorFactory) {
-				validator = customValidatorFactory.createValidator(validatorType, prAttr,  valConfig);
+				validator = customValidatorFactory.createValidator(validatorType, prAttr, valConfig);
 			}
 
 			if (null == validator) {
@@ -275,12 +276,12 @@ public class ValidatorFactory {
      * @return
      */
     public static Config getValidatorConfig(Config validatorConfig ,String validatorTag, ProcessorAttribute prAttr) {
-    	Config valConfig = validatorConfig.getConfig("validators." + validatorTag);
+    	Config valConfig = validatorConfig.getConfig(validatorTag);
     	Config config = null;
     	try {
     		//attribute specific config
-    		config = null != valConfig ?  valConfig.getConfig(prAttr.getName()) : null;
-    	} catch ( ConfigException.Missing ex) {
+    		config = valConfig.getConfig(prAttr.getName());
+    	} catch (ConfigException.Missing ex) {
     	}
     	
     	return null != config ? config :  valConfig;

@@ -9,7 +9,7 @@ case "$1" in
 "numStat")
 	echo "running NumericalAttrDistrStats"
 	CLASS_NAME=org.chombo.spark.explore.NumericalAttrDistrStats
-	INPUT=file:///Users/pranab/Projects/bin/chombo/input/nad/conv4.txt
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/nad/conv2.txt
 	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/nad
 	rm -rf ./output/nad
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \

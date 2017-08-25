@@ -60,4 +60,15 @@ public class MaxMissingFieldFilter extends BasePredicate {
 		// TODO Auto-generated method stub
 	}
 
+	@Override
+	public void build(int attribute, String operator, String value) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean evaluate(String field) {
+		return true;
+	}
+
 }
