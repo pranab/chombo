@@ -182,6 +182,7 @@ public class FunctionalDependencyAnalyzer  extends Configured implements Tool {
 			}
  		
     		stBld.delete(0, stBld.length());
+    		key.setDelim(fieldDelim);
 	       	stBld.append(key.toString()).append(fieldDelim);
 	    	for (String uniqueValue : uniqueValues) {
 	    		stBld.append(uniqueValue).append(fieldDelim);

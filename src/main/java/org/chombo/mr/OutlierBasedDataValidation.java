@@ -232,7 +232,7 @@ public class OutlierBasedDataValidation extends Configured implements Tool {
 					} 
 				} else {
 					//record
-					record = val. subTupleAsArray(1);
+					record = val.subTupleAsArray(1);
 				}
 			}
  		

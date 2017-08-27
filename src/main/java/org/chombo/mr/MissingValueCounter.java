@@ -253,6 +253,7 @@ public class MissingValueCounter extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
+    		key.setDelim(fieldDelim);
             if (operation.equals(OP_ROW)) {
             	count = Integer.MAX_VALUE - key.getInt(0);
         		//only if the count is above threshold if specified

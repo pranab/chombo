@@ -241,6 +241,7 @@ public class SeasonalDetector  extends Configured implements Tool {
          */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
+        	key.setDelim(fieldDelim);
     		sum = 0;
     		totalCount = 0;
     		for (Tuple val : values) {

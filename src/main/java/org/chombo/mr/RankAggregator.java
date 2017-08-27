@@ -166,6 +166,7 @@ public class RankAggregator extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
+    		key.setDelim(fieldDelim);
     		ranks.clear();
     		weights.clear();
     		stBld.delete(0, stBld.length());

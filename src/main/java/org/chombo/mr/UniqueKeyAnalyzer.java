@@ -131,6 +131,7 @@ public class UniqueKeyAnalyzer extends Configured implements Tool {
 	 	*/
 		protected void reduce(Tuple key, Iterable<IntWritable> values, Context context)
 				throws IOException, InterruptedException {
+			key.setDelim(fieldDelim);
 			count = 0;
 			for (IntWritable val : values) {
 				count += val.get();

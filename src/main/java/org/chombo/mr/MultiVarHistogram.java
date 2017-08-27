@@ -150,6 +150,7 @@ public class MultiVarHistogram extends Configured implements Tool {
     	protected void reduce(Tuple key, Iterable<IntWritable> values, Context context)
         	throws IOException, InterruptedException {
            	//System.out.println( "Reducer key size: " + key.getSize());
+    		key.setDelim(fieldDelim);
    		    sum = 0;
         	for (IntWritable value : values){
         		sum += value.get();

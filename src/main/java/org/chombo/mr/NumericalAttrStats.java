@@ -279,6 +279,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
+    		key.setDelim(fieldDelim);
     		processReduce(values);
     		emitOutput( key,  context);
     	}

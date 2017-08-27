@@ -209,6 +209,7 @@ public class SeasonalCycleFinder extends Configured implements Tool {
          */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
+        	key.setDelim(fieldDelim);
 			if (compactOutput) {
 				stBld.delete(0, stBld.length());
 				stBld.append(key.toString());
