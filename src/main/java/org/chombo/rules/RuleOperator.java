@@ -63,7 +63,7 @@ public class RuleOperator extends Operator {
 
 	@Override
 	public int getPrecedence() {
-		return this.IF_THEN_PREC;
+		return this.RULE_PREC;
 	}
 	
 }
