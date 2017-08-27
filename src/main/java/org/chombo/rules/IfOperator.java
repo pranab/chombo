@@ -34,8 +34,13 @@ public class IfOperator extends Operator{
 
 	@Override
 	public Object evaluate() {
-		// TODO Auto-generated method stub
-		return null;
+		if (children.size() != 1) {
+			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
+		}
+		
+		Expression child = children.get(0);
+		value = child.evaluate();
+		return value;
 	}
 
 	@Override

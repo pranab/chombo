@@ -17,6 +17,8 @@
 
 package org.chombo.rules;
 
+import org.chombo.util.BaseAttribute;
+
 /**
  * @author pranab
  *
@@ -34,8 +36,24 @@ public class OrOperator extends Operator{
 	
 	@Override
 	public Object evaluate() {
-		// TODO Auto-generated method stub
-		return null;
+		if (children.size() != 2) {
+			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
+		}
+		
+		Expression left = children.get(0);
+		Expression right = children.get(1);
+		Object leftVal = left.evaluate();
+		Object rightVal = right.evaluate();
+		
+		value = null;
+		if (left.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN) || right.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN)) {
+			value = (Boolean)leftVal && (Boolean)rightVal;
+		}
+		if (null == value) {
+			throw new IllegalStateException("failed evaluationfor or operator " + left.type + "  " + right.type);
+		}
+		
+		return value;
 	}
 
 	@Override

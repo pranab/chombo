@@ -33,6 +33,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_INT = "int";
 	public static final String DATA_TYPE_LONG = "long";
 	public static final String DATA_TYPE_DOUBLE = "double";
+	public static final String DATA_TYPE_BOOLEAN = "boolean";
 	public static final String DATA_TYPE_TEXT = "text";
 	public static final String DATA_TYPE_DATE = "date";
 	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";

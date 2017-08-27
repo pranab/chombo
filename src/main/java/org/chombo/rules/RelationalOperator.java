@@ -17,6 +17,12 @@
 
 package org.chombo.rules;
 
+import org.chombo.util.BaseAttribute;
+
+/**
+ * @author pranab
+ *
+ */
 public class RelationalOperator extends Operator {
 
 	/**
@@ -30,10 +36,132 @@ public class RelationalOperator extends Operator {
 	
 	@Override
 	public Object evaluate() {
-		// TODO Auto-generated method stub
-		return null;
+		if (children.size() != 2) {
+			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
+		}
+		
+		Expression left = children.get(0);
+		Expression right = children.get(1);
+		Object leftVal = left.evaluate();
+		Object rightVal = right.evaluate();
+		
+		value = null;
+		if (left.type.equals(BaseAttribute.DATA_TYPE_INT) && right.type.equals(BaseAttribute.DATA_TYPE_INT)) {
+			value = relOperator((Integer)leftVal, (Integer)rightVal, token);
+		} else if (left.type.equals(BaseAttribute.DATA_TYPE_DOUBLE) && right.type.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+			value = relOperator((Double)leftVal, (Double)rightVal, token);
+		} else if (left.type.equals(BaseAttribute.DATA_TYPE_INT) && right.type.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+			value = relOperator((Integer)leftVal, (Double)rightVal, token);
+		} else if (left.type.equals(BaseAttribute.DATA_TYPE_DOUBLE) && right.type.equals(BaseAttribute.DATA_TYPE_INT)) {
+			value = relOperator((Double)leftVal, (Integer)rightVal, token);
+		} else if (left.type.equals(BaseAttribute.DATA_TYPE_STRING) && right.type.equals(BaseAttribute.DATA_TYPE_STRING)) {
+			if (token.equals(EQUAL_TO_OP)) {
+				value = ((String)leftVal).equals((String)rightVal);
+			}
+		}
+		if (null == value) {
+			throw new IllegalStateException("failed evaluation for relational operator " + left.type + "  " + right.type + "  " + token);
+		}
+		type = promotedType = BaseAttribute.DATA_TYPE_BOOLEAN;
+		return value;
+	}
+	
+	/**
+	 * @param left
+	 * @param right
+	 * @param operator
+	 * @return
+	 */
+	private boolean relOperator(int left, int right, String operator) {
+		boolean result = false;
+		if (operator.equals(LESS_THAN_OP)) {
+			result = left < right;
+		} else if (operator.equals(LESS_THAN_EQUAL_TO_OP)) {
+			result = left <= right;
+		} else if (operator.equals(LESS_THAN_EQUAL_TO_OP)) {
+			result = left <= right;
+		} else if (operator.equals(GREATER_THAN_OP)) {
+			result = left > right;
+		} else if (operator.equals(GREATER_THAN_EQUAL_TO_OP)) {
+			result = left >= right;
+		} else if (operator.equals(EQUAL_TO_OP)) {
+			result = left == right;
+		}
+		return result;
 	}
 
+	/**
+	 * @param left
+	 * @param right
+	 * @param operator
+	 * @return
+	 */
+	private boolean relOperator(int left, double right, String operator) {
+		boolean result = false;
+		if (operator.equals(LESS_THAN_OP)) {
+			result = left < right;
+		} else if (operator.equals(LESS_THAN_EQUAL_TO_OP)) {
+			result = left <= right;
+		} else if (operator.equals(LESS_THAN_EQUAL_TO_OP)) {
+			result = left <= right;
+		} else if (operator.equals(GREATER_THAN_OP)) {
+			result = left > right;
+		} else if (operator.equals(GREATER_THAN_EQUAL_TO_OP)) {
+			result = left >= right;
+		} else if (operator.equals(EQUAL_TO_OP)) {
+			result = left == right;
+		}
+		return result;
+	}
+	
+	/**
+	 * @param left
+	 * @param right
+	 * @param operator
+	 * @return
+	 */
+	private boolean relOperator(double left, int right, String operator) {
+		boolean result = false;
+		if (operator.equals(LESS_THAN_OP)) {
+			result = left < right;
+		} else if (operator.equals(LESS_THAN_EQUAL_TO_OP)) {
+			result = left <= right;
+		} else if (operator.equals(LESS_THAN_EQUAL_TO_OP)) {
+			result = left <= right;
+		} else if (operator.equals(GREATER_THAN_OP)) {
+			result = left > right;
+		} else if (operator.equals(GREATER_THAN_EQUAL_TO_OP)) {
+			result = left >= right;
+		} else if (operator.equals(EQUAL_TO_OP)) {
+			result = left == right;
+		}
+		return result;
+	}
+	
+	/**
+	 * @param left
+	 * @param right
+	 * @param operator
+	 * @return
+	 */
+	private boolean relOperator(double left, double right, String operator) {
+		boolean result = false;
+		if (operator.equals(LESS_THAN_OP)) {
+			result = left < right;
+		} else if (operator.equals(LESS_THAN_EQUAL_TO_OP)) {
+			result = left <= right;
+		} else if (operator.equals(LESS_THAN_EQUAL_TO_OP)) {
+			result = left <= right;
+		} else if (operator.equals(GREATER_THAN_OP)) {
+			result = left > right;
+		} else if (operator.equals(GREATER_THAN_EQUAL_TO_OP)) {
+			result = left >= right;
+		} else if (operator.equals(EQUAL_TO_OP)) {
+			result = left == right;
+		}
+		return result;
+	}
+	
 	@Override
 	public int getPrecedence() {
 		return RELATIONAL_PREC;

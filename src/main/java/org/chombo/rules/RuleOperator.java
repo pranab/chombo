@@ -17,29 +17,43 @@
 
 package org.chombo.rules;
 
-/**
- * @author pranab
- *
- */
-public class ThenOperator extends Operator {
+import org.chombo.util.BaseAttribute;
+
+public class RuleOperator extends Operator {
 
 	/**
 	 * @param root
 	 * @param parent
 	 * @param token
 	 */
-	public ThenOperator(Expression root, Expression parent, String token) {
+	public RuleOperator(Expression root, Expression parent, String token) {
 		super(root,  parent,  token);
 	}
-	
+
 	@Override
 	public Object evaluate() {
-		if (children.size() != 1) {
+		if (children.size() != 2) {
 			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
 		}
 		
-		Expression child = children.get(0);
-		value = child.evaluate();
+		Expression left = children.get(0);
+		Expression right = children.get(1);
+		Object leftVal = left.evaluate();
+		Object rightVal = right.evaluate();
+		
+		value = null;
+		if (left.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN) && right.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN)) {
+			boolean ifVal = (Boolean)leftVal;
+			boolean thenVal = (Boolean)rightVal;
+			if (ifVal) {
+				value = thenVal;
+			} else {
+				value = Boolean.TRUE;
+			}
+		}
+		if (null == value) {
+			throw new IllegalStateException("failed evaluation for and operator " + left.type + "  " + right.type);
+		}
 		return value;
 	}
 
