@@ -19,6 +19,10 @@ package org.chombo.rules;
 
 import org.chombo.util.BaseAttribute;
 
+/**
+ * @author pranab
+ *
+ */
 public class RuleOperator extends Operator {
 
 	/**
