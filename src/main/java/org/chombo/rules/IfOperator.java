@@ -17,6 +17,8 @@
 
 package org.chombo.rules;
 
+import org.chombo.util.BaseAttribute;
+
 /**
  * @author pranab
  *
@@ -35,11 +37,17 @@ public class IfOperator extends Operator{
 	@Override
 	public Object evaluate() {
 		if (children.size() != 1) {
-			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
+			throw new IllegalStateException("unary operator has invalid number of operands " + children.size());
 		}
 		
 		Expression child = children.get(0);
-		value = child.evaluate();
+		Object childVal = child.evaluate();
+		if (child.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN)) {
+			value = childVal;
+		}
+		if (null == value) {
+			throw new IllegalStateException("failed evaluation for if operator " + child.type);
+		}
 		return value;
 	}
 

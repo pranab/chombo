@@ -36,28 +36,42 @@ public class RuleOperator extends Operator {
 
 	@Override
 	public Object evaluate() {
-		if (children.size() != 2) {
-			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
+		if (children.size() != 1 || children.size() != 2) {
+			throw new IllegalStateException("rule operator has invalid number of operands " + children.size());
 		}
-		
-		Expression left = children.get(0);
-		Expression right = children.get(1);
-		Object leftVal = left.evaluate();
-		Object rightVal = right.evaluate();
-		
 		value = null;
-		if (left.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN) && right.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN)) {
-			boolean ifVal = (Boolean)leftVal;
-			boolean thenVal = (Boolean)rightVal;
-			if (ifVal) {
-				value = thenVal;
-			} else {
-				value = Boolean.TRUE;
+		
+		if (children.size() == 2) {
+			//if then rule
+			Expression left = children.get(0);
+			Expression right = children.get(1);
+			Object leftVal = left.evaluate();
+			Object rightVal = right.evaluate();
+			
+			if (left.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN) && right.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN)) {
+				boolean ifVal = (Boolean)leftVal;
+				boolean thenVal = (Boolean)rightVal;
+				if (ifVal) {
+					value = thenVal;
+				} else {
+					value = Boolean.TRUE;
+				}
+			}
+			if (null == value) {
+				throw new IllegalStateException("failed evaluation for rule operator " + left.type + "  " + right.type);
+			}
+		} else if (children.size() == 1) {
+			//just expression
+			Expression child = children.get(0);
+			Object childVal = child.evaluate();
+			if (child.type.equals(BaseAttribute.DATA_TYPE_BOOLEAN)) {
+				value = childVal;
+			}
+			if (null == value) {
+				throw new IllegalStateException("failed evaluation for rule operator " + child.type );
 			}
 		}
-		if (null == value) {
-			throw new IllegalStateException("failed evaluation for and operator " + left.type + "  " + right.type);
-		}
+		
 		return value;
 	}
 
