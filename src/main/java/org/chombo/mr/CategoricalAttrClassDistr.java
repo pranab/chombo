@@ -202,6 +202,7 @@ public class CategoricalAttrClassDistr extends Configured implements Tool {
 				}
 			}
 			stBld.delete(0, stBld.length());
+			key.setDelim(fieldDelim);
 			stBld.append(key.toString()).append(fieldDelim).append(histogram.toString());
 			outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);

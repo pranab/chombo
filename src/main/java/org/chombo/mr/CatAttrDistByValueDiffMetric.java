@@ -186,6 +186,7 @@ public class CatAttrDistByValueDiffMetric extends Configured implements Tool {
 					
 					//emit
 					stBld.delete(0, stBld.length());
+					key.setDelim(fieldDelim);
 					stBld.append(key.toString()).append(fieldDelim).append(firstVal).
 						append(fieldDelim).append(secondVal).append(BasicUtils.formatDouble(dist, outputPrecision));
 					outVal.set(stBld.toString());

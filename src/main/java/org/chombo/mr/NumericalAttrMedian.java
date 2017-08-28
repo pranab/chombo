@@ -235,6 +235,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
 		 */
 		protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
      	throws IOException, InterruptedException {
+			key.setDelim(fieldDelim);
 			totalCount = 0;
 			histogram.clear();
 			stBld.delete(0, stBld.length());

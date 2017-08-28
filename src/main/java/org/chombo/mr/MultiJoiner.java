@@ -199,6 +199,7 @@ public class MultiJoiner extends Configured implements Tool {
          */
         protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
+        	key.setDelim(fieldDelimOut);
         	projectedFields.clear();
         	int lastSplitIndex = 0;
         	missingJoin  = false;

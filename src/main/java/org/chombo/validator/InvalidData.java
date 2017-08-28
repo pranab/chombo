@@ -33,6 +33,7 @@ public class InvalidData implements Serializable {
 	private String record;
 	private Map<Integer, List<String>> invalidFields  = new HashMap<Integer, List<String>>();
 	private List<String> invalidRow = new ArrayList<String>();
+	private boolean outputValidationFailures = true;
 	
 	/**
 	 * @param record
@@ -43,23 +44,36 @@ public class InvalidData implements Serializable {
 	}
 	
 	/**
+	 * @param record
+	 * @param outputValidationFailures
+	 */
+	public InvalidData(String record, boolean outputValidationFailures) {
+		this(record);
+		this.outputValidationFailures = outputValidationFailures;
+	}
+
+	/**
 	 * @param ordinal
 	 * @param validationType
 	 */
 	public void addValidationFailure(int ordinal, String validationType) {
-		List<String> validationTypes = invalidFields.get(ordinal);
-		if (null == validationTypes) {
-			validationTypes = new ArrayList<String>();
-			invalidFields.put(ordinal, validationTypes);
+		if (outputValidationFailures) {
+			List<String> validationTypes = invalidFields.get(ordinal);
+			if (null == validationTypes) {
+				validationTypes = new ArrayList<String>();
+				invalidFields.put(ordinal, validationTypes);
+			}
+			validationTypes.add(validationType);
 		}
-		validationTypes.add(validationType);
 	}
 
 	/**
 	 * @param validationType
 	 */
 	public void addRowValidationFailure(String validationType) {
-		invalidRow.add(validationType);
+		if (outputValidationFailures) {
+			invalidRow.add(validationType);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -67,26 +81,29 @@ public class InvalidData implements Serializable {
 	 */
 	public String toString() {
 		StringBuilder stBld = new StringBuilder();
-		stBld.append(record).append("\n");
+		stBld.append(record);
 		
-		//field validator
-		for (int ord : invalidFields.keySet()) {
-			stBld.append("field failed validations:" + ord).append("\n");
-			for (String valType : invalidFields.get(ord)) {
-				stBld.append(valType).append("  ");
-			}
+		if (outputValidationFailures) {
 			stBld.append("\n");
-		}
-		
-		//row validator
-		if (!invalidRow.isEmpty()) {
-			stBld.append("row failed validations:");
-			for (String valType : invalidRow) {
-				stBld.append(valType).append("  ");
+			
+			//field validator
+			for (int ord : invalidFields.keySet()) {
+				stBld.append("field failed validations:" + ord).append("\n");
+				for (String valType : invalidFields.get(ord)) {
+					stBld.append(valType).append("  ");
+				}
+				stBld.append("\n");
 			}
-			stBld.append("\n");
+			
+			//row validator
+			if (!invalidRow.isEmpty()) {
+				stBld.append("row failed validations:");
+				for (String valType : invalidRow) {
+					stBld.append(valType).append("  ");
+				}
+				stBld.append("\n");
+			}
 		}
-		
 		
 		return stBld.toString();
 	}

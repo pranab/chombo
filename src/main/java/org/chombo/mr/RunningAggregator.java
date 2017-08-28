@@ -190,6 +190,7 @@ public class RunningAggregator  extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
+    		key.setDelim(fieldDelim);
     		runningStats.clear();
     		recCount = 0;
     		for (Tuple val : values) {

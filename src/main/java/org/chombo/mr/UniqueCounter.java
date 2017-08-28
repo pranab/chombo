@@ -204,6 +204,7 @@ public class UniqueCounter  extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
+    		key.setDelim(fieldDelim);
     		dupRemover.initialize();
     		for (Tuple val : values) {
     			for (int i = 0; i < val.getSize(); ++i) {

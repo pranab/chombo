@@ -204,6 +204,7 @@ public class Normalizer extends Configured implements Tool {
     	 */
     	protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         	throws IOException, InterruptedException {
+    		key.setDelim(fieldDelim);
     		if (key.getInt(0) == 0) {
     			//aggregate stats
 	        	for (Tuple value : values){
