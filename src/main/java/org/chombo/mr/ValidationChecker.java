@@ -103,6 +103,7 @@ public class ValidationChecker extends Configured implements Tool {
         private NumericalAttrStatsManager statsManager;
         private ProcessorAttributeSchema validationSchema;      
         private List<Validator> rowValidators = new ArrayList<Validator>();
+        private boolean outputValidationFailures;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -113,6 +114,7 @@ public class ValidationChecker extends Configured implements Tool {
         	fieldDelimOut = config.get("field.delim", ",");
         	filterInvalidRecords = config.getBoolean("vac.filter.invalid.records", true);
         	invalidDataFilePath = config.get("vac.invalid.data.file.path");
+        	outputValidationFailures = config.getBoolean("vac.output.validation.failures", true);
 
            	//record id
         	idOrdinals = Utility.intArrayFromString(config.get("vac.id.field.ordinals"), fieldDelimRegex);
@@ -128,6 +130,7 @@ public class ValidationChecker extends Configured implements Tool {
 
         	//build validator objects
             int[] ordinals  = validationSchema.getAttributeOrdinals();
+            
 
             //validators cpnfig prop file 
             boolean validatorInPropConfig = config.getBoolean("vac.validator.config.present", true);
@@ -309,7 +312,7 @@ public class ValidationChecker extends Configured implements Tool {
             			}
             			if (!valid) {
             				if (null == invalidData) {
-            					invalidData = new InvalidData(value.toString());
+            					invalidData = new InvalidData(value.toString(), outputValidationFailures);
             					invalidDataList.add(invalidData);
             				}
             				invalidData.addValidationFailure(i, validator.getTag());
@@ -323,7 +326,7 @@ public class ValidationChecker extends Configured implements Tool {
             	valid = validator.isValid(value.toString());
             	if (!valid) {
 					if (null == invalidData) {
-						invalidData = new InvalidData(value.toString());
+						invalidData = new InvalidData(value.toString(), outputValidationFailures);
 						invalidDataList.add(invalidData);
 					}
 					invalidData.addRowValidationFailure(validator.getTag());
