@@ -299,6 +299,7 @@ public class RecordSimilarity extends Configured implements Tool {
 		        			dist  = recDistance.findScaledDistance(first, second);
 		        			if (dist <= distThreshold) {
 		        				outVal.set(createValueField(first, second));
+		        				context.write(NullWritable.get(), outVal);
 		        			}
 	            		}
 	        		}

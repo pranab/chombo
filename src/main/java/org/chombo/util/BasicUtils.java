@@ -1720,13 +1720,23 @@ public class BasicUtils {
 	public static <T> void arrayCopy(T[] src, int srcBeg, int srcEnd, T[] dest, int destbeg) {
 		//end index is exclusive
 		int copySize = srcEnd - srcBeg;
-		if (copySize > 0 && dest.length >= copySize)  {
+		if (copySize > 0 && dest.length >= copySize + destbeg)  {
 			for (int i = 0; i < copySize; ++i) {
 				dest[destbeg + i] = src[srcBeg + i];
 			}
 		} else {
 			throw new IllegalStateException("destination array too small or invalid array index");
 		}
+	}
+	
+	/**
+	 * @param src
+	 * @param srcBeg
+	 * @param srcEnd
+	 * @param dest
+	 */
+	public static <T> void arrayCopy(T[] src, int srcBeg, int srcEnd, T[] dest) {
+		arrayCopy(src, srcBeg, srcEnd, dest, 0);
 	}
 	
 	/**

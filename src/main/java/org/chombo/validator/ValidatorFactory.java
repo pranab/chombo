@@ -121,7 +121,7 @@ public class ValidatorFactory {
 	 * @param validatorContext
 	 * @return
 	 */
-	public static Validator create(String validatorType, Map<String, Object> validatorContext) {
+	public static Validator create(String validatorType, Map<String, Object> validatorContext, String fieldDelim) {
 		Validator validator = null;
 		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorContext);
@@ -130,6 +130,7 @@ public class ValidatorFactory {
 		}else {
 			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
 		}
+		validator.setFieldDelim(fieldDelim);
 		return validator;
 	}
 	
@@ -139,7 +140,7 @@ public class ValidatorFactory {
 	 * @param validatorConfig
 	 * @return
 	 */
-	public static Validator create(String validatorType,  Config validatorConfig) {
+	public static Validator create(String validatorType,  Config validatorConfig, String fieldDelim) {
 		Validator validator = null;
 		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
@@ -148,6 +149,7 @@ public class ValidatorFactory {
 		} else {
 			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
 		}
+		validator.setFieldDelim(fieldDelim);
 		return validator;
 	}
 	
