@@ -82,13 +82,12 @@ public class InvalidData implements Serializable {
 	public String toString() {
 		StringBuilder stBld = new StringBuilder();
 		stBld.append(record);
+		stBld.append("\n");
 		
 		if (outputValidationFailures) {
-			stBld.append("\n");
-			
 			//field validator
 			for (int ord : invalidFields.keySet()) {
-				stBld.append("field failed validations:" + ord).append("\n");
+				stBld.append("field level failed validations for field:" + ord).append("\n");
 				for (String valType : invalidFields.get(ord)) {
 					stBld.append(valType).append("  ");
 				}
@@ -97,13 +96,13 @@ public class InvalidData implements Serializable {
 			
 			//row validator
 			if (!invalidRow.isEmpty()) {
-				stBld.append("row failed validations:");
+				stBld.append("row level failed validations:").append("\n");
 				for (String valType : invalidRow) {
 					stBld.append(valType).append("  ");
 				}
 				stBld.append("\n");
 			}
-		}
+		} 
 		
 		return stBld.toString();
 	}

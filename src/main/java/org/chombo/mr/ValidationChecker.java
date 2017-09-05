@@ -212,10 +212,10 @@ public class ValidationChecker extends Configured implements Tool {
         	for (String valTag : valTags) {
         		if (null == validatorConfig) {
         			createRowValidatorContext(config, valTag);
-        			validator = ValidatorFactory.create(valTag, validatorContext);
+        			validator = ValidatorFactory.create(valTag, validatorContext, fieldDelimRegex);
         		} else {
         			Config thisValidatorConfig = validatorConfig.getConfig(valTag);
-        			validator = ValidatorFactory.create(valTag, thisValidatorConfig);
+        			validator = ValidatorFactory.create(valTag, thisValidatorConfig, fieldDelimRegex);
         		}
         		
         		rowValidators.add(validator);
@@ -310,6 +310,8 @@ public class ValidationChecker extends Configured implements Tool {
             				//pass only field
             				valid = validator.isValid(fieldValue);
             			}
+            			
+            			//track invalid records
             			if (!valid) {
             				if (null == invalidData) {
             					invalidData = new InvalidData(value.toString(), outputValidationFailures);

@@ -52,7 +52,7 @@ public class GenericValidator {
 	 * @author pranab
 	 *
 	 */
-	public static class NotMissingGroupValidator extends Validator {
+	public static class NotMissingGroupValidator extends Validator implements RowValidator{
 		private List<int[]> fieldGroups;
 		
 		public NotMissingGroupValidator(String tag,Map<String, Object> validatorContext) {
@@ -176,7 +176,7 @@ public class GenericValidator {
 	 * @author pranab
 	 *
 	 */
-	public static class ValueDependencyValidator extends Validator {
+	public static class ValueDependencyValidator extends Validator implements RowValidator {
 		private List<ValueDependency> valueDependencies = new ArrayList<ValueDependency>();
 		
 		public ValueDependencyValidator(String tag,Config validatorConfig) {
