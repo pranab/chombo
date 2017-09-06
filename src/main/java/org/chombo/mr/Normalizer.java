@@ -96,6 +96,11 @@ public class Normalizer extends Configured implements Tool {
         private Map<Integer, Stats> fieldStats = new HashMap<Integer, Stats>();
         private int fieldOrd;
         private Stats stats;
+        private String idStrategy;
+        private int[] idOrdinals;
+        private final String ID_STARTEGY_DEFAULT = "default";
+        private final String ID_STARTEGY_SPECIFIED = "specified";
+        private final String ID_STARTEGY_GENERATE = "generate";
         
         @Override
         protected void setup(Context context) throws IOException, InterruptedException {
@@ -106,16 +111,25 @@ public class Normalizer extends Configured implements Tool {
         			"missing numerical attribute ordinals");
         	getAttributeProperties(numAttributes,attributeProperties, config);
         	
+        	//initialize stats
         	for (int ord : attributeProperties.keySet()) {
         		fieldStats.put(ord, new Stats());
+        	}
+        	
+        	//record ID
+        	idStrategy = config.get("nor.id.strategy", ID_STARTEGY_DEFAULT);
+        	if (idStrategy.equals(ID_STARTEGY_SPECIFIED)) {
+            	idOrdinals = Utility.assertIntArrayConfigParam(config, "nor.id.field.ordinals", Utility.configDelim, 
+            			"missing id field ordinals");
         	}
         }
         
         @Override
         protected void cleanup(Context context) throws IOException, InterruptedException {
-        	//reduce will the stats first and then the data rows
+        	//reducer will process the stats first and then the data rows
             outKey.initialize();
             outKey.add(0, STATS_KEY);
+            
         	for (int ord : fieldStats.keySet()) {
         		outVal.initialize();
         		outVal.add(ord);
@@ -131,22 +145,42 @@ public class Normalizer extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             items  =  value.toString().split(fieldDelimRegex, -1);
+            
             outKey.initialize();
-            outKey.add(1, items[ID_ORD]);
+            outKey.add(1, getKey());
             
             outVal.initialize();
-            for (int i = 1; i < items.length; ++i) {
+            for (int i = 0; i < items.length; ++i) {
             	fieldOrd = i;
             	stats = fieldStats.get(fieldOrd);
             	if (null != stats) {
-            		//numeric
+            		//configured numeric fields only
             		stats.add(Double.parseDouble(items[fieldOrd]));
             	} 
             	outVal.add(items[fieldOrd]);
-            	
             }
+            
 			context.write(outKey, outVal);
         }
+        
+        /**
+         * @return
+         */
+        private String getKey() {
+        	String key = null;
+        	if (idStrategy.equals(ID_STARTEGY_DEFAULT)) {
+        		key = items[ID_ORD];
+        	} else if (idStrategy.equals(ID_STARTEGY_SPECIFIED)) {
+        		key = BasicUtils.extractFields(items, idOrdinals, fieldDelimRegex);
+        	} else if (idStrategy.equals(ID_STARTEGY_GENERATE)) {
+        		key = BasicUtils.generateId();
+        	} else {
+        		throw new IllegalStateException("invalid record Id strtaegy");
+        	}
+        	
+        	return key;
+        }
+        
 	}
 	
     /**
@@ -169,6 +203,7 @@ public class Normalizer extends Configured implements Tool {
         private int precision;
         private int ordinal;
 		private StringBuilder stBld = new StringBuilder();
+		private boolean forceUnitRange;
 		private static final String NORM_MIN_MAX = "minmax";
 		private static final String NORM_ZSCORE = "zscore";
 		private static final String NORM_CENTER = "center";
@@ -197,6 +232,9 @@ public class Normalizer extends Configured implements Tool {
         		stats.transformer = attrProp.getRight();
         		fieldStats.put(ord, stats);
         	}
+        	
+        	//for z score normalized force e most values to have unit range
+        	forceUnitRange = config.getBoolean("nor.force.unit.range", true);
         }
         
     	/* (non-Javadoc)
@@ -224,11 +262,12 @@ public class Normalizer extends Configured implements Tool {
     			//records
 	        	for (Tuple value : values){
 	        		stBld.delete(0, stBld.length());
-        			stBld.append(key.getString(1));
 	        		excluded = false;
+	        		
+	        		//all fields
 	        		for (int i = 0; i < value.getSize(); ++i) {
 	        			excluded = false;
-	        			ordinal = i + 1;
+	        			ordinal = i;
 	        			stats= fieldStats.get(ordinal);
 	        			if (null != stats) {
 	        				//numeric
@@ -236,16 +275,16 @@ public class Normalizer extends Configured implements Tool {
 	        				if (excluded) {
 	        					break;
 	        				} else {
-	        					stBld.append(fieldDelim).append(formattedTypedValue(ordinal));
+	        					stBld.append(formattedTypedValue(ordinal)).append(fieldDelim);
 	        				}
 	        			} else {
-        					//other types
-        					stBld.append(fieldDelim).append(value.getString(i));
+        					//pass through for other types
+        					stBld.append(value.getString(i)).append(fieldDelim);
 	        			}
 	        		}
 	        		
 	        		if (!excluded) {
-	        			outVal.set(stBld.toString());
+	        			outVal.set(stBld.substring(0, stBld.length() -1));
 	        			context.write(NullWritable.get(), outVal);
 	        		}
 	        	}    	
@@ -277,13 +316,20 @@ public class Normalizer extends Configured implements Tool {
     			double temp = (value - stats.mean) / stats.stdDev;
     			if (outlierTruncationLevel > 0) {
     				if (Math.abs(temp) > outlierTruncationLevel) {
+    					//exclude outlier
     					excluded = true;
     				} else {
     					//keep bounded between -.5 * scale and .5 * scale
     					temp /= outlierTruncationLevel;
     				}
     			}
-    			normalizedValue = temp * stats.scale / 2;
+    			
+				normalizedValue = temp * stats.scale;
+				
+    			//force most values between +0.5 and -0.5
+    			if (forceUnitRange) {
+    				normalizedValue /= 2;
+    			}
     		} else {
     			throw new IllegalStateException("invalid normalization strategy");
     		}
