@@ -263,6 +263,8 @@ public class Joiner extends Configured implements Tool {
 	         */
 	        private void setOutValue(TextInt key, Tuple firstType, Tuple secondType) {
 				stBld.delete(0, stBld.length());
+				firstType.setDelim(fieldDelimOut);
+				secondType.setDelim(fieldDelimOut);
 				
 				if (outputKeyAtBeg) {
 					stBld.append(key.getFirst()).append(fieldDelimOut);
