@@ -115,10 +115,12 @@ public class RecordSimilarity extends Configured implements Tool {
         	
         	//inter set matching
        	 	interSetMatching = config.getBoolean("resi.inter.set.matching",  false);
-       	 	String baseSetSplitPrefix = config.get("resi.base.set.split.prefix", "base");
-       	 	isBaseSetSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(baseSetSplitPrefix);
-       	 	
-       	
+       	 	if (interSetMatching) {
+       	 		//String baseSetSplitPrefix = config.get("resi.base.set.split.prefix", "base");
+       	 		String baseSetSplitPrefix = Utility.assertStringConfigParam(config, "resi.base.set.split.prefix", 
+       	 				"missing base split prefix");
+       	 		isBaseSetSplit = ((FileSplit)context.getInputSplit()).getPath().getName().startsWith(baseSetSplitPrefix);
+       	 	}
         }
         
         @Override
@@ -208,15 +210,20 @@ public class RecordSimilarity extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
-        	outputPrecision = config.getInt("cacd.output.precision", 3);
+        	outputPrecision = config.getInt("resi.output.precision", 3);
         	
-        	//inter record distance finer
+        	//schema
         	String shemaPath = Utility.assertStringConfigParam(config, "resi.schema.path", "missing shema file path");
         	GenericAttributeSchema schema = BasicUtils.getGenericAttributeSchema(shemaPath);
+        	
+        	//distance calculation related schema
         	String distSchemaPath = Utility.assertStringConfigParam(config, "resi.dist.schema.path", "missing distance shema file path");
         	AttributeDistanceSchema distSchema = BasicUtils.getDistanceSchema(distSchemaPath);
+
+        	//inter record distance finder
         	recDistance = new InterRecordDistance(schema,distSchema,fieldDelim);
         	
+        	//id
             idOrdinal = schema.getIdField().getOrdinal();
             
             //scale
@@ -224,15 +231,13 @@ public class RecordSimilarity extends Configured implements Tool {
         	recDistance.withScale(scale);
         	
         	//faceted fields
-        	String facetedFieldValues =  config.get("resi.faceted.field.ordinal");
-        	if (!StringUtils.isBlank(facetedFieldValues)) {
-        		int[] facetedFields = Utility.intArrayFromString(facetedFieldValues);
+        	int[] facetedFields = Utility.intArrayFromString(config, "resi.faceted.field.ordinal", Utility.configDelim);
+        	if (null != facetedFields) {
         		recDistance.withFacetedFields(facetedFields);
         	}
 
         	//output ID first
-        	outputIdFirst =   config.getBoolean("sts.output.id.first", true);      	
-        	
+        	outputIdFirst =   config.getBoolean("resi.output.id.first", true);      	
         	
         	//double range
         	boolean doubleRange = config.getBoolean("resi.double.range", false);
@@ -242,13 +247,14 @@ public class RecordSimilarity extends Configured implements Tool {
         	boolean categoricalSet = config.getBoolean("resi.categorical.set", false);
         	recDistance.withCategoricalSet(categoricalSet);
         	
-        	subFieldDelim = config.get("sts.sub.field.delim.regex", "::");
+        	//sub fields
+        	subFieldDelim = config.get("resi.sub.field.delim.regex", "::");
         	
         	//distance threshold for output
-        	distThreshold = config.getInt("sts.dist.threshold", scale);
+        	distThreshold = config.getInt("resi.dist.threshold", scale);
         	
         	//output whole record
-        	outputRecord =  config.getBoolean("sts.output.record", false);     
+        	outputRecord =  config.getBoolean("resi.output.record", false);     
 		}
 		
 		/* (non-Javadoc)
@@ -323,8 +329,6 @@ public class RecordSimilarity extends Configured implements Tool {
         	stBld.append(dist);
         	return stBld.toString();
         }
-		
-		
 	}	
 	
 	/**

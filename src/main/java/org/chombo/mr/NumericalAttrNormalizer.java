@@ -44,6 +44,11 @@ import org.chombo.util.ProcessorAttributeSchema;
 import org.chombo.util.Utility;
 import org.codehaus.jackson.map.ObjectMapper;
 
+/**
+ * Normalized data using stats output from another map reduce
+ * @author pranab
+ *
+ */
 public class NumericalAttrNormalizer extends Configured implements Tool {
 
 	@Override

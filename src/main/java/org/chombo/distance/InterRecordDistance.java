@@ -171,7 +171,7 @@ public class InterRecordDistance implements Serializable {
 	 * @return
 	 * @throws IOException 
 	 */
-	public double findDistance(String[] firstRec, String[] secondRec, int fieldOrd ) throws IOException {
+	public double findDistance(String[] firstRec, String[] secondRec, int fieldOrd) throws IOException {
 		this.fieldOrd = fieldOrd;
 		return findDistance(secondRec[fieldOrd], secondRec[fieldOrd]);
 	}	
@@ -182,7 +182,7 @@ public class InterRecordDistance implements Serializable {
 	 * @return
 	 * @throws IOException 
 	 */
-	public double findDistance(String  first, String second ) throws IOException {
+	public double findDistance(String  first, String second) throws IOException {
 		String[] firstItems = first.split(fieldDelim);
 		String[] secondItems = second.split(fieldDelim);
 		return findDistance(firstItems, secondItems );
@@ -194,7 +194,7 @@ public class InterRecordDistance implements Serializable {
 	 * @return
 	 * @throws IOException 
 	 */
-	public double findDistance(String[]  firstItems, String[]  secondItems ) throws IOException {
+	public double findDistance(String[]  firstItems, String[]  secondItems) throws IOException {
 		this.firstItems =firstItems;
 		this.secondItems = secondItems;
 		double recDist = 0;
@@ -249,7 +249,7 @@ public class InterRecordDistance implements Serializable {
 			attrDistances.put(ordinal, dist);
 		}
 		
-		//aggregate
+		//aggregate distance, different groups of attributes can be aggregated by different algorithms
 		double sumDist = 0;
 		double sumWeight = 0;
 		for (AttributeDistanceAggregator aggregator :  attrDistSchema.getAttrAggregators()) {
