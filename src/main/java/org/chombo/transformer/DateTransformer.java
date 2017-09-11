@@ -182,6 +182,7 @@ public class DateTransformer  {
 		private long refTime;
 		private String timeUnit;
 		private boolean failOnInvalid;
+		private boolean refTimeAlwaysBehind;
 		
 		/**
 		 * @param prAttr
@@ -191,7 +192,8 @@ public class DateTransformer  {
 			super(prAttr.getTargetFieldOrdinals().length);
 			String refDateStr = config.hasPath("refDateStr")? config.getString("refDateStr") :  null;
 			intialize(config.getString("dateFormat"), config.getString("timeZone"),
-					config.getString("timeUnit"), config.getBoolean("failOnInvalid"), refDateStr);
+					config.getString("timeUnit"), config.getBoolean("failOnInvalid"), 
+					config.getBoolean("refTimeAlwaysBehind"), refDateStr);
 		}
 		
 		/**
@@ -200,9 +202,9 @@ public class DateTransformer  {
 		 * @param failOnInvalid
 		 */
 		public ElapsedTimeTransformer(String dateFormat, String timeZone, String timeUnit, boolean failOnInvalid, 
-			String refDateStr) {
+			boolean refTimeAlwaysBehind, String refDateStr) {
 			super(1);
-			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid, refDateStr);
+			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid, refTimeAlwaysBehind, refDateStr);
 		}
 
 		/**
@@ -211,7 +213,7 @@ public class DateTransformer  {
 		 * @param failOnInvalid
 		 */
 		private void intialize(String dateFormatStr, String timeZone, String timeUnit, boolean failOnInvalid, 
-			String refDateStr) {
+				boolean refTimeAlwaysBehind, String refDateStr) {
 			try {
 				if (dateFormatStr.equals("epochTime")) {
 					epochTime = true;
@@ -234,6 +236,7 @@ public class DateTransformer  {
 					refTime = System.currentTimeMillis();
 				}
 				this.timeUnit = timeUnit;
+				this.refTimeAlwaysBehind = refTimeAlwaysBehind;
 			} catch (ParseException ex) {
 				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
 			}
@@ -253,7 +256,7 @@ public class DateTransformer  {
 					//epoch time
 					time = Long.parseLong(value);
 				}
-				if (time > refTime) {
+				if (!refTimeAlwaysBehind || time > refTime) {
 					elapsed = time - refTime;
 					elapsed = BasicUtils.convertTimeUnit(elapsed, timeUnit);
 					transformed[0] =  "" + elapsed;
@@ -283,6 +286,7 @@ public class DateTransformer  {
 		private boolean failOnInvalid;
 		private SimpleDateFormat dateFormat;
 		private int refDateFieldOrdinal;
+		private boolean refTimeAlwaysBehind;
 		
 		/**
 		 * @param prAttr
@@ -292,7 +296,7 @@ public class DateTransformer  {
 			super(prAttr.getTargetFieldOrdinals().length);
 			refDateFieldOrdinal = config.getInt("refDateFieldOrdinal");
 			intialize(config.getString("dateFormat"), config.getString("timeZone"),
-					config.getString("timeUnit"), config.getBoolean("failOnInvalid"));
+					config.getString("timeUnit"), config.getBoolean("failOnInvalid"), config.getBoolean("refTimeAlwaysBehind"));
 
 		}
 		
@@ -302,9 +306,10 @@ public class DateTransformer  {
 		 * @param timeUnit
 		 * @param failOnInvalid
 		 */
-		public ContextualElapsedTimeTransformer(String dateFormat, String timeZone, String timeUnit, boolean failOnInvalid) {
+		public ContextualElapsedTimeTransformer(String dateFormat, String timeZone, String timeUnit, boolean failOnInvalid,
+				boolean refTimeAlwaysBehind) {
 			super(1);
-			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid);
+			intialize(dateFormat,  timeZone, timeUnit, failOnInvalid, refTimeAlwaysBehind);
 		}
 
 		/**
@@ -313,7 +318,8 @@ public class DateTransformer  {
 		 * @param timeUnit
 		 * @param failOnInvalid
 		 */
-		private void intialize(String dateFormatStr, String timeZone, String timeUnit, boolean failOnInvalid) {
+		private void intialize(String dateFormatStr, String timeZone, String timeUnit, boolean failOnInvalid, 
+				boolean refTimeAlwaysBehind) {
 			if (dateFormatStr.equals("epochTime")) {
 				epochTime = true;
 			} else  {
@@ -323,6 +329,7 @@ public class DateTransformer  {
 				}
 			}
 			this.timeUnit = timeUnit;
+			this.refTimeAlwaysBehind = refTimeAlwaysBehind;
 		}
 		
 		@Override
@@ -353,7 +360,7 @@ public class DateTransformer  {
 					//epoch time
 					time = Long.parseLong(value);
 				}
-				if (time > refTime) {
+				if (!refTimeAlwaysBehind || time > refTime) {
 					elapsed = time - refTime;
 					elapsed = BasicUtils.convertTimeUnit(elapsed, timeUnit);
 					transformed[0] =  "" + elapsed;
