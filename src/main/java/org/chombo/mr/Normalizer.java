@@ -372,7 +372,7 @@ public class Normalizer extends Configured implements Tool {
     		if (null == value) {
     			throw new IllegalStateException("missing attribute properties");
     		}
-    		String[] parts = value.split(Utility.configDelim);
+    		String[] parts = value.split(Utility.configSubFieldDelim);
     		Triplet<String, Integer, String> attributeProp = null;
     		if (parts.length == 2) {
     			//data type, scale
