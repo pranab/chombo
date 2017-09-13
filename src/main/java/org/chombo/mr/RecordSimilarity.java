@@ -18,10 +18,10 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -38,6 +38,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.distance.AttributeDistanceSchema;
 import org.chombo.distance.InterRecordDistance;
+import org.chombo.util.Attribute;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.GenericAttributeSchema;
 import org.chombo.util.Tuple;
@@ -108,9 +109,12 @@ public class RecordSimilarity extends Configured implements Tool {
         	
         	//schema
         	String shemaPath = Utility.assertStringConfigParam(config, "resi.schema.path", "missing shema file path");
-        	schema = BasicUtils.getGenericAttributeSchema(shemaPath);
+        	InputStream inStr = Utility.getFileStream(shemaPath);
+        	schema = BasicUtils.getGenericAttributeSchema(inStr);
         	
-        	partitonOrdinal = schema.getPartitionField().getOrdinal();
+        	//partiton and ID  column ordinal
+        	Attribute partField =  schema.getPartitionField();
+        	partitonOrdinal = null  !=  partField ? partField.getOrdinal() : -1;
         	idOrdinal = schema.getIdField().getOrdinal();
         	
         	//inter set matching
@@ -209,16 +213,19 @@ public class RecordSimilarity extends Configured implements Tool {
 		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
 			fieldDelim = config.get("field.delim.out", ",");
         	outputPrecision = config.getInt("resi.output.precision", 3);
         	
         	//schema
         	String shemaPath = Utility.assertStringConfigParam(config, "resi.schema.path", "missing shema file path");
-        	GenericAttributeSchema schema = BasicUtils.getGenericAttributeSchema(shemaPath);
+        	InputStream inStr = Utility.getFileStream(shemaPath);
+        	GenericAttributeSchema schema = BasicUtils.getGenericAttributeSchema(inStr);
         	
         	//distance calculation related schema
         	String distSchemaPath = Utility.assertStringConfigParam(config, "resi.dist.schema.path", "missing distance shema file path");
-        	AttributeDistanceSchema distSchema = BasicUtils.getDistanceSchema(distSchemaPath);
+        	InputStream inStrDist = Utility.getFileStream(distSchemaPath);
+        	AttributeDistanceSchema distSchema = BasicUtils.getDistanceSchema(inStrDist);
 
         	//inter record distance finder
         	recDistance = new InterRecordDistance(schema,distSchema,fieldDelim);
@@ -274,10 +281,10 @@ public class RecordSimilarity extends Configured implements Tool {
 	        	firstBucketSize = secondBucketSize = valueList.size();
 	        	for (int i = 0;  i < valueList.size();  ++i){
 	        		String first = valueList.get(i);
-	        		firstId =  first.split(fieldDelimRegex)[idOrdinal];
+	        		firstId =  first.split(fieldDelimRegex, -1)[idOrdinal];
 	        		for (int j = i+1;  j < valueList.size();  ++j) {
 	            		String second = valueList.get(j);
-	            		secondId =  second.split(fieldDelimRegex)[idOrdinal];
+	            		secondId =  second.split(fieldDelimRegex, -1)[idOrdinal];
 	            		if (!firstId.equals(secondId)){
 		        			dist  = recDistance.findScaledDistance(first, second);
 		        			if (dist <= distThreshold) {
@@ -299,9 +306,9 @@ public class RecordSimilarity extends Configured implements Tool {
 	        			}
 	        			++secondBucketSize;
 	        			String second = value.getString(1);
-	            		secondId =  second.split(fieldDelimRegex)[idOrdinal];
+	            		secondId =  second.split(fieldDelimRegex, -1)[idOrdinal];
 	            		for (String first : valueList){
-	                		firstId =  first.split(fieldDelimRegex)[idOrdinal];
+	                		firstId =  first.split(fieldDelimRegex, -1)[idOrdinal];
 		        			dist  = recDistance.findScaledDistance(first, second);
 		        			if (dist <= distThreshold) {
 		        				outVal.set(createValueField(first, second));
@@ -323,8 +330,8 @@ public class RecordSimilarity extends Configured implements Tool {
         		stBld.append(firstId).append(fieldDelim).append(secondId).append(fieldDelim);
         	}
         	if (outputRecord) {
-        		stBld.append(fieldDelim).append(first);
-        		stBld.append(fieldDelim).append(second);
+        		stBld.append(first).append(fieldDelim);
+        		stBld.append(second).append(fieldDelim);
         	}
         	stBld.append(dist);
         	return stBld.toString();
