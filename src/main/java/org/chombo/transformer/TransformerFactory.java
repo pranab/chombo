@@ -38,6 +38,7 @@ public class TransformerFactory {
 	public static final String UPPER_CASE_TRANSFORMER  = "upperCaseTrans";
 	public static final String PATTERN_BASED_TRANSFORMER  = "patternBasedTrans";
 	public static final String SEARCH_REPLACE_TRANSFORMER  = "searchReplaceTrans";
+	public static final String PATTREN_BASED_SEARCH_REPLACE_TRANSFORMER  = "patternBasedSearchReplaceTrans";
 	public static final String KEY_VALUE_TRANSFORMER  = "keyValueTrans";
 	public static final String DEFAULT_VALUE_TRANSFORMER  = "defaultValueTrans";
 	public static final String ANOYNMIZER_TRANSFORMER  = "anoynmizerTrans";
@@ -127,6 +128,8 @@ public class TransformerFactory {
 			transformer = new StringTransformer.PatternBasedTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(SEARCH_REPLACE_TRANSFORMER)) {
 			transformer = new StringTransformer.PatternBasedTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(PATTREN_BASED_SEARCH_REPLACE_TRANSFORMER)) {
+			transformer = new StringTransformer.PatternBasedSearchReplaceTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(KEY_VALUE_TRANSFORMER)) {
 			transformer = new StringTransformer.KeyValueTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(DEFAULT_VALUE_TRANSFORMER)) {
