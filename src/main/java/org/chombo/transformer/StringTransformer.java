@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -124,6 +125,7 @@ public class StringTransformer {
 						continue;
 					}
 					
+					//create new fields by extracting group
 			        String extracted = matcher.group(grIndx);
 			        if(extracted != null) {
 			        	transformed[i] = extracted;
@@ -179,6 +181,84 @@ public class StringTransformer {
 		
 	}
 
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class PatternBasedSearchReplaceTransformer extends AttributeTransformer {
+		private String replacement;
+		private int numGroups;
+		private boolean replacementLengthSame;
+		private Pattern pattern;
+		private Matcher matcher;
+		private Set<String> searchResults = new HashSet<String>();
+		
+		public PatternBasedSearchReplaceTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			replacement = config.getString("replacement");
+			numGroups = config.getInt("numGroups");
+			replacementLengthSame = config.getBoolean("replacementLengthSame");
+			pattern = Pattern.compile(config.getString("regEx"));
+		}
+		
+		public PatternBasedSearchReplaceTransformer(int numTransAttributes, String regEx, String replacement, 
+				int numGroups, boolean replacementLengthSame) {
+			super(numTransAttributes);
+			this.replacement = replacement;
+			this.numGroups = numGroups;
+			this.replacementLengthSame = replacementLengthSame;
+			pattern = Pattern.compile(regEx);
+		}
+
+		@Override
+		public String[] tranform(String value) {
+			searchResults.clear();
+			matcher = pattern.matcher(value);
+			
+			if (-1 == numGroups) {
+				//variable number of groups
+		    	while(matcher.find()) {
+		    		String found = matcher.group(1);
+		    		searchResults.add(found);
+		    	}
+			} else {
+				//known number of groups
+				if (matcher.matches()) {
+		        	int numGr = 1;
+		        	for (int gr = 1; gr <= numGr; ++gr) {
+		        		String found = matcher.group(gr);
+			    		searchResults.add(found);
+		        	}
+		    	}				
+			}
+			
+			//all replacements
+			String replaced = value;
+			for (String found : searchResults) {
+				String replacement = getReplacement(found);
+				replaced = replaced.replaceAll(found, replacement);
+			}
+			transformed[0] = replaced;
+			return transformed;
+		}
+		
+		private String getReplacement(String found) {
+			String replacement = null;
+			if (replacementLengthSame) {
+				//create mask same size as string being replaced
+				if (this.replacement.length() != 1) {
+					throw new IllegalStateException("mask size should be 1");
+				}
+				replacement = StringUtils.repeat(this.replacement, found.length());
+			} else {
+				//use as is
+				replacement = this.replacement;
+			}
+			return replacement;
+		}
+		
+	}
+	
 	/**
 	 * @author pranab
 	 *
