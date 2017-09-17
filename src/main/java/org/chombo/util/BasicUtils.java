@@ -1711,6 +1711,26 @@ public class BasicUtils {
 	}
 	
 	/**
+	 * Excludes max value
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static int sampleUniformExclude(int min, int max) {
+		long val = min +( long)(Math.random() * (max - min));
+		return (int)val;
+	}
+
+	/**
+	 * Excludes max value
+	 * @param max
+	 * @return
+	 */
+	public static int sampleUniformExclude( int max) {
+		return sampleUniformExclude( 0, max);
+	}
+	
+	/**
 	 * @param src
 	 * @param srcBeg
 	 * @param srcEnd
@@ -1760,4 +1780,32 @@ public class BasicUtils {
 	public static int missingFieldCount(String[] items) {
 		return missingFieldCount(items, 0);
 	}
+	
+	/**
+	 * @param value
+	 * @param strength
+	 * @return
+	 */
+	public static String scramble(String value, int strength) {
+		String scrambled = value;
+		int len = value.length();
+		strength = strength < 4 ? 4 : strength;
+		for (int i = 0; i < strength; ++i) {
+			int beg =sampleUniformExclude(len);
+			int end =sampleUniformExclude(len);
+			while (end == beg) {
+				end =sampleUniformExclude(len);
+			}
+			
+			if (end < beg) {
+				int temp = beg;
+				beg = end;
+				end = temp;
+			}
+			
+			scrambled = scrambled.substring(0,beg) + scrambled.substring(end) + scrambled.substring(beg, end);
+		}
+		return scrambled;
+	}
+	
  }
