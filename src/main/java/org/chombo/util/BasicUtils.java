@@ -68,6 +68,8 @@ public class BasicUtils {
 	public static final long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
 	public static final long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
 	public static final long MILISEC_PER_WEEK = 7 * MILISEC_PER_DAY;
+	public static final long MILISEC_PER_MONTH = 730 * MILISEC_PER_HOUR;
+	public static final long MILISEC_PER_QUARTER = 2190 * MILISEC_PER_HOUR;
 
 	public static final String TIME_UNIT_MS = "ms";
     public static final String TIME_UNIT_SEC = "sec";
@@ -1115,9 +1117,9 @@ public class BasicUtils {
     	long modTime = epochTime;
 		if (timeUnit.equals(TIME_UNIT_SEC)) {
 			modTime /= MILISEC_PER_SEC;
-		}else if (timeUnit.equals(TIME_UNIT_MIN)) {
+		} else if (timeUnit.equals(TIME_UNIT_MIN)) {
 			modTime /= MILISEC_PER_MIN;
-		}else if (timeUnit.equals(TIME_UNIT_HOUR)) {
+		} else if (timeUnit.equals(TIME_UNIT_HOUR)) {
 			modTime /= MILISEC_PER_HOUR;
 		} else if (timeUnit.equals(TIME_UNIT_DAY)) {
 			modTime /= MILISEC_PER_DAY;
@@ -1125,6 +1127,31 @@ public class BasicUtils {
 			throw new IllegalArgumentException("invalid time unit");
 		}
     	return modTime;
+    }
+    
+    /**
+     * @param timeUnit
+     * @return
+     */
+    public static long toEpochTime(String timeUnit) {
+    	long epochTime = 0;
+		if (timeUnit.equals(TIME_UNIT_SEC)) {
+			epochTime = MILISEC_PER_SEC;
+		} else if (timeUnit.equals(TIME_UNIT_MIN)) {
+			epochTime = MILISEC_PER_MIN;
+		} else if (timeUnit.equals(TIME_UNIT_HOUR)) {
+			epochTime = MILISEC_PER_HOUR;
+		} else if (timeUnit.equals(TIME_UNIT_DAY)) {
+			epochTime = MILISEC_PER_DAY;
+		} else if (timeUnit.equals(BasicUtils.TIME_UNIT_MONTH)) {
+			epochTime = MILISEC_PER_MONTH;
+		} else if (timeUnit.equals(BasicUtils.TIME_UNIT_QUARTER)) {
+			epochTime = MILISEC_PER_QUARTER;
+		} else {
+			throw new IllegalArgumentException("invalid time unit");
+		}
+    	
+		return epochTime;
     }
     
     /**
