@@ -68,6 +68,8 @@ public class BasicUtils {
 	public static final long MILISEC_PER_HALF_DAY = 12 * MILISEC_PER_HOUR;
 	public static final long MILISEC_PER_DAY = 24 * MILISEC_PER_HOUR;
 	public static final long MILISEC_PER_WEEK = 7 * MILISEC_PER_DAY;
+	public static final long MILISEC_PER_MONTH = 730 * MILISEC_PER_HOUR;
+	public static final long MILISEC_PER_QUARTER = 2190 * MILISEC_PER_HOUR;
 
 	public static final String TIME_UNIT_MS = "ms";
     public static final String TIME_UNIT_SEC = "sec";
@@ -1115,9 +1117,9 @@ public class BasicUtils {
     	long modTime = epochTime;
 		if (timeUnit.equals(TIME_UNIT_SEC)) {
 			modTime /= MILISEC_PER_SEC;
-		}else if (timeUnit.equals(TIME_UNIT_MIN)) {
+		} else if (timeUnit.equals(TIME_UNIT_MIN)) {
 			modTime /= MILISEC_PER_MIN;
-		}else if (timeUnit.equals(TIME_UNIT_HOUR)) {
+		} else if (timeUnit.equals(TIME_UNIT_HOUR)) {
 			modTime /= MILISEC_PER_HOUR;
 		} else if (timeUnit.equals(TIME_UNIT_DAY)) {
 			modTime /= MILISEC_PER_DAY;
@@ -1125,6 +1127,31 @@ public class BasicUtils {
 			throw new IllegalArgumentException("invalid time unit");
 		}
     	return modTime;
+    }
+    
+    /**
+     * @param timeUnit
+     * @return
+     */
+    public static long toEpochTime(String timeUnit) {
+    	long epochTime = 0;
+		if (timeUnit.equals(TIME_UNIT_SEC)) {
+			epochTime = MILISEC_PER_SEC;
+		} else if (timeUnit.equals(TIME_UNIT_MIN)) {
+			epochTime = MILISEC_PER_MIN;
+		} else if (timeUnit.equals(TIME_UNIT_HOUR)) {
+			epochTime = MILISEC_PER_HOUR;
+		} else if (timeUnit.equals(TIME_UNIT_DAY)) {
+			epochTime = MILISEC_PER_DAY;
+		} else if (timeUnit.equals(BasicUtils.TIME_UNIT_MONTH)) {
+			epochTime = MILISEC_PER_MONTH;
+		} else if (timeUnit.equals(BasicUtils.TIME_UNIT_QUARTER)) {
+			epochTime = MILISEC_PER_QUARTER;
+		} else {
+			throw new IllegalArgumentException("invalid time unit");
+		}
+    	
+		return epochTime;
     }
     
     /**
@@ -1711,6 +1738,26 @@ public class BasicUtils {
 	}
 	
 	/**
+	 * Excludes max value
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static int sampleUniformExclude(int min, int max) {
+		long val = min +( long)(Math.random() * (max - min));
+		return (int)val;
+	}
+
+	/**
+	 * Excludes max value
+	 * @param max
+	 * @return
+	 */
+	public static int sampleUniformExclude( int max) {
+		return sampleUniformExclude( 0, max);
+	}
+	
+	/**
 	 * @param src
 	 * @param srcBeg
 	 * @param srcEnd
@@ -1760,4 +1807,32 @@ public class BasicUtils {
 	public static int missingFieldCount(String[] items) {
 		return missingFieldCount(items, 0);
 	}
+	
+	/**
+	 * @param value
+	 * @param strength
+	 * @return
+	 */
+	public static String scramble(String value, int strength) {
+		String scrambled = value;
+		int len = value.length();
+		strength = strength < 4 ? 4 : strength;
+		for (int i = 0; i < strength; ++i) {
+			int beg =sampleUniformExclude(len);
+			int end =sampleUniformExclude(len);
+			while (end == beg) {
+				end =sampleUniformExclude(len);
+			}
+			
+			if (end < beg) {
+				int temp = beg;
+				beg = end;
+				end = temp;
+			}
+			
+			scrambled = scrambled.substring(0,beg) + scrambled.substring(end) + scrambled.substring(beg, end);
+		}
+		return scrambled;
+	}
+	
  }

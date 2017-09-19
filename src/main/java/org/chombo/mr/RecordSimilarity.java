@@ -41,6 +41,7 @@ import org.chombo.distance.InterRecordDistance;
 import org.chombo.util.Attribute;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.GenericAttributeSchema;
+import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -71,6 +72,9 @@ public class RecordSimilarity extends Configured implements Tool {
 
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
+        
+        job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
+        job.setPartitionerClass(SecondarySort.TuplePairPartitioner.class);
 
         int numReducer = job.getConfiguration().getInt("resi.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
@@ -156,7 +160,7 @@ public class RecordSimilarity extends Configured implements Tool {
             	}
             } else {
             	// 1 set
-	    		hash = (hashCode %  bucketCount) / 2 ;
+	    		hash = (hashCode %  bucketCount)  ;
 	    		for (int i = 0; i < bucketCount;  ++i) {
 	    			initKeyVal();
 	    			if (i < hash){
@@ -273,6 +277,8 @@ public class RecordSimilarity extends Configured implements Tool {
         	inFirstBucket = true;
         	firstBucketSize = secondBucketSize = 0;
         	int secondPart = key.getInt(1);
+        	//System.out.println("hash pair:" + secondPart);
+        	
         	if (secondPart / hashMultiplier == secondPart % hashMultiplier){
         		//same hash bucket
 	        	for (Tuple value : values){
@@ -288,12 +294,13 @@ public class RecordSimilarity extends Configured implements Tool {
 	            		if (!firstId.equals(secondId)){
 		        			dist  = recDistance.findScaledDistance(first, second);
 		        			if (dist <= distThreshold) {
-		        				outVal.set(createValueField(first, first));
+		        				outVal.set(createValueField(first, second));
 		        				context.write(NullWritable.get(), outVal);
 		        			}
 	            		} 
 	   				}
 	        	}
+	           //	System.out.println("same bucket size:" + firstBucketSize );
         	} else {
         		//different hash bucket
 	        	for (Tuple value : values){
@@ -317,7 +324,9 @@ public class RecordSimilarity extends Configured implements Tool {
 	            		}
 	        		}
 	        	}
+            	//System.out.println("firstBucketSize:" + firstBucketSize + " secondBucketSize:" + secondBucketSize );
         	}
+        	
 		}	
 		
         /**
