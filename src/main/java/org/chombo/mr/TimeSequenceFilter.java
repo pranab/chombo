@@ -20,6 +20,8 @@ package org.chombo.mr;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -37,7 +39,8 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
- * Filters partitioned time sequence data. Filtering is on time field
+ * Filters partitioned time sequence data. Filtering is on time field generating
+ * a sub sequence
  * @author pranab
  *
  */
@@ -91,10 +94,14 @@ public class TimeSequenceFilter extends Configured implements Tool {
         private Long maxDateTime;
         private boolean toEmit;
         private long timeStamp;
+        private boolean includeRawDateTimeField;
+        private boolean outputCompact;
+        private List<String> compactRec = new ArrayList<String>();
 
 		private static final String FIlT_EARLIEST = "earliest";
 		private static final String FIlT_LATEST = "latest";
 		private static final String FIlT_RANGE = "range";
+		private static final String FIlT_NONE = "none";
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -124,7 +131,10 @@ public class TimeSequenceFilter extends Configured implements Tool {
         	numIDFields = Utility.intArrayFromString(config.get("tsf.id.field.ordinals"), configDelim).length;
         	numAttributes = Utility.assertIntArrayConfigParam(config, "tsf.quant.attr.list", configDelim, 
         			"missing quant attribute list").length;
-
+        	includeRawDateTimeField = config.getBoolean("tsf.include.raw.date.time.field", false);
+        	
+        	//whole sequence in one record
+        	outputCompact = config.getBoolean("tsf.output.compact", false);
 		}
 
 		/**
@@ -152,25 +162,58 @@ public class TimeSequenceFilter extends Configured implements Tool {
         		throws IOException, InterruptedException {
     		boolean first = true;
     		Tuple latest = null;
+    		
+    		if (outputCompact) {
+        		stBld.delete(0, stBld.length());
+        		addKey(key);
+    		}
+    		
     		for (Tuple val : values) {
     			if (filterType.equals(FIlT_EARLIEST) && first) {
-    				emit(key, val, context);
+    				//only the first in sequence
+    				if (outputCompact) {
+    					addValue(val);
+    				} else {
+    					emit(key, val, context);
+    				}
     				break;
     			} else if (filterType.equals(FIlT_LATEST)) {
+    				//only the last in sequence
     				latest = val;
     			} else if (filterType.equals(FIlT_RANGE)) {
+    				//sequence within time window
     				timeStamp = val.getLong(0);
     				toEmit = (null == minDateTime || timeStamp > minDateTime) && 
     						(null == maxDateTime || timeStamp < maxDateTime);
     				if (toEmit) {
+    					if (outputCompact) {
+        					addValue(val);
+    					} else {
+    						emit(key, val, context);
+    					}
+    				}
+    			} else if (filterType.equals(FIlT_NONE)) { 
+    				//all, no filter
+    				if (outputCompact) { 
+    					addValue(val);
+    				} else {
     					emit(key, val, context);
     				}
     			} else {
     				throw new IllegalStateException("invalid fliter type");
     			}
     		}
+    		
     		if (null != latest) {
-				emit(key, latest, context);
+    			if (outputCompact) {
+					addValue(latest);
+    			} else {
+    				emit(key, latest, context);
+    			}
+    		}
+    		
+    		if (outputCompact) {
+    			doEmit(context);
     		}
         }
         
@@ -183,18 +226,44 @@ public class TimeSequenceFilter extends Configured implements Tool {
          */
         private void emit(Tuple  key, Tuple val, Context context) throws IOException, InterruptedException {
     		stBld.delete(0, stBld.length());
+    		addKey(key);
+    		addValue(val);
+    		doEmit(context);
+        }
+        
+        /**
+         * @param key
+         */
+        private void addKey(Tuple  key) {
     		for (int i = 0; i < numIDFields; ++i) {
     			stBld.append(key.getString(i)).append(fieldDelim);
     		}
-			stBld.append(val.getString(1)).append(fieldDelim);
-    		for (int i = 0; i < numAttributes; ++i) {
-    			stBld.append(val.getString(i+2)).append(fieldDelim);
+        }
+        
+        /**
+         * @param val
+         */
+        private void addValue(Tuple  val) {
+    		int offset = 1;
+    		if (includeRawDateTimeField) {
+    			stBld.append(val.getString(offset)).append(fieldDelim);
+    			++offset;
     		}
+    		for (int i = 0; i < numAttributes; ++i) {
+    			stBld.append(val.getString(i + offset)).append(fieldDelim);
+    		}
+        }
+        
+        /**
+         * @param context
+         * @throws IOException
+         * @throws InterruptedException
+         */
+        private void doEmit(Context context) throws IOException, InterruptedException {
 			stBld.deleteCharAt(stBld.length() -1);
         	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
-        }
-		
+        }       
 	}	
 	
 	/**

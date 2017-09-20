@@ -94,22 +94,30 @@ public class TemporalRate extends Configured implements Tool {
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelim = config.get("field.delim.out", ",");
 
+        	//data format
         	quantValueBeginEndSpecified = config.getBoolean("ter.quant.value.begin.end.specified", true);
         	timeWindowBeginEndSpecified = config.getBoolean("ter.time.window.begin.end.specified", true);
+        	
+        	//field ordinals
         	idOrdinals = Utility.assertIntArrayConfigParam(config, "ter.id.ordinals", Utility.configDelim, 
         			"missing id field ordinals");
         	quantFieldOrdinals = Utility.assertIntArrayConfigParam(config, "ter.quant.field.ordinals", Utility.configDelim, 
         			"missing quant field ordinals");
         	timeWindowFieldOrdinals = Utility.assertIntArrayConfigParam(config, "ter.time.window.field.ordinals", Utility.configDelim, 
         			"missing quant field ordinals");
+        	
+        	//num of quants
         	numQuants = quantValueBeginEndSpecified ? quantFieldOrdinals.length / 2 : quantFieldOrdinals.length;
         	quantValues = new double[numQuants];
         	
+        	//date format
         	dateTimeFormat = config.get("ter.date.time.format", BasicUtils.EPOCH_TIME);
+        	
+        	//rate time unit
         	String rateTimeUnit = config.get("ter.rate.time.unit", BasicUtils.EPOCH_TIME);
         	rateTimeUnitMs = BasicUtils.toEpochTime(rateTimeUnit);
+        	
         	outputPrecision = config.getInt("nas.output.prec", 3);
-
         }
         
         @Override
