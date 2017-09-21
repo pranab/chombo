@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +37,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.chombo.util.AttributePredicate;
 import org.chombo.util.BasicUtils;
+import org.chombo.util.Pair;
 import org.chombo.util.ProcessorAttribute;
 
 import com.typesafe.config.Config;
@@ -187,49 +189,65 @@ public class StringTransformer {
 	 */
 	public static class PatternBasedSearchReplaceTransformer extends AttributeTransformer {
 		private String replacement;
-		private int numGroups;
 		private boolean replacementLengthSame;
-		private Pattern pattern;
 		private Matcher matcher;
 		private Set<String> searchResults = new HashSet<String>();
+		private List<Pair<Pattern, Integer>> patterns = new ArrayList<Pair<Pattern, Integer>>();
 		
 		public PatternBasedSearchReplaceTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			replacement = config.getString("replacement");
-			numGroups = config.getInt("numGroups");
 			replacementLengthSame = config.getBoolean("replacementLengthSame");
-			pattern = Pattern.compile(config.getString("regEx"));
+			
+			//all patterns
+			List<? extends Config> patternConfigs = config.getConfigList("patterns");
+			for (Config patConfig : patternConfigs) {
+				String regEx = patConfig.getString("regEx");
+				int numGroups = patConfig.getInt("numGroups");
+				patterns.add(new Pair<Pattern, Integer>(Pattern.compile(regEx), numGroups));
+			}
 		}
 		
-		public PatternBasedSearchReplaceTransformer(int numTransAttributes, String regEx, String replacement, 
-				int numGroups, boolean replacementLengthSame) {
+		public PatternBasedSearchReplaceTransformer(int numTransAttributes, String[] regExes, String replacement, 
+				int[] numGroups, boolean replacementLengthSame) {
 			super(numTransAttributes);
 			this.replacement = replacement;
-			this.numGroups = numGroups;
 			this.replacementLengthSame = replacementLengthSame;
-			pattern = Pattern.compile(regEx);
+			for (int i = 0; i < regExes.length; ++i) {
+				patterns.add(new Pair<Pattern, Integer>(Pattern.compile(regExes[i]), numGroups[i]));
+			}
 		}
 
 		@Override
 		public String[] tranform(String value) {
 			searchResults.clear();
-			matcher = pattern.matcher(value);
 			
-			if (-1 == numGroups) {
-				//variable number of groups
-		    	while(matcher.find()) {
-		    		String found = matcher.group(1);
-		    		searchResults.add(found);
-		    	}
-			} else {
-				//known number of groups
-				if (matcher.matches()) {
-		        	int numGr = 1;
-		        	for (int gr = 1; gr <= numGr; ++gr) {
-		        		String found = matcher.group(gr);
+			//all patterns
+			boolean matched = false;
+			for (Pair<Pattern, Integer> pattern : patterns) {
+				matcher = pattern.getLeft().matcher(value);
+				int numGroups = pattern.getRight();
+				if (-1 == numGroups) {
+					//variable number of groups
+			    	while(matcher.find()) {
+			    		String found = matcher.group(1);
 			    		searchResults.add(found);
-		        	}
-		    	}				
+			    		matched = true;
+			    	}
+				} else {
+					//known number of groups
+					if (matcher.matches()) {
+			        	int numGr = 1;
+			        	for (int gr = 1; gr <= numGr; ++gr) {
+			        		String found = matcher.group(gr);
+				    		searchResults.add(found);
+			        	}
+			        	matched = true;
+			    	}				
+				}
+		    	if (matched) {
+		    		break;
+		    	}
 			}
 			
 			//all replacements

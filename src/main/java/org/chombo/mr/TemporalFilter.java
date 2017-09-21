@@ -38,7 +38,7 @@ import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Utility;
 
 /**
- * Filters temooral data according seasonality criteria defined
+ * Filters tempooral data according seasonality criteria defined
  * @author pranab
  *
  */
