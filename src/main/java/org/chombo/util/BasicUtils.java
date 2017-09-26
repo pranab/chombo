@@ -1116,18 +1116,23 @@ public class BasicUtils {
     public static long convertTimeUnit(long epochTime, String timeUnit) {
     	long modTime = epochTime;
 		if (timeUnit.equals(TIME_UNIT_SEC)) {
-			modTime /= MILISEC_PER_SEC;
+			modTime = divideWithRoundOff(epochTime, MILISEC_PER_SEC);
 		} else if (timeUnit.equals(TIME_UNIT_MIN)) {
-			modTime /= MILISEC_PER_MIN;
+			modTime = divideWithRoundOff(epochTime, MILISEC_PER_MIN);
 		} else if (timeUnit.equals(TIME_UNIT_HOUR)) {
-			modTime /= MILISEC_PER_HOUR;
+			modTime = divideWithRoundOff(epochTime, MILISEC_PER_HOUR);
 		} else if (timeUnit.equals(TIME_UNIT_DAY)) {
-			modTime /= MILISEC_PER_DAY;
+			modTime = divideWithRoundOff(epochTime, MILISEC_PER_DAY);
+		} else if (timeUnit.equals(TIME_UNIT_WEEK)) {
+			modTime = divideWithRoundOff(epochTime, MILISEC_PER_WEEK);
+		} else if (timeUnit.equals(TIME_UNIT_MONTH)) {
+			modTime = divideWithRoundOff(epochTime, MILISEC_PER_MONTH);
 		} else {
 			throw new IllegalArgumentException("invalid time unit");
 		}
     	return modTime;
     }
+    
     
     /**
      * @param timeUnit
@@ -1834,5 +1839,18 @@ public class BasicUtils {
 		}
 		return scrambled;
 	}
+	
+    /**
+     * @param value
+     * @param divisor
+     * @return
+     */
+    public static long divideWithRoundOff(long value, long divisor) {
+    	long quotient = value / divisor;
+		if ((value % divisor) > (divisor / 2)) {
+			++quotient;
+		}
+    	return quotient;
+    }
 	
  }

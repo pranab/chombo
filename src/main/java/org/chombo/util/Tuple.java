@@ -569,6 +569,15 @@ public class Tuple  implements WritableComparable<Tuple>  {
 		this.delim = delim;
 	}
 
+	/**
+	 * sets delimeter
+	 * @param delim
+	 */
+	public Tuple withDelim(String delim) {
+		this.delim = delim;
+		return this;
+	}
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
