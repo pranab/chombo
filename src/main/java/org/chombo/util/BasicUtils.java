@@ -1061,6 +1061,19 @@ public class BasicUtils {
     	stream.close();
     	return stBld.toString();
     }
+    
+    /**
+     * @param dateTimeStamp
+     * @param dateFormat
+     * @return
+     * @throws ParseException
+     */
+    public static long getEpochTime(String dateTimeStamp, SimpleDateFormat dateFormat, int timeZoneShiftHour) throws ParseException {
+    	long epochTime = (null != dateFormat) ? getEpochTime(dateTimeStamp, false, dateFormat,timeZoneShiftHour) :
+    		getEpochTime(dateTimeStamp, true, dateFormat,0);
+    	return epochTime;
+    }
+    
 
     /**
      * @param dateTimeStamp
@@ -1069,9 +1082,7 @@ public class BasicUtils {
      * @throws ParseException
      */
     public static long getEpochTime(String dateTimeStamp, SimpleDateFormat dateFormat) throws ParseException {
-    	long epochTime = (null != dateFormat) ? getEpochTime(dateTimeStamp, false, dateFormat,0) :
-    		getEpochTime(dateTimeStamp, true, dateFormat,0);
-    	return epochTime;
+    	return getEpochTime(dateTimeStamp, dateFormat, 0);
     }
 
     /**

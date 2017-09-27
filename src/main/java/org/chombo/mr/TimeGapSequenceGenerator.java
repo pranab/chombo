@@ -92,7 +92,6 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         private int[] idOrdinals;
         private int timeStampFieldOrdinal;
         private long timeStamp;
-        private boolean isEpochTime;
         private SimpleDateFormat dateFormat;
         private int timeZoneShiftHours;
         private boolean includeRawDateTimeField;
@@ -107,9 +106,8 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         	idOrdinals = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), Utility.configDelim);
         	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"tgs.time.stamp.field.ordinal", "missing timestamp field ordinal");
         
-        	isEpochTime = config.getBoolean("tgs.is.epoch.time", false);
-        	if (!isEpochTime) {
-                String dateFormatStr = config.get("tgs.date.format.str",  "yyyy-MM-dd HH:mm:ss");
+        	String dateFormatStr = config.get("tgs.date.format.str",  "yyyy-MM-dd HH:mm:ss");
+        	if (!dateFormatStr.equals(BasicUtils.EPOCH_TIME)) {
                 dateFormat = new SimpleDateFormat(dateFormatStr);
                 timeZoneShiftHours = config.getInt("tgs.time.zone.shift.hours", 0);
         	}
@@ -123,7 +121,7 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         		throws IOException, InterruptedException {
         	items  =  value.toString().split(fieldDelimRegex, -1);
         	try {
-				timeStamp = Utility.getEpochTime(items[timeStampFieldOrdinal], isEpochTime, dateFormat, timeZoneShiftHours);
+        		timeStamp = BasicUtils.getEpochTime(items[timeStampFieldOrdinal],  dateFormat, timeZoneShiftHours);
 				
             	outKey.initialize();
             	outVal.initialize();
