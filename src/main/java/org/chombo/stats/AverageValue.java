@@ -26,7 +26,7 @@ public interface AverageValue {
 	
 	public void add(double value);
 	
-	public double getAvgValue();
+	public double getMean();
 	
-	public void setAvgValue(double avgValue);
+	public void setMean(double mean);
 }
