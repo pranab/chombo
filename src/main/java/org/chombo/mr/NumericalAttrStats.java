@@ -59,7 +59,7 @@ public class NumericalAttrStats  extends Configured implements Tool {
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
-        Utility.setConfiguration(job.getConfiguration(), "chombo", true);
+        Utility.setConfiguration(job.getConfiguration(), "chombo");
         job.setMapperClass(NumericalAttrStats.StatsMapper.class);
         job.setReducerClass(NumericalAttrStats.StatsReducer.class);
         job.setCombinerClass(NumericalAttrStats.StatsCombiner.class);

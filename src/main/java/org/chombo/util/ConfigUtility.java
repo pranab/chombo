@@ -27,7 +27,11 @@ import java.util.Properties;
  *
  */
 public  class ConfigUtility {
-
+	
+	public static boolean has(Map conf, String key) {
+		return conf.containsKey(key);
+	}
+	
 	/**
 	 * @param conf
 	 * @param key

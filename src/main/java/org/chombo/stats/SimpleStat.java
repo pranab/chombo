@@ -24,25 +24,77 @@ package org.chombo.stats;
  */
 public class SimpleStat implements AverageValue {
 	private double sum;
-	private long count;
+	private double sumSq;
+	private int count;
+	private double mean = -1;
+	private double  stdDev;
+	private boolean processed;
 	
+	/* (non-Javadoc)
+	 * @see org.chombo.stats.AverageValue#add(double)
+	 */
 	public void add(double value) {
 		sum +=  value;
+		sumSq += value * value;
 		++count;
+		processed = false;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.chombo.stats.AverageValue#getMean()
+	 */
+	@Override
 	public double getMean() {
-		return sum / count;
+		if (!processed) {
+			mean =  sum / count;
+			stdDev = Math.sqrt(sumSq / count - mean * mean);
+			processed = true;
+		}
+		return mean;
 	}
 
-	@Override
-	public double getAvgValue() {
-		return sum / count;
+	/**
+	 * @return
+	 */
+	public double getStdDev() {
+		if (!processed) {
+			mean =  sum / count;
+			stdDev = Math.sqrt(sumSq / count - mean * mean);
+			processed = true;
+		}
+		return stdDev;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.chombo.stats.AverageValue#setMean(double)
+	 */
 	@Override
-	public void setAvgValue(double avgValue) {
-		sum = avgValue;
-		count = 1;
+	public void setMean(double mean) {
+		this.mean = mean;
+		processed = true;
 	}
+	
+	/**
+	 * @param count
+	 * @param avgValue
+	 * @param stdDev
+	 */
+	public void setStats(int count, double mean, double stdDev) {
+		this.count = count;
+		this.mean = mean;
+		this.stdDev = stdDev;
+		processed = true;
+	}
+	
+	/**
+	 * @param count
+	 */
+	public void setCount(int count) {
+		this.count = count;
+	}
+		
+	public int getCount() {
+		return count;
+	}
+	
 }

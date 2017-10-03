@@ -34,6 +34,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -91,7 +92,6 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         private int[] idOrdinals;
         private int timeStampFieldOrdinal;
         private long timeStamp;
-        private boolean isEpochTime;
         private SimpleDateFormat dateFormat;
         private int timeZoneShiftHours;
         private boolean includeRawDateTimeField;
@@ -106,9 +106,8 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         	idOrdinals = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), Utility.configDelim);
         	timeStampFieldOrdinal = Utility.assertIntConfigParam(config,"tgs.time.stamp.field.ordinal", "missing timestamp field ordinal");
         
-        	isEpochTime = config.getBoolean("tgs.is.epoch.time", false);
-        	if (!isEpochTime) {
-                String dateFormatStr = config.get("tgs.date.format.str",  "yyyy-MM-dd HH:mm:ss");
+        	String dateFormatStr = config.get("tgs.date.format.str",  "yyyy-MM-dd HH:mm:ss");
+        	if (!dateFormatStr.equals(BasicUtils.EPOCH_TIME)) {
                 dateFormat = new SimpleDateFormat(dateFormatStr);
                 timeZoneShiftHours = config.getInt("tgs.time.zone.shift.hours", 0);
         	}
@@ -122,7 +121,7 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         		throws IOException, InterruptedException {
         	items  =  value.toString().split(fieldDelimRegex, -1);
         	try {
-				timeStamp = Utility.getEpochTime(items[timeStampFieldOrdinal], isEpochTime, dateFormat, timeZoneShiftHours);
+        		timeStamp = BasicUtils.getEpochTime(items[timeStampFieldOrdinal],  dateFormat, timeZoneShiftHours);
 				
             	outKey.initialize();
             	outVal.initialize();
@@ -157,6 +156,8 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
 		private int numIDFields;
 		private int numAttributes;
 		private long timeGap;
+		private boolean elapsedTimeBetEvents;
+		private String[] eventPair;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -164,10 +165,24 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
+			
         	timeGapUnit = config.get("tgs.time.gap.unit");
         	numIDFields = Utility.intArrayFromString(config.get("tgs.id.field.ordinals"), Utility.configDelim).length;
         	int[] attributes = Utility.intArrayFromString(config.get("tgs.quant.attr.list"), Utility.configDelim);
         	numAttributes = null != attributes ? attributes.length : 0;
+        	
+        	//elapsed time between 2 specified events
+        	elapsedTimeBetEvents = config.getBoolean("tgs.elapsed.time.bet.events", false);
+        	if (elapsedTimeBetEvents) {
+        		if (attributes.length != 1) {
+        			throw new IllegalStateException("only 1 attributes needed for elapsed time between 2 specified events");
+        		}
+        		
+        		eventPair = Utility.assertStringArrayConfigParam(config, "tgs.event.pair", Utility.configDelim, "");
+        		if (eventPair.length != 2) {
+        			throw new IllegalStateException("only 2 events needed for elapsed time between 2 specified events");
+        		}
+        	}
 		}
 
         /* (non-Javadoc)
@@ -175,21 +190,32 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
          */
         protected void reduce(Tuple  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
+        	if (elapsedTimeBetEvents) {
+        		gapBetweenSpecifiedEvents(key, values, context);
+        	} else {
+        		gapBetweenSuccessiveEvents(key, values, context);
+        	}
+        }
+        
+        /**
+         * @param key
+         * @param values
+         * @param context
+         * @throws InterruptedException 
+         * @throws IOException 
+         */
+        private void gapBetweenSuccessiveEvents(Tuple  key, Iterable<Tuple> values, Context context) 
+        	throws IOException, InterruptedException {
     		long lastTimeStamp = -1;
     		for (Tuple val : values) {
     			if (lastTimeStamp > 0) {
             		stBld.delete(0, stBld.length());
-            		for (int i = 0; i < numIDFields; ++i) {
-            			stBld.append(key.getString(i)).append(fieldDelim);
-            		}
+            		stBld.append(key.withDelim(fieldDelim).toString(0, key.getSize()-1)).append(fieldDelim);
 
             		timeGap = val.getLong(0) - lastTimeStamp;
-    				if (timeGapUnit.equals("hour")) {
-    					timeGap /= Utility.MILISEC_PER_HOUR;
-    				} else if (timeGapUnit.equals("day")) {
-    					timeGap /= Utility.MILISEC_PER_DAY;
-    				}
+            		timeGap = BasicUtils.convertTimeUnit(timeGap, timeGapUnit);
     				stBld.append(timeGap).append(fieldDelim);
+    				
             		for (int i = 0; i < numAttributes; ++i) {
             			stBld.append(val.getString(i+1)).append(fieldDelim);
             		}
@@ -198,9 +224,48 @@ public class TimeGapSequenceGenerator extends Configured implements Tool {
         			context.write(NullWritable.get(), outVal);
     			}
     			lastTimeStamp = val.getLong(0);
-    			
     		}
+       	
         }
+        
+        /**
+         * @param key
+         * @param values
+         * @param context
+         * @throws InterruptedException 
+         * @throws IOException 
+         */
+        private void gapBetweenSpecifiedEvents(Tuple  key, Iterable<Tuple> values, Context context) 
+        	throws IOException, InterruptedException {
+        	long begTime = -1;
+        	long endTime = -1;
+    		for (Tuple val : values) {
+    			String event = val.getString(1);
+    			if (-1 == begTime) {
+    				if (event.equals(eventPair[0])) {
+    					begTime = val.getLong(0);
+    				}
+    			} else if (-1 == endTime) {
+       				if (event.equals(eventPair[1])) {
+    					endTime = val.getLong(0);
+    				}
+    			} 
+    			
+    			if (begTime > 0 && endTime > 0) {
+    				stBld.delete(0, stBld.length());
+    				timeGap = endTime - begTime;
+            		timeGap = BasicUtils.convertTimeUnit(timeGap, timeGapUnit);
+
+    				stBld.append(key.withDelim(fieldDelim).toString(0, key.getSize()-1));
+    				stBld.append(fieldDelim).append(timeGap);
+                	outVal.set(stBld.toString());
+        			context.write(NullWritable.get(), outVal);
+    				break;
+    			}
+    		}
+    		
+        }   
+        
 	}
 	
 	/**
