@@ -55,14 +55,23 @@ public class StringTransformer {
 	 */
 	public static class LowerCaseTransformer extends AttributeTransformer  {
 
+		/**
+		 * @param prAttr
+		 */
 		public LowerCaseTransformer(ProcessorAttribute prAttr) {
 			super(prAttr.getTargetFieldOrdinals().length);
 		}
 
+		/**
+		 * 
+		 */
 		public LowerCaseTransformer() {
 			super(1);
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] =  value.toLowerCase();
@@ -77,14 +86,23 @@ public class StringTransformer {
 	 */
 	public static class UpperCaseTransformer extends AttributeTransformer  {
 		
+		/**
+		 * @param prAttr
+		 */
 		public UpperCaseTransformer(ProcessorAttribute prAttr) {
 			super(prAttr.getTargetFieldOrdinals().length);
 		}
 		
+		/**
+		 * 
+		 */
 		public UpperCaseTransformer() {
 			super(1);
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] =  value.toUpperCase();
@@ -103,6 +121,10 @@ public class StringTransformer {
 		private boolean failOnMissingGroup;
 		private boolean retainOriginalField;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public PatternBasedTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			pattern = Pattern.compile(config.getString("regEx"));
@@ -110,12 +132,20 @@ public class StringTransformer {
 			retainOriginalField = config.getBoolean("retainOriginalField");
 		}
 
+		/**
+		 * @param numTransAttributes
+		 * @param regEx
+		 * @param failOnMissingGroup
+		 */
 		public PatternBasedTransformer(int numTransAttributes, String regEx, boolean failOnMissingGroup) {
 			super(numTransAttributes);
 			pattern = Pattern.compile(regEx);
 			this.failOnMissingGroup =  failOnMissingGroup;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			matcher = pattern.matcher(value);
@@ -157,6 +187,10 @@ public class StringTransformer {
 		private String replacement;
 		private boolean replaceAll;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public SearchReplaceTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			regEx  = config.getString("regEx");
@@ -164,6 +198,12 @@ public class StringTransformer {
 			replaceAll = config.getBoolean("replaceAll");
 		}
 		
+		/**
+		 * @param numTransAttributes
+		 * @param regEx
+		 * @param replacement
+		 * @param replaceAll
+		 */
 		public SearchReplaceTransformer(int numTransAttributes, String regEx, String replacement, boolean replaceAll) {
 			super(numTransAttributes);
 			this.regEx  = regEx;
@@ -171,6 +211,9 @@ public class StringTransformer {
 			this.replaceAll = replaceAll;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			if (replaceAll) {
@@ -194,6 +237,10 @@ public class StringTransformer {
 		private Set<String> searchResults = new HashSet<String>();
 		private List<Pair<Pattern, Integer>> patterns = new ArrayList<Pair<Pattern, Integer>>();
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public PatternBasedSearchReplaceTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			replacement = config.getString("replacement");
@@ -208,6 +255,13 @@ public class StringTransformer {
 			}
 		}
 		
+		/**
+		 * @param numTransAttributes
+		 * @param regExes
+		 * @param replacement
+		 * @param numGroups
+		 * @param replacementLengthSame
+		 */
 		public PatternBasedSearchReplaceTransformer(int numTransAttributes, String[] regExes, String replacement, 
 				int[] numGroups, boolean replacementLengthSame) {
 			super(numTransAttributes);
@@ -218,6 +272,9 @@ public class StringTransformer {
 			}
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			searchResults.clear();
@@ -260,6 +317,10 @@ public class StringTransformer {
 			return transformed;
 		}
 		
+		/**
+		 * @param found
+		 * @return
+		 */
 		private String getReplacement(String found) {
 			String replacement = null;
 			if (replacementLengthSame) {
@@ -285,16 +346,31 @@ public class StringTransformer {
 		private Config keyValConfig;
 		private Map<String, String>  kayValues;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public KeyValueTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
-			keyValConfig = config.getConfig("keyValues");
+			if (config.hasPath("keyValues")) {
+				keyValConfig = config.getConfig("keyValues");
+			} 
 		}
 
+		/**
+		 * @param kayValues
+		 */
 		public KeyValueTransformer(Map<String, String>  kayValues) {
 			super(1);
 			this.kayValues = kayValues;
 		}
 
+		/**
+		 * @param prAttr
+		 * @param config
+		 * @param inStrm
+		 * @throws IOException
+		 */
 		public KeyValueTransformer(ProcessorAttribute prAttr, Config config, InputStream inStrm) throws IOException {
 			super(1);
 			int fieldOrd = prAttr.getOrdinal();
@@ -316,6 +392,9 @@ public class StringTransformer {
 			}
 		}
 		
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			String newValue = null;
@@ -341,16 +420,26 @@ public class StringTransformer {
 	public static class DefaultValueTransformer extends AttributeTransformer {
 		private String defaultValue;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public DefaultValueTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			defaultValue  = config.getString("defaultValue");
 		}
 
+		/**
+		 * @param defaultValue
+		 */
 		public DefaultValueTransformer( String defaultValue) {
 			super(1);
 			this.defaultValue  = defaultValue;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			if (value.isEmpty()) {
@@ -369,16 +458,26 @@ public class StringTransformer {
 	public static class ForcedReplaceTransformer extends AttributeTransformer {
 		private String newValue;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public ForcedReplaceTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			newValue  = config.getString("newValue");
 		}
 
+		/**
+		 * @param newValue
+		 */
 		public ForcedReplaceTransformer( String newValue) {
 			super(1);
 			this.newValue  = newValue;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] = newValue;
@@ -393,16 +492,26 @@ public class StringTransformer {
 	public static class AnoynmizerTransformer extends AttributeTransformer {
 		private String mask;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public AnoynmizerTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			mask  = config.getString("mask");
 		}
 
+		/**
+		 * @param mask
+		 */
 		public AnoynmizerTransformer( String mask) {
 			super(1);
 			this.mask  = mask;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] = StringUtils.repeat(mask, value.length());
@@ -417,16 +526,26 @@ public class StringTransformer {
 	public static class UniqueKeyGenerator extends AttributeTransformer {
 		private String algorithm;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public UniqueKeyGenerator(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			algorithm  = config.getString("algorithm");
 		}
 
+		/**
+		 * @param algorithm
+		 */
 		public UniqueKeyGenerator( String algorithm) {
 			super(1);
 			this.algorithm  = algorithm;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			if (algorithm.equals("uuid")) {
@@ -444,14 +563,23 @@ public class StringTransformer {
 	 */
 	public static class TrimTransformer extends AttributeTransformer {
 		
+		/**
+		 * @param prAttr
+		 */
 		public TrimTransformer(ProcessorAttribute prAttr) {
 			super(prAttr.getTargetFieldOrdinals().length);
 		}
 
+		/**
+		 * 
+		 */
 		public TrimTransformer( ) {
 			super(1);
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] =   value.trim();
@@ -466,16 +594,26 @@ public class StringTransformer {
 	public static class ConstantGenerator extends AttributeTransformer {
 		private String constValue;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public ConstantGenerator(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			constValue  = config.getString("constValue");
 		}
 
+		/**
+		 * @param constValue
+		 */
 		public ConstantGenerator( String constValue) {
 			super(1);
 			this.constValue  = constValue;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] = constValue;
@@ -490,6 +628,10 @@ public class StringTransformer {
 	public static class GroupTransformer extends AttributeTransformer {
 		private Map<String, List<String>> groupValues = new HashMap<String, List<String>>();
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public GroupTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			
@@ -500,11 +642,17 @@ public class StringTransformer {
 			}
 		}
 
+		/**
+		 * @param groupValues
+		 */
 		public GroupTransformer( Map<String, List<String>> groupValues ) {
 			super(2);
 			this.groupValues  = groupValues;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] = value;
@@ -529,18 +677,32 @@ public class StringTransformer {
 	 */
 	public static class StringCustomTransformer extends CustomTransformer {
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public StringCustomTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr, config);
 		}		
 		
+		/**
+		 * @param script
+		 * @param params
+		 */
 		public StringCustomTransformer(String script, Map<String, Object> params) {
 			super(script,  params);
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.CustomTransformer#getFieldValue(java.lang.String)
+		 */
 		protected  Object getFieldValue(String value) {
 			return value;
 		}
 		
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.CustomTransformer#getOutput(java.lang.Object)
+		 */
 		protected  String getOutput(Object out) {
 			String ret = null;
 			if (out instanceof String ) {
@@ -558,11 +720,18 @@ public class StringTransformer {
 	 */
 	public static class DeleteTransformer extends AttributeTransformer {
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public DeleteTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 		}
 
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			return null;
@@ -580,6 +749,10 @@ public class StringTransformer {
 		private String delimiter;
 		
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public ConcatenatorTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			operation  = config.getString("operation");
@@ -587,6 +760,12 @@ public class StringTransformer {
 			delimiter = config.getString("delimiter");
 		}
 		
+		/**
+		 * @param numTransAttributes
+		 * @param operation
+		 * @param stringToAdd
+		 * @param delimiter
+		 */
 		public ConcatenatorTransformer(int numTransAttributes, String operation, String stringToAdd, String delimiter) {
 			super(numTransAttributes);
 			this.operation  = operation;
@@ -594,6 +773,9 @@ public class StringTransformer {
 			this.delimiter = delimiter;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			if (operation.equals("prepend")) {
@@ -619,6 +801,10 @@ public class StringTransformer {
 		private String[] fields;
 		
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public FieldMergeTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			config = getFieldSpecificConfig(prAttr.getOrdinal(), config);
@@ -626,12 +812,20 @@ public class StringTransformer {
 			delimiter = config.getString("delimiter");
 		}
 		
+		/**
+		 * @param numTransAttributes
+		 * @param mergeFieldOrdinals
+		 * @param delimiter
+		 */
 		public FieldMergeTransformer(int numTransAttributes, List<Integer> mergeFieldOrdinals, String delimiter) {
 			super(numTransAttributes);
 			this.mergeFieldOrdinals  = mergeFieldOrdinals;
 			this.delimiter = delimiter;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			StringBuilder stBld = new StringBuilder(value);
@@ -642,6 +836,9 @@ public class StringTransformer {
 			return transformed;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.ContextAwareTransformer#setContext(java.util.Map)
+		 */
 		@Override
 		public void setContext(Map<String, Object> context) {
 			fields = (String[])context.get("record");
@@ -667,6 +864,10 @@ public class StringTransformer {
 		private static int collapsedFieldsNotDefinedCount;
 		private static int totalNumFieldsToCollapse;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public WithinFieldDelimiterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			curFieldOrdinal = prAttr.getOrdinal();
@@ -701,6 +902,14 @@ public class StringTransformer {
 			expectedNumFields = config.getInt("expectedNumFields");
 		}
 
+		/**
+		 * @param numTransAttributes
+		 * @param curFieldOrdinal
+		 * @param numFieldsToCollapse
+		 * @param replacementDelimiter
+		 * @param expectedNumFields
+		 * @param outputDelimiter
+		 */
 		public WithinFieldDelimiterTransformer(int numTransAttributes, int curFieldOrdinal, int numFieldsToCollapse,
 				String replacementDelimiter, int expectedNumFields, String outputDelimiter) {
 			super(numTransAttributes);
@@ -711,6 +920,9 @@ public class StringTransformer {
 			this.outputDelimiter = outputDelimiter;
 		}
 		
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			if (expectedNumFields != fields.length) {
@@ -743,6 +955,9 @@ public class StringTransformer {
 			return transformed;
 		}
 		
+		/**
+		 * 
+		 */
 		private static void checkForValidity() {
 			if (!checkedForValidity) {
 				if (collapsedFieldsNotDefinedCount > 1) {
@@ -760,6 +975,9 @@ public class StringTransformer {
 			}
 		}
 		
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.ContextAwareTransformer#setContext(java.util.Map)
+		 */
 		@Override
 		public void setContext(Map<String, Object> context) {
 			fields = (String[])context.get("record");
@@ -777,18 +995,35 @@ public class StringTransformer {
 		private boolean failOnDelimNotFound;
 		private String retainPolicy;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public SplitterTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			intialize(config.getString("operation"), config.getString("delimiter"), 
 					config.getBoolean("failOnDelimNotFound"),config.getString("retainPolicy"));
 		}
 		
+		/**
+		 * @param numTransAttributes
+		 * @param operation
+		 * @param delimiter
+		 * @param failOnDelimNotFound
+		 * @param retainPolicy
+		 */
 		public SplitterTransformer(int numTransAttributes, String operation, String delimiter, boolean failOnDelimNotFound,
 				String retainPolicy) {
 			super(numTransAttributes);
 			intialize(operation, delimiter, failOnDelimNotFound,retainPolicy);
 		}
 		
+		/**
+		 * @param operation
+		 * @param delimiter
+		 * @param failOnDelimNotFound
+		 * @param retainPolicy
+		 */
 		public void intialize(String operation, String delimiter, boolean failOnDelimNotFound,
 				String retainPolicy) {
 			this.operation  = operation;
@@ -797,6 +1032,9 @@ public class StringTransformer {
 			this.retainPolicy = retainPolicy;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			String[] items = null;
@@ -844,23 +1082,40 @@ public class StringTransformer {
 		private String trueValue;
 		private String falseValue;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public BinaryValueTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			initialize(config.getString("predicateExpr"), config.getString("trueValue"), 
 					config.getString("falseValue"));
 		}
 
+		/**
+		 * @param predicateExpr
+		 * @param trueValue
+		 * @param falseValue
+		 */
 		public BinaryValueTransformer(String predicateExpr, String trueValue, String falseValue) {
 			super(1);
 			initialize(predicateExpr, trueValue, falseValue);
 		}
 
+		/**
+		 * @param predicateExpr
+		 * @param trueValue
+		 * @param falseValue
+		 */
 		public void initialize(String predicateExpr, String trueValue, String falseValue) {
 			this.predicate = AttributePredicate.create(predicateExpr);
 			this.trueValue = trueValue;
 			this.falseValue = falseValue;
 		}
 		
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			transformed[0] = predicate.evaluate(value) ? trueValue : falseValue;
@@ -876,16 +1131,26 @@ public class StringTransformer {
 	public static class CategoricalToBinaryTransformer extends AttributeTransformer {
 		private List<String> cardinality;
 		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
 		public CategoricalToBinaryTransformer(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			cardinality  = prAttr.getCardinality();
 		}
 
+		/**
+		 * @param cardinality
+		 */
 		public CategoricalToBinaryTransformer(List<String> cardinality) {
 			super(cardinality.size());
 			this.cardinality  = cardinality;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
 		@Override
 		public String[] tranform(String value) {
 			if (cardinality.contains(value)) {
@@ -898,6 +1163,5 @@ public class StringTransformer {
 			return transformed;
 		}
 	}	
-	
 	
 }
