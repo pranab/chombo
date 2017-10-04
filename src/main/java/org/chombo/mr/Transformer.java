@@ -294,7 +294,9 @@ public class Transformer extends Configured implements Tool {
             	getTranformedAttributes(transformerSchema.getAttributes(), true);
 	        	
             	//generators
-	           	getTranformedAttributes(transformerSchema.getAttributeGenerators(), false);
+            	if (null  !=  transformerSchema.getAttributeGenerators()) {
+            		getTranformedAttributes(transformerSchema.getAttributeGenerators(), false);
+            	}
 	           	
 	            outVal.set(Utility.join(itemsOut, fieldDelimOut));
 				context.write(NullWritable.get(), outVal);
