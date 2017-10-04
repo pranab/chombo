@@ -121,7 +121,7 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
       
       //create row validators
       val rowValidatorTags = validationSchema.getRowValidators().asScala.toArray
-      val rowValidators = createRowValidators(config, rowValidatorTags)
+      val rowValidators = createRowValidators(config, rowValidatorTags, fieldDelimIn)
 	   
 	  if (debugOn) {
 	     validators.foreach(kv => {
@@ -266,15 +266,15 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
   * @param valTags
   * @return
   */
-  private def createRowValidators(config : Config, valTags : Array[String]) : Array[Validator] = {
+  private def createRowValidators(config : Config, valTags : Array[String], fieldDelim : String) : Array[Validator] = {
      val validators = valTags.map(valTag => {
        config.hasPath(valTag) match {
          case true => {
-           ValidatorFactory.create(valTag, config.getConfig(valTag));
+           ValidatorFactory.create(valTag, config.getConfig(valTag), fieldDelim);
          }
          case false => {
            createRowValidatorContext(config, valTag)
-           ValidatorFactory.create(valTag, validationContext)
+           ValidatorFactory.create(valTag, validationContext, fieldDelim)
          }
          
        }
