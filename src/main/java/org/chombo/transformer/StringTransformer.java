@@ -294,9 +294,9 @@ public class StringTransformer {
 				} else {
 					//known number of groups
 					if (matcher.matches()) {
-			        	int numGr = 1;
-			        	for (int gr = 1; gr <= numGr; ++gr) {
+			        	for (int gr = 1; gr <= numGroups; ++gr) {
 			        		String found = matcher.group(gr);
+			        		//System.out.println("found:" + found)
 				    		searchResults.add(found);
 			        	}
 			        	matched = true;
