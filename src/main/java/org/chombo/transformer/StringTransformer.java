@@ -311,7 +311,7 @@ public class StringTransformer {
 			String replaced = value;
 			for (String found : searchResults) {
 				String replacement = getReplacement(found);
-				replaced = replaced.replaceAll(found, replacement);
+				replaced = replaced.replace(found, replacement);
 			}
 			transformed[0] = replaced;
 			return transformed;
