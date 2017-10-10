@@ -44,6 +44,7 @@ import org.chombo.redis.RedisCache;
 import org.chombo.util.AttributeFilter;
 import org.chombo.util.BaseAttributeFilter;
 import org.chombo.util.BasicUtils;
+import org.chombo.util.Pair;
 import org.chombo.util.RowColumnFilter;
 import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
@@ -71,7 +72,7 @@ public class Projection extends Configured implements Tool {
         Utility.setConfiguration(job.getConfiguration());
         String operation = job.getConfiguration().get("projection.operation",  "project");
         
-        if (operation.startsWith("grouping")) {
+        if (operation.startsWith("group") || operation.startsWith("order")) {
         	//group by
             job.setMapperClass(Projection.ProjectionMapper.class);
             job.setReducerClass(Projection.ProjectionReducer.class);
@@ -84,7 +85,7 @@ public class Projection extends Configured implements Tool {
             job.setNumReduceTasks(numReducer);
             
             //order by
-        	boolean doOrderBy = job.getConfiguration().getInt("pro.orderBy.field", -1) >= 0;
+        	boolean doOrderBy = operation.startsWith("order");
         	if (doOrderBy) {
                 job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
                 job.setPartitionerClass(SecondarySort.TupleTextPartitioner.class);
@@ -145,6 +146,8 @@ public class Projection extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex, -1);
+            
+            //only if filter matched
             if (null == attrFilter || attrFilter.evaluate(items)) {
             	if (idIncluded) {
             		outVal.set(Utility.extractFields(items , projectionFields, fieldDelimOut, false));
@@ -165,12 +168,13 @@ public class Projection extends Configured implements Tool {
 		private Tuple outKey = new Tuple();
 		private Text outVal = new Text();
 		private int  keyField;
+		private boolean includeKey;
 		private int[]  projectionFields;
         private String fieldDelimRegex;
         private String fieldDelimOut;
-        private int orderByField;
+        private List<Pair<Integer, Boolean>> orderByFieldOrdinals;
         private boolean groupBy;
-        private boolean isOrderByFieldNumeric;
+        private int[] groupByFieldOrdinals;
         private BaseAttributeFilter attrFilter;
         private RowColumnFilter rowColFilter = new RowColumnFilter();
         
@@ -179,12 +183,34 @@ public class Projection extends Configured implements Tool {
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	String operation = config.get("pro.projection.operation",  "project");
-        	groupBy = operation.startsWith("grouping");
-        	
-        	keyField = config.getInt("pro.key.field", 0);
         	fieldDelimRegex = config.get("field.delim.regex", ",");
         	fieldDelimOut = config.get("field.delim.out", ",");
+        	
+        	String operation = config.get("pro.projection.operation", "project");
+        	groupBy = operation.startsWith("group");
+        	if (groupBy) {
+        		//group by
+        		groupByFieldOrdinals = Utility.assertIntArrayConfigParam(config, "pro.group.by.field.ordinals", 
+        				Utility.configDelim, "missing group by field ordinals");
+        	} else {
+            	//order by
+            	int orderByField = config.getInt("pro.orderBy.field", -1);
+            	boolean isOrderByFieldNumeric = config.getBoolean("pro.orderBy.filed.numeric", false);
+            	if (-1 == orderByField) {
+            		//multiple order by fields
+    	        	orderByFieldOrdinals = Utility.getIntBooleanList(config, "pro.orderBy.fields", Utility.configDelim, Utility.configSubFieldDelim);
+    	        	if (null != orderByFieldOrdinals && orderByFieldOrdinals.isEmpty()) {
+    	        		throw new IllegalStateException("failed to process order by field configuration");
+    	        	}
+            	} else {
+            		//one order by field
+            		orderByFieldOrdinals = new ArrayList<Pair<Integer, Boolean>>();
+            		orderByFieldOrdinals.add(new Pair<Integer, Boolean>(orderByField, isOrderByFieldNumeric));
+            	}
+        	}
+        	
+        	keyField = config.getInt("pro.key.field", 0);
+        	includeKey = config.getBoolean("pro.include.key", true);
         	
         	//filter expression delimetrs
         	setFilterExprDelimeter(config);
@@ -194,10 +220,6 @@ public class Projection extends Configured implements Tool {
         		//projected field from the output of another MR
         		projectionFields = findIncludedColumns(config, rowColFilter);
         	}
-        	
-        	//order by
-        	orderByField = config.getInt("pro.orderBy.field", -1);
-        	isOrderByFieldNumeric = config.getBoolean("pro.orderBy.filed.numeric", false);
         	
         	//selection
         	String selectFilter = config.get("pro.select.filter");
@@ -213,18 +235,25 @@ public class Projection extends Configured implements Tool {
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
             String[] items  =  value.toString().split(fieldDelimRegex, -1);
+            
+            //only if filter matched
             if (null == attrFilter || attrFilter.evaluate(items)) {
 	        	outKey.initialize();
-	            if (orderByField >= 0) {
-	            	//group by and order by
-	            	if (isOrderByFieldNumeric) {
-	               		outKey.add(items[keyField],Double.parseDouble( items[orderByField]));
-	            	} else {
-	            		outKey.add(items[keyField], items[orderByField]);
+        		if (includeKey) {
+        			outKey.add(items[keyField]);
+        		}
+	            if (null != orderByFieldOrdinals) {
+	            	//order by
+	            	for (Pair<Integer, Boolean> field : orderByFieldOrdinals) {
+	            		if (field.getRight()) {
+		               		outKey.add(Double.parseDouble(items[field.getLeft()]));
+	            		} else {
+		               		outKey.add(items[field.getLeft()]);
+	            		}
 	            	}
 	            } else {
 	            	//group by
-	            	outKey.add(items[keyField]);
+	            	outKey.addArrayElements(items, groupByFieldOrdinals);
 	            }
 	        	outVal.set(BasicUtils.extractFields(items , projectionFields, fieldDelimOut, false));
 	        	context.write(outKey, outVal);
@@ -243,50 +272,65 @@ public class Projection extends Configured implements Tool {
 		private RedisCache redisCache;
 		private String aggregateValueKeyPrefix;
 		private String[] aggrFunctions;
-		private int[] aggrFunctionValues;
-		private int[] aggrFunctionValuesMax;
+		private Map<String, Object> aggregateValues = new HashMap<String, Object>();
+		private Map<String, Object> aggregateValuesMax = new HashMap<String, Object>();
 		private List<String> strValues = new ArrayList<String>();
-		private List<Integer> intValues = new ArrayList<Integer>();
+		private List<Double> doubleValues = new ArrayList<Double>();
 		private Set<String> strValuesSet = new HashSet<String>();
-		private int sum;
-		private int sqSum;
-		private  boolean sortOrderAscending;
+		private double sum;
+		private double sqSum;
 		private List<String> sortedValues = new ArrayList<String>();
 		private int limitTo;
 		private boolean formatCompact;
-		private int averageFunctionIndex;
 		private double  stdDev;
 		private boolean useRank;
+		private boolean useRedisCache;
+		private boolean groupBy;
+		private double max;
+		private double min;
+		private boolean sumDone;
+		private int outputPrecision;
 		
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
-        	fieldDelim = config.get("field.delim.out", "[]");
-        	if (!StringUtils.isBlank(config.get("pro.agrregate.fumctions"))) {
-        		aggrFunctions = config.get("pro.agrregate.fumctions").split(fieldDelim);
-        		aggrFunctionValues = new int[aggrFunctions.length];
-        		aggrFunctionValuesMax = new int[aggrFunctions.length];
-        		for (int i = 0; i < aggrFunctionValuesMax.length;  ++i) {
-        			aggrFunctionValuesMax[i] = Integer.MIN_VALUE;
+        	fieldDelim = config.get("field.delim.out", ",");
+        	String operation = config.get("pro.projection.operation", "project");
+        	groupBy = operation.startsWith("group");
+       	
+        	if (!StringUtils.isBlank(config.get("pro.agrregate.functions"))) {
+        		if (groupBy) {
+	        		aggrFunctions = Utility.stringArrayFromString(config, "pro.agrregate.functions", Utility.configDelim);
+	        		useRedisCache = config.getBoolean("pro.use.redis.cache", true);
+	        		if (useRedisCache) {
+	        			aggregateValueKeyPrefix = config.get("pro.aggregate.value.key.prefix");
+	        			redisCache = RedisCache.createRedisCache(config, "ch");
+	        		}
+        		} else {
+        			throw new IllegalStateException("invalid t aggregate without group by");
         		}
-				aggregateValueKeyPrefix = config.get("pro.aggregate.value.key.prefix");
-	        	redisCache = RedisCache.createRedisCache(config, "ch");
+        	} else {
+        		//don't allow group by without aggregation
+        		if (groupBy) {
+        			throw new IllegalStateException("invalid to have group by without aggregation");
+        		}
         	}
-        	sortOrderAscending = config.getBoolean("pro.sort.order.ascending", true);
+        	//sortOrderAscending = config.getBoolean("pro.sort.order.ascending", true);
         	limitTo = config.getInt("pro.limit.to", -1);
         	formatCompact = config.getBoolean("pro.format.compact", true);
         	useRank = config.getBoolean("pro.use.rank", false);
+        	outputPrecision = config.getInt("pro.output.precision", 3);
        }
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#cleanup(org.apache.hadoop.mapreduce.Reducer.Context)
 		 */
 		protected void cleanup(Context context) throws IOException, InterruptedException {
-			if (null != aggrFunctions) {
-				for (int i = 0; i < aggrFunctions.length; ++i) {
-					redisCache.put(aggregateValueKeyPrefix + "." +aggrFunctions[i] ,  "" + aggrFunctionValuesMax[i], true);
+			if (useRedisCache && null != aggrFunctions) {
+				for (String fun : aggrFunctions) {
+					redisCache.put(aggregateValueKeyPrefix + "." + fun ,  "" + aggregateValuesMax.get(fun), true);
 				}
 			}
 		}
@@ -299,65 +343,113 @@ public class Projection extends Configured implements Tool {
     		if (null != aggrFunctions) {
     			//aggregate functions
         		stBld.delete(0, stBld.length());
-        		stBld.append(key.getString(0));
+        		stBld.append(key.withDelim(fieldDelim).toString());
 
         		strValues.clear();
-    			intValues.clear();
+    			//intValues.clear();
+    			doubleValues.clear();
     			strValuesSet.clear();
+    			aggregateValues.clear();
     			sum = 0;
+    			sumDone = false;
     			sqSum = 0;
-    			averageFunctionIndex = -1;
+    			//averageFunctionIndex = -1;
 	        	for (Text value : values){
 	        		strValues.add(value.toString());
 	        	}    			
 	        	
-	        	//all aggregate functions
+	        	//all aggregate functions but limited to one variable
 	        	for (int i = 0; i <  aggrFunctions.length; ++i) {
 	        		if (aggrFunctions[i].equals("count")) {
 	        			//count
-	        			aggrFunctionValues[i] = strValues.size(); 
+	        			aggregateValues.put("count", strValues.size());
 	        		} else if (aggrFunctions[i].equals("uniqueCount")) {
 	        			//unique count
 	        			for (String stVal : strValues) {
 	        				strValuesSet.add(stVal);
 	        			}
-	        			aggrFunctionValues[i] = strValuesSet.size(); 
+	        			aggregateValues.put("uniqueCount", strValuesSet.size());
 	        		} else if (aggrFunctions[i].equals("sum")) {
 	        			//sum
-	        			doSum();
-	        			aggrFunctionValues[i] = sum; 
+	        			if (!sumDone) {
+	        				doSum();
+	        			}
+	        			aggregateValues.put("sum", sum);
 	        		} else if (aggrFunctions[i].equals("average")) {
 	        			//average
-	        			if (sum == 0) {
+	        			if (!sumDone) {
 		        			doSum();
 	        			}
-	        			aggrFunctionValues[i] = sum / intValues.size() ; 
+	        			aggregateValues.put("average", sum / doubleValues.size());
+	        		} else if (aggrFunctions[i].equals("max")) {
+	        			//max
+		        		doMax();
+	        			aggregateValues.put("max", max);
+	        		} else if (aggrFunctions[i].equals("min")) {
+	        			//min
+		        		doMin();
+	        			aggregateValues.put("min", min);
 	        		} else if (aggrFunctions[i].equals("stdDev")) {
 	        			//standard deviation
-	        			if (averageFunctionIndex < 0) {
-	        				throw new IllegalStateException("average aggregate function must be included for std deviation");
+	        			Double average = null;
+	        			if (aggregateValues.containsKey("average")) {
+	        				average = (Double)aggregateValues.get("average");
+	        			} else {
+	        				if (!sumDone) {
+	        					doSum();
+	        				}
+	        				average = sum / doubleValues.size();
 	        			}
 		        		doSqSum();
-	        			stdDev = (double)sqSum / intValues.size() -  (double)aggrFunctionValues[averageFunctionIndex] * 
-	        					aggrFunctionValues[averageFunctionIndex];
+	        			stdDev = (double)sqSum / doubleValues.size() -  average * average;
 	        			stdDev = Math.sqrt(stdDev);
-	        			aggrFunctionValues[i] = (int)stdDev ; 
+	        			aggregateValues.put("stdDev", stdDev);
 	        		}
 	        	}
-	        	for (int i = 0; i < aggrFunctionValues.length; ++i) {
-	        		if (aggrFunctionValues[i] > aggrFunctionValuesMax[i]) {
-	        			aggrFunctionValuesMax[i] =  aggrFunctionValues[i]; 
+	        	
+	        	//all aggregate values
+	        	for (String fun : aggrFunctions) {
+	        		Object aggrVal = aggregateValues.get(fun);
+	        		Object aggrValMax = aggregateValuesMax.get(fun);
+	        		if (aggrVal instanceof Integer) {
+	        			Integer aggrValInt = (Integer)aggrVal;
+	        			stBld.append(fieldDelim).append(aggrValInt);
+	        			
+	        			if (useRedisCache) {
+		        			if (null == aggrValMax) {
+		        				aggregateValuesMax.put(fun, aggrValInt);
+		        			} else {
+		        				Integer aggrValMaxInt = (Integer)aggrValMax;
+		        				if (aggrValInt > aggrValMaxInt) {
+		        					aggregateValuesMax.put(fun, aggrValInt);
+		        				}
+		        			}
+	        			}
+	        		} else {
+	        			Double aggrValDouble = (Double)aggrVal;
+	        			stBld.append(fieldDelim).append(BasicUtils.formatDouble(aggrValDouble, outputPrecision));
+	        			
+	        			if (useRedisCache) {
+		        			if (null == aggrValMax) {
+		        				aggregateValuesMax.put(fun, aggrValDouble);
+		        			} else {
+		        				Double aggrValMaxDouble = (Double)aggrValMax;
+		        				if (aggrValDouble > aggrValMaxDouble) {
+		        					aggregateValuesMax.put(fun, aggrValDouble);
+		        				}
+		        			}
+	        			}
 	        		}
-	    	   		stBld.append(fieldDelim).append(aggrFunctionValues[i]);
 	        	}
+	        	
 	        	outVal.set(stBld.toString());
 				context.write(NullWritable.get(), outVal);
     		}  else {
        			//actual values
     			 if (formatCompact) {
-    				emitCompactFormat( key,  values, context);
+    				emitCompactFormat(key,  values, context);
     			} else {
-    				emitLongFormat( key,  values, context);
+    				emitLongFormat(key,  values, context);
     			}
     		}
     	}
@@ -374,32 +466,16 @@ public class Projection extends Configured implements Tool {
     		throws IOException, InterruptedException {
 			//actual values
     		stBld.delete(0, stBld.length());
-    		stBld.append(key.getString(0));
-			if (sortOrderAscending) {
-				int i = 0;
-	        	for (Text value : values){
-	        		if (i == limitTo) {
-	        			break;
-	        		}
-	    	   		stBld.append(fieldDelim).append(value);
-	    	   		++i;
-	        	}    		
-			} else {
-				sortedValues.clear();
-	        	for (Text value : values){
-	        		sortedValues.add(value.toString());
-	        	}    	
-	        	
-	        	//reverse order
-				int i = 0;
-	        	for (int j = sortedValues.size() -1; j >= 0; --j) {
-	        		if (i == limitTo) {
-	        			break;
-	        		}
-	    	   		stBld.append(fieldDelim).append(sortedValues.get(j));
-	    	   		++i;
-	        	}
-			}
+    		stBld.append(key.withDelim(fieldDelim).toString());
+			int i = 0;
+        	for (Text value : values){
+        		if (i == limitTo) {
+        			break;
+        		}
+    	   		stBld.append(fieldDelim).append(value);
+    	   		++i;
+        	}    		
+    		
 	       	outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
     	}
@@ -415,83 +491,88 @@ public class Projection extends Configured implements Tool {
     	private void emitLongFormat(Tuple key, Iterable<Text> values, Context context) 
     		throws IOException, InterruptedException {
 			//actual values
- 			if (sortOrderAscending) {
-				int i = 0;
-	        	for (Text value : values){
-	        		if (i == limitTo) {
-	        			break;
-	        		}
-	        		stBld.delete(0, stBld.length());
-	        		stBld.append(key.getString(0));
-	        		if (useRank) {
-	        			//rank
-	        			stBld.append(fieldDelim).append(i+1);
-	        		} else {
-	        			//actual value
-	        			stBld.append(fieldDelim).append(value);
-	        		}
-	    	       	outVal.set(stBld.toString());
-	    			context.write(NullWritable.get(), outVal);
-	    	   		++i;
-	        	}    		
-			} else {
-				sortedValues.clear();
-	        	for (Text value : values){
-	        		sortedValues.add(value.toString());
-	        	}    	
-	        	
-	        	//reverse order
-				int i = 0;
-	        	for (int j = sortedValues.size() -1; j >= 0; --j) {
-	        		if (i == limitTo) {
-	        			break;
-	        		}
-	        		stBld.delete(0, stBld.length());
-	        		stBld.append(key.getString(0));
-	        		if (useRank) {
-	        			//rank
-	        			stBld.append(fieldDelim).append(i+1);
-	        		} else {
-	        			//actual value
-	        			stBld.append(fieldDelim).append(sortedValues.get(j));
-	        		}
-	    	       	outVal.set(stBld.toString());
-	    			context.write(NullWritable.get(), outVal);
-	    	   		++i;
-	        	}
-			}
+			int i = 0;
+        	for (Text value : values){
+        		if (i == limitTo) {
+        			break;
+        		}
+        		stBld.delete(0, stBld.length());
+        		stBld.append(key.withDelim(fieldDelim).toString());
+        		if (useRank) {
+        			//rank
+        			stBld.append(fieldDelim).append(i+1);
+        		} else {
+        			//actual value
+        			stBld.append(fieldDelim).append(value);
+        		}
+    	       	outVal.set(stBld.toString());
+    			context.write(NullWritable.get(), outVal);
+    	   		++i;
+        	}    		
     	}
 
     	/**
     	 * 
     	 */
     	private void doSum() {
-			if (intValues.isEmpty()) {
-				initializeIntValues();
+			if (doubleValues.isEmpty()) {
+				initializeDoubleValues();
 			}
-			for (int intVal : intValues) {
-				sum += intVal;
+			for (double doubleVal : doubleValues) {
+				sum += doubleVal;
 			}
+			sumDone = true;
     	}
 
     	/**
     	 * 
     	 */
     	private void doSqSum() {
-			if (intValues.isEmpty()) {
-				initializeIntValues();
+			if (doubleValues.isEmpty()) {
+				initializeDoubleValues();
 			}
-			for (int intVal : intValues) {
-				sqSum += intVal * intVal;
+			for (double doubleVal : doubleValues) {
+				sqSum += doubleVal * doubleVal;
 			}
+    	}
+    	
+    	/**
+    	 * 
+    	 */
+    	private void doMax() {
+			if (doubleValues.isEmpty()) {
+				initializeDoubleValues();
+			}
+			max = Double.MIN_VALUE;
+			for (double doubleVal : doubleValues) {
+				if (doubleVal > max) {
+					max = doubleVal;
+				}
+			}    		
     	}
 
     	/**
     	 * 
     	 */
-    	private void initializeIntValues() {
+    	private void doMin() {
+			if (doubleValues.isEmpty()) {
+				initializeDoubleValues();
+			}
+			min = Double.MAX_VALUE;
+			for (double doubleVal : doubleValues) {
+				if (doubleVal < min) {
+					min = doubleVal;
+				}
+			}    		
+    	}
+
+     	
+    	/**
+    	 * 
+    	 */
+    	private void initializeDoubleValues() {
 			for (String stVal : strValues) {
-				intValues.add(Integer.parseInt(stVal));
+				doubleValues.add(Double.parseDouble(stVal));
 			}
     	}
     }

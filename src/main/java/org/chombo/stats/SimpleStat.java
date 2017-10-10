@@ -22,22 +22,30 @@ package org.chombo.stats;
  * @author pranab
  *
  */
-public class SimpleStat implements AverageValue {
-	private double sum;
+public class SimpleStat extends MeanStat {
 	private double sumSq;
-	private int count;
-	private double mean = -1;
 	private double  stdDev;
-	private boolean processed;
+	
+	public SimpleStat() {
+	}
+	
+	/**
+	 * @param count
+	 * @param sum
+	 * @param mean
+	 */
+	public SimpleStat(int count, double sum,  double sumSq, double mean, double stdDev) {
+		super(count, sum,  mean);
+		this.stdDev = stdDev;
+	}
 	
 	/* (non-Javadoc)
-	 * @see org.chombo.stats.AverageValue#add(double)
+	 * @see org.chombo.stats.MeanStat#add(double)
 	 */
+	@Override
 	public void add(double value) {
-		sum +=  value;
+		super.add(value);
 		sumSq += value * value;
-		++count;
-		processed = false;
 	}
 	
 	/* (non-Javadoc)
@@ -46,9 +54,8 @@ public class SimpleStat implements AverageValue {
 	@Override
 	public double getMean() {
 		if (!processed) {
-			mean =  sum / count;
+			super.getMean();
 			stdDev = Math.sqrt(sumSq / count - mean * mean);
-			processed = true;
 		}
 		return mean;
 	}
@@ -58,9 +65,8 @@ public class SimpleStat implements AverageValue {
 	 */
 	public double getStdDev() {
 		if (!processed) {
-			mean =  sum / count;
+			super.getMean();
 			stdDev = Math.sqrt(sumSq / count - mean * mean);
-			processed = true;
 		}
 		return stdDev;
 	}
