@@ -567,6 +567,16 @@ public class Utility {
 			tuple.add(record[i]);
 		}
 	}
+
+    /**
+     * @param config
+     * @param param
+     * @param delimRegex
+     * @return
+     */
+    public static String[] stringArrayFromString(Configuration config, String param, String delimRegex ) {
+    	return BasicUtils.stringArrayFromString(config.get(param), delimRegex);
+    }
 	
     /**
      * @param config
@@ -817,6 +827,18 @@ public class Utility {
 	public static boolean isBlank(String data) {
 		return  BasicUtils.isBlank(data);
 	}
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, Integer>> getIntPairList(Configuration config, String param, String fieldDelim, String subFieldDelim) {
+		String record = config.get(param);
+		return  null != record ? BasicUtils.getIntPairList(record, fieldDelim, subFieldDelim) : null;
+	}
 	
 	/**
 	 * @param record
@@ -829,6 +851,18 @@ public class Utility {
 	}
 	
 	/**
+	 * @param config
+	 * @param param
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, String>> getIntStringList(Configuration config, String param, String fieldDelim, String subFieldDelim) {
+		String record = config.get(param);
+		return  null != record ? BasicUtils.getIntStringList(record, fieldDelim, subFieldDelim) : null;
+	}
+	
+	/**
 	 * @param record
 	 * @param fieldDelim
 	 * @param subFieldDelim
@@ -836,6 +870,19 @@ public class Utility {
 	 */
 	public static List<Pair<Integer, String>> getIntStringList(String record, String fieldDelim, String subFieldDelim) {
 		return  BasicUtils.getIntStringList(record, fieldDelim, subFieldDelim);
+	}
+	
+
+	/**
+	 * @param config
+	 * @param param
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<String, String>> getStringPairList(Configuration config, String param, String fieldDelim, String subFieldDelim) {
+		String record = config.get(param);
+		return  null != record ? BasicUtils.getStringPairList(record, fieldDelim, subFieldDelim) : null;
 	}
 	
 	/**
@@ -846,6 +893,18 @@ public class Utility {
 	 */
 	public static List<Pair<String, String>> getStringPairList(String record, String fieldDelim, String subFieldDelim) {
 		return  BasicUtils.getStringPairList(record, fieldDelim, subFieldDelim);
+	}
+	
+	/**
+	 * @param config
+	 * @param param
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, Boolean>> getIntBooleanList(Configuration config, String param, String fieldDelim, String subFieldDelim) {
+		String record = config.get(param);
+		return  null != record ? BasicUtils.getIntBooleanList(record, fieldDelim, subFieldDelim) : null;
 	}
 	
 	/**

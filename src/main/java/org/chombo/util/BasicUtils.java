@@ -199,7 +199,21 @@ public class BasicUtils {
     	}
     	return stBld.toString();
     }
+    
+    /**
+     * @param record
+     * @param delimRegex
+     * @return
+     */
+    public static String[] stringArrayFromString(String record, String delimRegex ) {
+    	String[] data = null;
+    	if (null != record) {
+	    	data = record.split(delimRegex);
+    	}
+    	return data;
+    }
 
+    
     /**
      * @param record
      * @param delimRegex
@@ -708,6 +722,24 @@ public class BasicUtils {
 		}
 		return intStringPairs;
 	}
+	
+	/**
+	 * @param record
+	 * @param fieldDelim
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static List<Pair<Integer, Boolean>> getIntBooleanList(String record, String fieldDelim, String subFieldDelim) {
+		List<Pair<Integer, Boolean>> intBooleanPairs = new ArrayList<Pair<Integer, Boolean>>();
+		String[] items = record.split(fieldDelim);
+		for (String item : items) {
+			String[] subItems = item.split(subFieldDelim);
+			Pair<Integer, Boolean> pair = new Pair<Integer, Boolean>(Integer.parseInt(subItems[0]),  new Boolean(subItems[1]));
+			intBooleanPairs.add(pair);
+		}
+		return intBooleanPairs;
+	}
+	
 	
 	/**
 	 * @param record
