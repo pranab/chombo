@@ -46,7 +46,6 @@ import org.chombo.util.BaseAttributeFilter;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
 import org.chombo.util.RowColumnFilter;
-import org.chombo.util.SecondarySort;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -70,7 +69,7 @@ public class Projection extends Configured implements Tool {
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration());
-        String operation = job.getConfiguration().get("projection.operation",  "project");
+        String operation = job.getConfiguration().get("pro.projection.operation",  "project");
         
         if (operation.startsWith("group") || operation.startsWith("order")) {
         	//group by
@@ -292,16 +291,16 @@ public class Projection extends Configured implements Tool {
         	String operation = config.get("pro.projection.operation", "project");
         	groupBy = operation.startsWith("group");
        	
-        	if (!StringUtils.isBlank(config.get("pro.agrregate.functions"))) {
+        	if (!StringUtils.isBlank(config.get("pro.aggregate.functions"))) {
         		if (groupBy) {
-	        		aggrFunctions = Utility.stringArrayFromString(config, "pro.agrregate.functions", Utility.configDelim);
+	        		aggrFunctions = Utility.stringArrayFromString(config, "pro.aggregate.functions", Utility.configDelim);
 	        		useRedisCache = config.getBoolean("pro.use.redis.cache", true);
 	        		if (useRedisCache) {
 	        			aggregateValueKeyPrefix = config.get("pro.aggregate.value.key.prefix");
 	        			redisCache = RedisCache.createRedisCache(config, "ch");
 	        		}
         		} else {
-        			throw new IllegalStateException("invalid t aggregate without group by");
+        			throw new IllegalStateException("invalid to aggregate without group by");
         		}
         	} else {
         		//don't allow group by without aggregation
@@ -338,14 +337,14 @@ public class Projection extends Configured implements Tool {
         		stBld.append(key.withDelim(fieldDelim).toString());
 
         		strValues.clear();
-    			//intValues.clear();
     			doubleValues.clear();
     			strValuesSet.clear();
     			aggregateValues.clear();
     			sum = 0;
     			sumDone = false;
     			sqSum = 0;
-    			//averageFunctionIndex = -1;
+    			
+    			//store values
 	        	for (Text value : values){
 	        		strValues.add(value.toString());
 	        	}    			
