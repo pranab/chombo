@@ -83,14 +83,6 @@ public class Projection extends Configured implements Tool {
             int numReducer = job.getConfiguration().getInt("pro.num.reducer", -1);
             numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
             job.setNumReduceTasks(numReducer);
-            
-            //order by
-        	boolean doOrderBy = operation.startsWith("order");
-        	if (doOrderBy) {
-                job.setGroupingComparatorClass(SecondarySort.TuplePairGroupComprator.class);
-                job.setPartitionerClass(SecondarySort.TupleTextPartitioner.class);
-        	}
-
         } else {
         	//simple projection
             job.setMapperClass(Projection.SimpleProjectionMapper.class);
