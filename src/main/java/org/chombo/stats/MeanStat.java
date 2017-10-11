@@ -47,6 +47,16 @@ public class MeanStat implements AverageValue, Serializable {
 		this.mean = mean;
 		processed = true;
 	}
+	
+	/**
+	 * 
+	 */
+	public void initialize() {
+		sum = 0;
+		count = 0;
+		mean = 0;
+		processed = false;
+	}
 
 	/**
 	 * @param delim
@@ -78,6 +88,13 @@ public class MeanStat implements AverageValue, Serializable {
 		}
 		return mean;
 	}
+	
+	/**
+	 * @return
+	 */
+	public double getSum() {
+		return sum;
+	}
 
 	@Override
 	public void setMean(double mean) {
@@ -85,6 +102,9 @@ public class MeanStat implements AverageValue, Serializable {
 		
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	public String toString() {
 		StringBuilder stBld = new StringBuilder();
 		stBld.append(count).append(delim).append(BasicUtils.formatDouble(sum)).append(delim).append(mean);

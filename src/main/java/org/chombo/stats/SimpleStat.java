@@ -23,8 +23,8 @@ package org.chombo.stats;
  *
  */
 public class SimpleStat extends MeanStat {
-	private double sumSq;
-	private double  stdDev;
+	protected double sumSq;
+	protected double  stdDev;
 	
 	public SimpleStat() {
 	}
@@ -37,6 +37,16 @@ public class SimpleStat extends MeanStat {
 	public SimpleStat(int count, double sum,  double sumSq, double mean, double stdDev) {
 		super(count, sum,  mean);
 		this.stdDev = stdDev;
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.chombo.stats.MeanStat#initialize()
+	 */
+	@Override
+	public void initialize() {
+		super.initialize();
+		sumSq = 0;
+		stdDev = 0;
 	}
 	
 	/* (non-Javadoc)
