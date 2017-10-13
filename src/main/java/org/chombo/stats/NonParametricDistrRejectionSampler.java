@@ -114,5 +114,15 @@ public class NonParametricDistrRejectionSampler<T>  implements RejectionSampler<
 	public Map<T, Double> getDistr() {
 		return distr;
 	}
+	
+	/**
+	 * @return
+	 */
+	public Map<T, Double> getNormDistr() {
+		if (!normalized) {
+			normalize();
+		}
+		return normDistr;
+	}
 
 }

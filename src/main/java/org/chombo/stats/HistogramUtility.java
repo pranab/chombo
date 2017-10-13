@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.chombo.util.BasicUtils;
+import org.chombo.util.IntRange;
 import org.chombo.util.Pair;
 
 /**
@@ -108,4 +109,18 @@ public class HistogramUtility {
 		return newDistr;
 	}
 
+	/**
+	 * @param distr
+	 * @return
+	 */
+	public static int findMean(NonParametricDistrRejectionSampler<IntRange> distr) {
+		int mean = 0;
+		Map<IntRange, Double> norDistr = distr.getNormDistr();
+		double sum = 0;
+		for (IntRange range : norDistr.keySet()) {
+			sum += range.getMean() * norDistr.get(range);
+		}
+		mean = (int)Math.round(sum);
+		return mean;
+	}
 }
