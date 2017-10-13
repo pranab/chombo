@@ -18,6 +18,8 @@
 
 package org.chombo.util;
 
+import java.io.Serializable;
+
 /**
  * Generic Pair class
  * @author pranab
@@ -25,7 +27,7 @@ package org.chombo.util;
  * @param <L>
  * @param <R>
  */
-public class Pair<L,R>  {
+public class Pair<L,R>  implements Serializable {
 	protected  L left;
 	protected  R right;
 

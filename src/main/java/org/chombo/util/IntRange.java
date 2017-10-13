@@ -27,6 +27,10 @@ public class IntRange  extends Pair<Integer, Integer> implements Domain {
 	private boolean isPoint; 
 	private String delim;
 	
+	public IntRange(int min, int max) {
+		super(min, max);
+	}
+	
 	/**
 	 * @param stVal
 	 * @param delim
@@ -81,6 +85,13 @@ public class IntRange  extends Pair<Integer, Integer> implements Domain {
 	public boolean isContained(String value) {
 		int iValue = Integer.parseInt(value);
 		return iValue >= left && iValue <= right;
+	}
+	
+	/**
+	 * @return
+	 */
+	public int getMean() {
+		return (left + right) / 2;
 	}
 	
 	/* (non-Javadoc)
