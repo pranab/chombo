@@ -66,6 +66,18 @@ public class CompleteStat extends SimpleStat {
 	}
 	
 	/**
+	 * @param other
+	 */
+	public void merge(CompleteStat other) {
+		count += other.count;
+		max = max > other.max ? max : other.max;
+		min = min < other.min ? min : other.min;
+		sum += other.sum;
+		sumSq += other.sumSq;
+		this.processed = false;
+	}
+	
+	/**
 	 * @return
 	 */
 	public double getMin() {
