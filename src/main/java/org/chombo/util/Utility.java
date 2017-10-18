@@ -309,8 +309,24 @@ public class Utility {
      * @return
      * @throws IOException
      */
-    public static OutputStream getCreateFileOutputStream(Configuration conf, String pathConfig) throws IOException {
-        String filePath = conf.get(pathConfig);
+    public static OutputStream getCreateFileOutputStream(String filePath) throws IOException {
+    	Configuration conf = new Configuration();
+        FSDataOutputStream fs = null;
+        if (null != filePath) {
+        	FileSystem dfs = FileSystem.get(conf);
+        	Path src = new Path(filePath);
+        	fs = dfs.create(src, true);
+        }
+        return fs;
+    }
+
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static OutputStream getCreateFileOutputStream(Configuration conf, String filePath) throws IOException {
         FSDataOutputStream fs = null;
         if (null != filePath) {
         	FileSystem dfs = FileSystem.get(conf);
@@ -332,6 +348,29 @@ public class Utility {
 		writer.write(data);
 		writer.close();
 		os.close();
+    }
+
+    /**
+     * @param conf
+     * @param pathConfig
+     * @return
+     * @throws IOException
+     */
+    public static PrintWriter getCreateFileWriter(Configuration conf, String pathConfig) throws IOException {
+        OutputStream os = Utility.getCreateFileOutputStream(conf, pathConfig);
+        PrintWriter writer = new PrintWriter(os);
+        return writer;
+    }
+
+    /**
+     * @param filePath
+     * @return
+     * @throws IOException
+     */
+    public static PrintWriter getCreateFileWriter(String filePath) throws IOException {
+        OutputStream os = Utility.getCreateFileOutputStream(filePath);
+        PrintWriter writer = new PrintWriter(os);
+        return writer;
     }
 
     /**

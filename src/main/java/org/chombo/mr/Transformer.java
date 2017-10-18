@@ -193,6 +193,7 @@ public class Transformer extends Configured implements Tool {
 		        		List<String> generatorTagList = prAttr.getTransformers();
 		        		String[] generatorTags =  generatorTagList.toArray(new String[generatorTagList.size()]);
 		        		createGenerators(generatorTags, prAttr);
+	        			foundInSchemaConfig = true;
 		        	}
 	        	}
         	}
