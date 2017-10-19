@@ -22,6 +22,7 @@ import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.stats.CompleteStat
+import org.chombo.util.BasicUtils
 
 
 object Normalizer extends JobConfiguration {
@@ -40,8 +41,16 @@ object Normalizer extends JobConfiguration {
 	   
 	   //configuration params
 	   val fieldDelimIn = appConfig.getString("field.delim.in")
-	   val attrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals").asScala
-	   val normStrategy = this.getMandatoryStringParam(appConfig, "norm.strategy")
+	   val fieldDelimOut = appConfig.getString("field.delim.out")
+	   val attrConfigs = appConfig.getConfigList("num.attrs").asScala
+	   val attrConfigDetails = attrConfigs.map(c => {
+	     (c.getInt("ordinal"), c.getString("type"))
+	   })
+	   val outlierTruncLevel = this.getOptionalDoubleParam(appConfig, "outlier.trunc.level")
+	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
+	   
+	   val normStrategy = getStringParamOrElse(appConfig, "norm.strategy", "zScore")
+	   val scale = this.getOptionalIntParam(appConfig, "scale")
 	   
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
@@ -52,9 +61,10 @@ object Normalizer extends JobConfiguration {
 	   //filed ordinal and value
 	   val fieldVals = data.flatMap(line => {
 	     val items = line.split(fieldDelimIn)
-	     val allFields = attrOrdinals.map(ord => {
-	      val fieldVal = items(ord).toDouble 
-	      (ord, fieldVal)
+	     val allFields = attrConfigDetails.map(attr => {
+	       val ord = attr._1
+	       val fieldVal = items(ord).toDouble 
+	       (ord, fieldVal)
 	     })
 	     allFields
 	   })
@@ -78,40 +88,79 @@ object Normalizer extends JobConfiguration {
 	     thisStat
 	   }
 	   
+	   //field wise stats
 	   val fieldWiseStaats =  fieldVals.combineByKey(createStat, addToStat, mergeStats)
        val fieldStats = fieldWiseStaats.collectAsMap
        
        //normalize data
-       data.map(line => {
+       val normalized = data.map(line => {
          val items = line.split(fieldDelimIn)
-         attrOrdinals.foreach(ord => {
-           val curVal = items(ord).toDouble 
-           val stat = fieldStats.get(ord)
+         
+         var outlier = false
+         attrConfigDetails.foreach(attr => {
+           val attrOrd = attr._1
+           val attrType = attr._2
+           val curVal = items(attrOrd).toDouble 
+           val stat = fieldStats.get(attrOrd)
            val realStat = stat match {
              case Some(realStat: CompleteStat) => realStat
              case None => throw new IllegalStateException("missing stat")
            }
            
-           val normValue = normStrategy match {
+           //apply strategies
+           var normValue = normStrategy match {
              case "minMax" => {
-               (curVal - realStat.getMin()) /(realStat.getMax() - realStat.getMin())
+               (curVal - realStat.getMin()) / (realStat.getMax() - realStat.getMin())
              }
-             case "zscore" => {
-               Math.abs((curVal - realStat.getMean()) / realStat.getStdDev())
+             case "zScore" => {
+               val nVal = Math.abs((curVal - realStat.getMean()) / realStat.getStdDev())
+               outlier = outlierTruncLevel match {
+                 case Some(truncLevel : Double) => { outlier || nVal > truncLevel}
+                 case None => false
+               }
+               nVal
              }
              case "center" => {
                curVal - realStat.getMean()
              }
              case "unitSum" => {
-               
+               curVal / realStat.getSum()
              }
            }
+           
+           //scale if necessary
+           normValue = scale match {
+             case Some(s : Int) => s * normValue
+             case None => normValue
+           }
+           
+           //string value
+           val serVal = attrType match {
+             case "int" => "" + Math.round(normValue)
+             case "long" => "" + Math.round(normValue)
+             case "float" => BasicUtils.formatDouble(normValue, precision)
+             case "double" => BasicUtils.formatDouble(normValue, precision)
+           }
+           items(attrOrd) = serVal
          })
          
+         val rec = outlier match {
+           case true => "x"
+           case false => items.mkString(fieldDelimOut)
+         }
+         rec
        })
 	   
+	   //filter out outliers
+       val norlaizedFiletered = normalized.filter(r => !r.equals("x"))
+       
+       if (debugOn) {
+         val records = norlaizedFiletered.collect
+         records.foreach(r => println(r))
+       }
 	   
-
-
+	   if(saveOutput) {	   
+	     norlaizedFiletered.saveAsTextFile(outputPath) 
+	   }
    }
 }
