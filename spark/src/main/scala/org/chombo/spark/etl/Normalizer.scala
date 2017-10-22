@@ -25,6 +25,12 @@ import org.chombo.stats.CompleteStat
 import org.chombo.util.BasicUtils
 
 
+/**
+ * Normlizes data according to various strategies. For zScore normalization, optionally removes
+ * outliers
+ * @author pranab
+ *
+ */
 object Normalizer extends JobConfiguration {
 
    /**
@@ -152,8 +158,10 @@ object Normalizer extends JobConfiguration {
        })
 	   
 	   //filter out outliers
-       val norlaizedFiletered = normalized.filter(r => !r.equals("x"))
-       
+       val norlaizedFiletered = outlierTruncLevel match {
+         case Some(truncLevel : Double) => normalized.filter(r => !r.equals("x"))
+         case None => normalized
+       }       
        if (debugOn) {
          val records = norlaizedFiletered.collect
          records.foreach(r => println(r))
