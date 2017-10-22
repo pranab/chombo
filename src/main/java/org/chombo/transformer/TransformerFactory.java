@@ -79,6 +79,7 @@ public class TransformerFactory {
 	public static final String STRING_BINARY_TRANSFORMER  = "stringBinaryTrans";
 	public static final String CATEGORICAL_BINARY_TRANSFORMER  = "categoricalBinaryTrans";
 	public static final String BINARY_OPERATOR_GENERATOR = "binaryOperatorGen";
+	public static final String BINARY_CONST_OPERATOR_TRANSFORMER = "binaryConstOperatorTrans";
 	
 	private static Map<String,String> custTransformerClasses = new HashMap<String,String>();
 	private static Map<String,AttributeTransformer> custTransformers = new HashMap<String,AttributeTransformer>();
@@ -203,6 +204,8 @@ public class TransformerFactory {
 			transformer = new StringTransformer.CategoricalToBinaryTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(BINARY_OPERATOR_GENERATOR)) {
 			transformer = new NumericTransformer.BinaryOperator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(BINARY_CONST_OPERATOR_TRANSFORMER)) {
+			transformer = new NumericTransformer.BinaryConstOperator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
 			//custom transformer with configured transformer class names
 			transformer = createCustomTransformer(transformerTag, prAttr,  config);

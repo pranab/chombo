@@ -461,5 +461,53 @@ public class NumericTransformer  {
 			return transformed;
 		}
 	}
-	
+
+	/**
+	 * Binary operation between a field and a constant
+	 * @author pranab
+	 *
+	 */
+	public static class BinaryConstOperator  extends AttributeTransformer {
+		private String operator;
+		private String outputDataType;
+		private int outputPrecision;
+		private double constant;
+		
+		public BinaryConstOperator(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			operator = config.getString("operator");
+			outputDataType = config.getString("outputDataType");
+			outputPrecision = config.getInt("outputPrecision");
+			constant = config.getDouble("constant");
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			double dVal = Double.parseDouble(value);
+			double result = 0;
+			if (operator.equals("+")) {
+				result = dVal + constant;
+			} else if (operator.equals("-")) {
+				result = dVal - constant;
+			} else if (operator.equals("*")) {
+				result = dVal * constant;
+			} else if (operator.equals("/")) {
+				result = dVal / constant;
+			} else {
+				throw new IllegalStateException("invalid operator");
+			}
+			
+			if (outputDataType.equals(BaseAttribute.DATA_TYPE_INT) || 
+					outputDataType.equals(BaseAttribute.DATA_TYPE_LONG)) {
+				transformed[0] = "" + BasicUtils.roundToInt(result);
+			} else if (outputDataType.equals(BaseAttribute.DATA_TYPE_DOUBLE) || 
+					outputDataType.equals(BaseAttribute.DATA_TYPE_FLOAT)) {
+				transformed[0] = "" + BasicUtils.formatDouble(result, outputPrecision);
+			} else {
+				throw new IllegalStateException("invalid data type");
+			}
+			return transformed;
+		}
+	}
+
 }
