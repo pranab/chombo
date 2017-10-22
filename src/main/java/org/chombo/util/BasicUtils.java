@@ -1895,5 +1895,20 @@ public class BasicUtils {
 		}
     	return quotient;
     }
+    
+    /**
+     * @param value
+     * @return
+     */
+    public static long roundToLong(double value) {
+    	return Math.round(value);
+    }
 	
+    /**
+     * @param value
+     * @return
+     */
+    public static int roundToInt(double value) {
+    	return (int)(Math.round(value));
+    }
  }
