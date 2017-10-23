@@ -26,8 +26,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.chombo.mr.FeatureField;
-import org.chombo.mr.FeatureFieldCollection;
 
 /**
  * Metadata based on schema JSON file. Enriched by stats data

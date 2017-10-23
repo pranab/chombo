@@ -54,9 +54,9 @@ object Normalizer extends JobConfiguration {
 	   })
 	   val outlierTruncLevel = this.getOptionalDoubleParam(appConfig, "outlier.trunc.level")
 	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
-	   
 	   val normStrategy = getStringParamOrElse(appConfig, "norm.strategy", "zScore")
 	   val scale = this.getOptionalIntParam(appConfig, "scale")
+	   val forceUnitRangeForZscore = getBooleanParamOrElse(appConfig, "force.unit.range.for.zscore", true)
 	   
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
@@ -119,12 +119,16 @@ object Normalizer extends JobConfiguration {
                (curVal - realStat.getMin()) / (realStat.getMax() - realStat.getMin())
              }
              case "zScore" => {
-               val nVal = Math.abs((curVal - realStat.getMean()) / realStat.getStdDev())
+               var znVal = (curVal - realStat.getMean()) / realStat.getStdDev()
+               val znValAbs = Math.abs(znVal)
                outlier = outlierTruncLevel match {
-                 case Some(truncLevel : Double) => { outlier || nVal > truncLevel}
+                 case Some(truncLevel : Double) => { 
+                   znVal = znVal / truncLevel
+                   if (forceUnitRangeForZscore) znVal = (znVal + 1) / 2
+                   outlier || znValAbs > truncLevel}
                  case None => false
                }
-               nVal
+               znVal
              }
              case "center" => {
                curVal - realStat.getMean()
