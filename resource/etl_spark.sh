@@ -2,7 +2,7 @@
 
 PROJECT_HOME=/Users/pranab/Projects
 JAR_NAME=$PROJECT_HOME/bin/chombo/uber-chombo-spark-1.0.jar
-MASTER=spark://akash:7077
+MASTER=spark://akash.local:7077
 
 case "$1" in
 
@@ -31,9 +31,9 @@ case "$1" in
 "jsonExtractor")
 	echo "running FlatRecordExtractorFromJson"
 	CLASS_NAME=org.chombo.spark.etl.FlatRecordExtractorFromJson
-	INPUT=hdfs:///etl/input/jex/usage.json
-	OUTPUT=hdfs:///etl/output/jex
-	hdfs dfs -rm -r $OUTPUT
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/jex/usage.json
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/jex
+	rm -rf ./output/jex
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;
@@ -44,6 +44,16 @@ case "$1" in
 	INPUT=file:///Users/pranab/Projects/bin/chombo/input/jex/smEvents.json
 	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/jex
 	rm -rf ./output/jex
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
+;;
+
+"normalizer")
+	echo "running Normalizer"
+	CLASS_NAME=org.chombo.spark.etl.Normalizer
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/norm/price.txt
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/norm
+	rm -rf ./output/norm
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;
