@@ -128,6 +128,7 @@ public class Transformer extends Configured implements Tool {
         private int fieldOrd;;
         private int numFields;
         private Map<String, Object> context = new HashMap<String, Object>();
+        private String inputRec;
        
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -278,6 +279,7 @@ public class Transformer extends Configured implements Tool {
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
+        	inputRec = value.toString();
             if (numFields > 0){
             	//validate with field count
             	items = Utility.splitFields(value.toString(), fieldDelimRegex, numFields, false);
@@ -359,7 +361,7 @@ public class Transformer extends Configured implements Tool {
                 	source = items[fieldOrd];
         			transformerList = transformers.get(fieldOrd);
         		} else {
-        			source = null;
+        			source = inputRec;
         			transformerList = generators;
         		}
         		

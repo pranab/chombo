@@ -15,9 +15,8 @@
  * permissions and limitations under the License.
  */
 
-package org.chombo.mr;
+package org.chombo.util;
 
-import org.chombo.util.RichAttribute;
 
 /**
  * Field for feature attribute and class attribute

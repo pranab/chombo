@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.chombo.util.BaseAttribute;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.BinaryCategoryCreator;
 import org.chombo.util.ProcessorAttribute;
 import org.chombo.util.Utility;
@@ -406,4 +407,107 @@ public class NumericTransformer  {
 		}
 	}
 	
+	
+	/**
+	 * Binary operation between 2 fields
+	 * @author pranab
+	 *
+	 */
+	public static class BinaryOperator  extends AttributeTransformer {
+		private String operator;
+		private int firstOperandFieldOrdinal;
+		private int secondOperandFieldOrdinal;
+		private String outputDataType;
+		private int outputPrecision;
+		private String fieldDelim;
+		
+		public BinaryOperator(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			operator = config.getString("operator");
+			firstOperandFieldOrdinal = config.getInt("firstOperandFieldOrdinal");
+			secondOperandFieldOrdinal = config.getInt("secondOperandFieldOrdinal");
+			fieldDelim = config.getString("fieldDelim");
+			outputDataType = config.getString("outputDataType");
+			outputPrecision = config.getInt("outputPrecision");
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			String[] items = value.split(fieldDelim, -1);
+			double firstVal = Double.parseDouble(items[firstOperandFieldOrdinal]);
+			double secondVal = Double.parseDouble(items[secondOperandFieldOrdinal]);
+			double result = 0;
+			if (operator.equals("+")) {
+				result = firstVal + secondVal;
+			} else if (operator.equals("-")) {
+				result = firstVal - secondVal;
+			} else if (operator.equals("*")) {
+				result = firstVal * secondVal;
+			} else if (operator.equals("/")) {
+				result = firstVal / secondVal;
+			} else {
+				throw new IllegalStateException("invalid operator");
+			}
+			
+			if (outputDataType.equals(BaseAttribute.DATA_TYPE_INT) || 
+					outputDataType.equals(BaseAttribute.DATA_TYPE_LONG)) {
+				transformed[0] = "" + BasicUtils.roundToInt(result);
+			} else if (outputDataType.equals(BaseAttribute.DATA_TYPE_DOUBLE) || 
+					outputDataType.equals(BaseAttribute.DATA_TYPE_FLOAT)) {
+				transformed[0] = "" + BasicUtils.formatDouble(result, outputPrecision);
+			} else {
+				throw new IllegalStateException("invalid data type");
+			}
+			return transformed;
+		}
+	}
+
+	/**
+	 * Binary operation between a field and a constant
+	 * @author pranab
+	 *
+	 */
+	public static class BinaryConstOperator  extends AttributeTransformer {
+		private String operator;
+		private String outputDataType;
+		private int outputPrecision;
+		private double constant;
+		
+		public BinaryConstOperator(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			operator = config.getString("operator");
+			outputDataType = config.getString("outputDataType");
+			outputPrecision = config.getInt("outputPrecision");
+			constant = config.getDouble("constant");
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			double dVal = Double.parseDouble(value);
+			double result = 0;
+			if (operator.equals("+")) {
+				result = dVal + constant;
+			} else if (operator.equals("-")) {
+				result = dVal - constant;
+			} else if (operator.equals("*")) {
+				result = dVal * constant;
+			} else if (operator.equals("/")) {
+				result = dVal / constant;
+			} else {
+				throw new IllegalStateException("invalid operator");
+			}
+			
+			if (outputDataType.equals(BaseAttribute.DATA_TYPE_INT) || 
+					outputDataType.equals(BaseAttribute.DATA_TYPE_LONG)) {
+				transformed[0] = "" + BasicUtils.roundToInt(result);
+			} else if (outputDataType.equals(BaseAttribute.DATA_TYPE_DOUBLE) || 
+					outputDataType.equals(BaseAttribute.DATA_TYPE_FLOAT)) {
+				transformed[0] = "" + BasicUtils.formatDouble(result, outputPrecision);
+			} else {
+				throw new IllegalStateException("invalid data type");
+			}
+			return transformed;
+		}
+	}
+
 }
