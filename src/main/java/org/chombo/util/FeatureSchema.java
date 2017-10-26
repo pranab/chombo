@@ -186,4 +186,15 @@ public class FeatureSchema {
 		return  field.cardinalityIndex(attrVal);		
 	}
 	
+	/**
+	 * @param recLen
+	 */
+	public void validateFieldOrdinals(int recLen) {
+		for (FeatureField field : fields) {
+			if (field.getOrdinal() > recLen - 1) {
+				throw new IllegalStateException("ordinal out of bound for field name:" + field.getName() + 
+						" ordinal: " + field.getOrdinal());
+			}
+		}		
+	}
 }
