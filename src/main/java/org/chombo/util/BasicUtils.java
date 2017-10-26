@@ -1284,6 +1284,20 @@ public class BasicUtils {
 		}
     	return lVal;
     }
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isFloat(String val) {
+    	boolean valid = true;
+		try {
+			float dVal = Float.parseFloat(val);
+		} catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+    
 
     /**
      * @param val
