@@ -509,5 +509,24 @@ public class NumericTransformer  {
 			return transformed;
 		}
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class IntegerRoundOff  extends AttributeTransformer {
+		
+		public IntegerRoundOff(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			long roudedOffVal = Math.round(Double.parseDouble(value));
+			transformed[0] = "" + roudedOffVal;
+			return transformed;
+		}
+	}
+
 
 }

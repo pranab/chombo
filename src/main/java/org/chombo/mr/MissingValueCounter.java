@@ -85,6 +85,10 @@ public class MissingValueCounter extends Configured implements Tool {
         return status;
 	}
 
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static class CounterMapper extends Mapper<LongWritable, Text, Tuple, Tuple> {
 		private Tuple outKey = new Tuple();
 		private Tuple outVal = new Tuple();
