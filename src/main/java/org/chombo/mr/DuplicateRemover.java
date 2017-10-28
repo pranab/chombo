@@ -34,10 +34,12 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.BasicUtils;
+import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
- * Removes duplicate records
+ * Removes duplicate records.Dedup can be based on whole record or set of specified key fields
  * @author pranab
  *
  */
@@ -56,8 +58,8 @@ public class DuplicateRemover extends Configured implements Tool{
         job.setMapperClass(DuplicateRemover.DuplicateMapper.class);
         job.setReducerClass(DuplicateRemover.DuplicateReducer.class);
         
-        job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(IntWritable.class);
+        job.setMapOutputKeyClass(Tuple.class);
+        job.setMapOutputValueClass(Tuple.class);
 
         job.setOutputKeyClass(NullWritable.class);
         job.setOutputValueClass(Text.class);
@@ -75,15 +77,20 @@ public class DuplicateRemover extends Configured implements Tool{
      * @author pranab
      *
      */
-    public static class DuplicateMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
-    	private Text keyOut = new Text();
-    	private IntWritable valOut = new IntWritable(1);
+    public static class DuplicateMapper extends Mapper<LongWritable, Text, Tuple, Tuple> {
+    	private Tuple keyOut = new Tuple();
+    	private Tuple valOut = new Tuple();
+    	private int[] keyAttributes;
+        private String fieldDelimRegex;
+        private String[] items;
     	
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
          */
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
+        	fieldDelimRegex = config.get("field.delim.regex", ",");
+        	keyAttributes = Utility.intArrayFromString(config, "dur.key.filed.ordinals", Utility.configDelim);
         }
         
         /* (non-Javadoc)
@@ -92,7 +99,20 @@ public class DuplicateRemover extends Configured implements Tool{
         @Override
         protected void map(LongWritable key, Text value, Context context)
             throws IOException, InterruptedException {
-           	keyOut.set(value.toString());
+            items  =  value.toString().split(fieldDelimRegex, -1);
+        	keyOut.initialize();
+        	valOut.initialize();
+        	
+        	if (null == keyAttributes) {
+        		//whole record based dedup
+        		keyOut.add(value.toString());
+        		valOut.add(1);
+        	} else {
+        		//key fields based dedup
+        		String keyRec = BasicUtils.extractFields(items, keyAttributes, fieldDelimRegex);
+        		keyOut.add(keyRec);
+        		valOut.add(value.toString());
+        	}
            	context.write(keyOut, valOut);
         }        
     }
@@ -102,7 +122,7 @@ public class DuplicateRemover extends Configured implements Tool{
      * @author pranab
      *
      */
-    public static class DuplicateReducer extends Reducer<Text, IntWritable, NullWritable, Text> {
+    public static class DuplicateReducer extends Reducer<Tuple, Tuple, NullWritable, Text> {
     	private String fieldDelim;
     	private int count;
     	private static String OUT_ALL = "all";
@@ -110,6 +130,10 @@ public class DuplicateRemover extends Configured implements Tool{
     	private static String OUT_DUP = "duplicate";
     	private boolean dupOnly;
     	private boolean uniqueOnly;
+    	private int[] keyAttributes;
+    	private Text valVout = new Text();
+    	private String rec;
+    	private boolean doEmit;
     	
  
     	/* (non-Javadoc)
@@ -118,6 +142,8 @@ public class DuplicateRemover extends Configured implements Tool{
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim", ",");
+        	keyAttributes = Utility.intArrayFromString(config, "dur.key.filed.ordinals", Utility.configDelim);
+        	
         	String outputMode = config.get("dum.output.mode", "all");
         	dupOnly = outputMode.equals(OUT_DUP);
         	uniqueOnly = outputMode.equals(OUT_UNIQUE);
@@ -126,19 +152,35 @@ public class DuplicateRemover extends Configured implements Tool{
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
          */
-        protected void reduce(Text key, Iterable<IntWritable> values, Context context)
+        protected void reduce(Tuple key, Iterable<Tuple> values, Context context)
         throws IOException, InterruptedException {
+       		doEmit = true;
+       		rec = null;
         	if (dupOnly || uniqueOnly) {
+        		doEmit = false;
         		count = 0;
-            	for(IntWritable value : values) {
+            	for(Tuple value : values) {
             		++count;
+            		if (null != keyAttributes && null == rec) {
+            			rec = value.getString(0);
+            		}
             	}
             	if (uniqueOnly && count == 1 || dupOnly && count > 1){
-            		context.write(NullWritable.get(), key);
+            		doEmit = true;
             	}
-        	} else {
-        		context.write(NullWritable.get(), key);
+        	} 
+      	
+        	if (doEmit) {
+	        	if (null == keyAttributes) {
+	        		//whole rec base dedup
+	            	valVout.set(key.getString(0));
+	        	} else {
+	        		//key fields based dedup
+	            	valVout.set(rec);
+	        	}
+	        	context.write(NullWritable.get(), valVout);
         	}
+        	
         }
     }
     
