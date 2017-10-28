@@ -65,7 +65,7 @@ public class DuplicateRemover extends Configured implements Tool{
         job.setOutputValueClass(Text.class);
  
         Utility.setConfiguration(job.getConfiguration());
-        int numReducer = job.getConfiguration().getInt("dum.num.reducer", -1);
+        int numReducer = job.getConfiguration().getInt("dur.num.reducer", -1);
         numReducer = -1 == numReducer ? job.getConfiguration().getInt("num.reducer", 1) : numReducer;
         job.setNumReduceTasks(numReducer);
         
@@ -90,7 +90,7 @@ public class DuplicateRemover extends Configured implements Tool{
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelimRegex = config.get("field.delim.regex", ",");
-        	keyAttributes = Utility.intArrayFromString(config, "dur.key.filed.ordinals", Utility.configDelim);
+        	keyAttributes = Utility.intArrayFromString(config, "dur.key.field.ordinals", Utility.configDelim);
         }
         
         /* (non-Javadoc)
@@ -134,6 +134,7 @@ public class DuplicateRemover extends Configured implements Tool{
     	private Text valVout = new Text();
     	private String rec;
     	private boolean doEmit;
+    	private boolean outputWholeRec;
     	
  
     	/* (non-Javadoc)
@@ -142,11 +143,11 @@ public class DuplicateRemover extends Configured implements Tool{
         protected void setup(Context context) throws IOException, InterruptedException {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim", ",");
-        	keyAttributes = Utility.intArrayFromString(config, "dur.key.filed.ordinals", Utility.configDelim);
-        	
-        	String outputMode = config.get("dum.output.mode", "all");
+        	keyAttributes = Utility.intArrayFromString(config, "dur.key.field.ordinals", Utility.configDelim);
+        	String outputMode = config.get("dur.output.mode", "all");
         	dupOnly = outputMode.equals(OUT_DUP);
         	uniqueOnly = outputMode.equals(OUT_UNIQUE);
+        	outputWholeRec = config.getBoolean("dur.output.whole.rec", true);
         }
    	
         /* (non-Javadoc)
@@ -176,11 +177,14 @@ public class DuplicateRemover extends Configured implements Tool{
 	            	valVout.set(key.getString(0));
 	        	} else {
 	        		//key fields based dedup
-	            	valVout.set(rec);
+	        		if (outputWholeRec) {
+	        			valVout.set(rec);
+	        		} else {
+	        			valVout.set(key.getString(0));
+	        		}
 	        	}
 	        	context.write(NullWritable.get(), valVout);
         	}
-        	
         }
     }
     
