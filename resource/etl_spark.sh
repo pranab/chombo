@@ -58,6 +58,16 @@ case "$1" in
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;
 
+"dupRemover")
+	echo "running DuplicateRemover"
+	CLASS_NAME=org.chombo.spark.etl.DuplicateRemover
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/dupr/xxx.txt
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/dupr
+	rm -rf ./output/dupr
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
+;;
+
 *) 
 	echo "unknown operation $1"
 	;;

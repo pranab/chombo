@@ -50,16 +50,18 @@ object SimpleDataValidator extends JobConfiguration {
 	   val fieldDelimIn = appConfig.getString("field.delim.in")
 	   val subFieldDelimIn = appConfig.getString("sub.field.delim.in")
 	   val fieldDelimOut = appConfig.getString("field.delim.out")
-	   val fieldTypes = appConfig.getStringList("field.types")
+	   val fieldTypes = getMandatoryStringListParam(appConfig, "field.types", "missing field type list")
 	   val fieldCount = fieldTypes.size()
 	   val sampleFraction = getOptionalDoubleParam(appConfig, "sample.fraction") 
-	   val invalidFieldMarker = appConfig.getString("invalid.field.marker")
-	   val invalidRecordMarker = appConfig.getString("invalid.record.marker")
+	   val invalidFieldMarker = getStringParamOrElse(appConfig, "invalid.field.marker", "?")
+	   val invalidRecordMarker = getStringParamOrElse(appConfig, "invalid.record.marker", "*")
 	   val dateFromatStr = getOptionalStringParam(appConfig, "date.format")
 	   val dateFormat = dateFromatStr match {
 	     case Some(format:String) => Some(new SimpleDateFormat(format))
 	     case None => None
 	   }
+	   val outputValidRecs = this.getBooleanParamOrElse(appConfig, "output.valid.recs", true)
+	   val invalidRecsFilePath = this.getOptionalStringParam(appConfig, "invalid.recs.file.path")
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
 	   
@@ -112,18 +114,38 @@ object SimpleDataValidator extends JobConfiguration {
 	     rec
 	   })
 	   
-	   //filter out invalid records
-	   val invalidRecords = processedRecords.filter(r => {
-	     r.contains(invalidRecordMarker) || r.contains(invalidFieldMarker)
+	   processedRecords.cache
+	   
+	   //filter out valid or invalid records
+	   val filtRecords = processedRecords.filter(r => {
+	     val status = outputValidRecs match {
+	       case true => !r.contains(invalidRecordMarker) && !r.contains(invalidFieldMarker)
+	       case false => r.contains(invalidRecordMarker) || r.contains(invalidFieldMarker)
+	     }
+	     status
 	   })
-	   val invalidRecArray = invalidRecords.collect
 	   
 	   if (debugOn) {
-	     invalidRecArray.foreach(r => println(r))
+		   val filtRecordsArray = filtRecords.collect
+	       filtRecordsArray.foreach(r => println(r))
 	   }
 	   
 	   if(saveOutput) {	   
-		   invalidRecords.saveAsTextFile(outputPath) 
+		   filtRecords.saveAsTextFile(outputPath) 
+		   
+		   //if outputting valid recs, may need to output invalid recs also
+		   if (outputValidRecs)  {
+		     invalidRecsFilePath match {
+		       case Some(path : String) => {
+		    	   val invalidRecords = processedRecords.filter(r => {
+		    		   r.contains(invalidRecordMarker) || r.contains(invalidFieldMarker)
+		    	   })
+		           invalidRecords.saveAsTextFile(path) 	   
+		       }
+		       case None => 
+		     }
+		   }
+		   
    	   }
 	   
    }
