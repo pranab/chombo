@@ -6,15 +6,15 @@ MASTER=spark://akash.local:7077
 
 case "$1" in
 
-"simpleValidator")
-	echo "running SimpleDataValidator"
-	CLASS_NAME=org.chombo.spark.etl.SimpleDataValidator
-	INPUT=hdfs:///etl/input/retail.txt
-	OUTPUT=hdfs:///etl/output
-	hdfs dfs -rm -r $OUTPUT
-	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
-	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
-;;
+#"simpleValidator")
+#	echo "running SimpleDataValidator"
+#	CLASS_NAME=org.chombo.spark.etl.SimpleDataValidator
+#	INPUT=hdfs:///etl/input/retail.txt
+#	OUTPUT=hdfs:///etl/output
+#	hdfs dfs -rm -r $OUTPUT
+#	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+#	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
+#;;
 
 "validator")
 	echo "running DataValidator"
@@ -58,10 +58,22 @@ case "$1" in
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;
 
+"simpleValidator")
+	echo "running SimpleDataValidator"
+	CLASS_NAME=org.chombo.spark.etl.SimpleDataValidator
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/siva/order.txt
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/siva
+	hdfs dfs -rm -r $OUTPUT
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
+	rm -rf ./output/siva/_SUCCESS
+;;
+
+
 "dupRemover")
 	echo "running DuplicateRemover"
 	CLASS_NAME=org.chombo.spark.etl.DuplicateRemover
-	INPUT=file:///Users/pranab/Projects/bin/chombo/input/dupr/xxx.txt
+	INPUT=file:///Users/pranab/Projects/bin/chombo/output/siva
 	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/dupr
 	rm -rf ./output/dupr
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
