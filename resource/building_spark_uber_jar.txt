@@ -7,9 +7,9 @@ sbt publishLocal
 Build chombo/spark
 ==================
 In  directory .../chombo/spark
-sbt package
+sbt clean package
 
-Build uber jar
-==============
+In your working directory, build uber jar
+=========================================
 ant -f chomo_spark.xml
 
