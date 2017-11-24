@@ -19,6 +19,7 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
@@ -35,6 +36,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.chombo.util.BasicUtils;
+import org.chombo.util.Pair;
 import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
@@ -115,10 +117,14 @@ public class SeasonalDetector  extends Configured implements Tool {
     		//additional configuration
         	if (seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_DAY ) ||  
         			seasonalCycleType.equals(SeasonalAnalyzer.HOUR_RANGE_OF_WEEK_END_DAY ) ) {
-        		Map<Integer, Integer>  hourRanges = Utility. assertIntegerIntegerMapConfigParam(config, "sed.hour.groups", 
+        		Map<Integer, Integer>  hourRanges = Utility.assertIntegerIntegerMapConfigParam(config, "sed.hour.groups", 
         				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups", true);
         		seasonalAnalyzer.setHourRanges(hourRanges);
-        	} 
+        	} else if (seasonalCycleType.equals(SeasonalAnalyzer.ANY_TIME_RANGE)) {
+        		List<Pair<Integer, Integer>> timeRanges = Utility.assertIntPairListConfigParam(config, "sed.time.ranges", 
+        				Utility.configDelim, Utility.configSubFieldDelim, "missing hour groups");
+        		seasonalAnalyzer.setTimeRanges(timeRanges);
+        	}
         	
         	//time zone adjustment
         	int  timeZoneShiftHours = config.getInt("sed.time.zone.shift.hours",  0);
