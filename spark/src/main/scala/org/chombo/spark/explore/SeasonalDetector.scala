@@ -67,6 +67,8 @@ object SeasonalDetector extends JobConfiguration {
 	   val saveOutput = appConfig.getBoolean("save.output")
 	   
 	   val data = sparkCntxt.textFile(inputPath)
+	   
+	   //key by parent cycle index, cycle index, attribute
 	   val cycleKeyedRecs = data.flatMap(line => {
 	     val items  =  line.split(fieldDelimIn, -1) 
 	     val lineRec = Record(items)
