@@ -261,8 +261,8 @@ public class TopMatches extends Configured implements Tool {
         	for (Text value : values){
         		doEmitNeighbor = false;
         		
-        		//count based neighbor
-				if (nearestByCount) {
+        		//only count based neighbor
+				if (nearestByCount && !nearestByDistance) {
 					++count;
 					doEmitNeighbor = count >= topMatchCount ? false : true;
 				} 
@@ -274,7 +274,12 @@ public class TopMatches extends Configured implements Tool {
 					distance = Integer.parseInt(items[items.length - 1]);
 					if (distance  <=  topMatchDistance ) {
 						if (!nearestByCount) {
+							//only distance based
 							doEmitNeighbor = true;
+						} else {
+							//apply count in addition to distance
+							++count;
+							doEmitNeighbor = count >= topMatchCount ? false : true;
 						}
 					} else {
 						doEmitNeighbor = false;
