@@ -413,7 +413,7 @@ public class NumericTransformer  {
 	 * @author pranab
 	 *
 	 */
-	public static class BinaryOperator  extends AttributeTransformer {
+	public static class BinaryArithmeticOperator  extends AttributeTransformer {
 		private String operator;
 		private int firstOperandFieldOrdinal;
 		private int secondOperandFieldOrdinal;
@@ -421,7 +421,7 @@ public class NumericTransformer  {
 		private int outputPrecision;
 		private String fieldDelim;
 		
-		public BinaryOperator(ProcessorAttribute prAttr, Config config) {
+		public BinaryArithmeticOperator(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
 			operator = config.getString("operator");
 			firstOperandFieldOrdinal = config.getInt("firstOperandFieldOrdinal");
@@ -506,6 +506,46 @@ public class NumericTransformer  {
 			} else {
 				throw new IllegalStateException("invalid data type");
 			}
+			return transformed;
+		}
+	}
+	
+	/**
+	 * Rounds off floating to intgere
+	 * @author pranab
+	 *
+	 */
+	public static class IntegerRoundOff  extends AttributeTransformer {
+		
+		public IntegerRoundOff(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			long roudedOffVal = Math.round(Double.parseDouble(value));
+			transformed[0] = "" + roudedOffVal;
+			return transformed;
+		}
+	}
+
+	/**
+	 * Rounds off floating to floating
+	 * @author pranab
+	 *
+	 */
+	public static class FloatingRoundOff  extends AttributeTransformer {
+		private int outputPrecision;
+		
+		public FloatingRoundOff(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			outputPrecision = config.getInt("outputPrecision");
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			double dVal = Double.parseDouble(value);
+			transformed[0] = BasicUtils.formatDouble(dVal, outputPrecision);
 			return transformed;
 		}
 	}

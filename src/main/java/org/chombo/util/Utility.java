@@ -1120,31 +1120,7 @@ public class Utility {
 	public static Map<Integer, Integer> assertIntegerIntegerMapConfigParam(Configuration config, String param, String delimRegex, 
 			String subFieldDelim, String msg, boolean rangeInKey) {
 	   	String stParamValue =  assertStringConfigParam( config, param,  msg); 
-		String[] items = stParamValue.split(delimRegex);
-		Map<Integer, Integer> data = new HashMap<Integer, Integer>() ;
-		if (rangeInKey) {
-			for (String item :  items) {
-				String[] parts  = item.split(subFieldDelim);
-				String[] rangeLimits = parts[0].split("\\-");
-				if (rangeLimits.length == 1) {
-					data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
-				} else {
-					int rangeBeg = Integer.parseInt(rangeLimits[0]);
-					int rangeEnd = Integer.parseInt(rangeLimits[1]);
-					int val = Integer.parseInt(parts[1]);
-					for (int r = rangeBeg; r <= rangeEnd; ++r) {
-						//key:hour value:hour group
-						data.put(r,  val);
-					}
-				}
-			}
-		} else {
-			for (String item :  items) {
-				String[] parts  = item.split(subFieldDelim);
-				data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
-			}
-		}
-    	return data;
+	   	return BasicUtils.integerIntegerMapFromString(stParamValue, delimRegex, subFieldDelim, rangeInKey);
 	}
 
 	

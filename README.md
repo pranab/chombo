@@ -42,7 +42,8 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * https://pkghosh.wordpress.com/2017/05/30/mining-seasonal-products-from-sales-data/
 * https://pkghosh.wordpress.com/2017/07/26/processing-missing-values-with-hadoop/
 * https://pkghosh.wordpress.com/2017/08/15/measuring-campaign-effectiveness-for-an-online-service-on-spark/
-
+* https://pkghosh.wordpress.com/2017/11/07/removing-duplicates-from-order-data-using-spark/
+* https://pkghosh.wordpress.com/2017/12/05/data-normalization-with-spark/
 
 ## Build
 For Hadoop 1

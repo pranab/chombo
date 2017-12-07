@@ -1,0 +1,32 @@
+This tutorial for for removing duplicate from eCommerce order data. The duplicate are removed
+based on exact match on the whole record and specified key fields
+
+Environment
+===========
+Please modify etl_spark.sh based on you environment
+
+Build
+=====
+Please refer to building_spark_uber_jar.txt
+
+Input Data
+==========
+1.Down load invoice data from UCI repository. Select a small sub set if you desire. 
+2.Load in excel and save in CSV format. 
+3.Because the description field contains coma, in the CSV output description field is 
+double quoted. You have to manually fix it, by removing coma and double quites
+4.Copy file to input directory as specified in etl_spark.sh
+
+Run data validation Spark Job
+==============================
+In etl.conf make sure the first set of configuration for simpleValidator is commented out
+and the second one is uncommented
+./etl_spark.sh simpleValidator
+
+Run data deduplication Spark Job
+================================
+./etl_spark.sh dupRemover
+
+Configuration
+=============
+It's in etl.conf file. Please feel free to modify as needed. 

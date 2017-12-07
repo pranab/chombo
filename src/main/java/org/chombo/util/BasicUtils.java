@@ -285,6 +285,43 @@ public class BasicUtils {
 		}
     	return data;
 	}
+	
+	/**
+	 * @param stParamValue
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param msg
+	 * @param rangeInKey
+	 * @return
+	 */
+	public static Map<Integer, Integer> integerIntegerMapFromString(String stParamValue, String delimRegex, 
+			String subFieldDelim, boolean rangeInKey) {
+		String[] items = stParamValue.split(delimRegex);
+		Map<Integer, Integer> data = new HashMap<Integer, Integer>() ;
+		if (rangeInKey) {
+			for (String item :  items) {
+				String[] parts  = item.split(subFieldDelim);
+				String[] rangeLimits = parts[0].split("\\-");
+				if (rangeLimits.length == 1) {
+					data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+				} else {
+					int rangeBeg = Integer.parseInt(rangeLimits[0]);
+					int rangeEnd = Integer.parseInt(rangeLimits[1]);
+					int val = Integer.parseInt(parts[1]);
+					for (int r = rangeBeg; r <= rangeEnd; ++r) {
+						//key:hour value:hour group
+						data.put(r,  val);
+					}
+				}
+			}
+		} else {
+			for (String item :  items) {
+				String[] parts  = item.split(subFieldDelim);
+				data.put(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+			}
+		}
+    	return data;
+	}
 
     /**
      * @param items
@@ -1284,6 +1321,20 @@ public class BasicUtils {
 		}
     	return lVal;
     }
+    /**
+     * @param val
+     * @return
+     */
+    public static boolean isFloat(String val) {
+    	boolean valid = true;
+		try {
+			float dVal = Float.parseFloat(val);
+		} catch (Exception ex) {
+			valid = false;
+		}
+    	return valid;
+    }
+    
 
     /**
      * @param val
@@ -1911,4 +1962,41 @@ public class BasicUtils {
     public static int roundToInt(double value) {
     	return (int)(Math.round(value));
     }
+    
+    /**
+     * @param items
+     * @param index
+     * @return
+     */
+    public static int getIntField(String[] items, int index) {
+    	return Integer.parseInt(items[index]);
+    }
+    
+    /**
+     * @param items
+     * @param index
+     * @return
+     */
+    public static long getLongField(String[] items, int index) {
+    	return Long.parseLong(items[index]);
+    }
+    
+    /**
+     * @param items
+     * @param index
+     * @return
+     */
+    public static double getFloatField(String[] items, int index) {
+    	return Float.parseFloat(items[index]);
+    }
+
+    /**
+     * @param items
+     * @param index
+     * @return
+     */
+    public static double getDoubleField(String[] items, int index) {
+    	return Double.parseDouble(items[index]);
+    }
+    
  }

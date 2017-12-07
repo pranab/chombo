@@ -78,8 +78,10 @@ public class TransformerFactory {
 	public static final String STRING_WITHIN_FIELD_DELIM_TRANSFORMER  = "stringWithinFieldDelimTrans";
 	public static final String STRING_BINARY_TRANSFORMER  = "stringBinaryTrans";
 	public static final String CATEGORICAL_BINARY_TRANSFORMER  = "categoricalBinaryTrans";
-	public static final String BINARY_OPERATOR_GENERATOR = "binaryOperatorGen";
+	public static final String BINARY_ARITH_OPERATOR_GENERATOR = "binaryArithOperatorGen";
 	public static final String BINARY_CONST_OPERATOR_TRANSFORMER = "binaryConstOperatorTrans";
+	public static final String INTEGER_ROUND_OFF_TRANSFORMER = "intRoundOffTrans";
+	public static final String FLOAT_ROUND_OFF_TRANSFORMER = "floatRoundOffTrans";
 	
 	private static Map<String,String> custTransformerClasses = new HashMap<String,String>();
 	private static Map<String,AttributeTransformer> custTransformers = new HashMap<String,AttributeTransformer>();
@@ -202,10 +204,14 @@ public class TransformerFactory {
 			transformer = new StringTransformer.BinaryValueTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(CATEGORICAL_BINARY_TRANSFORMER)) {
 			transformer = new StringTransformer.CategoricalToBinaryTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
-		} else if (transformerTag.equals(BINARY_OPERATOR_GENERATOR)) {
-			transformer = new NumericTransformer.BinaryOperator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(BINARY_ARITH_OPERATOR_GENERATOR)) {
+			transformer = new NumericTransformer.BinaryArithmeticOperator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(BINARY_CONST_OPERATOR_TRANSFORMER)) {
 			transformer = new NumericTransformer.BinaryConstOperator(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(INTEGER_ROUND_OFF_TRANSFORMER)) {
+			transformer = new NumericTransformer.IntegerRoundOff(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(FLOAT_ROUND_OFF_TRANSFORMER)) {
+			transformer = new NumericTransformer.FloatingRoundOff(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
 			//custom transformer with configured transformer class names
 			transformer = createCustomTransformer(transformerTag, prAttr,  config);

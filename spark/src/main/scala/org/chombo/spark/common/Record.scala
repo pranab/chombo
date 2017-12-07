@@ -451,6 +451,28 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	}
 
 	/**
+	 * @param record
+	 * @param indexes
+	 * @return
+	 */
+	def add(record:Record, indexes : Array[Int]) : Record = {
+	  indexes.foreach(i => {
+	    array(cursor) = record.getAny(indexes(i))
+		cursor += 1
+	  })
+	  this
+	}
+
+
+	/**
+	 * @param index
+	 * @return
+	 */
+	def getAny(index:Int) : Any = {
+	  array(index)
+	}
+	
+	/**
 	 * @param index
 	 * @return
 	 */

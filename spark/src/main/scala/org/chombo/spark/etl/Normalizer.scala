@@ -118,6 +118,10 @@ object Normalizer extends JobConfiguration {
              case "minMax" => {
                (curVal - realStat.getMin()) / (realStat.getMax() - realStat.getMin())
              }
+             case "max" => {
+               val absMax = BasicUtils.max(Math.abs(realStat.getMax()), Math.abs(realStat.getMin()))
+               curVal / absMax
+             }
              case "zScore" => {
                var znVal = (curVal - realStat.getMean()) / realStat.getStdDev()
                val znValAbs = Math.abs(znVal)
@@ -132,6 +136,12 @@ object Normalizer extends JobConfiguration {
              }
              case "center" => {
                curVal - realStat.getMean()
+             }
+             case "decimal" => {
+               val absMax = BasicUtils.max(Math.abs(realStat.getMax()), Math.abs(realStat.getMin()))
+               val maxLog = Math.log10(absMax)
+               val pwr = (maxLog + 1).toInt
+               curVal / Math.pow(10, pwr)
              }
              case "unitSum" => {
                curVal / realStat.getSum()

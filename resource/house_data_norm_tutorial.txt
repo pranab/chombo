@@ -1,0 +1,33 @@
+This tutorial for normalizing data, which is often a preparatory step before applying many
+machine learning algorithm
+
+
+Dependent script
+================
+Checkout the project avenir. Take the script util.py and sampler.py from the project and placeit
+in ../lib directory with respect the directory containing store_order.py
+
+Build and Deployment
+====================
+Please refer to building_spark_uber_jar.txt
+
+Generate input data
+===================
+./hous_price.py  <num_of_houses>  > <output_file>
+
+where
+num_of_houses = number of houses
+
+Copy the output file to spark input directory as specified in etl_spark.sh
+
+Run normalizer spaek job
+=====================================
+./etl_spark.sh normalizer
+
+Script
+======
+The script etl_spark.sh should be changed as necessary depending on your environment
+
+Configuration
+=============
+Configuration parameters are etl.conf. Make changes as necessary

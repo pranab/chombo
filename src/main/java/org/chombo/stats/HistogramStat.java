@@ -47,6 +47,7 @@ public class HistogramStat implements Serializable {
 	protected boolean extendedOutput;
 	protected int outputPrecision = 3;
 	private boolean debugOn = false;
+	private boolean serializeBins;
 	public static String fieldDelim = ",";
 	
 	/**
@@ -101,6 +102,29 @@ public class HistogramStat implements Serializable {
 	}	
 	
 	/**
+	 * @param items
+	 * @param offset
+	 */
+	public void initializeBins(String[] items, int offset) {
+		int numBins = BasicUtils.getIntField(items, offset);
+		int i = 0;
+		for (i = offset + 1; i < 2 * numBins; ) {
+			int binIndex = BasicUtils.getIntField(items, i++);
+			int binCount = BasicUtils.getIntField(items, i++);
+			Bin bin = binMap.get(binIndex);
+			if (null == bin) {
+				bin = new Bin(binIndex);
+				binMap.put(binIndex, bin);
+			}
+			bin.addCount(binCount);
+		}
+		
+		this.count = BasicUtils.getIntField(items, i++);
+		this.sum = BasicUtils.getDoubleField(items, i++);
+		this.sumSq = BasicUtils.getDoubleField(items, i);
+	}
+	
+	/**
 	 * @throws IOException 
 	 * 
 	 */
@@ -142,6 +166,11 @@ public class HistogramStat implements Serializable {
 	 */
 	public HistogramStat withExtendedOutput(boolean extendedOutput) {
 		this.extendedOutput = extendedOutput;
+		return this;
+	}
+	
+	public HistogramStat withSerializeBins(boolean serializeBins) {
+		this.serializeBins = serializeBins;
 		return this;
 	}
 	
@@ -507,22 +536,26 @@ public class HistogramStat implements Serializable {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		StringBuilder stBld = new StringBuilder();
-		final String delim = ",";
-		if (!normalized) {
-			getDistribution();
-		}
-		
+		return serializeBins ? toStringBins() : toStringDistr();
+	}
+	
+	/**
+	 * @return
+	 */
+	public String toStringBins() {
+		StringBuilder stBld = new StringBuilder(binsToString());
+		stBld.append(fieldDelim).append(count).append(fieldDelim).
+			append(BasicUtils.formatDouble(sum, outputPrecision)).append(BasicUtils.formatDouble(sumSq, outputPrecision));
+		return stBld.toString();
+	}
+	
+	/**
+	 * @return
+	 */
+	public String toStringDistr() {
+		StringBuilder stBld = new StringBuilder(normalizedBinsToString());
 		//formatting
     	String formatter = "%." + outputPrecision + "f";
-
-		//distribution
-		stBld.append(histogram.size()).append(delim);
-		for(double x : histogram.keySet()) {
-			double y = histogram.get(x);
-			stBld.append(BasicUtils.formatDouble(x, formatter)).append(delim).
-				append(BasicUtils.formatDouble(y, formatter)).append(delim);
-		}
 		
 		//other stats
 		if (extendedOutput) {
@@ -534,18 +567,21 @@ public class HistogramStat implements Serializable {
 			String formHalfPer = BasicUtils.formatDouble(getQuantile(0.50), formatter);
 			String formThreeQuartPer = BasicUtils.formatDouble(getQuantile(0.75), formatter);
 			
-			stBld.append(formMean).append(delim).append(formMedian).append(delim).
-				append(formStdDev).append(delim).append(formMode).append(delim).
-				append(formQuartPer).append(delim).append(formHalfPer).append(delim).
-				append(formThreeQuartPer).append(delim);
+			stBld.append(formMean).append(fieldDelim).append(formMedian).append(fieldDelim).
+				append(formStdDev).append(fieldDelim).append(formMode).append(fieldDelim).
+				append(formQuartPer).append(fieldDelim).append(formHalfPer).append(fieldDelim).
+				append(formThreeQuartPer).append(fieldDelim);
 		}
 		return stBld.substring(0, stBld.length() - 1);
 	}
 	
+	/**
+	 * @return
+	 */
 	public String normalizedBinsToString() {
 		StringBuilder stBld = new StringBuilder();
 		if (!normalized) {
-			this.getDistribution();
+			getDistribution();
 		}
 		
 		//formatting

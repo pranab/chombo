@@ -50,18 +50,25 @@ object SimpleDataValidator extends JobConfiguration {
 	   val fieldDelimIn = appConfig.getString("field.delim.in")
 	   val subFieldDelimIn = appConfig.getString("sub.field.delim.in")
 	   val fieldDelimOut = appConfig.getString("field.delim.out")
-	   val fieldTypes = appConfig.getStringList("field.types")
+	   val fieldTypes = getMandatoryStringListParam(appConfig, "field.types", "missing field type list")
 	   val fieldCount = fieldTypes.size()
 	   val sampleFraction = getOptionalDoubleParam(appConfig, "sample.fraction") 
-	   val invalidFieldMarker = appConfig.getString("invalid.field.marker")
-	   val invalidRecordMarker = appConfig.getString("invalid.record.marker")
+	   val invalidFieldMarker = getStringParamOrElse(appConfig, "invalid.field.marker", "[X]")
+	   val invalidRecordMarker = getStringParamOrElse(appConfig, "invalid.record.marker", "[XX]")
 	   val dateFromatStr = getOptionalStringParam(appConfig, "date.format")
 	   val dateFormat = dateFromatStr match {
 	     case Some(format:String) => Some(new SimpleDateFormat(format))
 	     case None => None
 	   }
+	   val checkMissingFieldOnly = getBooleanParamOrElse(appConfig, "check.missing.field.only", false)
+	   val outputValidRecs = getBooleanParamOrElse(appConfig, "output.valid.recs", false)
+	   val invalidRecsFilePath = getOptionalStringParam(appConfig, "invalid.recs.file.path")
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
+	   
+	   //accumulators
+	   val invalidRecCount = sparkCntxt.accumulator[Long](0, "invalidRecCount")
+
 	   
 	   //sample if necessary
 	   val data = sparkCntxt.textFile(inputPath)
@@ -79,17 +86,43 @@ object SimpleDataValidator extends JobConfiguration {
 	       var recValid = true
 	       val zipped = fieldTypes.asScala.zipWithIndex
 	       zipped.foreach(t => {
-	         val item = items(t._2)
+	         val item = items(t._2).trim()
+	         val status = !item.isEmpty()
 	         val valid = t._1 match {
-	           case BaseAttribute.DATA_TYPE_INT => !item.isEmpty() && BasicUtils.isInt(item)
-	           case BaseAttribute.DATA_TYPE_LONG => !item.isEmpty() && BasicUtils.isLong(item)
-	           case BaseAttribute.DATA_TYPE_DOUBLE => !item.isEmpty() && BasicUtils.isDouble(item)
-	           case BaseAttribute.DATA_TYPE_STRING => !item.isEmpty()
-	           case BaseAttribute.DATA_TYPE_STRING_COMPOSITE => !item.isEmpty() && BasicUtils.isComposite(item, subFieldDelimIn)
+	           case BaseAttribute.DATA_TYPE_INT => {
+	             if (!checkMissingFieldOnly && status)
+	               BasicUtils.isInt(item)
+	             else 
+	               status
+	           }
+	           case BaseAttribute.DATA_TYPE_LONG => {
+	             if (!checkMissingFieldOnly && status)
+	               BasicUtils.isLong(item)
+	             else 
+	               status
+	           }
+	           case BaseAttribute.DATA_TYPE_DOUBLE => {
+	             if (!checkMissingFieldOnly && status)
+	               BasicUtils.isDouble(item)
+	             else 
+	               status
+	           }
+	           case BaseAttribute.DATA_TYPE_STRING => status
+	           case BaseAttribute.DATA_TYPE_STRING_COMPOSITE => {
+	             if (!checkMissingFieldOnly && status)
+	               BasicUtils.isComposite(item, subFieldDelimIn)
+	             else 
+	               status
+	           }
 	           case BaseAttribute.DATA_TYPE_DATE => {
 	             //use date formatter if provided, otherwise treat as string
 	             val dateValid = dateFormat match {
-	               case Some(formatter:SimpleDateFormat) => !item.isEmpty() && BasicUtils.isDate(item, formatter)
+	               case Some(formatter:SimpleDateFormat) => {
+	                 if (!checkMissingFieldOnly && status)
+	                   BasicUtils.isDate(item, formatter)
+	                 else 
+	                   status
+	               }
 	               case None => true
 	             }
 	             dateValid
@@ -112,18 +145,43 @@ object SimpleDataValidator extends JobConfiguration {
 	     rec
 	   })
 	   
-	   //filter out invalid records
-	   val invalidRecords = processedRecords.filter(r => {
-	     r.contains(invalidRecordMarker) || r.contains(invalidFieldMarker)
+	   processedRecords.cache
+	   
+	   //filter out valid or invalid records
+	   val filtRecords = processedRecords.filter(r => {
+	     val status = outputValidRecs match {
+	       case true => {
+	         val valid = !r.contains(invalidRecordMarker) && !r.contains(invalidFieldMarker)
+	         if (!valid) invalidRecCount += 1
+	         valid
+	       }
+	       case false => r.contains(invalidRecordMarker) || r.contains(invalidFieldMarker)
+	     }
+	     status
 	   })
-	   val invalidRecArray = invalidRecords.collect
 	   
 	   if (debugOn) {
-	     invalidRecArray.foreach(r => println(r))
+		   val filtRecordsArray = filtRecords.collect
+	       filtRecordsArray.foreach(r => println(r))
+	       println("invalid record count:" + invalidRecCount.value)
 	   }
 	   
 	   if(saveOutput) {	   
-		   invalidRecords.saveAsTextFile(outputPath) 
+		   filtRecords.saveAsTextFile(outputPath) 
+		   
+		   //if outputting valid recs, may need to output invalid recs also
+		   if (outputValidRecs)  {
+		     invalidRecsFilePath match {
+		       case Some(path : String) => {
+		    	   val invalidRecords = processedRecords.filter(r => {
+		    		   r.contains(invalidRecordMarker) || r.contains(invalidFieldMarker)
+		    	   })
+		           invalidRecords.saveAsTextFile(path) 	   
+		       }
+		       case None => 
+		     }
+		   }
+		   
    	   }
 	   
    }
