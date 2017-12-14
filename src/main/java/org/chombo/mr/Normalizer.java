@@ -205,8 +205,10 @@ public class Normalizer extends Configured implements Tool {
 		private StringBuilder stBld = new StringBuilder();
 		private boolean forceUnitRange;
 		private static final String NORM_MIN_MAX = "minmax";
+		private static final String NORM_MAX = "max";
 		private static final String NORM_ZSCORE = "zscore";
 		private static final String NORM_CENTER = "center";
+		private static final String NORM_DECIMAL = "decimal";
 		private static final String NORM_UNIT_SUM = "unitSum";
 		
         @Override
@@ -305,8 +307,16 @@ public class Normalizer extends Configured implements Tool {
     		normalizedValue = 0;
     		if (normalizingStrategy.equals(NORM_MIN_MAX)) {
     			normalizedValue = ((value - stats.min) * stats.scale) / stats.range;
+    		} else if (normalizingStrategy.equals(NORM_MAX)) { 
+    			double  absMax = BasicUtils.max(Math.abs(stats.max), Math.abs(stats.min));
+    			normalizedValue = value / absMax;
     		} else if (normalizingStrategy.equals(NORM_CENTER)) {
     			normalizedValue = (value - stats.mean) * stats.scale;
+    		} else if (normalizingStrategy.equals(NORM_DECIMAL)) { 
+    			double  absMax = BasicUtils.max(Math.abs(stats.max), Math.abs(stats.min));
+    			double maxLog = Math.log10(absMax);
+    			int pwr = (int)(maxLog + 1);
+    			normalizedValue = value / Math.pow(10, pwr);
     		} else if (normalizingStrategy.equals(NORM_UNIT_SUM)) {
     			normalizedValue = (value / stats.sum) * stats.scale;
     		} else if (normalizingStrategy.equals(NORM_ZSCORE)) {
