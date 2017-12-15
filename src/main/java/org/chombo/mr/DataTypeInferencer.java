@@ -18,8 +18,12 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -41,14 +45,18 @@ import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
 /**
- * Inferences data type of of fields
+ * Inferences data type of fields
  * @author pranab
  *
  */
 public class DataTypeInferencer extends Configured implements Tool {
-    private static final int INT_TYPE = 2;
-    private static final int FLOAT_TYPE = 1;
-    private static final int STRING_TYPE = 0;
+    private static final int NUM_TYPES = 6;
+    private static final int EPOCH_TIME_TYPE = 5;
+    private static final int DATE_TYPE = 4;
+    private static final int INT_TYPE = 3;
+    private static final int FLOAT_TYPE = 2;
+    private static final int STRING_TYPE = 1;
+    private static final int ANY_TYPE = 0;
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -91,6 +99,8 @@ public class DataTypeInferencer extends Configured implements Tool {
         private String[] items;
         private String fieldDelimRegex;
         private boolean allAttributes;
+        private long timeWindowBegin;
+        private SimpleDateFormat[] dateFormats;
         
         /* (non-Javadoc)
          * @see org.apache.hadoop.mapreduce.Mapper#setup(org.apache.hadoop.mapreduce.Mapper.Context)
@@ -102,6 +112,21 @@ public class DataTypeInferencer extends Configured implements Tool {
         		allAttributes = true;
         	} else {
         		attributes = Utility.intArrayFromString(config, "dti.attr.list", Utility.configDelim);
+        	}
+        	
+        	//epoch time
+        	int epochTimeWindowYears = config.getInt("dti.epoch.time.window.years", 10);
+        	long now = System.currentTimeMillis();
+        	timeWindowBegin = now - epochTimeWindowYears * BasicUtils.MILISEC_PER_DAY * 365;
+        	
+        	//date
+        	String[] dateFormatStrList = Utility.stringArrayFromString(config, "dti.date.formats", Utility.configDelim);
+        	if (null != dateFormatStrList) {
+        		int size = dateFormatStrList.length;
+        		dateFormats = new SimpleDateFormat[size];
+        		for(int i = 0; i < size; ++i) {
+        			dateFormats[i] = new SimpleDateFormat(dateFormatStrList[i]);
+        		}
         	}
         }
         
@@ -131,6 +156,18 @@ public class DataTypeInferencer extends Configured implements Tool {
         	boolean isNumeric = false;
         	outKey.set(ordinal);
         	
+        	//epoch time
+        	boolean isEpoch = false;
+        	if (BasicUtils.isLong(value)) {
+        		long lValue = Long.parseLong(value);
+        		isEpoch = lValue > timeWindowBegin;
+        	}
+        	if (isEpoch) {
+        		outVal.add(EPOCH_TIME_TYPE, 1);
+        	} else {
+        		outVal.add(EPOCH_TIME_TYPE, 0);
+        	}
+        	
         	//integer
         	if (BasicUtils.isInt(value)) {
         		outVal.add(INT_TYPE, 1);
@@ -147,12 +184,31 @@ public class DataTypeInferencer extends Configured implements Tool {
         		outVal.add(FLOAT_TYPE, 0);
         	}
         	
+        	//date type
+        	boolean isDate = false;
+        	for (SimpleDateFormat dateFormat : dateFormats) {
+        		//date if at least 1 format is able to parse
+        		isDate = BasicUtils.isDate(value, dateFormat);
+        		if (isDate)
+        			break;
+        	}
+        	if (isDate) {
+            	outVal.add(DATE_TYPE, 1);
+            } else {
+            	outVal.add(DATE_TYPE, 0);
+            }
+        	
+        	
         	//string type
         	if (isNumeric) {
         		outVal.add(STRING_TYPE, 0);
         	} else {
         		outVal.add(STRING_TYPE, 1);
         	}
+        	
+        	//any type
+        	outVal.add(ANY_TYPE, 1);
+        	
         	context.write(outKey, outVal);
         }
 	}
@@ -163,11 +219,14 @@ public class DataTypeInferencer extends Configured implements Tool {
 	 */
 	public static class InferenceCombiner extends Reducer<IntWritable, Tuple,IntWritable, Tuple> {
 		private Tuple outVal = new Tuple();
-		private List<Pair<Integer, Integer>> typeCounts = new ArrayList<Pair<Integer, Integer>>();
+		private Map<Integer, Integer> typeCounts = new HashMap<Integer, Integer>();
 		
+		/* (non-Javadoc)
+		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
+		 */
 		protected void setup(Context context) throws IOException, InterruptedException {
-        	for (int t = INT_TYPE; t >= 0; --t) {
-        		typeCounts.add(new Pair<Integer, Integer>(t, 0));
+        	for (int t = EPOCH_TIME_TYPE; t >= 0; --t) {
+        		typeCounts.put(t, 0);
         	}
 		}
 		
@@ -176,21 +235,21 @@ public class DataTypeInferencer extends Configured implements Tool {
          */
         protected void reduce(IntWritable  key, Iterable<Tuple> values, Context context)
         		throws IOException, InterruptedException {
-        	for (Pair<Integer, Integer> typeCount : typeCounts) {
-        		typeCount.setRight(0);
+        	for (int t = EPOCH_TIME_TYPE; t >= 0; --t) {
+        		typeCounts.put(t, 0);
         	}
     		for (Tuple val : values) {
-    			int offset = 0;
-    			for (int type = INT_TYPE; type >= 0; --type) {
-    				Pair<Integer, Integer> typeCount = typeCounts.get(offset / 2);
-    				offset++;
+            	int offset = 0;
+    			for (int i = 0; i < NUM_TYPES; ++i) {
+    				int type = val.getInt(offset++);
     				int count =  val.getInt(offset++);
-    				typeCount.setRight(typeCount.getRight() + count);
+    				typeCounts.put(type, typeCounts.get(type) + count);
     			}
     		}
+    		
     		outVal.initialize();
-    		for (Pair<Integer, Integer> typeCount : typeCounts) {
-    			outVal.add(typeCount.getLeft(), typeCount.getRight());
+    		for (int t = EPOCH_TIME_TYPE; t >= 0; --t) {
+    			outVal.add(t, typeCounts.get(t));
     		}
         	context.write(key, outVal);
         }	
@@ -203,7 +262,7 @@ public class DataTypeInferencer extends Configured implements Tool {
 	public static class InferenceReducer extends Reducer<IntWritable, Tuple, NullWritable, Text> {
 		protected Text outVal = new Text();
 		protected String fieldDelim;
-		private List<Pair<Integer, Integer>> typeCounts = new ArrayList<Pair<Integer, Integer>>();
+		private Map<Integer, Integer> typeCounts = new HashMap<Integer, Integer>();
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -211,8 +270,8 @@ public class DataTypeInferencer extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
-        	for (int t = INT_TYPE; t >= 0; --t) {
-        		typeCounts.add(new Pair<Integer, Integer>(t, 0));
+        	for (int t = EPOCH_TIME_TYPE; t >= 0; --t) {
+        		typeCounts.put(t, 0);
         	}
 		}
 	   	
@@ -221,30 +280,39 @@ public class DataTypeInferencer extends Configured implements Tool {
 	 	*/
 		protected void reduce(IntWritable  key, Iterable<Tuple> values, Context context)
 			throws IOException, InterruptedException {
-        	for (Pair<Integer, Integer> typeCount : typeCounts) {
-        		typeCount.setRight(0);
+        	for (int t = EPOCH_TIME_TYPE; t >= 0; --t) {
+        		typeCounts.put(t, 0);
         	}
     		for (Tuple val : values) {
-    			int offset = 0;
-    			for (int type = INT_TYPE; type >= 0; --type) {
-    				Pair<Integer, Integer> typeCount = typeCounts.get(offset / 2);
-    				offset++;
+            	int offset = 0;
+    			for (int i = 0; i < NUM_TYPES; ++i) {
+    				int type = val.getInt(offset++);
     				int count =  val.getInt(offset++);
-    				typeCount.setRight(typeCount.getRight() + count);
+    				typeCounts.put(type, typeCounts.get(type) + count);
     			}
     		}
     		
     		//find type
     		int type = STRING_TYPE;
-    		int intCount = typeCounts.get(0).getRight();
-    		int floatCount = typeCounts.get(1).getRight();
+    		int anyCount = typeCounts.get(ANY_TYPE);
+    		int intCount = typeCounts.get(INT_TYPE);
+    		int floatCount = typeCounts.get(FLOAT_TYPE);
+    		int epochTimeCount = typeCounts.get(EPOCH_TIME_TYPE);
     		if (intCount > 0 && floatCount > 0) {
-    			if (intCount == floatCount) {
-    				type = INT_TYPE;
-    			} else {
+    			if (intCount == anyCount) {
+    				//all can interpreted as int
+    				type =  epochTimeCount == anyCount ? EPOCH_TIME_TYPE : INT_TYPE;
+    			} else if (floatCount == anyCount){
+    				//only some can be interpreted as int
     				type = FLOAT_TYPE;
     			}
     		} 
+    		if (type == STRING_TYPE) {
+    			//can all be interpreted as date
+    			int dateCount = typeCounts.get(DATE_TYPE);
+    			type =  dateCount == anyCount ? DATE_TYPE : STRING_TYPE;
+    		}
+    		
     		
     		outVal.set("" + key.get() + fieldDelim + type);
 			context.write(NullWritable.get(), outVal);
