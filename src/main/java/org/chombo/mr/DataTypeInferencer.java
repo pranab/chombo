@@ -39,6 +39,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.chombo.util.BaseAttribute;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
 import org.chombo.util.Tuple;
@@ -262,7 +263,10 @@ public class DataTypeInferencer extends Configured implements Tool {
 	public static class InferenceReducer extends Reducer<IntWritable, Tuple, NullWritable, Text> {
 		protected Text outVal = new Text();
 		protected String fieldDelim;
+		private int ambiguityThresholdPercent;
 		private Map<Integer, Integer> typeCounts = new HashMap<Integer, Integer>();
+		private Map<Integer, String> typeNames = new HashMap<Integer, String>();
+		private StringBuilder stBld =  new StringBuilder();
 
 		/* (non-Javadoc)
 		 * @see org.apache.hadoop.mapreduce.Reducer#setup(org.apache.hadoop.mapreduce.Reducer.Context)
@@ -270,9 +274,17 @@ public class DataTypeInferencer extends Configured implements Tool {
 		protected void setup(Context context) throws IOException, InterruptedException {
 			Configuration config = context.getConfiguration();
 			fieldDelim = config.get("field.delim.out", ",");
+			ambiguityThresholdPercent = config.getInt("dti.ambiguity.threshold.percent", 50);
         	for (int t = EPOCH_TIME_TYPE; t >= 0; --t) {
         		typeCounts.put(t, 0);
         	}
+        	
+        	//type names
+        	typeNames.put(STRING_TYPE, BaseAttribute.DATA_TYPE_INT);
+        	typeNames.put(FLOAT_TYPE, BaseAttribute.DATA_TYPE_FLOAT);
+        	typeNames.put(INT_TYPE, BaseAttribute.DATA_TYPE_INT);
+        	typeNames.put(DATE_TYPE, BaseAttribute.DATA_TYPE_DATE);
+        	typeNames.put(EPOCH_TIME_TYPE, BaseAttribute.DATA_TYPE_EPOCH_TIME);
 		}
 	   	
 		/* (non-Javadoc)
@@ -280,6 +292,7 @@ public class DataTypeInferencer extends Configured implements Tool {
 	 	*/
 		protected void reduce(IntWritable  key, Iterable<Tuple> values, Context context)
 			throws IOException, InterruptedException {
+			boolean isAmbiguous = false;
         	for (int t = EPOCH_TIME_TYPE; t >= 0; --t) {
         		typeCounts.put(t, 0);
         	}
@@ -298,23 +311,46 @@ public class DataTypeInferencer extends Configured implements Tool {
     		int intCount = typeCounts.get(INT_TYPE);
     		int floatCount = typeCounts.get(FLOAT_TYPE);
     		int epochTimeCount = typeCounts.get(EPOCH_TIME_TYPE);
+    		int ambiguityThreshold = (anyCount * ambiguityThresholdPercent) / 100;
+    		
+    		//numeric
     		if (intCount > 0 && floatCount > 0) {
     			if (intCount == anyCount) {
     				//all can interpreted as int
-    				type =  epochTimeCount == anyCount ? EPOCH_TIME_TYPE : INT_TYPE;
+    				if (epochTimeCount == anyCount) {
+    					type = EPOCH_TIME_TYPE;
+    				} else if (epochTimeCount > ambiguityThreshold) {
+    					type = EPOCH_TIME_TYPE;
+        				isAmbiguous = true;
+    				} else {
+    					type = INT_TYPE;
+    				}
     			} else if (floatCount == anyCount){
     				//only some can be interpreted as int
     				type = FLOAT_TYPE;
     			}
     		} 
+    		
+    		//string
     		if (type == STRING_TYPE) {
     			//can all be interpreted as date
     			int dateCount = typeCounts.get(DATE_TYPE);
     			type =  dateCount == anyCount ? DATE_TYPE : STRING_TYPE;
+    			if (dateCount == anyCount) {
+    				type =  DATE_TYPE;
+    			} else if (dateCount > ambiguityThreshold) {
+    				type =  DATE_TYPE;
+    				isAmbiguous = true;
+    			} 
     		}
     		
+    		stBld.delete(0, stBld.length());
+    		stBld.append(key.get()).append(fieldDelim).append(typeNames.get(type));
+    		if (isAmbiguous) {
+    			stBld.append(" (ambiguous)");
+    		}
     		
-    		outVal.set("" + key.get() + fieldDelim + type);
+    		outVal.set(stBld.toString());
 			context.write(NullWritable.get(), outVal);
 		}
 	}
