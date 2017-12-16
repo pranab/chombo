@@ -38,8 +38,13 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_TEXT = "text";
 	public static final String DATA_TYPE_DATE = "date";
 	public static final String DATA_TYPE_EPOCH_TIME = "epochTime";
+	public static final String DATA_TYPE_SSN = "SSN";
+	public static final String DATA_TYPE_PHONE_NUM = "phoneNumber";
 	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";
 	public static final String DATA_TYPE_GEO_LOCATION = "geoLocation";
+	
+	public static String PATTERN_STR_SSN = "^(\\d{3}( |-)?\\d{2}( |-)?\\d{4}|\\w{3}( |-)?\\w{2}( |-)?(\\w){4})$";
+	public static String PATTERN_STR_PHONE_NUM = "^(\\(?\\d{3}\\)?[ \\.-]?\\d{3}[ \\.-]?\\d{4})$";
 	
 	public String getName() {
 		return name;
