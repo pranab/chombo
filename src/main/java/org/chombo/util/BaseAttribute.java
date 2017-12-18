@@ -28,6 +28,7 @@ public class BaseAttribute  implements Serializable {
 	protected String name;
 	protected int ordinal = -1;
 	protected String dataType;
+	
 	public static final String DATA_TYPE_STRING = "string";
 	public static final String DATA_TYPE_CATEGORICAL = "categorical";
 	public static final String DATA_TYPE_INT = "int";
@@ -40,7 +41,9 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_EPOCH_TIME = "epochTime";
 	public static final String DATA_TYPE_SSN = "SSN";
 	public static final String DATA_TYPE_PHONE_NUM = "phoneNumber";
+	public static final String DATA_TYPE_AGE = "age";
 	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";
+	public static final String DATA_TYPE_ANY = "any";
 	public static final String DATA_TYPE_GEO_LOCATION = "geoLocation";
 	
 	public static String PATTERN_STR_SSN = "^(\\d{3}( |-)?\\d{2}( |-)?\\d{4}|\\w{3}( |-)?\\w{2}( |-)?(\\w){4})$";

@@ -67,7 +67,7 @@ public class DataTypeInferencer extends Configured implements Tool {
 	@Override
 	public int run(String[] args) throws Exception {
         Job job = new Job(getConf());
-        String jobName = "MR for specific  value counting for various fields ";
+        String jobName = "MR for discovering data types for fields";
         job.setJobName(jobName);
         
         job.setJarByClass(ValueCounter.class);
@@ -105,7 +105,7 @@ public class DataTypeInferencer extends Configured implements Tool {
         private String[] items;
         private String fieldDelimRegex;
         private boolean allAttributes;
-        private long timeWindowBegin;
+        private long timeWindowBegin = -1;
         private SimpleDateFormat[] dateFormats;
         private Pattern ssnPattern;
         private Pattern phoneNumPattern;
@@ -124,9 +124,11 @@ public class DataTypeInferencer extends Configured implements Tool {
         	}
         	
         	//epoch time
-        	int epochTimeWindowYears = config.getInt("dti.epoch.time.window.years", 10);
-        	long now = System.currentTimeMillis();
-        	timeWindowBegin = now - epochTimeWindowYears * BasicUtils.MILISEC_PER_DAY * 365;
+        	int epochTimeWindowYears = config.getInt("dti.epoch.time.window.years", -1);
+        	if (epochTimeWindowYears > 0) {
+        		long now = System.currentTimeMillis();
+        		timeWindowBegin = now - epochTimeWindowYears * BasicUtils.MILISEC_PER_DAY * 365;
+        	}
         	
         	//date
         	String[] dateFormatStrList = Utility.stringArrayFromString(config, "dti.date.formats", Utility.configDelim);
@@ -180,9 +182,10 @@ public class DataTypeInferencer extends Configured implements Tool {
         private void emitOutput(int ordinal, String value, Context context) throws IOException, InterruptedException {
         	boolean isNumeric = false;
         	outKey.set(ordinal);
+        	outVal.initialize();
         	
         	//epoch time
-        	boolean isEpoch = BasicUtils.isLong(value) && Long.parseLong(value) > timeWindowBegin;
+        	boolean isEpoch = timeWindowBegin > 0 && BasicUtils.isLong(value) && Long.parseLong(value) > timeWindowBegin;
         	outVal.add(EPOCH_TIME_TYPE, isEpoch ? 1 : 0);
         	
         	//integer
@@ -201,19 +204,23 @@ public class DataTypeInferencer extends Configured implements Tool {
         	
         	//date type
         	boolean isDate = false;
-        	for (SimpleDateFormat dateFormat : dateFormats) {
-        		//date if at least 1 format is able to parse
-        		isDate = BasicUtils.isDate(value, dateFormat);
-        		if (isDate)
-        			break;
+        	if (!isNumeric){
+ 		    	for (SimpleDateFormat dateFormat : dateFormats) {
+		    		//date if at least 1 format is able to parse
+		    		isDate = BasicUtils.isDate(value, dateFormat);
+		    		if (isDate)
+		    			break;
+		    	}
         	}
         	outVal.add(DATE_TYPE, isDate? 1 : 0);
         	
         	//SSN
         	boolean isSsn = false;
-        	if (null != ssnPattern) {
-        		Matcher matcher = ssnPattern.matcher(value);
-        		isSsn = matcher.matches();
+        	if (!isNumeric){
+	        	if (null != ssnPattern) {
+	        		Matcher matcher = ssnPattern.matcher(value);
+	        		isSsn = matcher.matches();
+	        	}
         	}
         	outVal.add(SSN_TYPE, isSsn? 1 : 0);
         	
@@ -270,7 +277,7 @@ public class DataTypeInferencer extends Configured implements Tool {
     		}
     		
     		outVal.initialize();
-    		for (int t = EPOCH_TIME_TYPE; t >= 0; --t) {
+    		for (int t = NUM_TYPES-1; t >= 0; --t) {
     			outVal.add(t, typeCounts.get(t));
     		}
         	context.write(key, outVal);
@@ -293,7 +300,6 @@ public class DataTypeInferencer extends Configured implements Tool {
 		private int intCount;
 		private int floatCount;
 		private int ambiguityThreshold;
-
 		private StringBuilder stBld =  new StringBuilder();
 
 		/* (non-Javadoc)
@@ -313,6 +319,9 @@ public class DataTypeInferencer extends Configured implements Tool {
         	typeNames.put(INT_TYPE, BaseAttribute.DATA_TYPE_INT);
         	typeNames.put(DATE_TYPE, BaseAttribute.DATA_TYPE_DATE);
         	typeNames.put(EPOCH_TIME_TYPE, BaseAttribute.DATA_TYPE_EPOCH_TIME);
+        	typeNames.put(SSN_TYPE, BaseAttribute.DATA_TYPE_SSN);
+        	typeNames.put(PHONE_NUM_TYPE, BaseAttribute.DATA_TYPE_PHONE_NUM);
+        	typeNames.put(AGE_TYPE, BaseAttribute.DATA_TYPE_AGE);
 		}
 	   	
 		/* (non-Javadoc)
