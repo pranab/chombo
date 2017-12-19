@@ -42,12 +42,18 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_SSN = "SSN";
 	public static final String DATA_TYPE_PHONE_NUM = "phoneNumber";
 	public static final String DATA_TYPE_AGE = "age";
+	public static final String DATA_TYPE_STREET_ADDRESS = "streetAddress";
+	public static final String DATA_TYPE_CITY = "city";
+	public static final String DATA_TYPE_ZIP = "zip";
 	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";
 	public static final String DATA_TYPE_ANY = "any";
 	public static final String DATA_TYPE_GEO_LOCATION = "geoLocation";
 	
-	public static String PATTERN_STR_SSN = "^(\\d{3}( |-)?\\d{2}( |-)?\\d{4}|\\w{3}( |-)?\\w{2}( |-)?(\\w){4})$";
-	public static String PATTERN_STR_PHONE_NUM = "^(\\(?\\d{3}\\)?[ \\.-]?\\d{3}[ \\.-]?\\d{4})$";
+	public static final String PATTERN_STR_SSN = "^(\\d{3}( |-)?\\d{2}( |-)?\\d{4}|\\w{3}( |-)?\\w{2}( |-)?(\\w){4})$";
+	public static final String PATTERN_STR_PHONE_NUM = "^(\\(?\\d{3}\\)?[ \\.-]?\\d{3}[ \\.-]?\\d{4})$";
+	public static final String PATTERN_STR_STREET_ADDRESS = "^(\\d{1,8}(\\s{1,4}\\S{1,20})+)$";
+	public static final String PATTERN_STR_CITY = "^([A-Za-z]{2,20}(\\s{1,4}[A-Za-z]{2,20})*)$";
+	public static final String PATTERN_STR_ZIP = "^(\\d{5}([-\\s]\\d{4})*)$";
 	
 	public String getName() {
 		return name;
