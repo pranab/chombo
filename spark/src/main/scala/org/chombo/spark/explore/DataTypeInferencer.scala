@@ -60,6 +60,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	     }
 	   }
 	   
+	   val verifyDate = getBooleanParamOrElse(appConfig, "verify.date", true)
 	   val timeWindowYears = getOptionalIntParam(appConfig, "time.window.years")
 	   val timeWindowBegin = timeWindowYears match {
 	     case Some(windowYears : Int) => {
@@ -78,11 +79,17 @@ object DataTypeInferencer extends JobConfiguration  {
 	     }
 	     case None => None
 	   }
+	   
+	   if (verifyDate && timeWindowYears == None && dateFormatStrList == None) {
+	     throw new IllegalStateException("eithet date format list or time window must be provided for date verification : ")
+	   }
+	   
 	   val ssnPattern = getPattern(appConfig, "verify.ssn" : String, BaseAttribute.PATTERN_STR_SSN)
 	   val phoneNumPattern = getPattern(appConfig, "verify.phone.num" : String, BaseAttribute.PATTERN_STR_PHONE_NUM)
 	   val streetAddressPattern = getPattern(appConfig, "verify.street.address" : String, BaseAttribute.PATTERN_STR_STREET_ADDRESS)
 	   val cityPattern = getPattern(appConfig, "verify.city" : String, BaseAttribute.PATTERN_STR_CITY)
 	   val zipPattern = getPattern(appConfig, "verify.zip" : String, BaseAttribute.PATTERN_STR_ZIP)
+	   val currencyPattern = getPattern(appConfig, "verify.currency" : String, BaseAttribute.PATTERN_STR_CURRENCY)
 	   val maxAge = getOptionalIntParam(appConfig, "max.age")
 	   val ambiguityThresholdPercent = getIntParamOrElse(appConfig, "ambiguity.threshold.percent", 90)
 	   val debugOn = appConfig.getBoolean("debug.on")
@@ -160,6 +167,10 @@ object DataTypeInferencer extends JobConfiguration  {
 	           count = if (isDate) 1 else 0
 	           countRec.add(BaseAttribute.DATA_TYPE_DATE, count)
 	           
+	           //currency
+	           val isCurrency = isMatched(value, currencyPattern)
+	           countRec.add(BaseAttribute.DATA_TYPE_CURRENCY, if (isCurrency) 1 else 0)
+
 	           //ssn
 	           val isSsn = isMatched(value, ssnPattern)
 	           countRec.add(BaseAttribute.DATA_TYPE_SSN, if (isSsn) 1 else 0)
@@ -244,17 +255,17 @@ object DataTypeInferencer extends JobConfiguration  {
 	     } else {
 	       //string based
 	       val stringTypes = Array(
+	           BaseAttribute.DATA_TYPE_CURRENCY,
 	           BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, 
 	           BaseAttribute.DATA_TYPE_PHONE_NUM, BaseAttribute.DATA_TYPE_STREET_ADDRESS, 
 	           BaseAttribute.DATA_TYPE_CITY, BaseAttribute.DATA_TYPE_ZIP)
-	      stringTypes.foreach(strType => {
-	        result = discoverType(strType,  typeCounts, anyCount, ambiguityThreshold)
-	        if (result._1) {
-	          dataType = strType 
-	          break
-	        }
-	      }) 
-	       
+	       stringTypes.foreach(strType => {
+	         result = discoverType(strType,  typeCounts, anyCount, ambiguityThreshold)
+	         if (result._1) {
+	           dataType = strType 
+	           break
+	         }
+	       }) 
 	     }
 	     val info = if (result._2) " (ambiguous with correctness probability " + BasicUtils.formatDouble(result._3) + " )" else ""
 	     dataType + info
