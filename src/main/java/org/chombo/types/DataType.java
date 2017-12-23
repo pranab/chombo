@@ -25,11 +25,9 @@ import java.util.regex.Pattern;
  * @author pranab
  *
  */
-public class DataType implements Serializable, Comparable<DataType> {
+public abstract class DataType implements Serializable, Comparable<DataType> {
 	protected String name;
-	protected String patternStr;
 	protected int strength;
-	protected Pattern pattern;
 
 	public DataType() {
 	}
@@ -40,13 +38,6 @@ public class DataType implements Serializable, Comparable<DataType> {
 		this.strength = strength;
 	}
 	
-	public DataType(String name, String patternStr, int strength) {
-		super();
-		this.name = name;
-		this.patternStr = patternStr;
-		this.strength = strength;
-		pattern = Pattern.compile(patternStr);
-	}
 
 	public String getName() {
 		return name;
@@ -54,15 +45,6 @@ public class DataType implements Serializable, Comparable<DataType> {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getPatternStr() {
-		return patternStr;
-	}
-
-	public void setPatternStr(String patternStr) {
-		this.patternStr = patternStr;
-		pattern = Pattern.compile(patternStr);
 	}
 
 	public int getStrength() {
@@ -73,10 +55,7 @@ public class DataType implements Serializable, Comparable<DataType> {
 		this.strength = strength;
 	}
 	
-	public boolean isMatched(String value) {
-		Matcher matcher = pattern.matcher(value.trim());
-		return matcher.matches();
-	}
+	public abstract boolean isMatched(String value);
 	
 	@Override
 	public int compareTo(DataType that) {

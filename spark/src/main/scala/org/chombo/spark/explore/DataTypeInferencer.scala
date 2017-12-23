@@ -27,6 +27,7 @@ import org.chombo.spark.common.Record
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 import org.chombo.util.BaseAttribute
+import org.chombo.types.DataTypeHandler
 
 /**
  * @param args
@@ -60,22 +61,35 @@ object DataTypeInferencer extends JobConfiguration  {
 	     }
 	   }
 	   
+	   val stringTypeHandler  = new DataTypeHandler()
+	   val stringDataTypes = new java.util.HashSet[String]()
+	   if (getBooleanParamOrElse(appConfig, "verify.ssn", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_SSN)
+	   if (getBooleanParamOrElse(appConfig, "verify.phoneNum", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_PHONE_NUM)
+	   if (getBooleanParamOrElse(appConfig, "verify.streetAddress", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_STREET_ADDRESS)
+	   if (getBooleanParamOrElse(appConfig, "verify.city", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_CITY)
+	   if (getBooleanParamOrElse(appConfig, "verify.zip", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_ZIP)
+	   if (getBooleanParamOrElse(appConfig, "verify.currency", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_CURRENCY)
+	   if (getBooleanParamOrElse(appConfig, "verify.monetaryAmount", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_MONETARY_AMOUNT)
+	   if (getBooleanParamOrElse(appConfig, "verify.date", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_DATE)
+	   stringTypeHandler.addStringDataTypes(stringDataTypes)
+	   
+	   val numericTypeHandler  = new DataTypeHandler()
+	   numericTypeHandler.addNumericTypes
 	   val verifyDate = getBooleanParamOrElse(appConfig, "verify.date", true)
 	   val timeWindowYears = getOptionalIntParam(appConfig, "time.window.years")
-	   val timeWindowBegin = timeWindowYears match {
+	   timeWindowYears match {
 	     case Some(windowYears : Int) => {
 	       val now = System.currentTimeMillis();
            val windowBegin = now - windowYears * BasicUtils.MILISEC_PER_DAY * 365
-           Some(windowBegin)
+           numericTypeHandler.addEpochTimeType(windowBegin, now, 80)
 	     }
 	     case None => None
 	   }
 	   
 	   val dateFormatStrList = getOptionalStringListParam(appConfig, "date.format.str.list")
-	   val dateFormaList = dateFormatStrList match {
+	   dateFormatStrList match {
 	     case Some(formatStrList : java.util.List[String]) => {
-	       val dtFormat = formatStrList.asScala.toList.map(str => new SimpleDateFormat(str))
-	       Some(dtFormat)
+	       stringTypeHandler.addDateType(formatStrList)
 	     }
 	     case None => None
 	   }
@@ -84,19 +98,27 @@ object DataTypeInferencer extends JobConfiguration  {
 	     throw new IllegalStateException("eithet date format list or time window must be provided for date verification : ")
 	   }
 	   
-	   val ssnPattern = getPattern(appConfig, "verify.ssn" : String, BaseAttribute.PATTERN_STR_SSN)
-	   val phoneNumPattern = getPattern(appConfig, "verify.phone.num" : String, BaseAttribute.PATTERN_STR_PHONE_NUM)
-	   val streetAddressPattern = getPattern(appConfig, "verify.street.address" : String, BaseAttribute.PATTERN_STR_STREET_ADDRESS)
-	   val cityPattern = getPattern(appConfig, "verify.city" : String, BaseAttribute.PATTERN_STR_CITY)
-	   val zipPattern = getPattern(appConfig, "verify.zip" : String, BaseAttribute.PATTERN_STR_ZIP)
-	   val currencyPattern = getPattern(appConfig, "verify.currency" : String, BaseAttribute.PATTERN_STR_CURRENCY)
-	   val maxAge = getOptionalIntParam(appConfig, "max.age")
+	   if (getBooleanParamOrElse(appConfig, "verify.age", true)) {
+		   val maxAge = getMandatoryIntParam(appConfig, "max.age", "missing max age")
+		   numericTypeHandler.addAgeType(0, maxAge, 90)
+	   }
 	   val ambiguityThresholdPercent = getIntParamOrElse(appConfig, "ambiguity.threshold.percent", 90)
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
 	   
 	   //number of data types
-	   val numTypes = 12
+	   val allDataTypes = Array(
+	       BaseAttribute.DATA_TYPE_AGE, BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_INT,
+	       BaseAttribute.DATA_TYPE_FLOAT, BaseAttribute.DATA_TYPE_CURRENCY , BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
+	       BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, BaseAttribute.DATA_TYPE_PHONE_NUM, 
+	       BaseAttribute.PATTERN_STR_ZIP,BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY, 
+	       BaseAttribute.DATA_TYPE_STRING, BaseAttribute.DATA_TYPE_ANY)
+	   val numTypes = allDataTypes.length
+	   val countRecIndex = scala.collection.mutable.Map[String, Int]()
+	   allDataTypes.zipWithIndex.foreach(v => countRecIndex(v._1) = v._2)
+	   
+	   numericTypeHandler.prepare()
+	   stringTypeHandler.prepare()
 	   
 	   //input
 	   val data = sparkCntxt.textFile(inputPath)
@@ -109,96 +131,17 @@ object DataTypeInferencer extends JobConfiguration  {
 	     val attrTypeCount = attrList.map(attr => {
 	       val countRec = Record(2 * numTypes)
 	       val value = items(attr)
+	       initializeCount(countRec, allDataTypes)
 	       
-	       //epoch time
-	       var count = timeWindowBegin match {
-	         case Some(windowBegin : Long) => {
-	           val isEpoch = windowBegin > 0 && BasicUtils.isLong(value) && value.toLong > windowBegin
-	           if (isEpoch) 1 else 0
-	         }
-	         case None => 0
-	       }
-	       countRec.add(BaseAttribute.DATA_TYPE_EPOCH_TIME, count)
+	       val matchedNumericTypes = numericTypeHandler.findTypes(value).asScala.toList
+	       setMatchedTypeCount(countRec, matchedNumericTypes, countRecIndex)
+	       val isNumeric = matchedNumericTypes.size > 0
 	       
-	       //int
-	       val isInt = BasicUtils.isInt(value)
-	       count = if (isInt) 1 else  0
-	       countRec.add(BaseAttribute.DATA_TYPE_INT, count)
-	       var isNumeric = isInt
-	       
-	       //age
-	       count = maxAge match {
-	         case Some(max : Int) => {
-	           val isAge = isInt && value.toInt < max 
-	           if (isAge) 1 else 0
-	         }
-	         case None => 0
-	       }
-	       countRec.add(BaseAttribute.DATA_TYPE_AGE, count)
-	       
-	       //float
-	       val isFloat = BasicUtils.isFloat(value)
-	       count = if (isFloat) 1 else  0
-	       countRec.add(BaseAttribute.DATA_TYPE_FLOAT, count)
-	       isNumeric = isFloat
-	       
-	       isNumeric match {
-	         case true => {
-	           //already found numeric
-	           countRec.add(BaseAttribute.DATA_TYPE_DATE, 0)
-	           countRec.add(BaseAttribute.DATA_TYPE_SSN, 0)
-	           countRec.add(BaseAttribute.DATA_TYPE_PHONE_NUM, 0)
-	           countRec.add(BaseAttribute.DATA_TYPE_STRING, 0)
-	         }
-	         case false => {
-	           //date
-	           val isDate = dateFormaList match {
-	             case Some(dateFormats : List[SimpleDateFormat]) => {
-	               var isDate = false
-	               dateFormats.foreach(format => {
-	                 isDate = BasicUtils.isDate(value, format)
-		    		 if (isDate)
-		    			break;
-	               })
-	               isDate
-	             }
-	             case None => false 
-	           }
-	           count = if (isDate) 1 else 0
-	           countRec.add(BaseAttribute.DATA_TYPE_DATE, count)
-	           
-	           //currency
-	           val isCurrency = isMatched(value, currencyPattern)
-	           countRec.add(BaseAttribute.DATA_TYPE_CURRENCY, if (isCurrency) 1 else 0)
-
-	           //ssn
-	           val isSsn = isMatched(value, ssnPattern)
-	           countRec.add(BaseAttribute.DATA_TYPE_SSN, if (isSsn) 1 else 0)
-	           
-	           //phone number
-	           val isPhoneNum = isMatched(value, phoneNumPattern)
-	           countRec.add(BaseAttribute.DATA_TYPE_PHONE_NUM, if (isPhoneNum) 1 else 0)
-	           
-	           //zip
-	           val isZip = isMatched(value, zipPattern)
-	           countRec.add(BaseAttribute.DATA_TYPE_ZIP, if (isZip) 1 else 0)
-
-	           //street address
-	           val isStreetAddr = if (!isZip) isMatched(value, streetAddressPattern) else false
-	           countRec.add(BaseAttribute.DATA_TYPE_STREET_ADDRESS, if (isStreetAddr) 1 else 0)
-	           
-	           //city
-	           val isCity = if (!isZip && !isStreetAddr) isMatched(value, cityPattern) else false
-	           countRec.add(BaseAttribute.DATA_TYPE_CITY, if (isCity) 1 else 0)
-
-	           //string
-	           countRec.add(BaseAttribute.DATA_TYPE_STRING, 1)
-
-	         }
+	       if (!isNumeric) {
+	    	   val matchedStringTypes = stringTypeHandler.findTypes(value).asScala.toList
+	    	   setMatchedTypeCount(countRec, matchedStringTypes, countRecIndex)
 	       }
 	       
-	       //any type
-	       countRec.add(BaseAttribute.DATA_TYPE_ANY, 1)
 	       (attr.toInt, countRec)
 	     })
 	     attrTypeCount
@@ -219,6 +162,12 @@ object DataTypeInferencer extends JobConfiguration  {
 	   })
 	   
 	   //infer types
+	   val numericTypes = Array(BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_AGE)
+	   val stringTypes = Array(
+	     BaseAttribute.DATA_TYPE_CURRENCY, BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
+	     BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, 
+	     BaseAttribute.DATA_TYPE_PHONE_NUM, BaseAttribute.DATA_TYPE_ZIP, 
+	     BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY)
 	   val inferredTypes = aggrTypeCounts.mapValues(r => {
 	     var dataType = BaseAttribute.DATA_TYPE_STRING
 	     val typeCounts = scala.collection.mutable.Map[String, Int]()
@@ -238,7 +187,6 @@ object DataTypeInferencer extends JobConfiguration  {
 	     var result = (false, false, 0.0)
 	     if (intCount == anyCount) {
 	       //int based
-	       val numericTypes = Array(BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_AGE)
 	       numericTypes.foreach(numType => {
 	         result = discoverType(numType,  typeCounts, anyCount, ambiguityThreshold)
 	         if (result._1) {
@@ -254,11 +202,6 @@ object DataTypeInferencer extends JobConfiguration  {
 	         dataType = BaseAttribute.DATA_TYPE_FLOAT
 	     } else {
 	       //string based
-	       val stringTypes = Array(
-	           BaseAttribute.DATA_TYPE_CURRENCY,
-	           BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, 
-	           BaseAttribute.DATA_TYPE_PHONE_NUM, BaseAttribute.DATA_TYPE_STREET_ADDRESS, 
-	           BaseAttribute.DATA_TYPE_CITY, BaseAttribute.DATA_TYPE_ZIP)
 	       stringTypes.foreach(strType => {
 	         result = discoverType(strType,  typeCounts, anyCount, ambiguityThreshold)
 	         if (result._1) {
@@ -282,6 +225,29 @@ object DataTypeInferencer extends JobConfiguration  {
 	   }
    }
    
+    /**
+     * @param config
+     * @param paramName
+     * @return
+     */   
+   def initializeCount(countRec : Record, allDataTypes : Array[String]) {
+     allDataTypes.foreach(t => {
+       countRec.add(t)
+       countRec.add(if (t.equals(BaseAttribute.DATA_TYPE_ANY)) 1 else 0)
+     })
+   }
+   
+   /**
+   * @param countRec
+   * @param matchedTypes
+   * @param countRecIndex
+   */
+   def setMatchedTypeCount(countRec : Record, matchedTypes : List[String], countRecIndex : scala.collection.mutable.Map[String,Int]) {
+     matchedTypes.foreach(t => {
+       val index = countRecIndex(t)
+       countRec.addInt(index, 1)
+     })
+   }
    
    /**
     * @param master

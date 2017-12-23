@@ -14,42 +14,51 @@
  * implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
+
 package org.chombo.types;
-
-import java.text.SimpleDateFormat;
-import java.util.List;
-
-import org.chombo.util.BasicUtils;
 
 /**
  * @author pranab
  *
  */
-public class DateDataType extends DataType {
-	private List<SimpleDateFormat> formatList;
-	
+public class FloatDataType extends DataType {
+	protected float min;
+	protected float max;
+	private boolean withLimitCheck;
+
 	/**
 	 * @param name
-	 * @param formatStringList
 	 * @param strength
+	 * @param min
+	 * @param max
 	 */
-	public DateDataType(String name, List<String> formatStringList, int strength) {
+	public FloatDataType(String name,  int strength) {
 		super(name, strength);
-		for (String formatString : formatStringList) {
-			formatList.add(new SimpleDateFormat(formatString));
-		}
+		withLimitCheck = false;
 	}
 
+	/**
+	 * @param name
+	 * @param strength
+	 * @param min
+	 * @param max
+	 */
+	public FloatDataType(String name, float min, float max, int strength) {
+		super(name, strength);
+		this.min = min;
+		this.max = max;
+		withLimitCheck = true;
+	}
+	
 	@Override
 	public boolean isMatched(String value) {
-		boolean isDate = false;
-		value = value.trim();
-	    for (SimpleDateFormat dateFormat : formatList) {
-    		//date if at least 1 format is able to parse
-    		isDate = BasicUtils.isDate(value, dateFormat);
-    		if (isDate)
-    			break;
-    	}
-		return isDate;
+		boolean matched = false;
+		float fVal = 0;
+		try {
+			fVal = Float.parseFloat(value);
+			matched = withLimitCheck ? (fVal >= min && fVal <= max) : true;
+		} catch (Exception ex) {
+		}
+		return matched;
 	}
 }

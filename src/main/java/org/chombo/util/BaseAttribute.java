@@ -47,6 +47,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_ZIP = "zip";
 	public static final String DATA_TYPE_STATE = "state";
 	public static final String DATA_TYPE_CURRENCY = "currency";
+	public static final String DATA_TYPE_MONETARY_AMOUNT = "monetaryAmount";
 	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";
 	public static final String DATA_TYPE_ANY = "any";
 	public static final String DATA_TYPE_GEO_LOCATION = "geoLocation";

@@ -16,40 +16,40 @@
  */
 package org.chombo.types;
 
-import java.text.SimpleDateFormat;
-import java.util.List;
-
-import org.chombo.util.BasicUtils;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author pranab
  *
  */
-public class DateDataType extends DataType {
-	private List<SimpleDateFormat> formatList;
-	
+public class StringDataType extends DataType{
+	protected String patternStr;
+	protected Pattern pattern;
+
 	/**
 	 * @param name
-	 * @param formatStringList
+	 * @param patternStr
 	 * @param strength
 	 */
-	public DateDataType(String name, List<String> formatStringList, int strength) {
+	public StringDataType(String name, String patternStr, int strength) {
 		super(name, strength);
-		for (String formatString : formatStringList) {
-			formatList.add(new SimpleDateFormat(formatString));
-		}
+		this.patternStr = patternStr;
+		pattern = Pattern.compile(patternStr);
+	}
+	
+	public String getPatternStr() {
+		return patternStr;
 	}
 
-	@Override
-	public boolean isMatched(String value) {
-		boolean isDate = false;
-		value = value.trim();
-	    for (SimpleDateFormat dateFormat : formatList) {
-    		//date if at least 1 format is able to parse
-    		isDate = BasicUtils.isDate(value, dateFormat);
-    		if (isDate)
-    			break;
-    	}
-		return isDate;
+	public void setPatternStr(String patternStr) {
+		this.patternStr = patternStr;
+		pattern = Pattern.compile(patternStr);
 	}
+	
+	public boolean isMatched(String value) {
+		Matcher matcher = pattern.matcher(value.trim());
+		return matcher.matches();
+	}
+
 }

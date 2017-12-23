@@ -16,40 +16,33 @@
  */
 package org.chombo.types;
 
-import java.text.SimpleDateFormat;
-import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.chombo.util.BaseAttribute;
 import org.chombo.util.BasicUtils;
 
 /**
  * @author pranab
  *
  */
-public class DateDataType extends DataType {
-	private List<SimpleDateFormat> formatList;
+public class MonetaryAmountDataType extends DataType {
+	private Pattern currencyPattern;
 	
-	/**
-	 * @param name
-	 * @param formatStringList
-	 * @param strength
-	 */
-	public DateDataType(String name, List<String> formatStringList, int strength) {
+	public MonetaryAmountDataType(String name,  int strength) {
 		super(name, strength);
-		for (String formatString : formatStringList) {
-			formatList.add(new SimpleDateFormat(formatString));
-		}
+		currencyPattern = Pattern.compile(BaseAttribute.PATTERN_STR_CURRENCY);
 	}
-
+	
 	@Override
 	public boolean isMatched(String value) {
-		boolean isDate = false;
-		value = value.trim();
-	    for (SimpleDateFormat dateFormat : formatList) {
-    		//date if at least 1 format is able to parse
-    		isDate = BasicUtils.isDate(value, dateFormat);
-    		if (isDate)
-    			break;
-    	}
-		return isDate;
+		boolean isMonetaryAmount = false;
+		String[] items = value.trim().split("\\s+");
+		if (items.length == 2) {
+			Matcher matcher = currencyPattern.matcher(items[0].toUpperCase());
+			isMonetaryAmount = matcher.matches() && BasicUtils.isFloat(items[1]);
+		}
+		
+		return isMonetaryAmount;
 	}
 }
