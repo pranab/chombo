@@ -20,6 +20,7 @@ package org.chombo.types;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -32,13 +33,62 @@ import org.chombo.util.BaseAttribute;
 public class DataTypeHandler implements Serializable {
 	private List<DataType> dataTypes = new ArrayList<DataType>();
 	private boolean matchStrongestType;
+	private String[] allDataTypes = {
+			BaseAttribute.DATA_TYPE_AGE, BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_INT,
+		    BaseAttribute.DATA_TYPE_FLOAT, BaseAttribute.DATA_TYPE_CURRENCY , BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
+		    BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, BaseAttribute.DATA_TYPE_PHONE_NUM, 
+		    BaseAttribute.PATTERN_STR_ZIP,BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY, 
+		    BaseAttribute.DATA_TYPE_STRING, BaseAttribute.DATA_TYPE_ANY};
+	private String[] allNumericDataTypes = {BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_AGE};
+	private String[] allStringDataTypes = {
+			BaseAttribute.DATA_TYPE_CURRENCY, BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
+		    BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, 
+		    BaseAttribute.DATA_TYPE_PHONE_NUM, BaseAttribute.DATA_TYPE_ZIP, 
+		    BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY};
+	private Set<String> needsUpperCasing = new HashSet<String>();
 	
+	/**
+	 * 
+	 */
+	public DataTypeHandler() {
+		needsUpperCasing.add(BaseAttribute.DATA_TYPE_BOOLEAN);
+		needsUpperCasing.add(BaseAttribute.DATA_TYPE_STATE);
+		needsUpperCasing.add(BaseAttribute.DATA_TYPE_CURRENCY);
+	}
+	
+	/**
+	 * @return
+	 */
 	public boolean isMatchStrongestType() {
 		return matchStrongestType;
 	}
 
+	/**
+	 * @param matchStrongestType
+	 */
 	public void setMatchStrongestType(boolean matchStrongestType) {
 		this.matchStrongestType = matchStrongestType;
+	}
+
+	/**
+	 * @return
+	 */
+	public String[] getAllDataTypes() {
+		return allDataTypes;
+	}
+
+	/**
+	 * @return
+	 */
+	public String[] getAllNumericDataTypes() {
+		return allNumericDataTypes;
+	}
+
+	/**
+	 * @return
+	 */
+	public String[] getAllStringDataTypes() {
+		return allStringDataTypes;
 	}
 
 	/**
@@ -152,7 +202,8 @@ public class DataTypeHandler implements Serializable {
 	public List<String> findTypes(String value) {
 		List<String> matchedTypes = new ArrayList<String>();
 		for (DataType dataType : dataTypes) {
-			if (dataType.isMatched(value)) {
+			String transVal = needsUpperCasing.contains(dataType.name) ? value.toUpperCase() : value;
+			if (dataType.isMatched(transVal)) {
 				matchedTypes.add(dataType.name);
 				if (matchStrongestType) {
 					break;

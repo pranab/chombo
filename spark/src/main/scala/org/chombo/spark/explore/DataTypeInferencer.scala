@@ -55,7 +55,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	       attr.asScala.toList.map {_.toInt}
 	     }
 	     case None => {
-	       val recSize = getMandatoryIntParam(appConfig, "rec.size", "missing recor size parameter")
+	       val recSize = getMandatoryIntParam(appConfig, "rec.size", "missing record size parameter")
 	       val attrs = (0 to recSize-1).toList
 	       attrs
 	     }
@@ -107,12 +107,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	   val saveOutput = appConfig.getBoolean("save.output")
 	   
 	   //number of data types
-	   val allDataTypes = Array(
-	       BaseAttribute.DATA_TYPE_AGE, BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_INT,
-	       BaseAttribute.DATA_TYPE_FLOAT, BaseAttribute.DATA_TYPE_CURRENCY , BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
-	       BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, BaseAttribute.DATA_TYPE_PHONE_NUM, 
-	       BaseAttribute.PATTERN_STR_ZIP,BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY, 
-	       BaseAttribute.DATA_TYPE_STRING, BaseAttribute.DATA_TYPE_ANY)
+	   val allDataTypes = stringTypeHandler.getAllDataTypes()
 	   val numTypes = allDataTypes.length
 	   val countRecIndex = scala.collection.mutable.Map[String, Int]()
 	   allDataTypes.zipWithIndex.foreach(v => countRecIndex(v._1) = v._2)
@@ -144,6 +139,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	       
 	       (attr.toInt, countRec)
 	     })
+	     
 	     attrTypeCount
 	   })
 	   
@@ -162,12 +158,9 @@ object DataTypeInferencer extends JobConfiguration  {
 	   })
 	   
 	   //infer types
-	   val numericTypes = Array(BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_AGE)
-	   val stringTypes = Array(
-	     BaseAttribute.DATA_TYPE_CURRENCY, BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
-	     BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, 
-	     BaseAttribute.DATA_TYPE_PHONE_NUM, BaseAttribute.DATA_TYPE_ZIP, 
-	     BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY)
+	   
+	   val numericTypes = stringTypeHandler.getAllNumericDataTypes()
+	   val stringTypes = stringTypeHandler.getAllStringDataTypes()
 	   val inferredTypes = aggrTypeCounts.mapValues(r => {
 	     var dataType = BaseAttribute.DATA_TYPE_STRING
 	     val typeCounts = scala.collection.mutable.Map[String, Int]()
@@ -184,7 +177,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	     val intCount = typeCounts(BaseAttribute.DATA_TYPE_INT)
 	     val floatCount = typeCounts(BaseAttribute.DATA_TYPE_FLOAT)
 	     val ambiguityThreshold = (anyCount * ambiguityThresholdPercent) / 100
-	     var result = (false, false, 0.0)
+	     var result = (false, false, 100.0)
 	     if (intCount == anyCount) {
 	       //int based
 	       numericTypes.foreach(numType => {
