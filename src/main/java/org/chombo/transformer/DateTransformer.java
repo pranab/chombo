@@ -75,7 +75,7 @@ public class DateTransformer  {
 		 */
 		public DateGenerator(ProcessorAttribute prAttr, Config config) {
 			super(prAttr.getTargetFieldOrdinals().length);
-			dateFormat =   new SimpleDateFormat(config.getString("dateFormat"));
+			dateFormat = new SimpleDateFormat(config.getString("dateFormat"));
 		}
 		
 		public DateGenerator(String dateFormat) {

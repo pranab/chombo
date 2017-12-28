@@ -28,6 +28,7 @@ public class BaseAttribute  implements Serializable {
 	protected String name;
 	protected int ordinal = -1;
 	protected String dataType;
+	
 	public static final String DATA_TYPE_STRING = "string";
 	public static final String DATA_TYPE_CATEGORICAL = "categorical";
 	public static final String DATA_TYPE_INT = "int";
@@ -37,8 +38,28 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_BOOLEAN = "boolean";
 	public static final String DATA_TYPE_TEXT = "text";
 	public static final String DATA_TYPE_DATE = "date";
+	public static final String DATA_TYPE_EPOCH_TIME = "epochTime";
+	public static final String DATA_TYPE_SSN = "SSN";
+	public static final String DATA_TYPE_PHONE_NUM = "phoneNumber";
+	public static final String DATA_TYPE_AGE = "age";
+	public static final String DATA_TYPE_STREET_ADDRESS = "streetAddress";
+	public static final String DATA_TYPE_CITY = "city";
+	public static final String DATA_TYPE_ZIP = "zip";
+	public static final String DATA_TYPE_STATE = "state";
+	public static final String DATA_TYPE_CURRENCY = "currency";
+	public static final String DATA_TYPE_MONETARY_AMOUNT = "monetaryAmount";
 	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";
+	public static final String DATA_TYPE_ANY = "any";
 	public static final String DATA_TYPE_GEO_LOCATION = "geoLocation";
+	
+	public static final String PATTERN_STR_SSN = "^(\\d{3}( |-)?\\d{2}( |-)?\\d{4}|\\w{3}( |-)?\\w{2}( |-)?(\\w){4})$";
+	public static final String PATTERN_STR_PHONE_NUM = "^(\\(?\\d{3}\\)?[ \\.-]?\\d{3}[ \\.-]?\\d{4})$";
+	public static final String PATTERN_STR_STREET_ADDRESS = "^(\\d{1,8}(\\s{1,4}\\S{1,20})+)$";
+	public static final String PATTERN_STR_CITY = "^([A-Za-z]{2,20}(\\s{1,4}[A-Za-z]{2,20})*)$";
+	public static final String PATTERN_STR_ZIP = "^(\\d{5}([-\\s]\\d{4})*)$";
+	public static final String PATTERN_STR_STATE ="^(AK|AL|AR|AZ|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY)$";	
+ 	public static final String PATTERN_STR_CURRENCY = "^(AUD|BRL|CAD|DKKEUR|HKD|INR|NOK|FKP|RUB|SGD|CHF|JPY|USD)$";
+ 	public static final String PATTERN_STR_BOOLEAN = "^(TRUE|FALSE|T|F|YES|NO|Y|N|0|1)$";
 	
 	public String getName() {
 		return name;

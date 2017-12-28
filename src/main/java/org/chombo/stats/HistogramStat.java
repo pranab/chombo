@@ -313,13 +313,13 @@ public class HistogramStat implements Serializable {
 	 * @param confidenceLimitPercent
 	 * @return
 	 */
-	public int[] getConfidenceBounds(int confidenceLimitPercent) {
-		int[] confidenceBounds = new int[2];
+	public double[] getConfidenceBounds(double confidenceLimitPercent) {
+		double[] confidenceBounds = new double[2];
 		
 		int mean = (int)getMean();
 		int meanIndex = (int)(mean / binWidth);
 		int confCount = 0;
-		int confidenceLimit = (count * confidenceLimitPercent) / 100;
+		int confidenceLimit = (int)((count * confidenceLimitPercent) / 100);
 		int binCount = 0;
 		Bin bin = binMap.get(meanIndex);
 		if (null != bin) {
@@ -346,8 +346,8 @@ public class HistogramStat implements Serializable {
 		}
 		
 		double avBinWidth = binWidth > 1 ? 0.5 : 0.0;
-		confidenceBounds[0] = (int)((((double)(meanIndex - offset)) + avBinWidth) * binWidth);
-		confidenceBounds[1] = (int)((((double)(meanIndex + offset)) + avBinWidth) * binWidth);
+		confidenceBounds[0] = (((double)(meanIndex - offset)) + avBinWidth) * binWidth;
+		confidenceBounds[1] = (((double)(meanIndex + offset)) + avBinWidth) * binWidth;
 		return confidenceBounds;
 	}
 
@@ -497,6 +497,11 @@ public class HistogramStat implements Serializable {
 		return entropy;
 	}
 	
+	public double getSum() {
+		return sum;
+	}
+
+
 	/**
 	 * @param histStat
 	 * @return
