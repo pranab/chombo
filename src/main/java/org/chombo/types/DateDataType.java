@@ -17,6 +17,7 @@
 package org.chombo.types;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.chombo.util.BasicUtils;
@@ -26,7 +27,7 @@ import org.chombo.util.BasicUtils;
  *
  */
 public class DateDataType extends DataType {
-	private List<SimpleDateFormat> formatList;
+	private List<SimpleDateFormat> formatList = new ArrayList<SimpleDateFormat>();
 	
 	/**
 	 * @param name
