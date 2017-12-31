@@ -37,7 +37,7 @@ public class DataTypeHandler implements Serializable {
 			BaseAttribute.DATA_TYPE_AGE, BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_INT,
 		    BaseAttribute.DATA_TYPE_FLOAT, BaseAttribute.DATA_TYPE_CURRENCY , BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
 		    BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, BaseAttribute.DATA_TYPE_PHONE_NUM, 
-		    BaseAttribute.PATTERN_STR_ZIP,BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY, 
+		    BaseAttribute.DATA_TYPE_ZIP,BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY, 
 		    BaseAttribute.DATA_TYPE_STRING, BaseAttribute.DATA_TYPE_ANY};
 	private String[] allNumericDataTypes = {BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_AGE};
 	private String[] allStringDataTypes = {
