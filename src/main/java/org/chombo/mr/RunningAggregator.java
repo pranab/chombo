@@ -141,7 +141,7 @@ public class RunningAggregator  extends Configured implements Tool {
                 context.write(outKey, outVal);
         	} else {
             	//incremental - first run will have only incremental file
-    			for ( int ord : quantityAttrOrdinals) {
+    			for (int ord : quantityAttrOrdinals) {
     				//emit one for each quant field
             		initKey();
             		outKey.append(ord);
@@ -159,8 +159,8 @@ public class RunningAggregator  extends Configured implements Tool {
          */
         private void initKey() {
         	outKey.initialize();
-    		for (int i = 0; i < idFieldOrdinals.length; ++i) {
-  				outKey.append(items[i]);
+    		for (int indx : idFieldOrdinals) {
+  				outKey.append(items[indx]);
     		}
         }
  	}	
@@ -193,7 +193,6 @@ public class RunningAggregator  extends Configured implements Tool {
              	LOG.setLevel(Level.DEBUG);
             }
         	fieldDelim = config.get("field.delim.out", ",");
-        	//quantityAttrOrdinals = Utility.intArrayFromString(config.get("rug.quantity.attr.ordinals"));
         	handleMissingIncremental = config.getBoolean("rug.handle.missing.incremental",  false);
        }
 		
@@ -234,7 +233,6 @@ public class RunningAggregator  extends Configured implements Tool {
     		//output
     		stBld.delete(0, stBld.length());
     		stBld.append(key.toString()).append(fieldDelim);
-    		
 			LongRunningStats stat = runningStats.get(ord);
 			stat.process();
 			stBld.append(stat.getCount()).append(fieldDelim).
