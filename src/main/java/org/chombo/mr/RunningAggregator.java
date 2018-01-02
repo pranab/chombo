@@ -18,8 +18,12 @@
 package org.chombo.mr;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -30,6 +34,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -182,6 +187,9 @@ public class RunningAggregator  extends Configured implements Tool {
         private boolean  handleMissingIncremental;
         private int recType;
         private int recCount;
+        private Set<Integer> recTypes = new HashSet<Integer>();
+        private OutputStream aggrStrm;
+        private PrintWriter aggrWriter;
         private static final Logger LOG = Logger.getLogger(RunningAggregator.AggrReducer.class);
 		
 		/* (non-Javadoc)
@@ -194,7 +202,23 @@ public class RunningAggregator  extends Configured implements Tool {
             }
         	fieldDelim = config.get("field.delim.out", ",");
         	handleMissingIncremental = config.getBoolean("rug.handle.missing.incremental",  false);
-       }
+        	
+        	//only modified aggregate data output
+        	String aggrFilePath = config.get("rug.mod.aggr.file.path");
+        	if (null != aggrFilePath) {
+        		aggrStrm = Utility.getCreateFileOutputStream(config,aggrFilePath);
+        		aggrWriter = new PrintWriter(aggrStrm);
+        	}
+        }
+		
+        @Override
+		protected void cleanup(Context context) throws IOException,InterruptedException {
+			super.cleanup(context);
+			if (null != aggrStrm) {
+				aggrWriter.close();
+				aggrStrm.close();
+			}
+        }
 		
     	/* (non-Javadoc)
     	 * @see org.apache.hadoop.mapreduce.Reducer#reduce(KEYIN, java.lang.Iterable, org.apache.hadoop.mapreduce.Reducer.Context)
@@ -204,9 +228,11 @@ public class RunningAggregator  extends Configured implements Tool {
     		key.setDelim(fieldDelim);
     		runningStats.clear();
     		recCount = 0;
+    		recTypes.clear();
     		for (Tuple val : values) {
     			index = 0;
     			recType = val.getInt(index++);
+    			recTypes.add(recType);
     			
 				ord = val.getInt(index++);
 				count = val.getLong(index++);
@@ -239,8 +265,14 @@ public class RunningAggregator  extends Configured implements Tool {
 				append(stat.getSum()).append(fieldDelim).append(stat.getSumSq()).append(fieldDelim).
 				append(stat.getAvg()).append(fieldDelim).append(stat.getStdDev());
     		
-        	outVal.set(stBld.toString());
+			String outStr = stBld.toString();
+        	outVal.set(outStr);
 			context.write(NullWritable.get(), outVal);
+			
+			//output only updated aggregates if aggregate output file path specified
+			if (recTypes.size() == 2 && null != aggrWriter) {
+				aggrWriter.write(stBld.append("\n").toString());
+			}
     	}
 		
  	}
