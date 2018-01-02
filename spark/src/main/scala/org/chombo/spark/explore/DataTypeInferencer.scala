@@ -17,7 +17,6 @@
 
 package org.chombo.spark.explore
 
-import scala.util.control.Breaks._
 import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
@@ -70,7 +69,6 @@ object DataTypeInferencer extends JobConfiguration  {
 	   if (getBooleanParamOrElse(appConfig, "verify.zip", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_ZIP)
 	   if (getBooleanParamOrElse(appConfig, "verify.currency", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_CURRENCY)
 	   if (getBooleanParamOrElse(appConfig, "verify.monetaryAmount", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_MONETARY_AMOUNT)
-	   if (getBooleanParamOrElse(appConfig, "verify.date", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_DATE)
 	   stringTypeHandler.addStringDataTypes(stringDataTypes)
 	   
 	   val numericTypeHandler  = new DataTypeHandler()
@@ -112,13 +110,8 @@ object DataTypeInferencer extends JobConfiguration  {
 	   val countRecIndex = scala.collection.mutable.Map[String, Int]()
 	   allDataTypes.zipWithIndex.foreach(v => {
 	     val index = 2 * v._2 + 1
-	     //if (debugOn) 
-	     //  println("type: " + v._1 + " index:" + index)
 	     countRecIndex += (v._1 ->  index)
 	   })
-	   
-	   //if (debugOn)
-	   //  println("attribute list:" + attrList)
 	   
 	   numericTypeHandler.prepare()
 	   stringTypeHandler.prepare()
@@ -142,12 +135,10 @@ object DataTypeInferencer extends JobConfiguration  {
 	       setMatchedTypeCount(countRec, matchedNumericTypes, countRecIndex, debugOn)
 	       val isNumeric = matchedNumericTypes.size > 0
 	       
-	       if (!isNumeric) {
-	    	   val matchedStringTypes = stringTypeHandler.findTypes(value).asScala.toList
-	    	   //if (debugOn)
-	    	   //  println("matched string types:" + matchedStringTypes)
-	    	   setMatchedTypeCount(countRec, matchedStringTypes, countRecIndex, debugOn)
-	       }
+	       val matchedStringTypes = stringTypeHandler.findTypes(value).asScala.toList
+	       //if (debugOn)
+	       //  println("matched string types:" + matchedStringTypes)
+	       setMatchedTypeCount(countRec, matchedStringTypes, countRecIndex, debugOn)
 	       
 	       (attr.toInt, countRec)
 	     })
@@ -172,64 +163,74 @@ object DataTypeInferencer extends JobConfiguration  {
 	     countRec
 	   })
 	   
+	   //val aggrTypeCountsCol = aggrTypeCounts.collect
+	   
 	   //infer types
 	   if (debugOn) 
 	     println("inferring types")
-	   val numericTypes = stringTypeHandler.getAllNumericDataTypes()
+	   val numericTypes = numericTypeHandler.getAllNumericDataTypes()
 	   val stringTypes = stringTypeHandler.getAllStringDataTypes()
-	   val inferredTypes = aggrTypeCounts.mapValues(r => {
+	   val inferredTypes = aggrTypeCounts.map(r => {
+	     if (debugOn) 
+	       println("attr ordinal:" + r._1 + " count rec: " + r._2)
 	     var dataType = BaseAttribute.DATA_TYPE_STRING
-	     val typeCounts = scala.collection.mutable.Map[String, Int]()
-	     var offset = 0;
-	     for (i <- 0 to numTypes-1) {
-	       val dataType = r.getString(offset)
-	       offset += 1
-	       val typeCount = r.getInt(offset)
-	       offset += 1
-	       typeCounts += (dataType -> typeCount)
-	     }
+	     val typeCounts = buidTypeCountMap(r._2, numTypes)
 
 	     val anyCount = typeCounts(BaseAttribute.DATA_TYPE_ANY)
 	     val intCount = typeCounts(BaseAttribute.DATA_TYPE_INT)
 	     val floatCount = typeCounts(BaseAttribute.DATA_TYPE_FLOAT)
-	     if (debugOn)
-	       println("anyCount: " + anyCount + " intCount:" + intCount + " floatCount:" + floatCount)
+	     //if (debugOn)
+	     //  println("anyCount: " + anyCount + " intCount:" + intCount + " floatCount:" + floatCount)
 	       
 	     val ambiguityThreshold = (anyCount * ambiguityThresholdPercent) / 100
 	     var result = (false, false, 100.0)
 	     if (intCount == anyCount) {
 	       //int based
 	       numericTypes.foreach(numType => {
-	         result = discoverType(numType,  typeCounts, anyCount, ambiguityThreshold)
-	         if (result._1) {
-	           dataType = numType 
-	           break
+	         if (!result._1) {
+	           result = discoverType(numType,  typeCounts, anyCount, ambiguityThreshold)
+	           if (result._1) {
+	             dataType = numType 
+	             if (debugOn) println("numeric inferred type:" + dataType)
+	           }
 	         }
 	       }) 
-	       
-	       //int
-	       if (!result._1) {
-	         dataType = BaseAttribute.DATA_TYPE_INT
-	       }
 	     } else if (floatCount == anyCount) {
 	    	 //float
 	         dataType = BaseAttribute.DATA_TYPE_FLOAT
-	     } else {
-	       //string based
+	         result = (true, false, 100.0)
+	         if (debugOn) println("float inferred type:" + dataType)
+	     } 
+	     
+	     //string based
+	     if (!result._1) {
 	       stringTypes.foreach(strType => {
-	         result = discoverType(strType,  typeCounts, anyCount, ambiguityThreshold)
-	         if (result._1) {
-	           dataType = strType 
-	           break
+	         if (!result._1) {
+	        	 result = discoverType(strType,  typeCounts, anyCount, ambiguityThreshold)
+	        	 if (result._1) {
+	               dataType = strType 
+	               if (debugOn) println("string inferred type:" + dataType)
+	             }
 	         }
 	       }) 
 	     }
-	     if (debugOn) 
-	       println("inferred type:" + dataType)
-
-	     val info = if (result._2) " (ambiguous with correctness probability " + BasicUtils.formatDouble(result._3) + " )" else ""
-	     dataType + info
+	     
+	     //int
+	     if (!result._1 && intCount == anyCount) {
+	       dataType = BaseAttribute.DATA_TYPE_INT
+	       if (debugOn) println("int inferred type:" + dataType)
+	     }
+	     
+	     val info = 
+	       if (result._2) 
+	         " (ambiguous with correctness probability " + BasicUtils.formatDouble(result._3) + " )" 
+	       else 
+	         ""
+	     val typeInfo = dataType + info
+	     (r._1, typeInfo)
 	   })
+	   if (debugOn)
+	     println("done")
 	   
        if (debugOn) {
          val records = inferredTypes.collect
@@ -252,8 +253,6 @@ object DataTypeInferencer extends JobConfiguration  {
        val count = if (t.equals(BaseAttribute.DATA_TYPE_ANY)) 1 else 0
        countRec.addString(t)
        countRec.addInt(count)
-       //if (debugOn)
-       //  println("intialize type:" + t + " count:" + count)
      })
    }
    
@@ -327,5 +326,21 @@ object DataTypeInferencer extends JobConfiguration  {
 	 } 
      (matched, isAmbiguous, discoveryProb)
    } 
+   
+    /**
+     * @param countRec
+     * @param numTypes
+	 * @return
+	 */  
+     def buidTypeCountMap(countRec : Record, numTypes : Int) : scala.collection.mutable.Map[String, Int] = {
+     val typeCounts = scala.collection.mutable.Map[String, Int]()
+	 for (i <- 0 to numTypes-1) {
+	   val index = 2 * i
+	   val dataType = countRec.getString(index)
+	   val typeCount = countRec.getInt(index + 1)
+	   typeCounts += (dataType -> typeCount)
+	 }
+     typeCounts
+   }
    
 }

@@ -56,7 +56,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String PATTERN_STR_PHONE_NUM = "^(\\(?\\d{3}\\)?[ \\.-]?\\d{3}[ \\.-]?\\d{4})$";
 	public static final String PATTERN_STR_STREET_ADDRESS = "^(\\d{1,8}(\\s{1,4}\\S{1,20})+)$";
 	public static final String PATTERN_STR_CITY = "^([A-Za-z]{2,20}(\\s{1,4}[A-Za-z]{2,20})*)$";
-	public static final String PATTERN_STR_ZIP = "^(\\d{5}([-\\s]\\d{4})*)$";
+	public static final String PATTERN_STR_ZIP = "^(\\d{5}([-\\s]\\d{4})?)$";
 	public static final String PATTERN_STR_STATE ="^(AK|AL|AR|AZ|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY)$";	
  	public static final String PATTERN_STR_CURRENCY = "^(AUD|BRL|CAD|DKKEUR|HKD|INR|NOK|FKP|RUB|SGD|CHF|JPY|USD)$";
  	public static final String PATTERN_STR_BOOLEAN = "^(TRUE|FALSE|T|F|YES|NO|Y|N|0|1)$";

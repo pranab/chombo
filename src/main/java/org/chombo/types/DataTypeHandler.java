@@ -147,7 +147,7 @@ public class DataTypeHandler implements Serializable {
 	 */
 	public void addNumericTypes() {
 		dataTypes.add(new IntDataType(BaseAttribute.DATA_TYPE_INT, 20));
-		dataTypes.add(new IntDataType(BaseAttribute.DATA_TYPE_FLOAT, 10));
+		dataTypes.add(new FloatDataType(BaseAttribute.DATA_TYPE_FLOAT, 10));
 	}
 
 	/**
