@@ -60,6 +60,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	     }
 	   }
 	   
+	   //string types
 	   val stringTypeHandler  = new DataTypeHandler()
 	   val stringDataTypes = new java.util.HashSet[String]()
 	   if (getBooleanParamOrElse(appConfig, "verify.ssn", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_SSN)
@@ -71,8 +72,20 @@ object DataTypeInferencer extends JobConfiguration  {
 	   if (getBooleanParamOrElse(appConfig, "verify.monetaryAmount", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_MONETARY_AMOUNT)
 	   stringTypeHandler.addStringDataTypes(stringDataTypes)
 	   
+	   //id types
+	   val idLengthList = getOptionalIntListParam(appConfig,"idLengths")
+	   idLengthList match {
+	     case Some(idLengths : java.util.List[Integer]) => {
+	       stringTypeHandler.addIdType(idLengths)
+	     }
+	     case None => 
+	   }
+	   
+	   //numeric types
 	   val numericTypeHandler  = new DataTypeHandler()
 	   numericTypeHandler.addNumericTypes
+	   
+	   //epoch time
 	   val verifyDate = getBooleanParamOrElse(appConfig, "verify.date", true)
 	   val timeWindowYears = getOptionalIntParam(appConfig, "time.window.years")
 	   timeWindowYears match {
@@ -84,6 +97,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	     case None => None
 	   }
 	   
+	   //date
 	   val dateFormatStrList = getOptionalStringListParam(appConfig, "date.format.str.list")
 	   dateFormatStrList match {
 	     case Some(formatStrList : java.util.List[String]) => {
@@ -96,10 +110,12 @@ object DataTypeInferencer extends JobConfiguration  {
 	     throw new IllegalStateException("eithet date format list or time window must be provided for date verification : ")
 	   }
 	   
+	   //age type
 	   if (getBooleanParamOrElse(appConfig, "verify.age", true)) {
 		   val maxAge = getMandatoryIntParam(appConfig, "max.age", "missing max age")
 		   numericTypeHandler.addAgeType(0, maxAge, 90)
 	   }
+	   
 	   val ambiguityThresholdPercent = getIntParamOrElse(appConfig, "ambiguity.threshold.percent", 90)
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
