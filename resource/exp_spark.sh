@@ -16,6 +16,15 @@ case "$1" in
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT exp.conf
 ;;
 
+"dataTypeInferencer")
+	echo "running DataTypeInferencer"
+	CLASS_NAME=org.chombo.spark.explore.DataTypeInferencer
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/dti/sell_trans.txt
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/dti
+	rm -rf ./output/dti
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT exp.conf
+;;
 
 *) 
 	echo "unknown operation $1"

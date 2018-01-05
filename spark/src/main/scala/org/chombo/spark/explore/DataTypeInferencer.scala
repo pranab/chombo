@@ -73,12 +73,9 @@ object DataTypeInferencer extends JobConfiguration  {
 	   stringTypeHandler.addStringDataTypes(stringDataTypes)
 	   
 	   //id types
-	   val idLengthList = getOptionalIntListParam(appConfig,"idLengths")
-	   idLengthList match {
-	     case Some(idLengths : java.util.List[Integer]) => {
-	       stringTypeHandler.addIdType(idLengths)
-	     }
-	     case None => 
+	   if (getBooleanParamOrElse(appConfig, "verify.id", true)) {
+		   val idLengths = getMandatoryIntListParam(appConfig, "idLengths", "missing ID filed lenghths")
+		   stringTypeHandler.addIdType(idLengths)
 	   }
 	   
 	   //numeric types

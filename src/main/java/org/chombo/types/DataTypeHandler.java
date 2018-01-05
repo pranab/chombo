@@ -129,11 +129,11 @@ public class DataTypeHandler implements Serializable {
 	 */
 	public void addIdType(List<Integer> idLengths) {
 		if (idLengths.size() > allIdTypes.length) {
-			throw new IllegalStateException();
+			throw new IllegalStateException("number of ID lengs provided is more than ID types supported");
 		}
 		
 		for (int i = 0; i < idLengths.size(); ++i) {
-			new IdDataType(allIdTypes[i], BaseAttribute.PATTERN_STR_ID, idLengths.get(i), 78);
+			dataTypes.add(new IdDataType(allIdTypes[i], BaseAttribute.PATTERN_STR_ID, idLengths.get(i), 78));
 		}
 	}
 	
