@@ -113,6 +113,10 @@ object DataTypeInferencer extends JobConfiguration  {
 		   numericTypeHandler.addAgeType(0, maxAge, 90)
 	   }
 	   
+	   //custom types
+	   setCustomStringTypes(appConfig, stringTypeHandler)
+	   setCustomIntTypes(appConfig, stringTypeHandler, numericTypeHandler)
+	   
 	   val ambiguityThresholdPercent = getIntParamOrElse(appConfig, "ambiguity.threshold.percent", 90)
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
@@ -283,6 +287,48 @@ object DataTypeInferencer extends JobConfiguration  {
        countRec.addInt(index, 1)
      })
    }
+   
+   def setCustomStringTypes(appConfig : Config, stringTypeHandler : DataTypeHandler) {
+     val strTypes = getOptionalStringListParam(appConfig, "customStringTypes")
+     strTypes match {
+       case Some(stTypes : java.util.List[String]) => {
+         stTypes.asScala.foreach(t => {
+           val typeConfig  = appConfig.getConfig(t)
+           val name = getMandatoryStringParam(typeConfig, "name", "missing custom type name")
+           val regex = getMandatoryStringParam(typeConfig, "regex", "missing custom type regex")
+           val strength = getMandatoryIntParam(typeConfig, "strength", "missing custom type strength")
+           val length = getOptionalIntParam(typeConfig, "length")
+           length match {
+             case Some(realLength : Int) => {
+               
+             }
+             case None => {
+               stringTypeHandler.addCustomStringType(name, regex, strength)
+             }
+           }
+         })
+       }
+       case None =>
+     }
+   }
+
+    def setCustomIntTypes(appConfig : Config, stringTypeHandler : DataTypeHandler, numericTypeHandler : DataTypeHandler) {
+     val numTypes = getOptionalStringListParam(appConfig, "customIntTypes")
+     numTypes match {
+       case Some(nuTypes : java.util.List[String]) => {
+         nuTypes.asScala.foreach(t => {
+           val typeConfig  = appConfig.getConfig(t)
+           val name = getMandatoryStringParam(typeConfig, "name", "missing custom type name")
+           val minVal = getMandatoryIntParam(typeConfig, "minVal", "missing custom type regex")
+           val maxVal = getMandatoryIntParam(typeConfig, "maxVal", "missing custom type regex")
+           val strength = getMandatoryIntParam(typeConfig, "strength", "missing custom type strength")
+           numericTypeHandler.addCustomIntType( name, minVal, maxVal, strength)
+         })
+       }
+       case None =>
+     }
+   }
+  
    
    /**
     * @param master

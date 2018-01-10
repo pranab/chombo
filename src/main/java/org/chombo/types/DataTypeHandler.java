@@ -208,6 +208,29 @@ public class DataTypeHandler implements Serializable {
 	}
 	
 	/**
+	 * @param name
+	 * @param min
+	 * @param max
+	 * @param strength
+	 */
+	public void addCustomIntType(String name, int min, int max, int strength) {
+		//if exists already remove because patching pattern or strength is  being changed
+		DataType typeToBeRemoved = null;
+		for (DataType dataType : dataTypes) {
+			if (dataType.name.equals(name)) {
+				typeToBeRemoved = dataType;
+				break;
+			}
+		}	
+		if (null != typeToBeRemoved) {
+			dataTypes.remove(typeToBeRemoved);
+		}
+		
+		dataTypes.add(new IntDataType(name, min, max, strength));
+	}
+	
+	
+	/**
 	 * 
 	 */
 	public void prepare() {
