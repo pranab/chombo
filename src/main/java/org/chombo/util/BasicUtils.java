@@ -1886,6 +1886,54 @@ public class BasicUtils {
 	}
 	
 	/**
+	 * @param src
+	 * @param dest
+	 */
+	public static <T> void arrayCopy(T[] src,  T[] dest) {
+		arrayCopy(src, 0, src.length, dest, 0);
+	}
+	
+	/**
+	 * @param src
+	 * @param srcBeg
+	 * @param srcEnd
+	 * @param dest
+	 * @param destbeg
+	 */
+	public static <T> void listToArrayCopy(List<T> src, int srcBeg, int srcEnd, T[] dest, int destbeg) {
+		//end index is exclusive
+		int copySize = srcEnd - srcBeg;
+		if (copySize > 0 && dest.length >= copySize + destbeg)  {
+			for (int i = 0; i < copySize; ++i) {
+				dest[destbeg + i] = src.get(srcBeg + i);
+			}
+		} else {
+			throw new IllegalStateException("destination array too small or invalid array index");
+		}
+	}
+	
+	/**
+	 * @param src
+	 * @param srcBeg
+	 * @param srcEnd
+	 * @param dest
+	 */
+	public static <T> void listToArrayCopy(List<T> src, int srcBeg, int srcEnd, T[] dest) {
+		listToArrayCopy(src, srcBeg, srcEnd, dest, 0);
+	}
+	
+	/**
+	 * @param src
+	 * @param srcBeg
+	 * @param srcEnd
+	 * @param dest
+	 * @param destbeg
+	 */
+	public static <T> void listToArrayCopy(List<T> src,  T[] dest, int destbeg) {
+		listToArrayCopy(src, 0, src.size(), dest, destbeg);
+	}	
+	
+	/**
 	 * @param items
 	 * @return
 	 */

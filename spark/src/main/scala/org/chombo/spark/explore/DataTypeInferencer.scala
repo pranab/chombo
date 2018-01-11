@@ -115,7 +115,10 @@ object DataTypeInferencer extends JobConfiguration  {
 	   
 	   //custom types
 	   setCustomStringTypes(appConfig, stringTypeHandler)
-	   setCustomIntTypes(appConfig, stringTypeHandler, numericTypeHandler)
+	   setCustomIntTypes(appConfig, numericTypeHandler)
+	   
+	   //consolidate type name list
+	   stringTypeHandler.mergeTypeLists(numericTypeHandler)
 	   
 	   val ambiguityThresholdPercent = getIntParamOrElse(appConfig, "ambiguity.threshold.percent", 90)
 	   val debugOn = appConfig.getBoolean("debug.on")
@@ -185,7 +188,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	   //infer types
 	   if (debugOn) 
 	     println("inferring types")
-	   val numericTypes = numericTypeHandler.getAllNumericDataTypes()
+	   val numericTypes = stringTypeHandler.getAllNumericDataTypes()
 	   val stringTypes = stringTypeHandler.getAllStringDataTypes()
 	   val inferredTypes = aggrTypeCounts.map(r => {
 	     if (debugOn) 
@@ -294,7 +297,7 @@ object DataTypeInferencer extends JobConfiguration  {
        case Some(stTypes : java.util.List[String]) => {
          stTypes.asScala.foreach(t => {
            val typeConfig  = appConfig.getConfig(t)
-           val name = getMandatoryStringParam(typeConfig, "name", "missing custom type name")
+           val name = t
            val regex = getMandatoryStringParam(typeConfig, "regex", "missing custom type regex")
            val strength = getMandatoryIntParam(typeConfig, "strength", "missing custom type strength")
            val length = getOptionalIntParam(typeConfig, "length")
@@ -312,13 +315,13 @@ object DataTypeInferencer extends JobConfiguration  {
      }
    }
 
-    def setCustomIntTypes(appConfig : Config, stringTypeHandler : DataTypeHandler, numericTypeHandler : DataTypeHandler) {
+    def setCustomIntTypes(appConfig : Config,  numericTypeHandler : DataTypeHandler) {
      val numTypes = getOptionalStringListParam(appConfig, "customIntTypes")
      numTypes match {
        case Some(nuTypes : java.util.List[String]) => {
          nuTypes.asScala.foreach(t => {
            val typeConfig  = appConfig.getConfig(t)
-           val name = getMandatoryStringParam(typeConfig, "name", "missing custom type name")
+           val name = t
            val minVal = getMandatoryIntParam(typeConfig, "minVal", "missing custom type regex")
            val maxVal = getMandatoryIntParam(typeConfig, "maxVal", "missing custom type regex")
            val strength = getMandatoryIntParam(typeConfig, "strength", "missing custom type strength")

@@ -37,23 +37,27 @@ Configuration parameters are exp.conf. Make changes as necessary
 
 Custom types
 ============
-Out use case does not have any custom type. Here is an example configuration for custom types
+Our use case does not have any custom type. Here is an example configuration for custom types
 
 - string based UK phone number
-customStringTypes = ["UKPhoneNUmber", "custom1"]
+customStringTypes = ["UKPhoneNUmber", "custom100"]
 UKPhoneNUmber {
-	name = "UKPhoneNUmber"
 	regex = ""
 	strength = 80
 }
+custom100 {
+
+}
 
 - int based order quantity
-customIntTypes = ["orderQuantity", "custom1"]
+customIntTypes = ["orderQuantity", "custom200"]
 orderQuantity {
-	name = "orderQuantity"
 	minValue = 1
 	maxValue = 10
 	strength = 75
 }
 
+custom200 {
+
+}
 

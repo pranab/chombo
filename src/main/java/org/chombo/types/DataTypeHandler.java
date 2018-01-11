@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.chombo.util.BaseAttribute;
+import org.chombo.util.BasicUtils;
 
 /**
  * @author pranab
@@ -50,6 +51,8 @@ public class DataTypeHandler implements Serializable {
 		    BaseAttribute.DATA_TYPE_ID_LONG};
 	private String[] allIdTypes = {
 			BaseAttribute.DATA_TYPE_ID_SHORT,BaseAttribute.DATA_TYPE_ID_MEDIUM,BaseAttribute.DATA_TYPE_ID_LONG};
+	private List<String> customStringTypes = new ArrayList<String>();
+	private List<String> customIntTypes = new ArrayList<String>();
 	
 	private Set<String> needsUpperCasing = new HashSet<String>();
 	
@@ -80,21 +83,57 @@ public class DataTypeHandler implements Serializable {
 	 * @return
 	 */
 	public String[] getAllDataTypes() {
-		return allDataTypes;
+		String[] dataTypes = null;
+		int offset = 0;
+		if (!customStringTypes.isEmpty()) {
+			dataTypes = new String[allDataTypes.length + customStringTypes.size() + customIntTypes.size()];
+			BasicUtils.arrayCopy(allDataTypes, dataTypes);
+			offset =  allDataTypes.length;
+			BasicUtils.listToArrayCopy(customStringTypes, dataTypes, offset);
+		}
+		if (!customIntTypes.isEmpty()) {
+			if (null == dataTypes) {
+				dataTypes = new String[allDataTypes.length + customStringTypes.size() + customIntTypes.size()];
+				BasicUtils.arrayCopy(allDataTypes, dataTypes);
+				offset =  allDataTypes.length;
+			}
+			offset += customStringTypes.size();
+			BasicUtils.listToArrayCopy(customIntTypes, dataTypes, offset);
+		}	
+		if (null == dataTypes) {
+			dataTypes = allDataTypes;
+		}
+		return dataTypes;
 	}
 
 	/**
 	 * @return
 	 */
 	public String[] getAllNumericDataTypes() {
-		return allNumericDataTypes;
+		String[] intDataTypes = null;
+		if (!customIntTypes.isEmpty()) {
+			intDataTypes = new String[allNumericDataTypes.length + customIntTypes.size()];
+			BasicUtils.arrayCopy(allNumericDataTypes, intDataTypes);
+			BasicUtils.listToArrayCopy(customIntTypes, intDataTypes, allNumericDataTypes.length);
+		} else {
+			intDataTypes = allNumericDataTypes;
+		}
+		return intDataTypes;
 	}
 
 	/**
 	 * @return
 	 */
 	public String[] getAllStringDataTypes() {
-		return allStringDataTypes;
+		String[] strDataTypes = null;
+		if (!customStringTypes.isEmpty()) {
+			strDataTypes = new String[allStringDataTypes.length + customStringTypes.size()];
+			BasicUtils.arrayCopy(allStringDataTypes, strDataTypes);
+			BasicUtils.listToArrayCopy(customStringTypes, strDataTypes, allStringDataTypes.length);
+		} else {
+			strDataTypes = allStringDataTypes;
+		}
+		return strDataTypes;
 	}
 
 	/**
@@ -156,6 +195,11 @@ public class DataTypeHandler implements Serializable {
 		}
 		
 		dataTypes.add(new StringDataType(name, patternStr, strength));
+		
+		//new type
+		if (null == typeToBeRemoved) {
+			customStringTypes.add(name);
+		}
 	}
 	
 	/**
@@ -227,8 +271,20 @@ public class DataTypeHandler implements Serializable {
 		}
 		
 		dataTypes.add(new IntDataType(name, min, max, strength));
+		
+		//new type
+		if (null == typeToBeRemoved) {
+			customIntTypes.add(name);
+		}
 	}
 	
+	/**
+	 * @param that
+	 */
+	public void mergeTypeLists(DataTypeHandler that) {
+		customStringTypes.addAll(that.customStringTypes);
+		customIntTypes.addAll(that.customIntTypes);
+	}
 	
 	/**
 	 * 
