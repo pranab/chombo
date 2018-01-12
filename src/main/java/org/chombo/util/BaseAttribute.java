@@ -48,6 +48,9 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_STATE = "state";
 	public static final String DATA_TYPE_CURRENCY = "currency";
 	public static final String DATA_TYPE_MONETARY_AMOUNT = "monetaryAmount";
+	public static final String DATA_TYPE_ID_SHORT = "idShort";
+	public static final String DATA_TYPE_ID_MEDIUM = "idMedium";
+	public static final String DATA_TYPE_ID_LONG = "idLong";
 	public static final String DATA_TYPE_STRING_COMPOSITE = "stringComp";
 	public static final String DATA_TYPE_ANY = "any";
 	public static final String DATA_TYPE_GEO_LOCATION = "geoLocation";
@@ -60,7 +63,8 @@ public class BaseAttribute  implements Serializable {
 	public static final String PATTERN_STR_STATE ="^(AK|AL|AR|AZ|CA|CO|CT|DE|FL|GA|HI|IA|ID|IL|IN|KS|KY|LA|MA|MD|ME|MI|MN|MO|MS|MT|NC|ND|NE|NH|NJ|NM|NV|NY|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VA|VT|WA|WI|WV|WY)$";	
  	public static final String PATTERN_STR_CURRENCY = "^(AUD|BRL|CAD|DKKEUR|HKD|INR|NOK|FKP|RUB|SGD|CHF|JPY|USD)$";
  	public static final String PATTERN_STR_BOOLEAN = "^(TRUE|FALSE|T|F|YES|NO|Y|N|0|1)$";
-	
+ 	public static final String PATTERN_STR_ID = "^([a-zA-Z0-9-]{1,40})$";
+ 	
 	public String getName() {
 		return name;
 	}

@@ -17,40 +17,24 @@
 package org.chombo.types;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author pranab
  *
  */
-public class StringDataType extends DataType{
-	protected String patternStr;
-	protected Pattern pattern;
-
-	/**
-	 * @param name
-	 * @param patternStr
-	 * @param strength
-	 */
-	public StringDataType(String name, String patternStr, int strength) {
-		super(name, strength);
-		this.patternStr = patternStr;
-		pattern = Pattern.compile(patternStr);
-	}
+public class IdDataType extends StringDataType {
+	private int length;
 	
-	public String getPatternStr() {
-		return patternStr;
+	public IdDataType(String name, String patternStr, int length, int strength) {
+		super(name, patternStr, strength);
+		this.length = length;
 	}
 
-	public void setPatternStr(String patternStr) {
-		this.patternStr = patternStr;
-		pattern = Pattern.compile(patternStr);
-	}
-	
 	@Override
 	public boolean isMatched(String value) {
-		Matcher matcher = pattern.matcher(value.trim());
-		return matcher.matches();
+		String trimmedVal = value.trim();
+		Matcher matcher = pattern.matcher(trimmedVal);
+		return matcher.matches() && trimmedVal.length() == length;
 	}
 
 }

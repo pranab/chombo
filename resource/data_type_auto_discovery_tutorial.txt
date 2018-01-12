@@ -1,0 +1,63 @@
+This tutorial for normalizing data, which is often a preparatory step before applying many
+machine learning algorithm
+
+
+Dependent script
+================
+Checkout the project avenir. Take the script util.py and sampler.py from the project and placeit
+in ../lib directory with respect the directory containing store_order.py
+
+Build and Deployment
+====================
+Please refer to building_spark_uber_jar.txt
+
+Generate input data
+===================
+./retail_sell_ex.py <num_stores> <num_products> <num_xactions> <num_customers> > retail_sell.txt
+
+where
+num_store = number of stores
+num_products = number of products
+num_xactions = number of transactions
+num_customers = number of customers
+
+Copy the output file to spark input directory as specified in exp_spark.sh
+
+Run normalizer spaek job
+=====================================
+./exp_spark.sh dataTypeInferencer
+
+Script
+======
+The script exp_spark.sh should be changed as necessary depending on your environment
+
+Configuration
+=============
+Configuration parameters are exp.conf. Make changes as necessary
+
+Custom types
+============
+Our use case does not have any custom type. Here is an example configuration for custom types
+
+- string based UK phone number
+customStringTypes = ["UKPhoneNUmber", "custom100"]
+UKPhoneNUmber {
+	regex = ""
+	strength = 80
+}
+custom100 {
+
+}
+
+- int based order quantity
+customIntTypes = ["orderQuantity", "custom200"]
+orderQuantity {
+	minValue = 1
+	maxValue = 10
+	strength = 75
+}
+
+custom200 {
+
+}
+

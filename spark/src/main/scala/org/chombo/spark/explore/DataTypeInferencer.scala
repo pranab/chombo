@@ -60,6 +60,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	     }
 	   }
 	   
+	   //string types
 	   val stringTypeHandler  = new DataTypeHandler()
 	   val stringDataTypes = new java.util.HashSet[String]()
 	   if (getBooleanParamOrElse(appConfig, "verify.ssn", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_SSN)
@@ -71,8 +72,17 @@ object DataTypeInferencer extends JobConfiguration  {
 	   if (getBooleanParamOrElse(appConfig, "verify.monetaryAmount", true)) stringDataTypes.add(BaseAttribute.DATA_TYPE_MONETARY_AMOUNT)
 	   stringTypeHandler.addStringDataTypes(stringDataTypes)
 	   
+	   //id types
+	   if (getBooleanParamOrElse(appConfig, "verify.id", true)) {
+		   val idLengths = getMandatoryIntListParam(appConfig, "idLengths", "missing ID filed lenghths")
+		   stringTypeHandler.addIdType(idLengths)
+	   }
+	   
+	   //numeric types
 	   val numericTypeHandler  = new DataTypeHandler()
 	   numericTypeHandler.addNumericTypes
+	   
+	   //epoch time
 	   val verifyDate = getBooleanParamOrElse(appConfig, "verify.date", true)
 	   val timeWindowYears = getOptionalIntParam(appConfig, "time.window.years")
 	   timeWindowYears match {
@@ -84,6 +94,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	     case None => None
 	   }
 	   
+	   //date
 	   val dateFormatStrList = getOptionalStringListParam(appConfig, "date.format.str.list")
 	   dateFormatStrList match {
 	     case Some(formatStrList : java.util.List[String]) => {
@@ -96,10 +107,19 @@ object DataTypeInferencer extends JobConfiguration  {
 	     throw new IllegalStateException("eithet date format list or time window must be provided for date verification : ")
 	   }
 	   
+	   //age type
 	   if (getBooleanParamOrElse(appConfig, "verify.age", true)) {
 		   val maxAge = getMandatoryIntParam(appConfig, "max.age", "missing max age")
 		   numericTypeHandler.addAgeType(0, maxAge, 90)
 	   }
+	   
+	   //custom types
+	   setCustomStringTypes(appConfig, stringTypeHandler)
+	   setCustomIntTypes(appConfig, numericTypeHandler)
+	   
+	   //consolidate type name list
+	   stringTypeHandler.mergeTypeLists(numericTypeHandler)
+	   
 	   val ambiguityThresholdPercent = getIntParamOrElse(appConfig, "ambiguity.threshold.percent", 90)
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
@@ -168,7 +188,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	   //infer types
 	   if (debugOn) 
 	     println("inferring types")
-	   val numericTypes = numericTypeHandler.getAllNumericDataTypes()
+	   val numericTypes = stringTypeHandler.getAllNumericDataTypes()
 	   val stringTypes = stringTypeHandler.getAllStringDataTypes()
 	   val inferredTypes = aggrTypeCounts.map(r => {
 	     if (debugOn) 
@@ -270,6 +290,56 @@ object DataTypeInferencer extends JobConfiguration  {
        countRec.addInt(index, 1)
      })
    }
+   
+   /**
+    * @param appConfig
+ 	* @param stringTypeHandler
+ 	*/
+   def setCustomStringTypes(appConfig : Config, stringTypeHandler : DataTypeHandler) {
+     val strTypes = getOptionalStringListParam(appConfig, "customStringTypes")
+     strTypes match {
+       case Some(stTypes : java.util.List[String]) => {
+         stTypes.asScala.foreach(t => {
+           val typeConfig  = appConfig.getConfig(t)
+           val name = t
+           val regex = getMandatoryStringParam(typeConfig, "regex", "missing custom type regex")
+           val strength = getMandatoryIntParam(typeConfig, "strength", "missing custom type strength")
+           val length = getOptionalIntParam(typeConfig, "length")
+           length match {
+             case Some(realLength : Int) => {
+               
+             }
+             case None => {
+               stringTypeHandler.addCustomStringType(name, regex, strength)
+             }
+           }
+         })
+       }
+       case None =>
+     }
+   }
+
+    /**
+     * @param appConfig
+     * @param numericTypeHandler
+     */
+    def setCustomIntTypes(appConfig : Config,  numericTypeHandler : DataTypeHandler) {
+     val numTypes = getOptionalStringListParam(appConfig, "customIntTypes")
+     numTypes match {
+       case Some(nuTypes : java.util.List[String]) => {
+         nuTypes.asScala.foreach(t => {
+           val typeConfig  = appConfig.getConfig(t)
+           val name = t
+           val minVal = getMandatoryIntParam(typeConfig, "minVal", "missing custom type regex")
+           val maxVal = getMandatoryIntParam(typeConfig, "maxVal", "missing custom type regex")
+           val strength = getMandatoryIntParam(typeConfig, "strength", "missing custom type strength")
+           numericTypeHandler.addCustomIntType( name, minVal, maxVal, strength)
+         })
+       }
+       case None =>
+     }
+   }
+  
    
    /**
     * @param master

@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.chombo.util.BaseAttribute;
+import org.chombo.util.BasicUtils;
 
 /**
  * @author pranab
@@ -38,13 +39,21 @@ public class DataTypeHandler implements Serializable {
 		    BaseAttribute.DATA_TYPE_FLOAT, BaseAttribute.DATA_TYPE_CURRENCY , BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
 		    BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, BaseAttribute.DATA_TYPE_PHONE_NUM, 
 		    BaseAttribute.DATA_TYPE_ZIP,BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY, 
+		    BaseAttribute.DATA_TYPE_ID_SHORT,BaseAttribute.DATA_TYPE_ID_MEDIUM,BaseAttribute.DATA_TYPE_ID_LONG,
 		    BaseAttribute.DATA_TYPE_STRING, BaseAttribute.DATA_TYPE_ANY};
 	private String[] allNumericDataTypes = {BaseAttribute.DATA_TYPE_EPOCH_TIME, BaseAttribute.DATA_TYPE_AGE};
 	private String[] allStringDataTypes = {
 			BaseAttribute.DATA_TYPE_CURRENCY, BaseAttribute.DATA_TYPE_MONETARY_AMOUNT,
 		    BaseAttribute.DATA_TYPE_DATE, BaseAttribute.DATA_TYPE_SSN, 
 		    BaseAttribute.DATA_TYPE_PHONE_NUM, BaseAttribute.DATA_TYPE_ZIP, 
-		    BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY};
+		    BaseAttribute.DATA_TYPE_STREET_ADDRESS,BaseAttribute.DATA_TYPE_CITY,
+		    BaseAttribute.DATA_TYPE_ID_SHORT,BaseAttribute.DATA_TYPE_ID_MEDIUM, 
+		    BaseAttribute.DATA_TYPE_ID_LONG};
+	private String[] allIdTypes = {
+			BaseAttribute.DATA_TYPE_ID_SHORT,BaseAttribute.DATA_TYPE_ID_MEDIUM,BaseAttribute.DATA_TYPE_ID_LONG};
+	private List<String> customStringTypes = new ArrayList<String>();
+	private List<String> customIntTypes = new ArrayList<String>();
+	
 	private Set<String> needsUpperCasing = new HashSet<String>();
 	
 	/**
@@ -74,21 +83,57 @@ public class DataTypeHandler implements Serializable {
 	 * @return
 	 */
 	public String[] getAllDataTypes() {
-		return allDataTypes;
+		String[] dataTypes = null;
+		int offset = 0;
+		if (!customStringTypes.isEmpty()) {
+			dataTypes = new String[allDataTypes.length + customStringTypes.size() + customIntTypes.size()];
+			BasicUtils.arrayCopy(allDataTypes, dataTypes);
+			offset =  allDataTypes.length;
+			BasicUtils.listToArrayCopy(customStringTypes, dataTypes, offset);
+		}
+		if (!customIntTypes.isEmpty()) {
+			if (null == dataTypes) {
+				dataTypes = new String[allDataTypes.length + customStringTypes.size() + customIntTypes.size()];
+				BasicUtils.arrayCopy(allDataTypes, dataTypes);
+				offset =  allDataTypes.length;
+			}
+			offset += customStringTypes.size();
+			BasicUtils.listToArrayCopy(customIntTypes, dataTypes, offset);
+		}	
+		if (null == dataTypes) {
+			dataTypes = allDataTypes;
+		}
+		return dataTypes;
 	}
 
 	/**
 	 * @return
 	 */
 	public String[] getAllNumericDataTypes() {
-		return allNumericDataTypes;
+		String[] intDataTypes = null;
+		if (!customIntTypes.isEmpty()) {
+			intDataTypes = new String[allNumericDataTypes.length + customIntTypes.size()];
+			BasicUtils.arrayCopy(allNumericDataTypes, intDataTypes);
+			BasicUtils.listToArrayCopy(customIntTypes, intDataTypes, allNumericDataTypes.length);
+		} else {
+			intDataTypes = allNumericDataTypes;
+		}
+		return intDataTypes;
 	}
 
 	/**
 	 * @return
 	 */
 	public String[] getAllStringDataTypes() {
-		return allStringDataTypes;
+		String[] strDataTypes = null;
+		if (!customStringTypes.isEmpty()) {
+			strDataTypes = new String[allStringDataTypes.length + customStringTypes.size()];
+			BasicUtils.arrayCopy(allStringDataTypes, strDataTypes);
+			BasicUtils.listToArrayCopy(customStringTypes, strDataTypes, allStringDataTypes.length);
+		} else {
+			strDataTypes = allStringDataTypes;
+		}
+		return strDataTypes;
 	}
 
 	/**
@@ -119,6 +164,19 @@ public class DataTypeHandler implements Serializable {
 	}
 	
 	/**
+	 * @param iDLengths
+	 */
+	public void addIdType(List<Integer> idLengths) {
+		if (idLengths.size() > allIdTypes.length) {
+			throw new IllegalStateException("number of ID lengs provided is more than ID types supported");
+		}
+		
+		for (int i = 0; i < idLengths.size(); ++i) {
+			dataTypes.add(new IdDataType(allIdTypes[i], BaseAttribute.PATTERN_STR_ID, idLengths.get(i), 78));
+		}
+	}
+	
+	/**
 	 * @param name
 	 * @param patternStr
 	 * @param strength
@@ -137,6 +195,11 @@ public class DataTypeHandler implements Serializable {
 		}
 		
 		dataTypes.add(new StringDataType(name, patternStr, strength));
+		
+		//new type
+		if (null == typeToBeRemoved) {
+			customStringTypes.add(name);
+		}
 	}
 	
 	/**
@@ -186,6 +249,41 @@ public class DataTypeHandler implements Serializable {
 	 */
 	public void addFloatType(String name, float min, float max, int strength) {
 		dataTypes.add(new FloatDataType(name, min, max, strength));
+	}
+	
+	/**
+	 * @param name
+	 * @param min
+	 * @param max
+	 * @param strength
+	 */
+	public void addCustomIntType(String name, int min, int max, int strength) {
+		//if exists already remove because patching pattern or strength is  being changed
+		DataType typeToBeRemoved = null;
+		for (DataType dataType : dataTypes) {
+			if (dataType.name.equals(name)) {
+				typeToBeRemoved = dataType;
+				break;
+			}
+		}	
+		if (null != typeToBeRemoved) {
+			dataTypes.remove(typeToBeRemoved);
+		}
+		
+		dataTypes.add(new IntDataType(name, min, max, strength));
+		
+		//new type
+		if (null == typeToBeRemoved) {
+			customIntTypes.add(name);
+		}
+	}
+	
+	/**
+	 * @param that
+	 */
+	public void mergeTypeLists(DataTypeHandler that) {
+		customStringTypes.addAll(that.customStringTypes);
+		customIntTypes.addAll(that.customIntTypes);
 	}
 	
 	/**
