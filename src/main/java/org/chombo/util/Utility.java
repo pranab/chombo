@@ -549,6 +549,30 @@ public class Utility {
      * @param tuple
      * @param toInclude
      */
+    public static void appendStringTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple, boolean toInclude) {
+    	for (int i = 0; i < recordItems.length; ++i) {
+    		if (!toInclude && !ArrayUtils.contains(filterFieldOrdinal, i)  || toInclude && ArrayUtils.contains(filterFieldOrdinal, i)) {
+    			tuple.add(recordItems[i]);
+    		}
+    	}
+    }    
+    
+    /**
+     * @param recordItems
+     * @param filterFieldOrdinal
+     * @param tuple
+     */
+    public static void appendStringTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple) {
+    	appendStringTuple(recordItems, filterFieldOrdinal, tuple, true);
+    }    
+
+    
+    /**
+     * @param recordItems
+     * @param filterFieldOrdinal
+     * @param tuple
+     * @param toInclude
+     */
     public static void createIntTuple(String[] recordItems, int[] filterFieldOrdinal, Tuple tuple, boolean toInclude) {
     	tuple.initialize();
     	for (int i = 0; i < recordItems.length; ++i) {
@@ -607,7 +631,47 @@ public class Utility {
 		}
 	}
 
-    /**
+	/**
+	 * @param record
+	 * @param beg
+	 * @param end
+	 * @param tuple
+	 */
+	public static void appendStringTuple(String[] record, int beg, int end, Tuple tuple) {
+		for (int i = beg; i < end; ++i) {
+			tuple.add(record[i]);
+		}
+	}
+
+	/**
+	 * @param record
+	 * @param offset
+	 * @param tuple
+	 */
+	public static void appendStringTupleFromEnd(String[] record, int offset, Tuple tuple) {
+		appendStringTuple(record, offset, record.length, tuple);
+	}    
+	
+	/**
+	 * @param record
+	 * @param offset
+	 * @param tuple
+	 */
+	public static void appendStringTupleFromBegining(String[] record, int offset, Tuple tuple) {
+		appendStringTuple(record, 0, offset, tuple);
+	}    
+	
+    /** 
+     * creates tuple
+     * @param record coma separated  fields
+     * @param tuple
+     */
+    public static void appendTuple(String record, Tuple tuple) {
+    	String[] items = record.split(",");
+    	appendStringTuple(items, 0, items.length, tuple);
+    }    
+	
+	/**
      * @param config
      * @param param
      * @param delimRegex

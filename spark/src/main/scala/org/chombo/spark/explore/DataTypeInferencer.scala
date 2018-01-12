@@ -291,6 +291,10 @@ object DataTypeInferencer extends JobConfiguration  {
      })
    }
    
+   /**
+    * @param appConfig
+ 	* @param stringTypeHandler
+ 	*/
    def setCustomStringTypes(appConfig : Config, stringTypeHandler : DataTypeHandler) {
      val strTypes = getOptionalStringListParam(appConfig, "customStringTypes")
      strTypes match {
@@ -315,6 +319,10 @@ object DataTypeInferencer extends JobConfiguration  {
      }
    }
 
+    /**
+     * @param appConfig
+     * @param numericTypeHandler
+     */
     def setCustomIntTypes(appConfig : Config,  numericTypeHandler : DataTypeHandler) {
      val numTypes = getOptionalStringListParam(appConfig, "customIntTypes")
      numTypes match {
