@@ -44,6 +44,7 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * https://pkghosh.wordpress.com/2017/08/15/measuring-campaign-effectiveness-for-an-online-service-on-spark/
 * https://pkghosh.wordpress.com/2017/11/07/removing-duplicates-from-order-data-using-spark/
 * https://pkghosh.wordpress.com/2017/12/05/data-normalization-with-spark/
+* https://pkghosh.wordpress.com/2018/01/10/data-type-auto-discovery-with-spark/
 
 ## Build
 For Hadoop 1
