@@ -80,6 +80,13 @@ public class Record {
 	/**
 	 * @return
 	 */
+	public int getSize() {
+		return items.length;
+	}
+	
+	/**
+	 * @return
+	 */
 	public String getString() {
 		return items[offset++];
 	}

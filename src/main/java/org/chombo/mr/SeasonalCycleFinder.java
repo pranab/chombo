@@ -215,6 +215,7 @@ public class SeasonalCycleFinder extends Configured implements Tool {
 				stBld.append(key.toString());
 			}
     		for (Tuple val : values) {
+    			val.setDelim(fieldDelim);
     			if (compactOutput) {
     				stBld.append(fieldDelim).append(val.toString());
     			} else {
