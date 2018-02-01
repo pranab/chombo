@@ -17,12 +17,14 @@
 
 package org.chombo.stats;
 
+import java.io.Serializable;
+
 /**
  * @author pranab
  *
  * @param <T>
  */
-public interface RejectionSampler<T> {
+public interface RejectionSampler<T> extends Serializable {
 
 	/**
 	 * get a sample based on a distribution
