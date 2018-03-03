@@ -47,7 +47,7 @@ public class NonParametricDistrRejectionSampler<T>  implements RejectionSampler<
 	 */
 	public void merge(NonParametricDistrRejectionSampler<T> that) {
 		for (T key : that.distr.keySet()) {
-			double thatVal = that.distr.get(key);
+			Double thatVal = that.distr.get(key);
 			Double thisVal = this.distr.get(key);
 			if (null == thisVal) {
 				distr.put(key, thatVal);

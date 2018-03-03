@@ -39,6 +39,7 @@ public class ValidatorFactory {
 	public static final String EXACT_LENGTH_VALIDATOR = "exactLength";
 	public static final String NOT_MISSING_VALIDATOR = "notMissing";
 	public static final String PATTERN_VALIDATOR = "pattern";
+	public static final String PRE_DEFINED_PATTERN_VALIDATOR = "preDefinedPattern";
 	public static final String MEMEBERSHIP_VALIDATOR = "membership";
 	public static final String ENSURE_INT_VALIDATOR = "ensureInt";
 	public static final String ENSURE_LONG_VALIDATOR = "ensureLong";
@@ -205,6 +206,10 @@ public class ValidatorFactory {
 		} else if (validatorType.equals(PATTERN_VALIDATOR)) {
 			if (prAttr.isString()) {
 				validator = new  StringValidator.PatternValidator(validatorType, prAttr);
+			}
+		} else if (validatorType.equals(PRE_DEFINED_PATTERN_VALIDATOR)) {
+			if (prAttr.isString()) {
+				validator = new  StringValidator.PreDefinedPatternValidator(validatorType, prAttr);
 			}
 		} else if (validatorType.equals(MEMEBERSHIP_VALIDATOR)) {
 			if (prAttr.isCategorical()) {
