@@ -1061,6 +1061,25 @@ public class BasicUtils {
 			list.add(value);
 		}
     }
+    
+    /**
+     * @param list
+     * @param numIter
+     * @param maxSwapOffset
+     */
+    public static <T> void scramble(List<T> list, int numIter, int maxSwapOffset) {
+    	for (int i = 0; i < numIter; ) {
+    		int firstIndex = sampleUniform(list.size());
+    		int secondIndex = firstIndex + sampleUniform(1, maxSwapOffset);
+    		if (secondIndex < list.size()) {
+    			//swap
+    			T temp = list.get(secondIndex);
+    			list.add(secondIndex, list.get(firstIndex));
+    			list.add(firstIndex, temp);
+    			++i;
+    		}
+    	}
+    }
 
     /**
      * @param val
