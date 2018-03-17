@@ -28,7 +28,7 @@ object UniqueValueCounter extends JobConfiguration {
     * @return
     */
    def main(args: Array[String]) {
-	   val appName = "categoricalAttrDistrStats"
+	   val appName = "uniqueValueCounter"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)
@@ -40,9 +40,11 @@ object UniqueValueCounter extends JobConfiguration {
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val catFieldOrdinals = getMandatoryIntListParam(appConfig, "cat.field.ordinals").asScala.toArray
 	   val uniqueValCount = getBooleanParamOrElse(appConfig, "count.values", false)
+	   val caseInsensitive = getBooleanParamOrElse(appConfig, "case.insensitive", false)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
+	   //input
 	   val data = sparkCntxt.textFile(inputPath)
 	   
 	   //values for each column
@@ -50,8 +52,10 @@ object UniqueValueCounter extends JobConfiguration {
 		   val items = line.split(fieldDelimIn, -1)
 		   val values = catFieldOrdinals.map(i => {
 		     val colIndex = i.toInt
-		     val valSet = Set[String](items(colIndex))
-		     (colIndex, valSet)
+		     var colValue = items(colIndex)
+		     colValue = if (caseInsensitive) colValue.toLowerCase() else colValue
+		     val colValSet = Set[String](colValue)
+		     (colIndex, colValSet)
 		   })
 		   values
 	   })
@@ -73,14 +77,17 @@ object UniqueValueCounter extends JobConfiguration {
 		   }
 	     
 	   } else {
+		   //values as delim separated string
+		   val colUniqueValueStr = colUniqueValues.mapValues(v => v.mkString(fieldDelimOut))
+	       
 		   //actual unique values
 		   if (debugOn) {
-		     val uniqueValues = colUniqueValues.collect
+		     val uniqueValues = colUniqueValueStr.collect
 		     uniqueValues.foreach(line => println(line))
 		   }
 		   
 		   if (saveOutput) {
-		     colUniqueValues.saveAsTextFile(outputPath)
+		     colUniqueValueStr.saveAsTextFile(outputPath)
 		   }
 	   }
    }
