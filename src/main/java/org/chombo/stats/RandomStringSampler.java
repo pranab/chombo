@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
 
 
@@ -30,7 +31,7 @@ import org.chombo.util.Pair;
  * @author pranab
  *
  */
-public class RandomSampler {
+public class RandomStringSampler {
 	private Map<String, Integer> distr = new HashMap<String, Integer>();
 	private List<Pair<String, Integer>> distrRange = new ArrayList<Pair<String, Integer>>();
 	private int max;
@@ -58,13 +59,19 @@ public class RandomSampler {
 		if (distrRange.isEmpty()) {
 			createDistrRange();
 		}
-		int rand = (int)(Math.random() * max);
+		int rand = BasicUtils.sampleUniform(max);
 		String entity = null;
-		for (Pair<String, Integer> pair :  distrRange) {
+		
+		//start at random location in array
+		int i = BasicUtils.sampleUniform(distrRange.size());
+		for (int k = 0; k < distrRange.size(); ++k) {
+			Pair<String, Integer> pair = distrRange.get(i);
 			if (rand <= pair.getRight()) {
 				entity = pair.getLeft();
 				break;
 			}
+			++i;
+			i %= distrRange.size();
 		}
 		return entity;
 	}
