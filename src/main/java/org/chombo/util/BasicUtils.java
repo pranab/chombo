@@ -1850,6 +1850,16 @@ public class BasicUtils {
 	 * @param max
 	 * @return
 	 */
+	public static float sampleUniform(float min, float max) {
+		float val = min + (float)(Math.random() * (max - min));
+		return val;
+	}
+	
+	/**
+	 * @param min
+	 * @param max
+	 * @return
+	 */
 	public static double sampleUniform(double min, double max) {
 		double val = min + Math.random() * (max - min);
 		return val;
