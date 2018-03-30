@@ -18,6 +18,7 @@
 package org.chombo.util;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -2074,6 +2075,46 @@ public class BasicUtils {
      */
     public static double getDoubleField(String[] items, int index) {
     	return Double.parseDouble(items[index]);
+    }
+    
+    /**
+     * @param commands
+     * @param execDir
+     * @return
+     */
+    public static String execShellCommand(List<String> commands, String execDir)  {
+    	String result = null;
+    	try {
+	    	//Run macro on target
+	        ProcessBuilder pb = new ProcessBuilder(commands);
+	        pb.directory(new File(execDir));
+	        pb.redirectErrorStream(true);
+	        Process process = pb.start();
+	        
+	        //read output
+	        StringBuilder out = new StringBuilder();
+	        BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+	        String line = null, previous = null;
+	        while ((line = br.readLine()) != null) {
+	            if (!line.equals(previous)) {
+	                previous = line;
+	                out.append(line).append('\n');
+	                System.out.println(line);
+	            }
+	        }
+	        
+	        //check result
+	        if (process.waitFor() == 0) {
+	        	result = out.toString();
+	        }  else {
+	        	throw new RuntimeException("process exited abnormally");
+	        }
+    	} catch (IOException ex) {
+        	throw new RuntimeException("process execution error " + ex.getMessage());
+    	} catch (InterruptedException ex) {
+        	throw new RuntimeException("process execution error " + ex.getMessage());
+    	}
+        return result;
     }
     
  }

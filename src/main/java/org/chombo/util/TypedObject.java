@@ -18,12 +18,14 @@
 
 package org.chombo.util;
 
+import java.io.Serializable;
+
 /**
  * Object with type indicator
  * @author pranab
  *
  */
-public class TypedObject extends Pair<Object, String> {
+public class TypedObject extends Pair<Object, String>  implements Serializable {
 	
 	/**
 	 * @param value
