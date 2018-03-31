@@ -43,6 +43,7 @@ public class Attribute extends BaseAttribute{
 	protected String datePattern;
 	protected boolean nullable;
 	protected String stringPattern;
+	protected String stringPatternName;
 	protected String minString;
 	protected String maxString;
 	protected int length;
@@ -145,6 +146,12 @@ public class Attribute extends BaseAttribute{
 	}
 	public void setStringPattern(String stringPattern) {
 		this.stringPattern = stringPattern;
+	}
+	public String getStringPatternName() {
+		return stringPatternName;
+	}
+	public void setStringPatternName(String stringPatternName) {
+		this.stringPatternName = stringPatternName;
 	}
 	public String getMinString() {
 		return minString;

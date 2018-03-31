@@ -17,18 +17,30 @@
 
 package org.chombo.stats;
 
-import java.io.Serializable;
+import java.util.List;
+
+import org.chombo.util.BasicUtils;
+import org.chombo.util.TypedObject;
 
 /**
  * @author pranab
  *
- * @param <T>
  */
-public interface RejectionSampler<T> extends Serializable {
-
+public class UniformStringSampler extends UniformSampler {
+	private List<String> values;
+	
 	/**
-	 * get a sample based on a distribution
-	 * @return
+	 * @param values
 	 */
-	public T sample();
+	public UniformStringSampler(List<String> values) {
+		super();
+		this.values = values;
+	}
+
+	@Override
+	public TypedObject sample() {
+		String sampled = BasicUtils.selectRandom(values);
+		return new TypedObject(sampled);
+	}
+
 }

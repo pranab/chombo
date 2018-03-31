@@ -53,7 +53,7 @@ public class UniqueKeyAnalyzer extends Configured implements Tool {
         String jobName = "MR for unique composite key analysis ";
         job.setJobName(jobName);
         
-        job.setJarByClass(UniqueCounter.class);
+        job.setJarByClass(UniqueKeyAnalyzer.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));

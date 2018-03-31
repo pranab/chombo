@@ -17,18 +17,12 @@
 
 package org.chombo.stats;
 
-import java.io.Serializable;
+import org.chombo.util.TypedObject;
 
 /**
  * @author pranab
  *
- * @param <T>
  */
-public interface RejectionSampler<T> extends Serializable {
-
-	/**
-	 * get a sample based on a distribution
-	 * @return
-	 */
-	public T sample();
+public abstract class UniformSampler {
+	public abstract TypedObject sample();
 }

@@ -18,6 +18,8 @@
 package org.chombo.util;
 
 import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author pranab
@@ -48,6 +50,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_STATE = "state";
 	public static final String DATA_TYPE_CURRENCY = "currency";
 	public static final String DATA_TYPE_MONETARY_AMOUNT = "monetaryAmount";
+	public static final String DATA_TYPE_ID = "id";
 	public static final String DATA_TYPE_ID_SHORT = "idShort";
 	public static final String DATA_TYPE_ID_MEDIUM = "idMedium";
 	public static final String DATA_TYPE_ID_LONG = "idLong";
@@ -64,6 +67,18 @@ public class BaseAttribute  implements Serializable {
  	public static final String PATTERN_STR_CURRENCY = "^(AUD|BRL|CAD|DKKEUR|HKD|INR|NOK|FKP|RUB|SGD|CHF|JPY|USD)$";
  	public static final String PATTERN_STR_BOOLEAN = "^(TRUE|FALSE|T|F|YES|NO|Y|N|0|1)$";
  	public static final String PATTERN_STR_ID = "^([a-zA-Z0-9-]{1,40})$";
+ 	
+ 	public static Map<String, String> patternStrings = new HashMap<String, String>();
+ 	static {
+ 		patternStrings.put(DATA_TYPE_SSN, PATTERN_STR_SSN);
+ 		patternStrings.put(DATA_TYPE_PHONE_NUM, PATTERN_STR_PHONE_NUM);
+ 		patternStrings.put(DATA_TYPE_STREET_ADDRESS, PATTERN_STR_STREET_ADDRESS);
+ 		patternStrings.put(DATA_TYPE_CITY, PATTERN_STR_CITY);
+ 		patternStrings.put(DATA_TYPE_STATE, PATTERN_STR_STATE);
+ 		patternStrings.put(DATA_TYPE_CURRENCY, PATTERN_STR_CURRENCY);
+ 		patternStrings.put(DATA_TYPE_BOOLEAN, PATTERN_STR_BOOLEAN);
+ 		patternStrings.put(DATA_TYPE_ID, PATTERN_STR_ID);
+ 	}
  	
 	public String getName() {
 		return name;
@@ -117,5 +132,9 @@ public class BaseAttribute  implements Serializable {
 
 	public boolean isGeoLocation() {
 		return dataType.equals(DATA_TYPE_GEO_LOCATION );
+	}
+	
+	public static String getPatternString(String patternName) {
+		return patternStrings.get(patternName);
 	}
 }

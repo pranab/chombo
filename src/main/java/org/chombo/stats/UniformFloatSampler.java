@@ -17,18 +17,27 @@
 
 package org.chombo.stats;
 
-import java.io.Serializable;
+import org.chombo.util.BasicUtils;
+import org.chombo.util.TypedObject;
 
-/**
- * @author pranab
- *
- * @param <T>
- */
-public interface RejectionSampler<T> extends Serializable {
-
+public class UniformFloatSampler extends UniformSampler {
+	private float min;
+	private float max;
+	
 	/**
-	 * get a sample based on a distribution
-	 * @return
+	 * @param min
+	 * @param max
 	 */
-	public T sample();
+	public UniformFloatSampler(float min, float max) {
+		super();
+		this.min = min;
+		this.max = max;
+	}
+
+	@Override
+	public TypedObject sample() {
+		Float sampled = BasicUtils.sampleUniform(min, max);
+		return new TypedObject(sampled);
+	}
+
 }

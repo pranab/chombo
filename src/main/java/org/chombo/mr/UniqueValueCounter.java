@@ -44,7 +44,7 @@ import org.chombo.util.Utility;
  * @author pranab
  *
  */
-public class UniqueCounter  extends Configured implements Tool {
+public class UniqueValueCounter  extends Configured implements Tool {
 	private static String configDelim = ",";
 
 	@Override
@@ -53,15 +53,15 @@ public class UniqueCounter  extends Configured implements Tool {
         String jobName = "MR for unique value counting for various fields ";
         job.setJobName(jobName);
         
-        job.setJarByClass(UniqueCounter.class);
+        job.setJarByClass(UniqueValueCounter.class);
 
         FileInputFormat.addInputPath(job, new Path(args[0]));
         FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
         Utility.setConfiguration(job.getConfiguration(), "chombo");
-        job.setMapperClass(UniqueCounter.CounterMapper.class);
-        job.setReducerClass(UniqueCounter.CounterReducer.class);
-        job.setCombinerClass(UniqueCounter.CounterCombiner.class);
+        job.setMapperClass(UniqueValueCounter.CounterMapper.class);
+        job.setReducerClass(UniqueValueCounter.CounterReducer.class);
+        job.setCombinerClass(UniqueValueCounter.CounterCombiner.class);
         
         job.setMapOutputKeyClass(Tuple.class);
         job.setMapOutputValueClass(Tuple.class);
@@ -232,7 +232,7 @@ public class UniqueCounter  extends Configured implements Tool {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
-		int exitCode = ToolRunner.run(new UniqueCounter(), args);
+		int exitCode = ToolRunner.run(new UniqueValueCounter(), args);
 		System.exit(exitCode);
 	}
  

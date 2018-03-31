@@ -18,6 +18,7 @@
 package org.chombo.util;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1061,6 +1062,25 @@ public class BasicUtils {
 			list.add(value);
 		}
     }
+    
+    /**
+     * @param list
+     * @param numIter
+     * @param maxSwapOffset
+     */
+    public static <T> void scramble(List<T> list, int numIter, int maxSwapOffset) {
+    	for (int i = 0; i < numIter; ) {
+    		int firstIndex = sampleUniform(list.size());
+    		int secondIndex = firstIndex + sampleUniform(1, maxSwapOffset);
+    		if (secondIndex < list.size()) {
+    			//swap
+    			T temp = list.get(secondIndex);
+    			list.add(secondIndex, list.get(firstIndex));
+    			list.add(firstIndex, temp);
+    			++i;
+    		}
+    	}
+    }
 
     /**
      * @param val
@@ -1831,6 +1851,16 @@ public class BasicUtils {
 	 * @param max
 	 * @return
 	 */
+	public static float sampleUniform(float min, float max) {
+		float val = min + (float)(Math.random() * (max - min));
+		return val;
+	}
+	
+	/**
+	 * @param min
+	 * @param max
+	 * @return
+	 */
 	public static double sampleUniform(double min, double max) {
 		double val = min + Math.random() * (max - min);
 		return val;
@@ -2045,6 +2075,46 @@ public class BasicUtils {
      */
     public static double getDoubleField(String[] items, int index) {
     	return Double.parseDouble(items[index]);
+    }
+    
+    /**
+     * @param commands
+     * @param execDir
+     * @return
+     */
+    public static String execShellCommand(List<String> commands, String execDir)  {
+    	String result = null;
+    	try {
+	    	//Run macro on target
+	        ProcessBuilder pb = new ProcessBuilder(commands);
+	        pb.directory(new File(execDir));
+	        pb.redirectErrorStream(true);
+	        Process process = pb.start();
+	        
+	        //read output
+	        StringBuilder out = new StringBuilder();
+	        BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
+	        String line = null, previous = null;
+	        while ((line = br.readLine()) != null) {
+	            if (!line.equals(previous)) {
+	                previous = line;
+	                out.append(line).append('\n');
+	                System.out.println(line);
+	            }
+	        }
+	        
+	        //check result
+	        if (process.waitFor() == 0) {
+	        	result = out.toString();
+	        }  else {
+	        	throw new RuntimeException("process exited abnormally");
+	        }
+    	} catch (IOException ex) {
+        	throw new RuntimeException("process execution error " + ex.getMessage());
+    	} catch (InterruptedException ex) {
+        	throw new RuntimeException("process execution error " + ex.getMessage());
+    	}
+        return result;
     }
     
  }

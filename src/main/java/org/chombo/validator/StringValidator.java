@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.chombo.util.AttributeSchema;
+import org.chombo.util.BaseAttribute;
 import org.chombo.util.ProcessorAttribute;
 
 /**
@@ -114,7 +115,7 @@ public class StringValidator {
 	 *
 	 */
 	public static class PatternValidator extends Validator {
-		private Pattern pattern;
+		protected Pattern pattern;
 		
 		public PatternValidator(String tag, ProcessorAttribute prAttr) {
 			super(tag,  prAttr);
@@ -124,6 +125,31 @@ public class StringValidator {
 		public boolean isValid(String value) {
 			if (null == pattern) {
 				pattern = Pattern.compile(prAttr.getStringPattern());
+			}
+			Matcher matcher = pattern.matcher(value);
+			return matcher.matches();
+		}
+	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class PreDefinedPatternValidator extends PatternValidator {
+		
+		public PreDefinedPatternValidator(String tag, ProcessorAttribute prAttr) {
+			super(tag, prAttr);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			if (null == pattern) {
+				String patternName = prAttr.getStringPatternName();
+				String patternString = BaseAttribute.getPatternString(patternName);
+				if (null == patternString) {
+					throw new IllegalStateException("invalid pattern name " + patternName);
+				}
+				pattern = Pattern.compile(patternString);
 			}
 			Matcher matcher = pattern.matcher(value);
 			return matcher.matches();
