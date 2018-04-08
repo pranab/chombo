@@ -1719,7 +1719,50 @@ public class BasicUtils {
 		return pos;
 	}
 	
-    /**
+	/**
+	 * @param value
+	 * @param offset
+	 * @return
+	 */
+	public static String slice(String value, int offset) {
+		return slice( value, offset);
+	}	
+	
+	/**
+	 * @param value
+	 * @param offsetBeg
+	 * @param offsetEnd
+	 * @return
+	 */
+	public static String slice(String value, int offsetBeg, int offsetEnd) {
+		String sliced = null;
+		if (offsetBeg + offsetEnd < value.length()) {
+			sliced = value.substring(offsetBeg, value.length() - offsetEnd);
+		} else {
+			throw  new IllegalStateException("invalid begi and end offsets for slicing");
+		}
+		return sliced;
+	}
+
+	/**
+	 * @param value
+	 * @param offset
+	 * @return
+	 */
+	public static String rightSlice(String value, int offset) {
+		return value.substring(offset);
+	}
+	
+	/**
+	 * @param value
+	 * @param offset
+	 * @return
+	 */
+	public static String leftSlice(String value, int offset) {
+		return value.substring(0, value.length() - offset);
+	}
+
+	/**
      * geo location distance by Haversine formula
      * @param lat1
      * @param long1
