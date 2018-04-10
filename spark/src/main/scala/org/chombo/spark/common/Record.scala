@@ -21,6 +21,7 @@ package org.chombo.spark.common
 import org.chombo.util.Utility
 import scala.collection.mutable.Buffer
 import org.chombo.util.BasicUtils
+import org.chombo.util.BaseAttribute
 import scala.reflect.ClassTag
 
 
@@ -33,6 +34,13 @@ object Record {
  */
   def apply(size:Int) : Record = new Record(size)
   
+  /**
+ * @param size
+ * @param record
+ * @return
+ */
+  def apply(record:Record) : Record = new Record(record)
+
   /**
  * @param size
  * @param record
@@ -136,6 +144,16 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	var cursor:Int = 0
 	var sortFields:Option[Array[Int]] = None
 	var secondaryKeySize = 1
+
+	/**
+	 * @param size
+	 * @param record
+	 */
+	def this(record:Record) {
+	  this(record.size)
+	  Array.copy(record.array, 0, array, 0, record.size)
+	  cursor += record.size
+	}
 	
 	/**
 	 * @param size
@@ -338,6 +356,43 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  addLong(strVal.toLong)
 	}
 	
+	/**
+	 * @param index
+	 * @param dblVal
+	 * @return
+	 */
+	def addFloat(index:Int, fltVal:Float) : Record = {
+	  array(index) = fltVal
+	  this
+	}
+
+	/**
+	 * @param index
+	 * @param strlVal
+	 * @return
+	 */
+	def addFloat(index:Int, strVal:String) : Record = {
+	  addFloat(index, strVal.toFloat)
+	}
+
+	/**
+	 * @param dblVal
+	 * @return
+	 */
+	def addFloat(fltVal:Float) : Record = {
+	  array(cursor) = fltVal
+	  cursor += 1
+	  this
+	}
+	
+	/**
+	 * @param strlVal
+	 * @return
+	 */
+	def addFloat(strlVal:String) : Record = {
+	  addFloat(strlVal.toFloat)
+	}
+	
 
 	/**
 	 * @param index
@@ -413,7 +468,39 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  addBoolean(strlVal.toBoolean)
 	}
 
+	/**
+	 * @param strlVal
+	 * @param fieldType
+	 * @return
+	 */
+	def addStringAsTyped(strVal:String, fieldType:String) : Record = {
+	  val rec = fieldType match {
+	    case BaseAttribute.DATA_TYPE_STRING => addString(strVal)
+	    case BaseAttribute.DATA_TYPE_INT => addInt(strVal)
+	    case BaseAttribute.DATA_TYPE_LONG => addLong(strVal)
+	    case BaseAttribute.DATA_TYPE_FLOAT => addFloat(strVal)
+	    case BaseAttribute.DATA_TYPE_DOUBLE => addDouble(strVal)
+	  }
+	  rec
+	}
 	
+	/**
+	 * @param index
+	 * @param strlVal
+	 * @param fieldType
+	 * @return
+	 */
+	def addStringAsTyped(index:Int, strVal:String, fieldType:String) : Record = {
+	  val rec = fieldType match {
+	    case BaseAttribute.DATA_TYPE_STRING => addString(index, strVal)
+	    case BaseAttribute.DATA_TYPE_INT => addInt(index, strVal)
+	    case BaseAttribute.DATA_TYPE_LONG => addLong(index, strVal)
+	    case BaseAttribute.DATA_TYPE_FLOAT => addFloat(index, strVal)
+	    case BaseAttribute.DATA_TYPE_DOUBLE => addDouble(index, strVal)
+	  }
+	  rec
+	}
+
 	/**
 	 * @param values
 	 * @return
@@ -470,6 +557,15 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 */
 	def getAny(index:Int) : Any = {
 	  array(index)
+	}
+	
+	/**
+	 * @return
+	 */
+	def getAny() : Any = {
+	  val anyVal = array(cursor)
+	  cursor += 1
+	  anyVal
 	}
 	
 	/**
