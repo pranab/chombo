@@ -21,15 +21,19 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 /**
  * @author pranab
  *
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class BaseAttribute  implements Serializable {
 	private static final long serialVersionUID = 7639336747752713872L;
 	protected String name;
 	protected int ordinal = -1;
 	protected String dataType;
+	protected String datePattern;
 	
 	public static final String DATA_TYPE_STRING = "string";
 	public static final String DATA_TYPE_CATEGORICAL = "categorical";
@@ -97,6 +101,12 @@ public class BaseAttribute  implements Serializable {
 	}
 	public void setDataType(String dataType) {
 		this.dataType = dataType;
+	}
+	public String getDatePattern() {
+		return datePattern;
+	}
+	public void setDatePattern(String datePattern) {
+		this.datePattern = datePattern;
 	}
 	public boolean isCategorical() {
 		return dataType.equals(DATA_TYPE_CATEGORICAL);

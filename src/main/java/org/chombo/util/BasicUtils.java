@@ -1704,6 +1704,17 @@ public class BasicUtils {
 	 * @param failOnDelimNotFound
 	 * @return
 	 */
+	public static int findOccurencePosition(String value, String delim, int numOccurence) {
+		return findOccurencePosition(value, delim, numOccurence, false);
+	}
+	
+	/**
+	 * @param value
+	 * @param delim
+	 * @param numOccurence
+	 * @param failOnDelimNotFound
+	 * @return
+	 */
 	public static int findOccurencePosition(String value, String delim, int numOccurence, boolean failOnDelimNotFound) {
 		int delimLen = delim.length();
 		int pos = -1;
@@ -1711,12 +1722,58 @@ public class BasicUtils {
 		for (int i = 0;  i < numOccurence; ++i ) {
 			pos = value.indexOf(delim, from);
 			if (pos == -1) {
-				throw new IllegalStateException("less than required number of occurences");
+				if (failOnDelimNotFound) {
+					throw new IllegalStateException("less than required number of occurences");
+				} else {
+					break;
+				}
 			} else {
 				from += pos + delimLen;
 			}
 		}
 		return pos;
+	}
+	
+	/**
+	 * @param value
+	 * @param delim
+	 * @param numOccurence
+	 * @return
+	 */
+	public static int[] findAllOccurencePositions(String value, String delim, int numOccurence) {
+		return findAllOccurencePositions(value, delim, numOccurence, false);
+	}	
+	
+	/**
+	 * @param value
+	 * @param delim
+	 * @param numOccurence
+	 * @param failOnDelimNotFound
+	 * @return
+	 */
+	public static int[] findAllOccurencePositions(String value, String delim, int numOccurence, boolean failOnDelimNotFound) {
+		int delimLen = delim.length();
+		int pos = -1;
+		int from = 0;
+		int[] positions = new int[numOccurence];
+		for (int i = 0; i < numOccurence; ++i){
+			positions[i] = -1;
+		}
+		
+		for (int i = 0;  i < numOccurence; ++i ) {
+			pos = value.indexOf(delim, from);
+			if (pos == -1) {
+				if (failOnDelimNotFound) {
+					throw new IllegalStateException("less than required number of occurences");
+				} else {
+					break;
+				}
+			} else {
+				positions[i] = pos;
+				from += pos + delimLen;
+			}
+		}
+		return positions;
 	}
 	
 	/**
@@ -2158,6 +2215,48 @@ public class BasicUtils {
         	throw new RuntimeException("process execution error " + ex.getMessage());
     	}
         return result;
+    }
+    
+    /**
+     * @param data
+     * @param delimRegex
+     * @param guard
+     * @param delim
+     * @param repl
+     * @return
+     */
+    public static String[] splitWithEmbeddedDelim(String data, String delimRegex, String guard, 
+    		String delim, String repl) {
+    	boolean done = false;
+    	int guardLen = guard.length();
+    	String value = data;
+    	while(!done) {
+    		int[] positions = findAllOccurencePositions(value, guard, 2);
+    		if (positions[0] >= 0) {
+    			if (positions[1] >= 0) {
+    				int leftBeg = 0;
+    				int leftEnd = positions[0];
+    				int midBeg = positions[0] + guardLen;
+    				int midEnd = positions[1];
+    				int rightBeg = positions[1] + guardLen;
+    				
+    				String left = value.substring(leftBeg, leftEnd);
+    				String mid = value.substring(midBeg, midEnd);
+    				String right = value.substring(rightBeg);
+    				mid = mid.replaceAll(delim, repl);
+    				value = left + delim + mid + delim + right;
+    			} else {
+    				throw new IllegalStateException("no matching guard delimeter found");
+    			}
+    		} else {
+    			done = true;
+    		}
+    	}
+    	String[] items = value.split(delimRegex);
+    	for (int i = 0; i < items.length; ++i) {
+    		items[i] = items[i].replaceAll(repl, delim);
+    	}
+    	return items;
     }
     
  }

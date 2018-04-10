@@ -40,7 +40,6 @@ public class Attribute extends BaseAttribute{
 	protected double stdDev;
 	protected double skew;
 	protected double maxZscore;
-	protected String datePattern;
 	protected boolean nullable;
 	protected String stringPattern;
 	protected String stringPatternName;
@@ -128,12 +127,6 @@ public class Attribute extends BaseAttribute{
 	}
 	public void setMaxZscore(double maxZscore) {
 		this.maxZscore = maxZscore;
-	}
-	public String getDatePattern() {
-		return datePattern;
-	}
-	public void setDatePattern(String datePattern) {
-		this.datePattern = datePattern;
 	}
 	public boolean isNullable() {
 		return nullable;
