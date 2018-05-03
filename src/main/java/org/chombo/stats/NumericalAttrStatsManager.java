@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
+import org.chombo.util.BasicUtils;
 import org.chombo.util.Tuple;
 import org.chombo.util.Utility;
 
@@ -61,11 +62,18 @@ public class NumericalAttrStatsManager {
 	 * @param fromFilePath
 	 * @throws IOException
 	 */
-	public NumericalAttrStatsManager(String statsFilePath, String delim, boolean fromFilePath) 
+	public NumericalAttrStatsManager(String statsFilePath, String delim, boolean fromHdfsFilePath) 
 			throws IOException {
-	    	InputStream fs = Utility.getFileStream(statsFilePath);
-	    	initialize(fs, delim);
+		InputStream fs = null;
+		if (fromHdfsFilePath) {
+			fs = Utility.getFileStream(statsFilePath);
+		} else {
+			fs = BasicUtils.getFileStream(statsFilePath);
 		}
+	    initialize(fs, delim);
+	}
+	
+	
 
 	/**
 	 * @param fs

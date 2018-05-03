@@ -120,6 +120,10 @@ public class BaseAttribute  implements Serializable {
 		return dataType.equals(DATA_TYPE_LONG );
 	}
 
+	public boolean isFloat() {
+		return dataType.equals(DATA_TYPE_FLOAT);
+	}
+
 	public boolean isDouble() {
 		return dataType.equals(DATA_TYPE_DOUBLE);
 	}
