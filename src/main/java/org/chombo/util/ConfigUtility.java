@@ -99,7 +99,9 @@ public  class ConfigUtility {
 		int[] values = null;
 		Object obj = conf.get(key);
 		if (null != obj) {
-			if (obj instanceof String) {
+			if (obj instanceof int[]) {
+				values = (int[])obj;
+			} else if (obj instanceof String) {
 				String[] items  = ((String)obj).split(",");
 				values = new int[items.length];
 				for (int i = 0; i < items.length; ++i) {
@@ -113,6 +115,33 @@ public  class ConfigUtility {
 		}
 		return values;
 	}
+	
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
+	public static float[] getFloatArray(Map conf,String key) {
+		float[] values = null;
+		Object obj = conf.get(key);
+		if (null != obj) {
+			if (obj instanceof float[]) {
+				values = (float[])obj;
+			} else if (obj instanceof String) {
+				String[] items  = ((String)obj).split(",");
+				values = new float[items.length];
+				for (int i = 0; i < items.length; ++i) {
+					values[i] = Float.parseFloat(items[i]);
+				}
+			} else {
+				throw new IllegalArgumentException("String value not found  in configuration  for " + key);
+			}
+		} else {
+			throw new IllegalArgumentException("Nothing found in configuration for " + key);
+		}
+		return values;
+	}
+	
 
 	/**
 	 * @param conf
@@ -123,7 +152,9 @@ public  class ConfigUtility {
 		double[] values = null;
 		Object obj = conf.get(key);
 		if (null != obj) {
-			if (obj instanceof String) {
+			if (obj instanceof double[]) {
+				values = (double[])obj;
+			} else if (obj instanceof String) {
 				String[] items  = ((String)obj).split(",");
 				values = new double[items.length];
 				for (int i = 0; i < items.length; ++i) {
@@ -192,6 +223,28 @@ public  class ConfigUtility {
 		return val;
 	}
 
+	/**
+	 * @param conf
+	 * @param key
+	 * @return
+	 */
+	public static float getFloat(Map conf,String key) {
+		float  val = 0;
+		Object obj = conf.get(key);
+		if (null != obj) {
+			if (obj instanceof Float) {
+				val = (Float)obj;
+			} else if (obj instanceof String) {
+				val = Float.parseFloat((String)obj);
+			} else {
+				throw new IllegalArgumentException("String value not found  in configuration  for " + key);
+			}
+		} else {
+			throw new IllegalArgumentException("Nothing found in configuration for " + key);
+		}
+		return val;
+	}
+	
 	/**
 	 * @param conf
 	 * @param key

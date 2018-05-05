@@ -495,6 +495,19 @@ public class BasicUtils {
     	values = valueList.toArray(values);
     	return values;
     }
+
+    /**
+     * @param valueList
+     * @return
+     */
+    public static double[] fromListToDoubleArray(List<Double> valueList) {
+    	double[] values = new double[valueList.size()];
+ 		for (int i = 0; i < valueList.size(); ++i) {
+ 			values[i] = valueList.get(i);
+ 		}
+ 		return values;
+     }
+    
     /**
      * @param list
      * @return
@@ -1431,6 +1444,16 @@ public class BasicUtils {
     	for( ;matcher.find(); ++count){}  
     	return count;
     }
+    
+    /**
+     * @param filePath
+     * @return
+     * @throws IOException
+     */
+    public static List<String> getFileLines(String filePath) throws IOException {
+    	InputStream fs = getFileStream(filePath);
+    	return getFileLines(fs);
+    }    
     
     /**
      * @param fs

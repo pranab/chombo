@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
+import org.chombo.util.BasicUtils;
+import org.chombo.util.ConfigUtility;
 import org.chombo.util.Utility;
 
 /**
@@ -48,9 +50,9 @@ public class MedianStatsManager {
 	 */
 	public MedianStatsManager(Configuration config, String medFilePathParam,  String delim, int[] idOrdinals) 
 			throws IOException {
-			this.idOrdinals = idOrdinals;
-			loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
-		}
+		this.idOrdinals = idOrdinals;
+		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
+	}
 	
 	/**
 	 * @param medFilePath
@@ -60,9 +62,9 @@ public class MedianStatsManager {
 	 */
 	public MedianStatsManager(String medFilePath,  String delim, int[] idOrdinals) 
 			throws IOException {
-			this.idOrdinals = idOrdinals;
-			loadMedianStat(medFilePath,  delim, idOrdinals, medians, keyedMedians);
-		}
+		this.idOrdinals = idOrdinals;
+		loadMedianStat(medFilePath,  delim, idOrdinals, medians, keyedMedians);
+	}
 
 	/**
 	 * @param config
@@ -81,6 +83,22 @@ public class MedianStatsManager {
 	}
 
 	/**
+	 * @param config
+	 * @param medFilePathParam
+	 * @param madFilePathParam
+	 * @param delim
+	 * @param idOrdinals
+	 * @throws IOException
+	 */
+	public MedianStatsManager(Map<String, Object> config, String medFilePathParam, String madFilePathParam,  
+			String delim, int[] idOrdinals) 
+			throws IOException {
+		this.idOrdinals = idOrdinals;
+		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
+		loadMedianStat(config, madFilePathParam,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
+	}
+
+	/**
 	 * @param medFilePath
 	 * @param madFilePath
 	 * @param delim
@@ -90,10 +108,10 @@ public class MedianStatsManager {
 	 */
 	public MedianStatsManager(String medFilePath, String madFilePath,  String delim, int[] idOrdinals, boolean useFilePath) 
 			throws IOException {
-			this.idOrdinals = idOrdinals;
-			loadMedianStat(medFilePath,  delim, idOrdinals, medians, keyedMedians);
-			loadMedianStat(madFilePath,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
-		}
+		this.idOrdinals = idOrdinals;
+		loadMedianStat(medFilePath,  delim, idOrdinals, medians, keyedMedians);
+		loadMedianStat(madFilePath,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
+	}
 
 	/**
 	 * @param config
@@ -107,6 +125,21 @@ public class MedianStatsManager {
 	private void loadMedianStat(Configuration config, String statFilePathParam,   String delim, int[] idOrdinals, 
 			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats) throws IOException {
 		List<String> lines = Utility.getFileLines(config, statFilePathParam);
+		loadMedianStat(lines, delim, stats,  keyedStats);
+	}
+
+	/**
+	 * @param config
+	 * @param statFilePathParam
+	 * @param delim
+	 * @param idOrdinals
+	 * @param stats
+	 * @param keyedStats
+	 * @throws IOException
+	 */
+	private void loadMedianStat(Map<String, Object> config, String statFilePathParam,   String delim, int[] idOrdinals, 
+			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats) throws IOException {
+		List<String> lines  = BasicUtils.getFileLines(ConfigUtility.getString(config, statFilePathParam));
 		loadMedianStat(lines, delim, stats,  keyedStats);
 	}
 

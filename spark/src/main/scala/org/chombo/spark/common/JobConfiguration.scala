@@ -31,18 +31,18 @@ import scala.collection.JavaConverters._
  *
  */
 trait JobConfiguration {
-  
+
   /**
    * @param args
    * @return
- */
-	def configFileFromCommandLine(args: Array[String]) : String = {
+   */
+   def configFileFromCommandLine(args: Array[String]) : String = {
 		val confifFilePath = args.length match {
 			case x: Int if x == 1 => args(0)
 			case _ => throw new IllegalArgumentException("invalid number of  command line args, expecting 1")
 		}
 		confifFilePath
-  }
+    }
 
 	/**
 	 * @param args
@@ -508,6 +508,68 @@ trait JobConfiguration {
 	  }
 	  paramValue
 	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryDoubleListParam(config:Config, paramName:String, errorMsg:String) : java.util.List[java.lang.Double] = {
+	  getDoubleListParam(config, paramName, None, Some(errorMsg))
+	}
+	
+
+	/**
+	 * @param config
+	 * @param paramName
+	 * @return
+	 */
+	def getMandatoryDoubleListParam(config:Config, paramName:String) : java.util.List[java.lang.Double] = {
+	  getDoubleListParam(config, paramName, None, None)
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getDoubleListParamOrElse(config:Config, paramName:String, defValue:java.util.List[Double]) : java.util.List[java.lang.Double] = {
+	  getDoubleListParam(config, paramName, Some(defValue), None)
+	}
+
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param defValue
+	 * @param errorMsg
+	 * @return
+	 */
+	def getDoubleListParam(config:Config, paramName:String, defValue:Option[java.util.List[Double]], errorMsg:Option[String]) : 
+	  java.util.List[java.lang.Double] = {
+	  val paramValue = if (config.hasPath(paramName)) {
+	    config.getDoubleList(paramName)
+	  } else {
+	    defValue match {
+	      case Some(va:java.util.List[Double]) => {
+	        val dList = new java.util.ArrayList[java.lang.Double]()
+	        va.foreach(v => dList.add(v))
+	        dList
+	      }
+	      case None => {
+	        errorMsg match {
+	          case Some(e:String) => throw new IllegalStateException(e + " parameter: " + paramName)
+	          case None => throw new IllegalStateException("missing mandatory configuration parameter: " + paramName)
+	        }
+	      }
+	    }
+	  }
+	  paramValue
+	}
+	
+	
 	
 	/**
 	 * @param config
