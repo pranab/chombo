@@ -90,12 +90,12 @@ public class MedianStatsManager {
 	 * @param idOrdinals
 	 * @throws IOException
 	 */
-	public MedianStatsManager(Map<String, Object> config, String medFilePathParam, String madFilePathParam,  
-			String delim, int[] idOrdinals) 
+	public MedianStatsManager(Map<String, Object> config, String medFilePath, String madFilePath,  
+			String delim, int[] idOrdinals, boolean hdfsFile) 
 			throws IOException {
 		this.idOrdinals = idOrdinals;
-		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
-		loadMedianStat(config, madFilePathParam,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
+		loadMedianStat(config, medFilePath,  delim, idOrdinals, medians, keyedMedians,  hdfsFile);
+		loadMedianStat(config, madFilePath,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  hdfsFile);
 	}
 
 	/**
@@ -137,10 +137,15 @@ public class MedianStatsManager {
 	 * @param keyedStats
 	 * @throws IOException
 	 */
-	private void loadMedianStat(Map<String, Object> config, String statFilePathParam,   String delim, int[] idOrdinals, 
-			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats) throws IOException {
-		List<String> lines  = BasicUtils.getFileLines(ConfigUtility.getString(config, statFilePathParam));
-		loadMedianStat(lines, delim, stats,  keyedStats);
+	private void loadMedianStat(Map<String, Object> config, String statFilePath,   String delim, int[] idOrdinals, 
+			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats, boolean hdfsFile) throws IOException {
+		List<String> lines  = null;
+		if (hdfsFile) {
+			lines = Utility.getFileLines(statFilePath);
+		} else {
+			lines  = BasicUtils.getFileLines(statFilePath);
+		}
+		loadMedianStat(lines, delim, stats, keyedStats);
 	}
 
 	/**
