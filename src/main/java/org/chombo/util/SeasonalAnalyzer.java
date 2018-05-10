@@ -34,6 +34,7 @@ public class SeasonalAnalyzer {
     private List<Pair<Integer, Integer>> timeRanges;
     private long secToYear;
     private int year;
+    private Map<Long, Integer> anyDays;
     
     public  static final String QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
     public static final String  QUARTER_HOUR_OF_WEEK_DAY = "quarterHourOfWeekDay";
@@ -52,6 +53,7 @@ public class SeasonalAnalyzer {
     public static final String  WEEK_OF_YEAR = "weekOfYear";
     public static final String  MONTH_OF_YEAR = "monthOfYear";
     public static final String  ANY_TIME_RANGE = "anyTimeRange";
+    public static final String  ANY_DAY = "anyDay";
     
     private static long secInWeek =7L * 24 * 60 * 60;
     private static long secInDay =24L * 60 * 60;
@@ -112,7 +114,7 @@ public class SeasonalAnalyzer {
     	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
     		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
-    	}  else if (seasonalCycleType.equals(HOUR_OF_WEEK_DAY)) {
+    	} else if (seasonalCycleType.equals(HOUR_OF_WEEK_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
            	weekDayIndex = parentCycleIndex % 7;
            	if (weekDayIndex < 5) {
@@ -157,7 +159,7 @@ public class SeasonalAnalyzer {
         	} else {
         		cycleIndex = -1;
         	}
-    	}  else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_WEEK_END_DAY)) {
+    	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_WEEK_END_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
         	weekDayIndex = parentCycleIndex % 7;
         	if (weekDayIndex > 4) {
@@ -165,7 +167,7 @@ public class SeasonalAnalyzer {
         	} else {
         		cycleIndex = -1;
         	}
-    	}  else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)) {
+    	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)) {
     		parentCycleIndex = timeStamp / secInDay;
     		weekDayIndex = parentCycleIndex % 7;
     		if (weekDayIndex < 5) {
@@ -175,7 +177,7 @@ public class SeasonalAnalyzer {
     		} else {
     			cycleIndex = -1;
     		}
-    	}  else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY)) {
+    	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY)) {
     		parentCycleIndex = timeStamp / secInDay;
     		weekDayIndex = parentCycleIndex % 7;
     		if (weekDayIndex >= 5) {
@@ -185,7 +187,7 @@ public class SeasonalAnalyzer {
     		} else {
     			cycleIndex = -1;
     		}
-    	}  else  if (seasonalCycleType.equals(MONTH_OF_YEAR)) {
+    	} else  if (seasonalCycleType.equals(MONTH_OF_YEAR)) {
     		monthOfYearCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(WEEK_OF_YEAR)) {
     		weekOfYearCycleIndex(timeStamp);
@@ -198,6 +200,16 @@ public class SeasonalAnalyzer {
     				break;
     			}
     			++indx;
+    		}
+    	} else  if (seasonalCycleType.equals(ANY_DAY)) {
+    		cycleIndex = -1;
+    		parentCycleIndex = 0;
+    		for (long  dayBegin :  anyDays.keySet()) {
+    			long dayEnd = dayBegin + secInDay;
+    			if (timeStamp >= dayBegin && timeStamp < dayEnd) {
+    				cycleIndex = anyDays.get(dayBegin);
+    				break;
+    			}
     		}
     	} else {
     		throw new IllegalArgumentException("invalid cycle type");
@@ -218,6 +230,10 @@ public class SeasonalAnalyzer {
 	 */
 	public void setTimeRanges(List<Pair<Integer, Integer>> timeRanges) {
 		this.timeRanges = timeRanges;
+	}
+
+	public void setAnyDays(Map<Long, Integer> anyDays) {
+		this.anyDays = anyDays;
 	}
 
 	/**
@@ -304,5 +320,14 @@ public class SeasonalAnalyzer {
 		//back up to beginning of year
 		secToYear -= secInCurYear;
 	}	
+	
+	/**
+	 * @param seasonalCycleType
+	 * @return
+	 */
+	public static boolean isHourRange(String seasonalCycleType) {
+		return seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)  ||  
+			seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY);
+	}
 	
 }
