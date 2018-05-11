@@ -41,7 +41,7 @@ object NumericalAttrStats extends JobConfiguration {
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val keyFields = getOptionalIntListParam(appConfig, "id.field.ordinals")
+	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
 	   val keyFieldOrdinals = keyFields match {
 	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
 	     case None => None  
@@ -50,23 +50,28 @@ object NumericalAttrStats extends JobConfiguration {
 	  val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", 
 	      "missing quant attribute ordinals").asScala.toArray
 	  val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
-	  val seasonalAnalyzer = if (seasonalAnalysis) {
-	    val seasonalCycleType = getMandatoryStringParam(appConfig, "seasonal.cycleType", "missing seasonal cycle type")
-	    val seasonalAnalyzer = new SeasonalAnalyzer(seasonalCycleType)
-	    if (SeasonalAnalyzer.isHourRange(seasonalCycleType)) {
-	      val hourRanges = BasicUtils.integerIntegerMapFromString("seasonal.hourGroups", BasicUtils.DEF_FIELD_DELIM, 
-	          BasicUtils.DEF_SUB_FIELD_DELIM, true)
-	      seasonalAnalyzer.setHourRanges(hourRanges)
-	    }
+	  val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
+	  val seasonalAnalyzers = if (seasonalAnalysis) {
+	    val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	        "missing seasonal cycle type").asScala.toArray
 	    val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
-	    if (timeZoneShiftHours > 0) {
-	      seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours)
-	    }
 	    val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
 	        "missing time stamp field ordinal")
 	    val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
-	    seasonalAnalyzer.setTimeStampInMili(timeStampInMili)
-	    Some((seasonalAnalyzer, timeStampFieldOrdinal))
+	    val analyzers = seasonalCycleTypes.map(sType => {
+	    	val seasonalAnalyzer = new SeasonalAnalyzer(sType)
+	    	if (SeasonalAnalyzer.isHourRange(sType)) {
+	    		val hourRanges = BasicUtils.integerIntegerMapFromString("seasonal.hourGroups", BasicUtils.DEF_FIELD_DELIM, 
+	    				BasicUtils.DEF_SUB_FIELD_DELIM, true)
+	    		seasonalAnalyzer.setHourRanges(hourRanges)
+	    	}
+	    	if (timeZoneShiftHours > 0) {
+	    		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours)
+	    	}
+	    	seasonalAnalyzer.setTimeStampInMili(timeStampInMili)
+	        seasonalAnalyzer
+	    })
+	    Some((analyzers, timeStampFieldOrdinal))
 	  } else {
 	    None
 	  }
@@ -102,11 +107,12 @@ object NumericalAttrStats extends JobConfiguration {
 	         }
 		     
 		     //seasonality cycle
-		     seasonalAnalyzer match {
-		       case Some(seAnalyzer : (SeasonalAnalyzer, Int)) => {
-		         val timeStamp = items(seAnalyzer._2).toLong
-		         val cycleIndex = seAnalyzer._1.getCycleIndex(timeStamp)
-		         key.addInt(cycleIndex)
+		     seasonalAnalyzers match {
+		       case Some(seAnalyzers : (Array[SeasonalAnalyzer], Int)) => {
+		         val timeStamp = items(seAnalyzers._2).toLong
+		         val cIndex = SeasonalAnalyzer.getCycleIndex(seAnalyzers._1, timeStamp)
+		         key.addString(cIndex.getLeft())
+		         if (partBySeasonCycle) key.addInt(cIndex.getRight())
 		       }
 		       case None => 
 		     }	  

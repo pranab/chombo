@@ -17,6 +17,7 @@
 
 package org.chombo.util;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ import java.util.Map;
  * @author pranab
  *
  */
-public class SeasonalAnalyzer {
+public class SeasonalAnalyzer implements Serializable {
     private long parentCycleIndex;
     private int cycleIndex;
     private String seasonalCycleType;
@@ -328,6 +329,24 @@ public class SeasonalAnalyzer {
 	public static boolean isHourRange(String seasonalCycleType) {
 		return seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)  ||  
 			seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY);
+	}
+	
+	/**
+	 * @param analyzers
+	 * @param timeStamp
+	 * @return
+	 */
+	public static Pair<String, Integer> getCycleIndex(SeasonalAnalyzer[] analyzers, long timeStamp) {
+		Pair<String, Integer> seasonalCycle = new Pair<String, Integer>("normal", 0);
+		for (SeasonalAnalyzer analyzer : analyzers) {
+			int cycleIndex = analyzer.getCycleIndex(timeStamp);
+			if (cycleIndex >= 0) {
+				seasonalCycle.setLeft(analyzer.seasonalCycleType);
+				seasonalCycle.setRight(cycleIndex);
+				break;
+			}
+		}
+		return seasonalCycle;
 	}
 	
 }

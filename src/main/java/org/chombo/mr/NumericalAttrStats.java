@@ -87,7 +87,6 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		private Tuple outVal = new Tuple();
 		private int[]  attributes;
         private String fieldDelimRegex;
-        private int conditionedAttr;
         private double val;
         private double sqVal;
         private int count = 1;
@@ -113,7 +112,6 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	attributes =  Utility.getAttributes("nas.attr.list", configDelim,schema, config,  
         			Attribute.DATA_TYPE_INT, Attribute.DATA_TYPE_LONG, Attribute.DATA_TYPE_DOUBLE);        	
         	
-        	conditionedAttr = config.getInt("nas.conditioned.attr",-1);
         	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
         	
         	//seasonal
@@ -166,22 +164,19 @@ public class NumericalAttrStats  extends Configured implements Tool {
                 }
     		}
             
-            String condAttrVal = conditionedAttr >= 0 ?  items[conditionedAttr] : "$";
-        	for (int attr : attributes) {
+         	for (int attr : attributes) {
             	outKey.initialize();
             	outVal.initialize();
             	
             	if (null != idOrdinals) {
             		outKey.addFromArray(items, idOrdinals);
             	}
-        		outKey.add(attr);
         		
         		//seasonal analysis
         		if (seasonalAnalysis) {
                     outKey.add(cycleIndex);
         		}
-            	
-        		outKey.add(condAttrVal);
+        		outKey.add(attr);
 
             	val = Double.parseDouble(items[attr]);
             	if (null == attrZscoreFilter || attrZscoreFilter.isWithinBound(attr, val))  {
@@ -259,7 +254,6 @@ public class NumericalAttrStats  extends Configured implements Tool {
 		protected double max;
 		private double curMin;
 		private double curMax;
-        private int conditionedAttr;
         private int[] idOrdinals;
         private int outputPrecision ;
 
@@ -270,7 +264,6 @@ public class NumericalAttrStats  extends Configured implements Tool {
         	Configuration config = context.getConfiguration();
         	fieldDelim = config.get("field.delim.out", ",");
         	idOrdinals = Utility.intArrayFromString(config.get("nas.id.field.ordinals"), configDelim);
-        	conditionedAttr = config.getInt("nas.conditioned.attr",-1);
         	outputPrecision = config.getInt("nas.output.prec", 3);
      }
 		
