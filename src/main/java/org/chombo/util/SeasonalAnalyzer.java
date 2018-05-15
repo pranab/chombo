@@ -323,12 +323,18 @@ public class SeasonalAnalyzer implements Serializable {
 	}	
 	
 	/**
-	 * @param seasonalCycleType
 	 * @return
 	 */
-	public static boolean isHourRange(String seasonalCycleType) {
+	public  boolean isHourRange() {
 		return seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)  ||  
 			seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY);
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean isAnyDay() {
+		return seasonalCycleType.equals(ANY_DAY);
 	}
 	
 	/**

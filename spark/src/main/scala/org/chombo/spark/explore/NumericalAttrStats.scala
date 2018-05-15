@@ -60,10 +60,19 @@ object NumericalAttrStats extends JobConfiguration {
 	    val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
 	    val analyzers = seasonalCycleTypes.map(sType => {
 	    	val seasonalAnalyzer = new SeasonalAnalyzer(sType)
-	    	if (SeasonalAnalyzer.isHourRange(sType)) {
+	    	if (seasonalAnalyzer.isHourRange()) {
 	    		val hourRanges = BasicUtils.integerIntegerMapFromString("seasonal.hourGroups", BasicUtils.DEF_FIELD_DELIM, 
 	    				BasicUtils.DEF_SUB_FIELD_DELIM, true)
 	    		seasonalAnalyzer.setHourRanges(hourRanges)
+	    	}
+	    	if (seasonalAnalyzer.isAnyDay()) {
+	    	  val days = getMandatoryStringListParam(appConfig, "specific.Days", "missing days list").asScala.toArray
+	    	  val dateFormatStr = getMandatoryStringParam(appConfig, "date.formatStr", "missinfg date format string")
+	    	  val timeZone = getOptionalStringParam(appConfig, "time.zone") match {
+	    	    case Some(tz : String) => tz
+	    	    case None => null
+	    	  }
+	    	  val daysMap = BasicUtils.epochTimeObjectMapFromString(days, BasicUtils.DEF_SUB_FIELD_DELIM, dateFormatStr, timeZone, false)
 	    	}
 	    	if (timeZoneShiftHours > 0) {
 	    		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours)
@@ -87,6 +96,7 @@ object NumericalAttrStats extends JobConfiguration {
 	    case None =>
 	  }
 	  keyLen += (if (seasonalAnalysis) 1 else 0)
+	  keyLen += (if (seasonalAnalysis && partBySeasonCycle) 1 else 0)
 	  keyLen += 1
 	  
 	  val data = sparkCntxt.textFile(inputPath)

@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -270,23 +271,26 @@ public class BasicUtils {
 	 */
 	public static Map<String, Object> stringObjectMapFromString(String record, String delimRegex, 
 			String subFieldDelim) {
-		Map<String, Object> data = new HashMap<String, Object>();
 		String[] items = record.split(delimRegex);
+		return stringObjectMapFromString(items, subFieldDelim);
+	}
+	
+	/**
+	 * @param items
+	 * @param subFieldDelim
+	 * @return
+	 */
+	public static Map<String, Object> stringObjectMapFromString(String[] items, String subFieldDelim) {
+		Map<String, Object> data = new HashMap<String, Object>();
 		for (String item :  items) {
 			String[] parts  = item.split(subFieldDelim);
 			String key = parts[0];
-			Object val = asInt(parts[1]);
-			if (null == val) {
-				val = asDouble(parts[1]);
-			}
-			if (null == val) {
-				val = parts[1];
-			}
+			Object val = asTypedObject(parts[1]);
 			data.put(key, val);
 		}
     	return data;
 	}
-	
+
 	/**
 	 * @param stParamValue
 	 * @param delimRegex
@@ -323,7 +327,99 @@ public class BasicUtils {
 		}
     	return data;
 	}
+	
+	/**
+	 * @param stParamValue
+	 * @param delimRegex
+	 * @param subFieldDelim
+	 * @param dateFormatStr
+	 * @param timeZone
+	 * @param epochTimeMs
+	 * @return
+	 */
+	public static Map<Long, Object> epochTimeObjectMapFromString(String stParamValue, String delimRegex, String subFieldDelim, 
+			String dateFormatStr, String timeZone, boolean epochTimeMs) {
+		String[] items = stParamValue.split(delimRegex);
+		return epochTimeObjectMapFromString(items, subFieldDelim, dateFormatStr, timeZone,  epochTimeMs);
+	}	
+	
+	/**
+	 * @param items
+	 * @param subFieldDelim
+	 * @param dateFormatStr
+	 * @param timeZone
+	 * @param epochTimeMs
+	 * @return
+	 */
+	public static Map<Long, Object> epochTimeObjectMapFromString(String[] items, String subFieldDelim, 
+			String dateFormatStr, String timeZone, boolean epochTimeMs) {
+		Map<Long, Object> data = new HashMap<Long, Object>();
+		try {
+			SimpleDateFormat dateFormat = new SimpleDateFormat(dateFormatStr);
+			if (null != timeZone) {
+				dateFormat.setTimeZone(TimeZone.getTimeZone(timeZone));
+			}
+			for (String item :  items) {
+				String[] parts  = item.split(subFieldDelim);
+				Date date = dateFormat.parse(parts[0]);
+				long epochTime = date.getTime();
+				if (!epochTimeMs) {
+					epochTime /= 1000;
+				}
+				Object val = asTypedObject(parts[1]);
+				data.put(epochTime, val);
+			}		
+		} catch (ParseException ex) {
+			throw new IllegalArgumentException("failed to parse date " + ex.getMessage());		
+		}
+		return data;
+	}
+	
+	/**
+	 * @param items
+	 * @param subFieldDelim
+	 * @param dateFormatStr
+	 * @param timeZone
+	 * @param epochTimeMs
+	 * @return
+	 */
+	public static Map<Long, Integer> epochTimeIntegerMapFromString(String[] items, String subFieldDelim, 
+			String dateFormatStr, String timeZone, boolean epochTimeMs) {
+		Map<Long, Integer> data = new HashMap<Long, Integer>();
+		Map<Long, Object> objData = epochTimeObjectMapFromString(items, subFieldDelim, dateFormatStr, timeZone, epochTimeMs);
+		for (Long key : objData.keySet()) {
+			Object val = objData.get(key);
+			if (val instanceof Long) {
+				long lVal = (Long)val;
+				data.put(key, (int)lVal);
+			} else {
+				throw new IllegalArgumentException("expecting integer  as value");
+			}
+		}
+		return data;
+	}	
+	
 
+	/**
+	 * @param value
+	 * @return
+	 */
+	public static Object asTypedObject(String value) {
+		//try integer
+		Object val = asLong(value);
+		
+		//try floating point
+		if (null == val) {
+			val = asDouble(value);
+		}
+		
+		//default string
+		if (null == val) {
+			val = value;
+		}
+		return val;
+	}
+	
     /**
      * @param items
      * @param fields
