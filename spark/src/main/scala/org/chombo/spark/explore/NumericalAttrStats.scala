@@ -72,8 +72,10 @@ object NumericalAttrStats extends JobConfiguration {
 	    	    case Some(tz : String) => tz
 	    	    case None => null
 	    	  }
-	    	  val daysMap = BasicUtils.epochTimeObjectMapFromString(days, BasicUtils.DEF_SUB_FIELD_DELIM, dateFormatStr, timeZone, false)
+	    	  val anyDays = BasicUtils.epochTimeIntegerMapFromString(days, BasicUtils.DEF_SUB_FIELD_DELIM, dateFormatStr, timeZone, false)
+	    	  seasonalAnalyzer.setAnyDays(anyDays)
 	    	}
+	    	
 	    	if (timeZoneShiftHours > 0) {
 	    		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours)
 	    	}
