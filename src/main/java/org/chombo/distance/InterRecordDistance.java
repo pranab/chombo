@@ -386,6 +386,14 @@ public class InterRecordDistance implements Serializable {
 	}
 	
 	/**
+	 * attribute wise distance
+	 * @return
+	 */
+	public Map<Integer, Double> getAttributeDistances() {
+		return attrDistances;
+	}
+	
+	/**
 	 * @param ordinals
 	 * @return
 	 */
