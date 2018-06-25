@@ -2205,6 +2205,14 @@ public class BasicUtils {
 	}
 	
 	/**
+	 * @param items
+	 * @return
+	 */
+	public static boolean anyMissingField(String[] items) {
+		return missingFieldCount(items) > 0;
+	}
+	
+	/**
 	 * @param value
 	 * @param strength
 	 * @return

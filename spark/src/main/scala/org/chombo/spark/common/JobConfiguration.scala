@@ -191,7 +191,7 @@ trait JobConfiguration {
 	 * @return
 	 */
 	def getConditionalMandatoryStringParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : String = {
-      if (condition) getMandatoryStringParam(config, errorMsg) else null
+      if (condition) getMandatoryStringParam(config, paramName, errorMsg) else null
 	}
 	
 	/**
@@ -255,7 +255,7 @@ trait JobConfiguration {
 	 * @return
 	 */
 	def getConditionalMandatoryIntParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : Int = {
-      if (condition) getMandatoryIntParam(config, errorMsg) else 0
+      if (condition) getMandatoryIntParam(config, paramName, errorMsg) else 0
 	}
 	
 	/**
@@ -320,7 +320,7 @@ trait JobConfiguration {
 	 * @return
 	 */
 	def getConditionalMandatoryDoubleParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : Double = {
-      if (condition) getMandatoryDoubleParam(config, errorMsg) else 0
+      if (condition) getMandatoryDoubleParam(config, paramName, errorMsg) else 0
 	}
 	
 	/**
@@ -374,6 +374,17 @@ trait JobConfiguration {
 	 */
 	def getBooleanParamOrElse(config:Config, paramName:String, defValue:Boolean) : Boolean = {
 	  getBooleanParam(config, paramName, Some(defValue), None)
+	}
+	
+	/**
+	 * condition
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getConditionalMandatoryBooleanParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : Boolean = {
+      if (condition) getMandatoryBooleanParam(config, paramName, errorMsg) else false
 	}
 	
 	/**
