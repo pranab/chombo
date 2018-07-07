@@ -25,7 +25,12 @@ import org.chombo.spark.common.Record
 import org.chombo.util.BasicUtils
 import org.chombo.util.AttributeFilter
 
-
+/**
+ * Splits a data set into two data sets based on various criteria e.g sub sampling, filter and 
+ * presence of missing fields
+ * @param args
+ * @return
+ */
 object DataSetSplitter extends JobConfiguration {
    /**
     * @param args

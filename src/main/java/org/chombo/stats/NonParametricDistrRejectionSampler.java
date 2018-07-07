@@ -140,5 +140,23 @@ public class NonParametricDistrRejectionSampler<T>  implements RejectionSampler<
 		}
 		return normDistr;
 	}
+	
+	/**
+	 * @return
+	 */
+	public T getMode() {
+		T mode = null;
+		if (!normalized) {
+			normalize();
+		}
+		double dist = -1;
+		for (T key : normDistr.keySet()) {
+			if (normDistr.get(key) > dist) {
+				dist = normDistr.get(key);
+				mode = key;
+			}
+		}
+		return mode;
+	}
 
 }
