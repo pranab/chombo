@@ -57,6 +57,7 @@ public class InterRecordDistance implements Serializable {
 			new HashMap<Integer, Map<Pair<String, String>, Double>>();
 	private int scale = 1;
 	private int[] facetedFields;
+	private boolean tolerateMissingValue;
 	
 	/**
 	 * @param attrSchema
@@ -112,6 +113,15 @@ public class InterRecordDistance implements Serializable {
 	 */
 	public InterRecordDistance withCategoricalSet(boolean categoricalSet) {
 		this.categoricalSet = categoricalSet;
+		return this;
+	}
+	
+	/**
+	 * @param tolerateMissingValue
+	 * @return
+	 */
+	public InterRecordDistance withTolerateMissingValue(boolean tolerateMissingValue) {
+		this.tolerateMissingValue = tolerateMissingValue;
 		return this;
 	}
 	
@@ -220,32 +230,18 @@ public class InterRecordDistance implements Serializable {
 			firstItem = firstItems[ordinal];
 			secondItem = secondItems[ordinal];
 			
-			if (attr.isCategorical()) {
-				dist = categoricalDistance(attr, attrDist);
-			} else if (attr.isInteger()) {
-				dist = numericDistance(Integer.parseInt(firstItem), Integer.parseInt(secondItem), attrDist);
-			} else if (attr.isDouble()) {
-				if (doubleRange) {
-					DoubleRange firstItemRange = DoubleRange.create(firstItem, subFieldDelim);
-					if (null != firstItemRange) {
-						dist = numericDistance(firstItemRange,  Double.parseDouble(secondItem),  attrDist);
-					} else {
-						DoubleRange secondItemRange = DoubleRange.create(secondItem, subFieldDelim);
-						if (null != secondItemRange) {
-							dist = numericDistance(secondItemRange,  Double.parseDouble(firstItem),  attrDist);
-						} else {
-							throw new IllegalStateException("no range data found in field");
-						}
-					}
-				} else {
-					dist = numericDistance(Double.parseDouble(firstItem), Double.parseDouble(secondItem), attrDist);
-				}
-			} else if (attr.isText()) {
-				dist = textDistance(attrDist);
-			} else if (attr.isGeoLocation()) {
-				dist = geoLocationDistance(attrDist);
+			//missing value
+			boolean anyMissingValue = firstItem.isEmpty() || secondItem.isEmpty();
+			if (!tolerateMissingValue && anyMissingValue) {
+				throw new IllegalStateException("missing field found");
 			}
 			
+			//only none of the fields has missing value
+			if (anyMissingValue){
+				continue;
+			}
+			
+			dist = attributeDistance(attr, attrDist);
 			attrDistances.put(ordinal, dist);
 		}
 		
@@ -268,6 +264,43 @@ public class InterRecordDistance implements Serializable {
 		}
 		recDist = sumDist / sumWeight;
 		return recDist;
+	}
+	
+	/**
+	 * @param attr
+	 * @param attrDist
+	 * @return
+	 * @throws IOException
+	 */
+	private double attributeDistance(Attribute attr, AttributeDistance attrDist) throws IOException {
+		double dist = 0;
+		if (attr.isCategorical()) {
+			dist = categoricalDistance(attr, attrDist);
+		} else if (attr.isInteger()) {
+			dist = numericDistance(Integer.parseInt(firstItem), Integer.parseInt(secondItem), attrDist);
+		} else if (attr.isDouble()) {
+			if (doubleRange) {
+				DoubleRange firstItemRange = DoubleRange.create(firstItem, subFieldDelim);
+				if (null != firstItemRange) {
+					dist = numericDistance(firstItemRange,  Double.parseDouble(secondItem),  attrDist);
+				} else {
+					DoubleRange secondItemRange = DoubleRange.create(secondItem, subFieldDelim);
+					if (null != secondItemRange) {
+						dist = numericDistance(secondItemRange,  Double.parseDouble(firstItem),  attrDist);
+					} else {
+						throw new IllegalStateException("no range data found in field");
+					}
+				}
+			} else {
+				dist = numericDistance(Double.parseDouble(firstItem), Double.parseDouble(secondItem), attrDist);
+			}
+		} else if (attr.isText()) {
+			dist = textDistance(attrDist);
+		} else if (attr.isGeoLocation()) {
+			dist = geoLocationDistance(attrDist);
+		}
+		
+		return dist;
 	}
 	
 	/**
@@ -378,10 +411,15 @@ public class InterRecordDistance implements Serializable {
 	private double aggregateEuclidean(int[] ordinals) {
 		double dist = 0;
 		double sum = 0;
+		int count = 0;
 		for (int ordinal : ordinals) {
-			sum += attrDistances.get(ordinal) * attrDistances.get(ordinal);
+			Double attrDist = attrDistances.get(ordinal);
+			if (null != attrDist) {
+				sum += attrDist * attrDist;
+				++count;
+			}
 		}
-		dist = Math.sqrt(sum) / ordinals.length;
+		dist = Math.sqrt(sum) / count;
 		return dist;
 	}
 	
@@ -400,10 +438,15 @@ public class InterRecordDistance implements Serializable {
 	private double aggregateManhattan(int[] ordinals) {
 		double dist = 0;
 		double sum = 0;
+		int count = 0;
 		for (int ordinal : ordinals) {
-			sum += attrDistances.get(ordinal);
+			Double attrDist = attrDistances.get(ordinal);
+			if (null != attrDist) {
+				sum += attrDist;
+				++count;
+			}
 		}
-		dist = sum / ordinals.length;
+		dist = sum / count;
 		return dist;
 	}
 	
@@ -414,12 +457,16 @@ public class InterRecordDistance implements Serializable {
 	private double aggregateMinkwoski(int[] ordinals, double param) {
 		double dist = 0;
 		double sum = 0;
+		int count = 0;
 		for (int ordinal : ordinals) {
-			Math.pow(attrDistances.get(ordinal), param);
-			sum += Math.pow(attrDistances.get(ordinal), param);
+			Double attrDist = attrDistances.get(ordinal);
+			if (null != attrDist) {
+				sum += Math.pow(attrDist, param);
+				++count;
+			}
 		}
 		
-		dist = Math.pow(sum, 1.0/param) / ordinals.length;
+		dist = Math.pow(sum, 1.0/param) / count;
 		return dist;
 	}
 
@@ -430,10 +477,15 @@ public class InterRecordDistance implements Serializable {
 	private double aggregateCategorical(int[] ordinals) {
 		double dist = 0;
 		double sum = 0;
+		int count = 0;
 		for (int ordinal : ordinals) {
-			sum += attrDistances.get(ordinal);
+			Double attrDist = attrDistances.get(ordinal);
+			if (null != attrDist) {
+				sum += attrDist;
+				++count;
+			}
 		}
-		dist = sum / ordinals.length;
+		dist = sum / count;
 		return dist;
 	}
 	
