@@ -1190,6 +1190,39 @@ public class BasicUtils {
     		}
     	}
     }
+    
+    /**
+     * @param values
+     * @param value
+     * @return
+     */
+    public static Pair<Integer, Integer> getBoundingValues(List<Integer> values, int value) {
+    	Pair<Integer, Integer> bounds = null;
+    	for(int i = 0; i < values.size() - 1; ++i) {
+    		if (value >= values.get(i) && value < values.get(i + 1)) {
+    			bounds = new Pair<Integer, Integer>(values.get(i), values.get(i + 1));
+    			break;
+    		}
+    	}
+    	return bounds;
+    }
+   
+    
+    /**
+     * @param values
+     * @param value
+     * @return
+     */
+    public static Pair<Double, Double> getBoundingValues(List<Double> values, double value) {
+    	Pair<Double, Double> bounds = null;
+    	for(int i = 0; i < values.size() - 1; ++i) {
+    		if (value >= values.get(i) && value < values.get(i + 1)) {
+    			bounds = new Pair<Double, Double>(values.get(i), values.get(i + 1));
+    			break;
+    		}
+    	}
+    	return bounds;
+    }
 
     /**
      * @param val

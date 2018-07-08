@@ -31,8 +31,8 @@ import java.util.Map;
 public class NonParametricDistrRejectionSampler<T>  implements RejectionSampler<T> {
 	protected Map<T, Double> distr = new HashMap<T, Double>();
 	protected Map<T, Double> normDistr = new HashMap<T, Double>();
-	private List<T> values;
-	private boolean normalized;
+	protected List<T> values;
+	protected boolean normalized;
 	
 	/**
 	 * 
