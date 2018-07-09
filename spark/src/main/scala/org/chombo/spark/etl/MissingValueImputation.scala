@@ -51,6 +51,12 @@ object MissingValueImputation extends JobConfiguration {
 	   val neighborCount = getMandatoryIntParam(appConfig, "neighbor.count", "missing neighbor count")
 	   val recLen = getMandatoryIntParam(appConfig, "rec.len", "missing record length parameter")
 	   val distrFactor = getMandatoryDoubleParam(appConfig, "distr.factor")
+	   val classValueOrd = getOptionalIntParam(appConfig, "class.value.ord")
+	   val minNeighborCount = classValueOrd match {
+	     case Some(ord : Int) => 
+	       getConditionalMandatoryIntParam(true, appConfig, "min.neighbor.count", "miising min neighbor count")
+	     case None => 0
+	   }
 	   val sampleNeighbor = getBooleanParamOrElse(appConfig, "", true)
 	   val genAttrSchemaPath = getMandatoryStringParam(appConfig, "gen.attr.schema.path")
 	   val genAttrSchema = BasicUtils.getGenericAttributeSchema(genAttrSchemaPath)
@@ -58,60 +64,82 @@ object MissingValueImputation extends JobConfiguration {
 	   
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
+	   val sampler = new NonParametricDistrRejectionSampler[Integer]()
 	   
 	   val data = sparkCntxt.textFile(inputPath)
 	   val fixedRecs = data.map(line => {
-		   val sampler = new NonParametricDistrRejectionSampler[Integer]()
+		   sampler.initialize()
 		   val items = line.split(fieldDelimIn, -1)
-		   val firstRec = items.slice(0, recLen)
+		   val srcRec = items.slice(0, recLen)
 		   val neighbors = ArrayBuffer[Array[String]]()
 		   var offset = recLen
+		   
+		   //all neighbors
 		   for (i <- 0 to neighborCount-1) {
 		     val neRec = items.slice(offset, offset+recLen)
-		     val dist = items(offset+recLen).toDouble
-		     val distr = Math.pow(1 / dist, distrFactor)
-		     neighbors += neRec
-		     sampler.add(i, distr)
+		     val toInclude = classValueOrd match {
+		     	case Some(ord : Int) => {
+		     	  val srcClassVal = srcRec(ord)
+		     	  val neClassVal = neRec(ord)
+		     	  srcClassVal.equals(neClassVal)
+		     	}
+		     	case None => true
+		     }	
+		     if (toInclude) {
+		    	 val dist = items(offset + recLen).toDouble
+		    	 val distr = Math.pow(1 / dist, distrFactor)
+		    	 neighbors += neRec
+		    	 sampler.add(i, distr)
+		     }
 		     offset = offset + recLen + 1
 		   }
 		   
-		   //fill missing values
-		   firstRec.zipWithIndex.foreach(r => {
-		     val field = r._1
-		     val idx = r._2
-		     if (field.isEmpty()) {
-		       if (sampleNeighbor) {
-		         //sampled 
-		         val sampledNe = sampler.sample()
-		         val neRec = neighbors(sampledNe)
-		         firstRec(idx) = neRec(idx)
-		       } else {
-		         if (genAttrSchema.areCategoricalAttributes(idx)) {
-		           //mode
-		           val modeNe = sampler.getMode();
-		           val neRec = neighbors(modeNe)
-		           firstRec(idx) = neRec(idx)
-		         } else if (genAttrSchema.areNumericalAttributes(idx)){
-		           //expected value
-		           var exVal = 0.0
-		           for (key <-  sampler.getNormDistr().keySet().asScala) {
-		             val distr = sampler.getNormDistr().get(key)
-		             val fval = neighbors(key)(idx).toDouble
-		             exVal = exVal + fval * distr
-		           }
-		           
-		           val fVal = if (genAttrSchema.getAttributes().get(idx).isDouble()) {
-		             BasicUtils.formatDouble(exVal, precision)
-		           } else {
-		             Math.round(exVal).toString
-		           }
-		           firstRec(idx) = fVal
-		         }
-		       }
-		     }
-		   })
+		   //whether to fill missing value if class label matched check min neighborhood size
+		   val fillMissingValue = classValueOrd match {
+		     	case Some(ord : Int) => neighbors.size >= minNeighborCount
+		     	case None => true
+		    }	
 		   
-		   firstRec.mkString(fieldDelimOut)
+		   //fill missing values
+		   if (fillMissingValue) {
+			   srcRec.zipWithIndex.foreach(r => {
+			     val field = r._1
+			     val idx = r._2
+			     if (field.isEmpty()) {
+			       if (sampleNeighbor) {
+			         //sampled 
+			         val sampledNe = sampler.sample()
+			         val neRec = neighbors(sampledNe)
+			         srcRec(idx) = neRec(idx)
+			       } else {
+			         //expected value
+			         if (genAttrSchema.areCategoricalAttributes(idx)) {
+			           //mode
+			           val modeNe = sampler.getMode();
+			           val neRec = neighbors(modeNe)
+			           srcRec(idx) = neRec(idx)
+			         } else if (genAttrSchema.areNumericalAttributes(idx)){
+			           //expected value
+			           var exVal = 0.0
+			           for (key <-  sampler.getNormDistr().keySet().asScala) {
+			             val distr = sampler.getNormDistr().get(key)
+			             val fval = neighbors(key)(idx).toDouble
+			             exVal = exVal + fval * distr
+			           }
+			           
+			           val fVal = if (genAttrSchema.getAttributes().get(idx).isDouble()) {
+			             BasicUtils.formatDouble(exVal, precision)
+			           } else {
+			             Math.round(exVal).toString
+			           }
+			           srcRec(idx) = fVal
+			         }
+			       }
+			     }
+			   })
+		   }
+		   
+		   srcRec.mkString(fieldDelimOut)
 	   })
 	   
 	   if (debugOn) {

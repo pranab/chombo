@@ -31,6 +31,7 @@ import org.chombo.util.Pair;
 public class NonParametricDistrNumRejectionSampler extends NonParametricDistrRejectionSampler<Double> {
 	private double minBase;
 	private double maxBase;
+	
 	/**
 	 * @return
 	 */

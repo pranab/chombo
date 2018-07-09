@@ -37,9 +37,10 @@ public class NonParametricDistrRejectionSampler<T>  implements RejectionSampler<
 	/**
 	 * 
 	 */
-	public void intialize() {
+	public void initialize() {
 		distr.clear();
 		values = null;
+		normalized = false;
 	}
 	
 	/**
