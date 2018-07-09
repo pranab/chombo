@@ -32,7 +32,7 @@ import org.chombo.stats.NonParametricDistrRejectionSampler
  * @author pranab
  *
  */
-object MissingValueImputation extends JobConfiguration {
+object NearestNeighborMissingValueImputation extends JobConfiguration {
    /**
     * @param args
     * @return
