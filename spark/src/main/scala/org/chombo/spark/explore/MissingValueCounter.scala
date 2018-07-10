@@ -1,5 +1,4 @@
 /*
-
  * avenir-spark: Predictive analytic based on Spark
  * Author: Pranab Ghosh
  * 
@@ -36,7 +35,7 @@ object MissingValueCounter extends JobConfiguration {
     * @return
     */
    def main(args: Array[String])  {
-	   val appName = "dataSetSplitter"
+	   val appName = "missingValueCounter"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)

@@ -38,7 +38,7 @@ object NearestNeighborMissingValueImputation extends JobConfiguration {
     * @return
     */
    def main(args: Array[String])  {
-	   val appName = "nearestRecords"
+	   val appName = "nearestNeighborMissingValueImputation"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)
