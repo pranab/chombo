@@ -47,9 +47,10 @@ object DataCompleteness extends JobConfiguration {
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val complProfiles = getMandatoryStringListParam(appConfig, "compl.profiles", "missing ").asScala.toList
 	   val profWeights = complProfiles.map(pr => {
-	     val weights = getMandatoryIntListParam(appConfig, pr + ".weight", "missing profile weight").asScala.toArray
+	     val weights = getMandatoryDoubleListParam(appConfig, pr + ".weight", "missing profile weight").asScala.toArray
 	     (pr, weights)
 	   })
+	   val invalidFieldMarker = getOptionalStringParam(appConfig, "invalid.field.marker")
 	   val outputPrecision = this.getIntParamOrElse(appConfig, "output.precision", 3)
 	   
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
@@ -61,9 +62,18 @@ object DataCompleteness extends JobConfiguration {
 		   val dataWithMetric = profWeights.map(prw => {
 		     val pr = prw._1
 		     val weights = prw._2
+		     if (items.length != weights.length) {
+		       throw new IllegalStateException("weight vetor length and record length mismatch")
+		     }
 		     val fieldWeights = items.zip(weights).map(r => {
-		       val exists = if (r._1.isEmpty()) 0 else 1
-		       (exists, r._2.toInt)
+		       val qualityFlag = invalidFieldMarker match {
+		         //validation quality
+		         case Some(marker:String) => if (r._1.equals(marker)) 0 else 1
+		         
+		         //completeness quality
+		         case None => if (r._1.isEmpty()) 0 else 1
+		       }
+		       (qualityFlag, r._2)
 		     })
 		     val sum = fieldWeights.map(r => r._1 * r._2).reduceLeft(_ + _).toDouble
 		     val metric = sum / items.length
