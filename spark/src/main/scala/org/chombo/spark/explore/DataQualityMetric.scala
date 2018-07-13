@@ -25,17 +25,17 @@ import org.chombo.util.BasicUtils
 import scala.collection.mutable.ArrayBuffer
 
 /**
- * Profile based data completeness metric
+ * Profile based data completeness or validation metric
  * @param args
  * @return
  */
-object DataCompleteness extends JobConfiguration {
+object DataQualityMetric extends JobConfiguration {
    /**
     * @param args
     * @return
     */
    def main(args: Array[String])  {
-	   val appName = "dataCompleteness"
+	   val appName = "dataQualityMetric"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)
@@ -48,8 +48,10 @@ object DataCompleteness extends JobConfiguration {
 	   val complProfiles = getMandatoryStringListParam(appConfig, "compl.profiles", "missing ").asScala.toList
 	   val profWeights = complProfiles.map(pr => {
 	     val weights = getMandatoryDoubleListParam(appConfig, pr + ".weight", "missing profile weight").asScala.toArray
-	     (pr, weights)
+	     val weightSum = weights.reduceLeft(_ + _)
+	     (pr, weights, weightSum)
 	   })
+	   
 	   val invalidFieldMarker = getOptionalStringParam(appConfig, "invalid.field.marker")
 	   val outputPrecision = this.getIntParamOrElse(appConfig, "output.precision", 3)
 	   
@@ -62,6 +64,7 @@ object DataCompleteness extends JobConfiguration {
 		   val dataWithMetric = profWeights.map(prw => {
 		     val pr = prw._1
 		     val weights = prw._2
+		     val weightSum = prw._3
 		     if (items.length != weights.length) {
 		       throw new IllegalStateException("weight vetor length and record length mismatch")
 		     }
@@ -76,7 +79,7 @@ object DataCompleteness extends JobConfiguration {
 		       (qualityFlag, r._2)
 		     })
 		     val sum = fieldWeights.map(r => r._1 * r._2).reduceLeft(_ + _).toDouble
-		     val metric = sum / items.length
+		     val metric = sum / weightSum
 		     pr + fieldDelimOut + line + fieldDelimOut + BasicUtils.formatDouble(metric, outputPrecision)
 		   })
 		   dataWithMetric
