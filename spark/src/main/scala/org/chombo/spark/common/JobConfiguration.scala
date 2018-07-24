@@ -24,6 +24,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import collection.JavaConversions._
 import scala.collection.JavaConverters._
+import org.chombo.util.BasicUtils
 
 /**
  * Various configuration helper methods for spark jobs
@@ -678,6 +679,38 @@ trait JobConfiguration {
 	    None
 	  }
 	  paramValue
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryStringDoubleMapParam(config:Config, paramName:String, errorMsg:String) : java.util.Map[String, Double] = {
+	  val paramMap = new java.util.HashMap[String, Double]
+	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg)
+	  for (param <- paramList) {
+	    val items = param.split(BasicUtils.DEF_SUB_FIELD_DELIM)
+	    paramMap.put(items(0), items(1).toDouble)
+	  }
+	  paramMap
+	}
+	
+	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryStringIntMapParam(config:Config, paramName:String, errorMsg:String) : java.util.Map[String, Int] = {
+	  val paramMap = new java.util.HashMap[String, Int]
+	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg)
+	  for (param <- paramList) {
+	    val items = param.split(BasicUtils.DEF_SUB_FIELD_DELIM)
+	    paramMap.put(items(0), items(1).toInt)
+	  }
+	  paramMap
 	}
 	
 }
