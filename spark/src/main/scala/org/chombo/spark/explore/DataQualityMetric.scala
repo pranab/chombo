@@ -45,6 +45,7 @@ object DataQualityMetric extends JobConfiguration {
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
+	   val dimension = getStringParamOrElse(appConfig, "operation.dimension", "row")
 	   val complProfiles = getMandatoryStringListParam(appConfig, "compl.profiles", "missing ").asScala.toList
 	   val profWeights = complProfiles.map(pr => {
 	     val weights = getMandatoryDoubleListParam(appConfig, pr + ".weight", "missing profile weight").asScala.toArray
@@ -59,31 +60,80 @@ object DataQualityMetric extends JobConfiguration {
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 	   
 	   val data = sparkCntxt.textFile(inputPath)
-	   val dataWithMetric = data.flatMap(line => {
-		   val items = line.split(fieldDelimIn, -1)
-		   val dataWithMetric = profWeights.map(prw => {
-		     val pr = prw._1
-		     val weights = prw._2
-		     val weightSum = prw._3
-		     if (items.length != weights.length) {
-		       throw new IllegalStateException("weight vetor length and record length mismatch")
-		     }
-		     val fieldWeights = items.zip(weights).map(r => {
-		       val qualityFlag = invalidFieldMarker match {
-		         //validation quality
-		         case Some(marker:String) => if (r._1.equals(marker)) 0 else 1
-		         
-		         //completeness quality
-		         case None => if (r._1.isEmpty()) 0 else 1
-		       }
-		       (qualityFlag, r._2)
-		     })
-		     val sum = fieldWeights.map(r => r._1 * r._2).reduceLeft(_ + _).toDouble
-		     val metric = sum / weightSum
-		     pr + fieldDelimOut + line + fieldDelimOut + BasicUtils.formatDouble(metric, outputPrecision)
-		   })
+	   val dataWithMetric = if (dimension.equals("row")) {
+		   //row wise
+		   val dataWithMetric = data.flatMap(line => {
+			   val items = line.split(fieldDelimIn, -1)
+			   val dataWithMetric = profWeights.map(prw => {
+			     val prof = prw._1
+			     val weights = prw._2
+			     val weightSum = prw._3
+			     if (items.length != weights.length) {
+			       throw new IllegalStateException("weight vetor length and record length mismatch")
+			     }
+			     
+			     //quality metric and weight list for all columns
+			     val fieldWeights = items.zip(weights).map(r => {
+			       val qualityFlag = invalidFieldMarker match {
+			         //validation quality
+			         case Some(marker:String) => if (r._1.equals(marker)) 0 else 1
+			         
+			         //completeness quality
+			         case None => if (r._1.isEmpty()) 0 else 1
+			       }
+			       (qualityFlag, r._2)
+			     })
+			     
+			     //metric for row
+			     val sum = fieldWeights.map(r => r._1 * r._2).reduceLeft(_ + _).toDouble
+			     val metric = sum / weightSum
+			     prof + fieldDelimOut + BasicUtils.formatDouble(metric, outputPrecision) + fieldDelimOut  + line 
+			   })
+			   dataWithMetric
+		   })	
 		   dataWithMetric
-	   })	
+	   } else {
+		   //column wise
+		   data.cache
+		   val rowCount = data.count
+		   val dataWithMetric = data.flatMap(line => {
+			   val items = line.split(fieldDelimIn, -1)
+			   	 val dataWithMetric = profWeights.map(prw => {
+			   		 val prof = prw._1
+			   		 val weights = prw._2
+			   		 if (items.length != weights.length) {
+			   			 throw new IllegalStateException("weight vetor length and record length mismatch")
+			   		 }
+			   		 //all columns
+			   		 val colWt = weights.zipWithIndex.map(r => {
+			   			 val colIndex = r._2
+			   			 val key =  (prof, colIndex)
+			   			 val qualityFlag = invalidFieldMarker match {
+			   				 //validation quality
+			   			 	case Some(marker:String) => if (items(colIndex).equals(marker)) 0 else 1
+			         
+			   			 	//completeness quality
+			   			 	case None => if (items(colIndex).isEmpty()) 0 else 1
+			   			 }
+			   			 val wt = r._1 * qualityFlag
+			   			(key, wt)
+			   		 })
+			   		colWt 
+			   })
+			   
+			   //profile , column index and weight
+			   val metricArray = ArrayBuffer[((String, Int),Double)]()
+			   dataWithMetric.foreach(a =>  metricArray ++= a)
+			   metricArray
+		   })
+		   val colWithMetric = dataWithMetric.reduceByKey(_ + _).map(r => {
+		     val prof = r._1._1
+		     val col = r._1._2
+		     val wt = r._2 / rowCount
+		     prof + fieldDelimOut + col + fieldDelimOut + BasicUtils.formatDouble(wt, outputPrecision)
+		   })
+	     colWithMetric
+	   }
 	   
 	   if (debugOn) {
 	     val dataWithMetricCol = dataWithMetric.collect

@@ -45,7 +45,7 @@ object MissingValueCounter extends JobConfiguration {
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val operation = this.getStringParamOrElse(appConfig, "operation.dimension", "row")
+	   val operation = getStringParamOrElse(appConfig, "operation.dimension", "row")
 	   val keyOrdinals = getMandatoryIntListParam(appConfig,   "key.ordinals", "missing key field ordinals")
 	   var keyOrdinalsArr = Array[Integer](keyOrdinals.size())
 	   keyOrdinalsArr = keyOrdinals.toArray(keyOrdinalsArr)
