@@ -51,8 +51,6 @@ abstract trait ValidatorBuilder {
  *
 * */
 object DataValidator extends JobConfiguration  with ValidatorRegistration {
-  var statsManager: Option[NumericalAttrStatsManager] = None
-  var medStatManager : Option[MedianStatsManager] = None
   val validationContext = new java.util.HashMap[String, Object]()
   val mutValidators : scala.collection.mutable.HashMap[Int, Array[Validator]]   = scala.collection.mutable.HashMap()
   lazy val validators :  Map[Int, Array[Validator]]   = mutValidators.toMap
@@ -70,17 +68,19 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	   val sparkCntxt = new SparkContext(sparkConf)
 	   val appConfig = config.getConfig(appName)
 	   
-	   val invalidRecordsOutputFile = getOptionalStringParam(appConfig, "invalid.records.output.file")
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
+	   val invalidRecordsOutputFile = getOptionalStringParam(appConfig, "invalid.records.output.file")
 	   val valTagSeparator = getStringParamOrElse(appConfig, "val.tag.separator", ";")
 	   val filterInvalidRecords = getBooleanParamOrElse(appConfig, "filter.invalid.records", true)
 	   val outputInvalidRecords = getBooleanParamOrElse(appConfig, "output.invalid.records", true)
+	   val tagWithFailedValidator = getBooleanParamOrElse(appConfig, "tag.with.failed.validator", true)
+	   val invalidFieldMask = getStringParamOrElse(config, "invalid.field.mask", "??????")
 	   
 	   val validationSchema = BasicUtils.getProcessingSchema(
 	       getMandatoryStringParam(appConfig, "schema.file.path", "missing schema file path configuration"))
 	   val validatorConfig = appConfig
-	   val configClass = 
+	   val customValidFactoryClass = 
 	     if (appConfig.hasPath("custom.valid.factory.class"))
 	       appConfig.getString("custom.valid.factory.class")
 	     else
@@ -89,33 +89,41 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	   val saveOutput = appConfig.getBoolean("save.output")
 
 	     
-	   ValidatorFactory.initialize(configClass, validatorConfig)
+	   ValidatorFactory.initialize(customValidFactoryClass, validatorConfig)
 	   val ordinals =  validationSchema.getAttributeOrdinals()
 	   
 	   //initialize stats manager
 	   val statsFilePath = getOptionalStringParam(appConfig, "stats.file.path")
-	   statsFilePath match {
-	     case Some(path:String) => getAttributeStats(path)
-	     case None =>
+	   val statsManager = statsFilePath match {
+	     case Some(path:String) => {
+	       val statsManager = new NumericalAttrStatsManager(path, ",", true)
+	       validationContext.put("stats",  statsManager)
+	       Some(statsManager)
+	     }
+	     case None => None
 	   }
+       
+       //initialize median stats manager
 	   val medStatsFilePath = this.getOptionalStringParam(appConfig, "med.stats.file.path")
-	   medStatsFilePath match {
+	   val medStatsManager = medStatsFilePath match {
 	     case Some(path:String) => {
 	       val modStatsFilePath = getMandatoryStringParam(appConfig, "mad.stats.file.path", 
 	           "missing stats file path configuration")
 	       val idOrdList = getMandatoryIntListParam(appConfig, "id.ordinals", "missing id ordinals configuration")
 	       val idOrds = BasicUtils.fromListToIntArray(idOrdList)
-	       getAttributeMeds(path, modStatsFilePath, idOrds)
+	       val statsManager = new MedianStatsManager(path, modStatsFilePath, ",",  idOrds)
+	       validationContext.put("stats",  statsManager)
+	       Some(statsManager)
 	     }
-	     
-	     case None =>
+	     case None => None
 	   }
 	   
 	  //create field validators
       validationSchema.getAttributes().asScala.foreach( attr  => {
     	  	if (null != attr.getValidators()) {
     	  		val validatorTags =  attr.getValidators().asScala.toArray
-    	  		createValidators(appConfig, validatorTags, attr.getOrdinal(), validationSchema, mutValidators)
+    	  		createValidators(appConfig, validatorTags, attr.getOrdinal(), validationSchema, 
+    	  		    mutValidators, statsManager, medStatsManager)
     	  	}
       })
       
@@ -134,7 +142,7 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	   
 	   //broadcast row validators
 	   val brRowValidators = sparkCntxt.broadcast(rowValidators)
-
+	   
 	   //input
 	   val data = sparkCntxt.textFile(inputPath)
 
@@ -168,8 +176,12 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	    		  val field = 
 	    	       	if (failedValidators.isEmpty)
 	    	    	   z._1
-	    	    	 else 
-	    			   z._1 + valTagSeparator + failedValidators.mkString(valTagSeparator)
+	    	    	 else {
+	    	    	   if (tagWithFailedValidator)
+	    	    		   z._1 + valTagSeparator + failedValidators.mkString(valTagSeparator)
+	    	    	   else
+	    	    	     invalidFieldMask
+	    	    	 }
 	    	    field
 	    	  }
 	    	  
@@ -204,7 +216,7 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	 //filter valid data
 	 if (filterInvalidRecords) {
 	     //only valid records
-		 val validData = taggedData.filter(line => !line.contains(valTagSeparator))
+		 val validData = taggedData.filter(line => !line.contains(valTagSeparator) && !line.contains(invalidFieldMask))
 		 validData.saveAsTextFile(outputPath)
 	 } else {
 	   //all records
@@ -229,20 +241,29 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
    * @param validationSchema
    */
    private  def createValidators(config : Config, valTags : Array[String], ord : Int,
-       validationSchema :  ProcessorAttributeSchema, mutValidators : scala.collection.mutable.HashMap[Int, Array[Validator]])  {
-	   val validatorList =  List[Validator]()
+       validationSchema :ProcessorAttributeSchema, 
+       mutValidators : scala.collection.mutable.HashMap[Int, Array[Validator]],
+       statsManager: Option[NumericalAttrStatsManager],
+       medStatsManager: Option[MedianStatsManager])  {
 	   val  prAttr = validationSchema.findAttributeByOrdinal(ord)
 	   val validators = valTags.map(tag => {
 		    val validator = tag match {
 		     case "zscoreBasedRange" => {
-		    	 getAttributeStats(config.getString("stats.file.path"))
-		    	 ValidatorFactory.create(tag, prAttr, validationContext)
+		        validationContext.clear()
+		        statsManager match {
+		          case Some(stMan : NumericalAttrStatsManager) => validationContext.put("stats",  stMan)
+		          case None => throw new IllegalStateException("missing attribute stats manager")
+		        }
+		    	ValidatorFactory.create(tag, prAttr, validationContext)
 		     }
 		     
 		     case "robustZscoreBasedRange" => {
-		    	 getAttributeMeds(config.getString("med.stats.file.path"), config.getString("mad.stats.file.path"), 
-		    			 BasicUtils.intArrayFromString(config.getString("id.ordinals"), ",") )		       
-		    	 ValidatorFactory.create(tag, prAttr,validationContext)
+		        validationContext.clear()
+		        medStatsManager match {
+		          case Some(stMan : MedianStatsManager) => validationContext.put("stats",  stMan)
+		          case None => throw new IllegalStateException("missing attribute median stats manager")
+		        }
+		    	 ValidatorFactory.create(tag, prAttr, validationContext)
 		     }
 		    
 		     case tag:String => {
@@ -273,45 +294,12 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
            ValidatorFactory.create(valTag, config.getConfig(valTag), fieldDelim);
          }
          case false => {
-           createRowValidatorContext(config, valTag)
-           ValidatorFactory.create(valTag, validationContext, fieldDelim)
+           throw new IllegalStateException("missing configuration for row validator")
          }
-         
        }
      })
      validators
    }
-
-   private def createRowValidatorContext(config : Config, valTag : String) {
-     throw new IllegalStateException("missing context for row validator " + valTag)
-   }
-   
-  /**
- * @param statsFilePath
- * @return
- */
-  private def getAttributeStats(statsFilePath : String) {
-    statsManager = statsManager match{
-     	case None => Some( new NumericalAttrStatsManager(statsFilePath, ",", true))
-     	case Some(s) => statsManager
-    }
-    
-    //validationContext.
-     validationContext.clear()
-    validationContext.put("stats",  statsManager.get)
-  }
-   
-  private def getAttributeMeds(medFilePath : String, madFilePath:String, idOrdinals : Array[Int] ) {
-    medStatManager = medStatManager match{
-     	case None => Some(new MedianStatsManager(medFilePath, madFilePath,  
-        			",",  idOrdinals))
-     	case Some(s) => medStatManager
-    }
-    
-    //validationContext.
-    validationContext.clear()
-    validationContext.put("stats",  medStatManager.get)
-  }
   
     /**
      * @param fieldOrd
