@@ -91,6 +91,7 @@ def createReatilOrders(storesFile, productsFile, numOrders, numDays, numStores):
 	ts = time.time() - 10 * daysInSec
 	ordersByDay = distrUniformWithRanndom(numOrders, numDays, 0.05)
 	ordersByDay = asIntList(ordersByDay)	
+	#print "total orders " + str(ordersByDay)
 	
 	#days
 	for i in range(numDays):
@@ -99,6 +100,7 @@ def createReatilOrders(storesFile, productsFile, numOrders, numDays, numStores):
 		ts += daysInSec
 		ordersByStore = distrUniformWithRanndom(ordersByDay[i], numStores, 0.10)
 		ordersByStore = asIntList(ordersByStore)	
+		#print "orders by store " + str(ordersByStore)
 		
 		#stores
 		for j in range(numStores):
@@ -117,8 +119,8 @@ def createReatilOrders(storesFile, productsFile, numOrders, numDays, numStores):
 					quantity = quantity + randint(-variance, variance)
 					if quantity < 1:
 						quantity = 1
-					amount = quanity * float(prod[2])
-					print" %s,%s,%s,%s,%s,%s,%d,%.2f" %(dt, store[0], store[1], orderID, prod[0], prod[1], quantity, amount)
+					amount = quantity * float(prod[2])
+					print "%s,%s,%s,%s,%s,%s,%d,%.2f" %(dt, store[0], store[1], orderID, prod[0], prod[1], quantity, amount)
 		
 
 ##############################################################################
@@ -132,8 +134,8 @@ if op == "createOrders":
 	load(existStoreFile, allStores)
 	createStoreOrders(allStores, allProducts, avNumProduct)
 elif op == "createRetOrders":
-	existProdFile = sys.argv[2]
-	existStoreFile = sys.argv[3]	
+	productsFile = sys.argv[2]
+	storesFile = sys.argv[3]	
 	numOrders = int(sys.argv[4])
 	numDays = int(sys.argv[5])
 	numStores = int(sys.argv[6])
