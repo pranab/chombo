@@ -123,27 +123,29 @@ def createReatilOrders(storesFile, productsFile, numOrders, numDays, numStores):
 					print "%s,%s,%s,%s,%s,%s,%d,%.2f" %(dt, store[0], store[1], orderID, prod[0], prod[1], quantity, amount)
 		
 
-##############################################################################
-op = sys.argv[1]
+if __name__ == "__main__":
+	op = sys.argv[1]
 			
-if op == "createOrders":
-	existProdFile = sys.argv[2]
-	existStoreFile = sys.argv[3]	
-	avNumProduct = int(sys.argv[4])
-	load(existProdFile, allProducts)
-	load(existStoreFile, allStores)
-	createStoreOrders(allStores, allProducts, avNumProduct)
-elif op == "createRetOrders":
-	productsFile = sys.argv[2]
-	storesFile = sys.argv[3]	
-	numOrders = int(sys.argv[4])
-	numDays = int(sys.argv[5])
-	numStores = int(sys.argv[6])
-	createReatilOrders(storesFile, productsFile, numOrders, numDays, numStores)
-elif op == "createProducts":
-	count = int(sys.argv[2])
-	createProducts(count)
-elif op == "createStores":
-	count = int(sys.argv[2])
-	createStores(count)
+	if op == "createOrders":
+		existProdFile = sys.argv[2]
+		existStoreFile = sys.argv[3]	
+		avNumProduct = int(sys.argv[4])
+		load(existProdFile, allProducts)
+		load(existStoreFile, allStores)
+		createStoreOrders(allStores, allProducts, avNumProduct)
+	elif op == "createRetOrders":
+		productsFile = sys.argv[2]
+		storesFile = sys.argv[3]	
+		numOrders = int(sys.argv[4])
+		numDays = int(sys.argv[5])
+		numStores = int(sys.argv[6])
+		createReatilOrders(storesFile, productsFile, numOrders, numDays, numStores)
+	elif op == "createProducts":
+		count = int(sys.argv[2])
+		createProducts(count)
+	elif op == "createStores":
+		count = int(sys.argv[2])
+		createStores(count)
+	else:
+		print "invalid command"
 	
