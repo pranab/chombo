@@ -41,6 +41,7 @@ public class ValidatorFactory {
 	public static final String PATTERN_VALIDATOR = "pattern";
 	public static final String PRE_DEFINED_PATTERN_VALIDATOR = "preDefinedPattern";
 	public static final String MEMEBERSHIP_VALIDATOR = "membership";
+	public static final String MEMEBERSHIP_EXT_SRC__VALIDATOR = "membershipExtSrc";
 	public static final String ENSURE_INT_VALIDATOR = "ensureInt";
 	public static final String ENSURE_LONG_VALIDATOR = "ensureLong";
 	public static final String ENSURE_DOUBLE_VALIDATOR = "ensureDouble";
@@ -214,6 +215,10 @@ public class ValidatorFactory {
 		} else if (validatorType.equals(MEMEBERSHIP_VALIDATOR)) {
 			if (prAttr.isCategorical()) {
 				validator = new CategoricalValidator.MembershipValidator(validatorType, prAttr);
+			}
+		}else if (validatorType.equals(MEMEBERSHIP_EXT_SRC__VALIDATOR)) {
+			if (prAttr.isString()) {
+				validator = new CategoricalValidator.MembershipValidatorExtSource(validatorType, prAttr, validatorConfig);
 			}
 		} else if (validatorType.equals(ENSURE_INT_VALIDATOR)) {
 				validator = new GenericValidator.EnsureIntValidator(validatorType, prAttr);

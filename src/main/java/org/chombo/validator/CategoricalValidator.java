@@ -17,7 +17,13 @@
 
 package org.chombo.validator;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.chombo.util.BasicUtils;
 import org.chombo.util.ProcessorAttribute;
+
+import com.typesafe.config.Config;
 
 /**
  * @author pranab
@@ -41,4 +47,39 @@ public class CategoricalValidator {
 		}
 	}
 
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class MembershipValidatorExtSource extends Validator {
+		private String filePath;
+		private int colIndex;
+		private String delim;
+		private List<String> cardinality;
+		
+		public MembershipValidatorExtSource(String tag, ProcessorAttribute prAttr, Config config)  {
+			super(tag,  prAttr);
+			
+			filePath = config.getString("filePath");
+			colIndex = config.getInt("colIndex");
+			delim = config.getString("delim");
+			List<String> lines = null;
+			try {
+				lines = BasicUtils. getFileLines(filePath);
+			} catch (IOException e) {
+				throw new IllegalStateException("falied to load member values from file");
+			}
+			for (String line : lines) {
+				String[] items = line.split(delim, -1);
+				cardinality.add(items[colIndex]);
+			}
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			return cardinality.contains(value);
+		}
+	}
+	
 }
