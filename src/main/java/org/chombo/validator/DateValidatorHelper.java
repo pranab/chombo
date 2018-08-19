@@ -18,6 +18,7 @@
 package org.chombo.validator;
 
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 import org.chombo.util.BasicUtils;
@@ -28,9 +29,60 @@ import org.chombo.util.ProcessorAttribute;
  *
  */
 public class DateValidatorHelper implements Serializable {
-	private SimpleDateFormat dateFormatter;
 	private boolean epochTimeMs;
+	private SafeDateFormatter safeDateFormatter;
 
+	/**
+	 * @author pranab
+	 *
+	 */
+	private static class SafeDateFormatter extends ThreadLocal<SimpleDateFormat> implements Serializable {
+		private String dateFormatStr;
+		
+		/**
+		 * @param dateFormatStr
+		 */
+		public SafeDateFormatter(String dateFormatStr) {
+			this.dateFormatStr = dateFormatStr;
+		}
+		
+		/* (non-Javadoc)
+		 * @see java.lang.ThreadLocal#get()
+		 */
+		@Override
+		public SimpleDateFormat get() {
+		   return super.get();
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.ThreadLocal#initialValue()
+		 */
+		@Override
+		protected SimpleDateFormat initialValue() {
+		   return new SimpleDateFormat(dateFormatStr);
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.ThreadLocal#remove()
+		 */
+		@Override
+		public void remove() {
+		   super.remove();
+		}
+
+		/* (non-Javadoc)
+		 * @see java.lang.ThreadLocal#set(java.lang.Object)
+		 */
+		@Override
+		public void set(SimpleDateFormat value) {
+		   super.set(value);
+		}
+
+	};	
+	
+	/**
+	 * @param prAttr
+	 */
 	public DateValidatorHelper(ProcessorAttribute prAttr) {
 		super();
 		String datePattern = prAttr.getDatePattern();
@@ -39,18 +91,27 @@ public class DateValidatorHelper implements Serializable {
 		} else if (datePattern.equals(BasicUtils.EPOCH_TIME_SEC)) {
 			epochTimeMs = false;
 		} else {
-			dateFormatter = new SimpleDateFormat(prAttr.getDatePattern());
+			safeDateFormatter = new SafeDateFormatter(prAttr.getDatePattern());
 		}
 	}
 
+	/**
+	 * @return
+	 */
 	public SimpleDateFormat getDateFormatter() {
-		return dateFormatter;
+		return safeDateFormatter.get();
 	}
 
+	/**
+	 * @param dateFormatter
+	 */
 	public void setDateFormatter(SimpleDateFormat dateFormatter) {
-		this.dateFormatter = dateFormatter;
+		safeDateFormatter.set(dateFormatter);
 	}
 
+	/**
+	 * @return
+	 */
 	public boolean isEpochTimeMs() {
 		return epochTimeMs;
 	}

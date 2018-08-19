@@ -1,0 +1,63 @@
+{
+		"name" : "retailOrders",
+		"attributes" :
+		[
+			{
+				"name" : "date",
+				"ordinal" : 0,
+				"dataType" : "date",
+				"datePattern" : "yyyy-MM-dd",
+				"earliestDate" : "2018-06-30",
+				"validators" : ["ensureDate", "min"]
+			},
+			{
+				"name" : "storeID",
+				"ordinal" : 1,
+				"id" : true,
+				"dataType" : "string",
+				"length" : 8,
+				"validators" : ["exactLength"]
+			},
+			{
+				"name" : "zip",
+				"ordinal" : 2,
+				"dataType" : "categorical",
+				"cardinality" : ["95126", "95137", "94936", "95024", "94925", "94501", "94502", "94509", "94513", "94531", "94561", "94565", 	"94541", "94546", "94552", "94577", "94578"],
+				"validators" : ["notMissing", "membership"]
+			},
+			{
+				"name" : "orderID",
+				"ordinal" : 3,
+				"id" : true,
+				"dataType" : "string"
+			},
+			{
+				"name" : "productID",
+				"ordinal" : 4,
+				"id" : true,
+				"dataType" : "string",
+				"validators" : ["notMissing", "membershipExtSrc"]
+			},
+			{
+				"name" : "category",
+				"ordinal" : 5,
+				"dataType" : "categorical",
+				"cardinality" : ["general", "produce", "poultry", "dairy", "beverages", "bakery", "canned food", "frozen food", "meat", "cleaner", "paper goods"],
+				"validators" : ["notMissing", "membership"]
+			},
+			{
+				"name" : "quantity",
+				"ordinal" : 6,
+				"dataType" : "int",
+				"min" : 1,
+				"validators" : ["ensureInt", "min"]
+			},
+			{
+				"name" : "amount",
+				"ordinal" : 7,
+				"dataType" : "double",
+				"max" : 1000.0,
+				"validators" : ["max"]
+			}
+		]
+}
