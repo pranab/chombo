@@ -17,6 +17,7 @@
 
 package org.chombo.validator;
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 
 import org.chombo.util.BasicUtils;
@@ -26,7 +27,7 @@ import org.chombo.util.ProcessorAttribute;
  * @author pranab
  *
  */
-public class DateValidatorHelper {
+public class DateValidatorHelper implements Serializable {
 	private SimpleDateFormat dateFormatter;
 	private boolean epochTimeMs;
 

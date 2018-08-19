@@ -70,10 +70,14 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	   
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val invalidRecordsOutputFile = getOptionalStringParam(appConfig, "invalid.records.output.file")
 	   val valTagSeparator = getStringParamOrElse(appConfig, "val.tag.separator", ";")
 	   val filterInvalidRecords = getBooleanParamOrElse(appConfig, "filter.invalid.records", true)
 	   val outputInvalidRecords = getBooleanParamOrElse(appConfig, "output.invalid.records", true)
+	   val invalidRecordsOutputFile = if (outputInvalidRecords) {
+	     getMandatoryStringParam(appConfig, "invalid.records.output.file", "missing invalid output file path")
+	   } else {
+	     ""
+	   }
 	   val tagWithFailedValidator = getBooleanParamOrElse(appConfig, "tag.with.failed.validator", true)
 	   val invalidFieldMask = getStringParamOrElse(config, "invalid.field.mask", "??????")
 	   
@@ -156,37 +160,43 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	     val taggedItems = itemsZipped.map(z => {
 	    	val valListOpt = valMap.get(z._2)
 	    	
-	    	valListOpt match  {
+	    	val taggedField = valListOpt match  {
 	    	  case Some(valList: Array[Validator]) => {
 	    		  val valStatuses = valList.map(validator => {
-	    		  val status = validator.isValid(z._1)
-	    		  (validator.getTag(), status)
+	    			  val status = validator.isValid(z._1)
+	    			  (validator.getTag(), status)
 	    		  })
 	    		  
 	    		  if (debugOn) {
-	    		    println("field: " + z._1)
+	    		    println("next field index value: " + z._2 + "  " + z._1)
 	    		    valStatuses.foreach(vs => println("validator: " + vs._1 + " status:" + vs._2))
 	    		  }
 	    	
 	    		  //only failed validators
 	    		  val failedValidators = valStatuses.filter(s => {
 	    		   !s._2
-	    		  }).map(vs => vs._1)
-	    
+	    		  })
 	    		  val field = 
 	    	       	if (failedValidators.isEmpty)
 	    	    	   z._1
 	    	    	 else {
-	    	    	   if (tagWithFailedValidator)
-	    	    		   z._1 + valTagSeparator + failedValidators.mkString(valTagSeparator)
-	    	    	   else
+	    	    	   if (tagWithFailedValidator) {
+	    	    		   val fvals = failedValidators.map(vs => vs._1)
+	    	    		   if (debugOn) {
+	    	    			   println("failed validators " + fvals.mkString(","))
+	    		           }
+	    	    		   
+	    	    		   z._1 + valTagSeparator + fvals.mkString(valTagSeparator)
+	    	    	   } else {
 	    	    	     invalidFieldMask
+	    	    	   }
 	    	    	 }
 	    	    field
 	    	  }
 	    	  
 	    	  case None =>  z._1
 	    	}
+	    	taggedField
 	    })
 	 
 	    val rec = taggedItems.mkString(fieldDelimOut)
@@ -225,11 +235,8 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	  
 	 //output invalid data
 	 if (outputInvalidRecords){
-		val invalidData = taggedData.filter(line => line.contains(valTagSeparator))
-		invalidRecordsOutputFile match {
-		  case Some(path:String) => invalidData.saveAsTextFile(path)
-		  case None =>
-		}
+		val invalidData = taggedData.filter(line => line.contains(valTagSeparator) || line.contains(invalidFieldMask))
+		invalidData.saveAsTextFile(invalidRecordsOutputFile)
 	 }
    }
    

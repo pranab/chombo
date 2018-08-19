@@ -43,17 +43,21 @@ public class DateValidator {
 		public boolean isValid(String value) {
 			boolean valid = false;
 			try {
-				if (null != helper.getDateFormatter()) {
-					Date date = helper.getDateFormatter().parse(value);
-					Date earliestDate = helper.getDateFormatter().parse(prAttr.getEarliestDate());
-					valid = date.after(earliestDate);
-				} else  {
-					long epoch = Long.parseLong(value);
-					long earliestEpoch = Long.parseLong(prAttr.getEarliestDate());
-					valid = epoch > earliestEpoch;
-				} 
+				if (!value.isEmpty()) {
+					if (null != helper.getDateFormatter()) {
+						Date date = helper.getDateFormatter().parse(value);
+						Date earliestDate = helper.getDateFormatter().parse(prAttr.getEarliestDate());
+						valid = date.after(earliestDate);
+					} else  {
+						long epoch = Long.parseLong(value);
+						long earliestEpoch = Long.parseLong(prAttr.getEarliestDate());
+						valid = epoch > earliestEpoch;
+					} 
+				} else {
+					System.out.println("empty field in DateMinValidator");
+				}
 			} catch (Exception ex) {
-				throw new IllegalStateException("date formatting error " + ex.getMessage());
+				System.out.println("date formatting error in DateMinValidator for " + value + " " + ex.getMessage());
 			}
 			return valid;
 		}
@@ -76,17 +80,21 @@ public class DateValidator {
 		public boolean isValid(String value) {
 			boolean valid = false;
 			try {
-				if (null != helper.getDateFormatter()) {
-					Date date = helper.getDateFormatter().parse(value);
-					Date latestDate = helper.getDateFormatter().parse(prAttr.getLatestDate());
-					valid = date.before(latestDate);
-				} else  {
-					long epoch = Long.parseLong(value);
-					long latestEpoch = Long.parseLong(prAttr.getLatestDate());
-					valid = epoch < latestEpoch;
-				} 
+				if (!value.isEmpty()) {
+					if (null != helper.getDateFormatter()) {
+						Date date = helper.getDateFormatter().parse(value);
+						Date latestDate = helper.getDateFormatter().parse(prAttr.getLatestDate());
+						valid = date.before(latestDate);
+					} else  {
+						long epoch = Long.parseLong(value);
+						long latestEpoch = Long.parseLong(prAttr.getLatestDate());
+						valid = epoch < latestEpoch;
+					} 
+				} else {
+					System.out.println("empty field in DateMaxValidator");
+				}
 			} catch (Exception ex) {
-				throw new IllegalStateException("date formatting error " + ex.getMessage());
+				System.out.println("date formatting error in DateMaxValidator for " + value + " " + ex.getMessage());
 			}
 			return valid;
 		}

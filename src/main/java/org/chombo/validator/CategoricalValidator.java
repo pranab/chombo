@@ -18,6 +18,7 @@
 package org.chombo.validator;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.chombo.util.BasicUtils;
@@ -56,7 +57,7 @@ public class CategoricalValidator {
 		private String filePath;
 		private int colIndex;
 		private String delim;
-		private List<String> cardinality;
+		private List<String> cardinality = new ArrayList<String>();
 		
 		public MembershipValidatorExtSource(String tag, ProcessorAttribute prAttr, Config config)  {
 			super(tag,  prAttr);

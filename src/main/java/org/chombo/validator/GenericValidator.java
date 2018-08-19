@@ -160,14 +160,15 @@ public class GenericValidator {
 		@Override
 		public boolean isValid(String value) {
 			boolean valid = false;
-			if (null != helper.getDateFormatter()) {
-				valid =  BasicUtils.isDate(value, helper.getDateFormatter());
-			} else if (helper.isEpochTimeMs()) {
-				valid = BasicUtils.isLong(value) && value.length() >= 13;
-			} else {
-				valid = BasicUtils.isLong(value) && value.length() >= 10;
+			if (!value.isEmpty()) {
+				if (null != helper.getDateFormatter()) {
+					valid =  BasicUtils.isDate(value, helper.getDateFormatter());
+				} else if (helper.isEpochTimeMs()) {
+					valid = BasicUtils.isLong(value) && value.length() >= 13;
+				} else {
+					valid = BasicUtils.isLong(value) && value.length() >= 10;
+				}
 			}
-			
 			return valid;
 		}
 	}
