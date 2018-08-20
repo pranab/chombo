@@ -1,0 +1,60 @@
+This tutorial for validating retail order data, using a pluggable rule driven data 
+validation framework running on Spark.
+
+Environment
+===========
+Please modify etl_spark.sh based on you environment
+
+Build
+=====
+Please refer to building_spark_uber_jar.txt
+
+Input Data
+==========
+- Create store data
+python store_order.py createStores <num_of_stores> > stores.txt
+
+where
+num_of_stores = number of store e.g. 20
+
+- Create product data
+python store_order.py createProducts <num_of_products> > products.txt
+
+where
+num_of_products = number of products e.g. 1000
+
+- create retail order data
+python store_order.py createRetOrders products.txt stores.txt <num_of_orders>  
+  <num_of_days> <num_of_stores> > orders.txt
+
+where
+<num_of_orders> = number of orders e.g. 50000
+<num_of_days> = number of days for order data e.g. 5
+<num_of_stores> = number of store  (20)
+
+- make some fields invalid in the order data
+python invalid_retail.py retail_orders.txt > retail_orders.txt
+
+Copy retail_orders.txt to the input directory specified in etl_spark.sh
+
+Meta data file
+==============
+Copy retail_order.json to the path specified through the parameter schema.file.path
+
+Configuration
+=============
+Configuration is defined  in etl.conf. 
+
+Copy products.txt to the path specified in the configuration for the validator membershipExtSrc
+in etl.conf
+
+Run data validation Spark job
+=============================
+./etl_spark.sh validator
+
+Output
+======
+Check output in the output path specified in etl_spark.sh. Check invalid data in the path 
+specified through the parameter invalid.records.output.file
+
+
