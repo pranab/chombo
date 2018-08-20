@@ -2364,10 +2364,11 @@ public class BasicUtils {
 	        }
 	        
 	        //check result
-	        if (process.waitFor() == 0) {
+	        int exitCode = process.waitFor();
+	        if (exitCode == 0) {
 	        	result = out.toString();
 	        }  else {
-	        	throw new RuntimeException("process exited abnormally");
+	        	throw new RuntimeException("process exited abnormally with exit code" + exitCode);
 	        }
     	} catch (IOException ex) {
         	throw new RuntimeException("process execution error " + ex.getMessage());

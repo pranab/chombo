@@ -50,6 +50,7 @@ public class ValidatorFactory {
 	public static final String ROBUST_ZCORE_BASED_RANGE_VALIDATOR = "robustZscoreBasedRange";
 	public static final String NOT_MISSING_GROUP_VALIDATOR = "notMissingGroup";
 	public static final String VALUE_DEPENDENCY_VALIDATOR = "valueDependency";
+	public static final String PIPED_VALIDATOR = "piped";
 	
 	private static Map<String,String> custValidatorClasses = new HashMap<String,String>();
 	private static Map<String,Validator> custValidators = new HashMap<String,Validator>();
@@ -142,12 +143,14 @@ public class ValidatorFactory {
 	 * @param validatorConfig
 	 * @return
 	 */
-	public static Validator create(String validatorType,  Config validatorConfig, String fieldDelim) {
+	public static Validator create(String validatorType, Config validatorConfig, String fieldDelim) {
 		Validator validator = null;
 		if (validatorType.equals(NOT_MISSING_GROUP_VALIDATOR)) {
 			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
 		} else if (validatorType.equals(VALUE_DEPENDENCY_VALIDATOR)) {
 			validator = new  GenericValidator.ValueDependencyValidator(validatorType, validatorConfig);
+		} else if (validatorType.equals(PIPED_VALIDATOR)) {
+			validator = new  GenericValidator.PipedValidator(validatorType, validatorConfig);
 		} else {
 			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
 		}

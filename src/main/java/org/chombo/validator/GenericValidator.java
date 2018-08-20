@@ -234,5 +234,34 @@ public class GenericValidator {
 		public Config valueMap;
 	}
 	
+	/**
+	 * Externally piped
+	 * @author pranab
+	 *
+	 */
+	public static class PipedValidator extends Validator implements RowValidator {
+		private String script;
+		private String workingDir;
+		private String configParams;
+		private List<String> commands = new ArrayList<String>();
+		
+		public PipedValidator(String tag, Config validatorConfig) {
+			super(tag);
+			script = validatorConfig.getString("script");
+			workingDir = validatorConfig.getString("workingDir");
+			List<String> configList = validatorConfig.getStringList("config");
+			configParams = BasicUtils.join(configList);
+			commands.add(0, script);
+			commands.add(2, configParams);
+		}
+
+		@Override
+		public boolean isValid(String value) {
+			commands.add(1, value);
+			String result = BasicUtils.execShellCommand(commands, workingDir);
+			return result.startsWith("valid");
+		}
+	}
+
 	
 }
