@@ -59,5 +59,6 @@
 				"max" : 1000.0,
 				"validators" : ["max"]
 			}
-		]
+		],
+		"rowValidators" : ["pipedMaxMonetaryAmount"]
 }

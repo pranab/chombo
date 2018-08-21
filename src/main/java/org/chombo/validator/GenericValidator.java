@@ -248,17 +248,25 @@ public class GenericValidator {
 		public PipedValidator(String tag, Config validatorConfig) {
 			super(tag);
 			script = validatorConfig.getString("script");
+			commands.add(script);
+			
+			if (validatorConfig.hasPath("args")) {
+				List<String> argList = validatorConfig.getStringList("args");
+				commands.addAll(argList);
+			}
+			
 			workingDir = validatorConfig.getString("workingDir");
+			
 			List<String> configList = validatorConfig.getStringList("config");
 			configParams = BasicUtils.join(configList);
-			commands.add(0, script);
-			commands.add(2, configParams);
+			commands.add(configParams);
 		}
 
 		@Override
 		public boolean isValid(String value) {
-			commands.add(1, value);
-			String result = BasicUtils.execShellCommand(commands, workingDir);
+			List<String> finalCommands = new ArrayList<String>(commands);
+			finalCommands.add(value);
+			String result = BasicUtils.execShellCommand(finalCommands, workingDir);
 			return result.startsWith("valid");
 		}
 	}

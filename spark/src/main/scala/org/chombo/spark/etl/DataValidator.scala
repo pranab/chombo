@@ -133,7 +133,7 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
       
       //create row validators
       val rowValidatorTags = validationSchema.getRowValidators().asScala.toArray
-      val rowValidators = createRowValidators(config, rowValidatorTags, fieldDelimIn)
+      val rowValidators = createRowValidators(appConfig, rowValidatorTags, fieldDelimIn)
 	   
 	  if (debugOn) {
 	     validators.foreach(kv => {
@@ -209,8 +209,9 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	    })
 	    val failedRowValidators = rowValStatuses.filter(s => {
 	    	!s._2
-	    	}).map(vs => vs._1)
+	    }).map(vs => vs._1)
 	    	
+	    //tag row validators at the end of the record
 	    val taggedRec = 
 	    	if (failedRowValidators.isEmpty)
 	    		rec
@@ -301,7 +302,7 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
            ValidatorFactory.create(valTag, config.getConfig(valTag), fieldDelim);
          }
          case false => {
-           throw new IllegalStateException("missing configuration for row validator")
+           throw new IllegalStateException("missing configuration for row validator " + valTag)
          }
        }
      })

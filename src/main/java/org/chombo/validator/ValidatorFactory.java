@@ -149,7 +149,7 @@ public class ValidatorFactory {
 			validator = new  GenericValidator.NotMissingGroupValidator(validatorType, validatorConfig);
 		} else if (validatorType.equals(VALUE_DEPENDENCY_VALIDATOR)) {
 			validator = new  GenericValidator.ValueDependencyValidator(validatorType, validatorConfig);
-		} else if (validatorType.equals(PIPED_VALIDATOR)) {
+		} else if (validatorType.startsWith(PIPED_VALIDATOR)) {
 			validator = new  GenericValidator.PipedValidator(validatorType, validatorConfig);
 		} else {
 			throw new IllegalArgumentException("invalid row validator type  validator:" + validatorType);
