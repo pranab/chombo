@@ -37,6 +37,17 @@ python invalid_retail.py retail_orders.txt > retail_orders.txt
 
 Copy retail_orders.txt to the input directory specified in etl_spark.sh
 
+- data for row validator
+For the row validator "pipedMaxMonetaryAmount" some preparation is necessary because it requires
+external data. Run this to generate a file based on products.txt. I will add a 4th column which 
+is the maximum amount that is spent on a product. Ideally it should have been generated based on
+z score. We are kind of faking it here
+
+./max_amount.py products.txt > max_amount.txt
+
+Copy max_amount.txt and check_max_amout.py to the directory specified through the config param 
+pipedMaxMonetaryAmount/workingDir in node in your Spark cluster.
+
 Meta data file
 ==============
 Copy retail_order.json to the path specified through the parameter schema.file.path
