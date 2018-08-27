@@ -11,6 +11,9 @@ Please refer to building_spark_uber_jar.txt
 
 Input Data
 ==========
+Please make sure the lib  directory for avenir/python is in ../lib with respect to your
+script store_order.py
+
 - Create store data
 python store_order.py createStores <num_of_stores> > stores.txt
 
