@@ -61,12 +61,13 @@ object NumericalAttrStats extends JobConfiguration {
 	    val analyzers = seasonalCycleTypes.map(sType => {
 	    	val seasonalAnalyzer = new SeasonalAnalyzer(sType)
 	    	if (seasonalAnalyzer.isHourRange()) {
-	    		val hourRanges = BasicUtils.integerIntegerMapFromString("seasonal.hourGroups", BasicUtils.DEF_FIELD_DELIM, 
+	    		val hourRangeStr = getMandatoryStringParam(appConfig, "seasonal.hourGroups", "missinfg hour rangen")
+	    		val hourRanges = BasicUtils.integerIntegerMapFromString(hourRangeStr, BasicUtils.DEF_FIELD_DELIM, 
 	    				BasicUtils.DEF_SUB_FIELD_DELIM, true)
 	    		seasonalAnalyzer.setHourRanges(hourRanges)
 	    	}
 	    	if (seasonalAnalyzer.isAnyDay()) {
-	    	  val days = getMandatoryStringListParam(appConfig, "specific.Days", "missing days list").asScala.toArray
+	    	  val days = getMandatoryStringListParam(appConfig, "specific.days", "missing days list").asScala.toArray
 	    	  val dateFormatStr = getMandatoryStringParam(appConfig, "date.formatStr", "missinfg date format string")
 	    	  val timeZone = getOptionalStringParam(appConfig, "time.zone") match {
 	    	    case Some(tz : String) => tz
