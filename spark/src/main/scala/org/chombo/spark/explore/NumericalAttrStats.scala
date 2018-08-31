@@ -21,8 +21,10 @@ import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
-import org.chombo.util.SeasonalAnalyzer;
+import org.chombo.util.SeasonalAnalyzer
+import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.BasicUtils
+import org.chombo.stats.NumericalAttrStatsManager
 
 object NumericalAttrStats extends JobConfiguration {
   
@@ -49,6 +51,7 @@ object NumericalAttrStats extends JobConfiguration {
 	   
 	  val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", 
 	      "missing quant attribute ordinals").asScala.toArray
+	  val condAttrOrd = getOptionalIntParam(appConfig, "cond.attr.ordinal")
 	  val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
 	  val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
 	  val seasonalAnalyzers = if (seasonalAnalysis) {
@@ -100,7 +103,7 @@ object NumericalAttrStats extends JobConfiguration {
 	  }
 	  keyLen += (if (seasonalAnalysis) 1 else 0)
 	  keyLen += (if (seasonalAnalysis && partBySeasonCycle) 1 else 0)
-	  keyLen += 1
+	  keyLen += 2
 	  
 	  val data = sparkCntxt.textFile(inputPath)
 	  val keyedData = data.flatMap(line => {
@@ -132,7 +135,13 @@ object NumericalAttrStats extends JobConfiguration {
 		     
 		     //attr ordinal
 		     key.addInt(attr)
-
+		     
+		     //conditional attribute
+		     condAttrOrd match {
+		     	case Some(attrOrd : Int) => key.addString(items(attrOrd))
+		     	case None => key.addString(NumericalAttrStatsManager.DEF_COND_ATTR_VAL)
+		     }
+		     
 		     val quantVal = items(attr).toDouble
 		     value.addDouble(quantVal)
 		     value.addDouble(quantVal)
