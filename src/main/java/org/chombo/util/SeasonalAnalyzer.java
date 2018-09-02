@@ -49,6 +49,7 @@ public class SeasonalAnalyzer implements Serializable {
     public static final String  DAY_OF_WEEK  = "dayOfWeek";
     public static final String  WEEK_DAY_OF_WEEK  = "weekDayOfWeek";
     public static final String  WEEK_END_DAY_OF_WEEK  = "weekEndDayOfWeek";
+    public static final String  WEEK_DAY_OR_WEEK_END_OF_WEEK  = "weekDayOrWeekendOfWeek";
     public static final String  HOUR_RANGE_OF_WEEK_DAY  = "hourRangeOfWeekDay";
     public static final String  HOUR_RANGE_OF_WEEK_END_DAY  = "hourRangeOfWeekEndDay";
     public static final String  WEEK_OF_YEAR = "weekOfYear";
@@ -95,7 +96,7 @@ public class SeasonalAnalyzer implements Serializable {
     		timeStamp /= 1000;
     	}
     	timeStamp += timeZoneShiftSec;
-    	
+    	cycleIndex = -1;
     	long  weekDayIndex = 0;
     	if (seasonalCycleType.equals(DAY_OF_WEEK)) {
         	parentCycleIndex = timeStamp / secInWeek;
@@ -112,62 +113,42 @@ public class SeasonalAnalyzer implements Serializable {
     		if (cycleIndex < 5) {
     			cycleIndex = -1;
     		}
+    	} else if (seasonalCycleType.equals(WEEK_DAY_OR_WEEK_END_OF_WEEK)) {
+        	parentCycleIndex = timeStamp / secInWeek;
+    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+    		cycleIndex = cycleIndex > 4 ?  1 : 0;
     	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
     		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
     	} else if (seasonalCycleType.equals(HOUR_OF_WEEK_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
            	weekDayIndex = parentCycleIndex % 7;
-           	if (weekDayIndex < 5) {
-        		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
-         	} else {
-         		cycleIndex = -1;
-         	}
+           	cycleIndex = weekDayIndex < 5 ? (int)((timeStamp % secInDay) / secInHour) : -1;
     	}  else if (seasonalCycleType.equals(HOUR_OF_WEEK_END_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
-            if (weekDayIndex > 4) {
-        		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
-         	} else {
-         		cycleIndex = -1;
-         	}
+        	cycleIndex = weekDayIndex > 4 ? (int)((timeStamp % secInDay) / secInHour) :  -1;
     	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
     		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
     	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_WEEK_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
         	weekDayIndex = parentCycleIndex % 7;
-        	if (weekDayIndex < 5) {
-        		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
-        	} else {
-        		cycleIndex = -1;
-        	}
+        	cycleIndex = weekDayIndex < 5 ? (int)((timeStamp % secInDay) / secInHalfHour) : -1;
     	} else  if (seasonalCycleType.equals(HALF_HOUR_OF_WEEK_END_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
         	weekDayIndex = parentCycleIndex % 7;
-        	if (weekDayIndex > 4) {
-        		cycleIndex = (int)((timeStamp % secInDay) / secInHalfHour);
-        	} else {
-        		cycleIndex = -1;
-        	}
+        	cycleIndex = weekDayIndex > 4 ? (int)((timeStamp % secInDay) / secInHalfHour) : -1;
     	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
     		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
     	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_WEEK_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
         	weekDayIndex = parentCycleIndex % 7;
-        	if (weekDayIndex < 5) {
-        		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
-        	} else {
-        		cycleIndex = -1;
-        	}
+        	cycleIndex = weekDayIndex < 5 ? (int)((timeStamp % secInDay) / secInQuarterHour) : -1;
     	} else  if (seasonalCycleType.equals(QUARTER_HOUR_OF_WEEK_END_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
         	weekDayIndex = parentCycleIndex % 7;
-        	if (weekDayIndex > 4) {
-        		cycleIndex = (int)((timeStamp % secInDay) / secInQuarterHour);
-        	} else {
-        		cycleIndex = -1;
-        	}
+        	cycleIndex = weekDayIndex > 4 ? (int)((timeStamp % secInDay) / secInQuarterHour) : -1;
     	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)) {
     		parentCycleIndex = timeStamp / secInDay;
     		weekDayIndex = parentCycleIndex % 7;
@@ -175,9 +156,7 @@ public class SeasonalAnalyzer implements Serializable {
     			int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
     			Integer hourGroup = hourRanges.get(hourCycleIndex);
     			cycleIndex = hourGroup != null ? hourGroup : -1;
-    		} else {
-    			cycleIndex = -1;
-    		}
+    		} 
     	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY)) {
     		parentCycleIndex = timeStamp / secInDay;
     		weekDayIndex = parentCycleIndex % 7;
@@ -185,15 +164,12 @@ public class SeasonalAnalyzer implements Serializable {
     			int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
     			Integer hourGroup = hourRanges.get(hourCycleIndex);
     			cycleIndex = hourGroup != null ? hourGroup : -1;
-    		} else {
-    			cycleIndex = -1;
-    		}
+    		} 
     	} else  if (seasonalCycleType.equals(MONTH_OF_YEAR)) {
     		monthOfYearCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(WEEK_OF_YEAR)) {
     		weekOfYearCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(ANY_TIME_RANGE)) {
-    		cycleIndex = -1;
     		int indx = 0;
     		for (Pair<Integer, Integer> timeRange :  timeRanges) {
     			if (timeStamp >= timeRange.getLeft() && timeStamp <= timeRange.getRight()) {
@@ -203,7 +179,6 @@ public class SeasonalAnalyzer implements Serializable {
     			++indx;
     		}
     	} else  if (seasonalCycleType.equals(ANY_DAY)) {
-    		cycleIndex = -1;
     		parentCycleIndex = 0;
     		for (long  dayBegin :  anyDays.keySet()) {
     			long dayEnd = dayBegin + secInDay;

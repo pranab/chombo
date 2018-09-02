@@ -33,7 +33,7 @@ object NumericalAttrStats extends JobConfiguration {
     * @return
     */
    def main(args: Array[String]) {
-	   val appName = "numericalAttrDistrStats"
+	   val appName = "numericalAttrStats"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)
@@ -154,12 +154,26 @@ object NumericalAttrStats extends JobConfiguration {
 		   fieldStats
 	  }).reduceByKey((v1, v2) => {
 	    val aggr = Record(5)
+	    v1.intialize
+	    v2.intialize
+	    
+	    //sum
 	    aggr.addDouble(v1.getDouble() + v2.getDouble())
-	    val d1 = v1.getDouble()
-	    val d2 = v2.getDouble()
+	    
+	    //min
+	    var d1 = v1.getDouble()
+	    var d2 = v2.getDouble()
 	    aggr.addDouble(if (d1 < d2) d1 else d2)
+	    
+	    //max
+	    d1 = v1.getDouble()
+	    d2 = v2.getDouble()
 	    aggr.addDouble(if (d1 > d2) d1 else d2)
+	    
+	    //sum sq
 	    aggr.addDouble(v1.getDouble() + v2.getDouble())
+	    
+	    //count
 	    aggr.addInt(v1.getInt() + v2.getInt())
 	    aggr
 	  })
@@ -167,6 +181,7 @@ object NumericalAttrStats extends JobConfiguration {
 	  //calculate stats
 	  val stats = keyedData.map(kv => {
 	    val stat = Record(8)
+	    kv._2.intialize
 	    val sum = kv._2.getDouble()
 	    val min = kv._2.getDouble()
 	    val max = kv._2.getDouble()
@@ -190,7 +205,7 @@ object NumericalAttrStats extends JobConfiguration {
 	  })
 	  
 	  if (debugOn) {
-	     stats.foreach(s => println(s))
+	     stats.collect.foreach(s => println(s))
 	  }
 	   
 	  if (saveOutput) {

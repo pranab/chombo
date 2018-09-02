@@ -48,10 +48,10 @@ public class MedianStatsManager {
 	 * @param idOrdinals
 	 * @throws IOException
 	 */
-	public MedianStatsManager(Configuration config, String medFilePathParam,  String delim, int[] idOrdinals) 
-			throws IOException {
+	public MedianStatsManager(Configuration config, String medFilePathParam,  String delim, int[] idOrdinals, 
+			boolean seasonal) throws IOException {
 		this.idOrdinals = idOrdinals;
-		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
+		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians,  seasonal);
 	}
 	
 	/**
@@ -60,10 +60,10 @@ public class MedianStatsManager {
 	 * @param idOrdinals
 	 * @throws IOException
 	 */
-	public MedianStatsManager(String medFilePath,  String delim, int[] idOrdinals) 
+	public MedianStatsManager(String medFilePath,  String delim, int[] idOrdinals, boolean seasonal) 
 			throws IOException {
 		this.idOrdinals = idOrdinals;
-		loadMedianStat(medFilePath,  delim, idOrdinals, medians, keyedMedians);
+		loadMedianStat(medFilePath,  delim, idOrdinals, medians, keyedMedians,  seasonal);
 	}
 
 	/**
@@ -75,11 +75,11 @@ public class MedianStatsManager {
 	 * @throws IOException
 	 */
 	public MedianStatsManager(Configuration config, String medFilePathParam, String madFilePathParam,  
-		String delim, int[] idOrdinals) 
+		String delim, int[] idOrdinals, boolean seasonal) 
 		throws IOException {
 		this.idOrdinals = idOrdinals;
-		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians);
-		loadMedianStat(config, madFilePathParam,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
+		loadMedianStat(config, medFilePathParam,  delim, idOrdinals, medians, keyedMedians,  seasonal);
+		loadMedianStat(config, madFilePathParam,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  seasonal);
 	}
 
 	/**
@@ -91,11 +91,11 @@ public class MedianStatsManager {
 	 * @throws IOException
 	 */
 	public MedianStatsManager(Map<String, Object> config, String medFilePath, String madFilePath,  
-			String delim, int[] idOrdinals, boolean hdfsFile) 
+			String delim, int[] idOrdinals, boolean hdfsFile, boolean seasonal) 
 			throws IOException {
 		this.idOrdinals = idOrdinals;
-		loadMedianStat(config, medFilePath,  delim, idOrdinals, medians, keyedMedians,  hdfsFile);
-		loadMedianStat(config, madFilePath,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  hdfsFile);
+		loadMedianStat(config, medFilePath,  delim, idOrdinals, medians, keyedMedians,  hdfsFile,  seasonal);
+		loadMedianStat(config, madFilePath,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  hdfsFile,  seasonal);
 	}
 
 	/**
@@ -106,11 +106,12 @@ public class MedianStatsManager {
 	 * @param useFilePath
 	 * @throws IOException
 	 */
-	public MedianStatsManager(String medFilePath, String madFilePath,  String delim, int[] idOrdinals, boolean useFilePath) 
+	public MedianStatsManager(String medFilePath, String madFilePath,  String delim, int[] idOrdinals,
+			boolean useFilePath, boolean seasonal) 
 			throws IOException {
 		this.idOrdinals = idOrdinals;
-		loadMedianStat(medFilePath,  delim, idOrdinals, medians, keyedMedians);
-		loadMedianStat(madFilePath,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv);
+		loadMedianStat(medFilePath,  delim, idOrdinals, medians, keyedMedians,  seasonal);
+		loadMedianStat(madFilePath,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  seasonal);
 	}
 
 	/**
@@ -123,9 +124,9 @@ public class MedianStatsManager {
 	 * @throws IOException
 	 */
 	private void loadMedianStat(Configuration config, String statFilePathParam,   String delim, int[] idOrdinals, 
-			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats) throws IOException {
+			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats, boolean seasonal) throws IOException {
 		List<String> lines = Utility.getFileLines(config, statFilePathParam);
-		loadMedianStat(lines, delim, stats,  keyedStats);
+		loadMedianStat(lines, delim, stats, keyedStats,  seasonal);
 	}
 
 	/**
@@ -138,14 +139,15 @@ public class MedianStatsManager {
 	 * @throws IOException
 	 */
 	private void loadMedianStat(Map<String, Object> config, String statFilePath,   String delim, int[] idOrdinals, 
-			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats, boolean hdfsFile) throws IOException {
+			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats, boolean hdfsFile, boolean seasonal) 
+			throws IOException {
 		List<String> lines  = null;
 		if (hdfsFile) {
 			lines = Utility.getFileLines(statFilePath);
 		} else {
 			lines  = BasicUtils.getFileLines(statFilePath);
 		}
-		loadMedianStat(lines, delim, stats, keyedStats);
+		loadMedianStat(lines, delim, stats, keyedStats, seasonal);
 	}
 
 	/**
@@ -157,9 +159,9 @@ public class MedianStatsManager {
 	 * @throws IOException
 	 */
 	private void loadMedianStat(String statFilePath,   String delim, int[] idOrdinals, 
-			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats) throws IOException {
+			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats, boolean seasonal) throws IOException {
 		List<String> lines = Utility.getFileLines(statFilePath);
-		loadMedianStat(lines, delim, stats,  keyedStats);
+		loadMedianStat(lines, delim, stats,  keyedStats,  seasonal);
 	}
 	
 	/**
@@ -169,18 +171,24 @@ public class MedianStatsManager {
 	 * @param keyedStats
 	 */
 	private void loadMedianStat(List<String> lines, String delim, Map<Integer, Double> stats, Map<String, 
-			Map<Integer, Double>> keyedStats) {
+			Map<Integer, Double>> keyedStats, boolean seasonal) {
 		for (String line : lines) {
 			String[] items = line.split(delim);
 			if (null != idOrdinals) {
 				//with IDs
 				String compId = Utility.join(items, 0, idOrdinals.length, delim);
+				int i = idOrdinals.length;
+	    		if (seasonal) {
+	    			compId = compId + delim + items[i] + delim + items[i+1];
+	    			i += 2;
+	    		}
+				
 				Map<Integer, Double> medians = keyedStats.get(compId);
 				if (null == medians) {
 					medians = new HashMap<Integer, Double>();
 					keyedStats.put(compId, medians);
 				}
-				medians.put(Integer.parseInt(items[idOrdinals.length]), Double.parseDouble(items[idOrdinals.length + 1]));
+				medians.put(Integer.parseInt(items[i]), Double.parseDouble(items[i + 1]));
 			} else {
 				//without IDs
 				stats.put(Integer.parseInt(items[0]), Double.parseDouble(items[1]));
