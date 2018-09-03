@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +38,7 @@ import org.chombo.util.Utility;
  * @author pranab
  *
  */
-public class NumericalAttrStatsManager {
+public class NumericalAttrStatsManager implements Serializable {
 	private Map<Integer, List<Tuple>> stats = new HashMap<Integer, List<Tuple>>();
 	private Map<String, Map<Integer, List<Tuple>>> keyedStats = new HashMap<String, Map<Integer, List<Tuple>>>();
 	public static final String DEF_COND_ATTR_VAL = "$";

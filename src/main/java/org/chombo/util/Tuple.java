@@ -19,6 +19,7 @@ package org.chombo.util;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,7 @@ import org.apache.hadoop.io.WritableComparable;
  * @author pranab
  *
  */
-public class Tuple  implements WritableComparable<Tuple>  {
+public class Tuple  implements WritableComparable<Tuple> , Serializable {
 	public static final byte BYTE = 0;
 	public static final byte BOOLEAN = 1;
 	public static final byte INT = 2;
