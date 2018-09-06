@@ -687,6 +687,14 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @see java.lang.Object#toString()
 	 */
 	override def toString() : String = {
+	  toString(",")
+	}
+	
+	/**
+	 * @param delim
+	 * @return
+	 */
+	def toString(delim : String) : String = {
 	  val stArray = array.map(a => {
 	    if (a.isInstanceOf[Double]) {
 	      BasicUtils.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
@@ -694,9 +702,35 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	      a
 	    }
 	  })
-	  stArray.mkString(",")
+	  stArray.mkString(delim)
 	}
-	
+
+	/**
+	 * @param beg
+	 * @param end
+	 * @return
+	 */
+	def toString(beg:Int, end:Int) : String = {
+	  toString(beg, end, ",")
+	}
+
+	/**
+	 * @param beg
+	 * @param end
+	 * @param delim
+	 * @return
+	 */
+	def toString(beg:Int, end:Int, delim : String) : String = {
+	  val sarray = array.slice(beg, end)
+	  val stArray = sarray.map(a => {
+	    if (a.isInstanceOf[Double]) {
+	      BasicUtils.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
+	    } else {
+	      a
+	    }
+	  })
+	  stArray.mkString(delim)
+	}
 
 	/**
 	 * @param that
