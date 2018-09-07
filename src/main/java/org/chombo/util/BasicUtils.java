@@ -2420,4 +2420,13 @@ public class BasicUtils {
     	return items;
     }
     
+    /**
+     * @param cons
+     * @param val
+     * @return
+     */
+    public static double expSacle(double cons, double val) {
+    	double e = Math.exp(cons * val);
+    	return (e -1) / e;
+    }
  }
