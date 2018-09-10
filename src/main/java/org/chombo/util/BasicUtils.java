@@ -2425,7 +2425,7 @@ public class BasicUtils {
      * @param val
      * @return
      */
-    public static double expSacle(double cons, double val) {
+    public static double expScale(double cons, double val) {
     	double e = Math.exp(cons * val);
     	return (e -1) / e;
     }
