@@ -26,8 +26,10 @@ import org.chombo.stats.HistogramStat
 import org.chombo.stats.HistogramUtility
 import java.io.FileInputStream
 import scala.collection.mutable.Map
+import org.chombo.spark.common.SeasonalUtility
+import org.chombo.util.SeasonalAnalyzer
 
-object NumericalAttrDistrStats extends JobConfiguration {
+object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
   
    /**
     * @param args
@@ -49,23 +51,46 @@ object NumericalAttrDistrStats extends JobConfiguration {
 	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
 	     case None => None  
 	   }
-	   val keyLen = keyFieldOrdinals match {
+	   var keyLen = keyFieldOrdinals match {
 		     case Some(fields:Array[Integer]) => fields.length + 1
 		     case None =>1
 	   }
-
+	   
+	   
 	   //val keyFieldOrdinals = getMandatoryIntListParam(appConfig, "id.field.ordinals").asScala.toArray
 	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals", "").asScala.toArray
 	   
-	   
+	   //field ordinal and bin width
 	   val binWidths = numAttrOrdinals.map(ord => {
 	     //attribute bin width tuple
 	     val key = "attrBinWidth." + ord
 	     (ord, getMandatoryIntParam(appConfig, key, "missing bin width"))
 	   })
+	   
 	   val extendedOutput = getBooleanParamOrElse(appConfig, "extended.output", true)
 	   val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
 	   val refDistrFilePath = getOptionalStringParam(appConfig, "reference.distr.file.path")
+	   
+	   //seasonal data
+	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
+	   val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
+	   val seasonalAnalyzers = if (seasonalAnalysis) {
+		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	        "missing seasonal cycle type").asScala.toArray
+	        val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
+	        val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
+	        "missing time stamp field ordinal")
+	        val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
+	        
+	        val analyzers = seasonalCycleTypes.map(sType => {
+	    	val seasonalAnalyzer = createSeasonalAnalyzer(this, appConfig, sType, timeZoneShiftHours, timeStampInMili)
+	        seasonalAnalyzer
+	    })
+	    Some((analyzers, timeStampFieldOrdinal))
+	   } else {
+		   None
+	   }
+	   keyLen += (if (seasonalAnalysis) 2 else 0)
 	   
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
@@ -81,6 +106,18 @@ object NumericalAttrDistrStats extends JobConfiguration {
 			     //with partition key and field ordinal
 			     case Some(fields:Array[Integer]) => {
 			       val rec = Record(keyLen, items, fields)
+			       
+			       //seasonality cycle
+		           seasonalAnalyzers match {
+		             case Some(seAnalyzers : (Array[SeasonalAnalyzer], Int)) => {
+		            	 val timeStamp = items(seAnalyzers._2).toLong
+		            	 val cIndex = SeasonalAnalyzer.getCycleIndex(seAnalyzers._1, timeStamp)
+		            	 rec.addString(cIndex.getLeft())
+		            	 rec.addInt(cIndex.getRight())
+		             }
+		             case None => 
+			       }	  
+			       
 			       rec.addInt(ord._1.toInt)
 			       rec
 			     }

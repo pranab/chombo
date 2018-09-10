@@ -18,6 +18,7 @@
 package org.chombo.util;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -322,12 +323,33 @@ public class SeasonalAnalyzer implements Serializable {
 		for (SeasonalAnalyzer analyzer : analyzers) {
 			int cycleIndex = analyzer.getCycleIndex(timeStamp);
 			if (cycleIndex >= 0) {
+				//first valid cycle only
 				seasonalCycle.setLeft(analyzer.seasonalCycleType);
 				seasonalCycle.setRight(cycleIndex);
 				break;
 			}
 		}
 		return seasonalCycle;
+	}
+
+	/**
+	 * @param analyzers
+	 * @param timeStamp
+	 * @return
+	 */
+	public static List<Pair<String, Integer>> getCycleIndexes(SeasonalAnalyzer[] analyzers, long timeStamp) {
+		List<Pair<String, Integer>> seasonalCycles = new ArrayList<Pair<String, Integer>>();
+		for (SeasonalAnalyzer analyzer : analyzers) {
+			int cycleIndex = analyzer.getCycleIndex(timeStamp);
+			if (cycleIndex >= 0) {
+				//all cycles
+				Pair<String, Integer> seasonalCycle = new Pair<String, Integer>("normal", 0);
+				seasonalCycle.setLeft(analyzer.seasonalCycleType);
+				seasonalCycle.setRight(cycleIndex);
+				seasonalCycles.add(seasonalCycle);
+			}
+		}
+		return seasonalCycles;
 	}
 	
 }
