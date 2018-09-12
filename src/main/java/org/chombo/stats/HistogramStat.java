@@ -485,6 +485,33 @@ public class HistogramStat implements Serializable {
 	}
 	
 	/**
+	 * @param base
+	 * @return
+	 */
+	public double findDistr(double base) {
+		double minDiff = Double.MAX_VALUE;
+		double distr = 0;
+		for (double thisBase : histogram.keySet()) {
+			double diff = Math.abs(thisBase - base);
+			if (diff < minDiff) {
+				minDiff = diff;
+				distr = histogram.get(thisBase);
+			}
+		}
+		return distr;
+	}
+	
+	/**
+	 * 
+	 */
+	public void normalizeCount() {
+		for (Integer index : binMap.keySet()) {
+			Bin bin = binMap.get(index);
+			bin.normalize(count);
+		}		
+	}
+	
+	/**
 	 * @return
 	 */
 	public double getEntropy() {
@@ -624,6 +651,7 @@ public class HistogramStat implements Serializable {
 	public static class Bin implements  Comparable<Bin>,  Serializable {
 		private int index;
 		private int count;
+		private double normCount;
 
 		public Bin(int index) {
 			super();
@@ -651,6 +679,15 @@ public class HistogramStat implements Serializable {
 
 		public int getCount() {
 			return count;
+		}
+		
+		
+		public double getNormCount() {
+			return normCount;
+		}
+
+		public void normalize(int maxCount) {
+			normCount = ((double)count) / maxCount;
 		}
 	}
 
