@@ -264,7 +264,7 @@ public class ValidationChecker extends Configured implements Tool {
         	throws IOException {
         	if (null == medStatManager) {
         		medStatManager = new MedianStatsManager(config, medFilePathParam, madFilePathParam,  
-        			",",  idOrdinals);
+        			",",  idOrdinals, false);
         	}
         	validatorContext.clear();
 			validatorContext.put("stats",  medStatManager);

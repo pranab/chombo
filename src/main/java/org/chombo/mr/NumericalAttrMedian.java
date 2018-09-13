@@ -138,7 +138,7 @@ public class NumericalAttrMedian extends Configured implements Tool {
         	operation = config.get("nam.op.type", "med");
         	if (operation.equals("mad")) {
         		//median of deviation from median
-   				statsManager = new MedianStatsManager(config, "nam.med.file.path",statsDelim, idOrdinals);
+   				statsManager = new MedianStatsManager(config, "nam.med.file.path",statsDelim, idOrdinals, false);
         	}
         	
         	//seasonal
