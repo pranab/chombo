@@ -26,6 +26,10 @@ import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.BasicUtils
 import org.chombo.stats.NumericalAttrStatsManager
 
+/**
+ * Numerical fields tatistics
+ * @author pranab
+ */
 object NumericalAttrStats extends JobConfiguration {
   
    /**
