@@ -2427,6 +2427,57 @@ public class BasicUtils {
      */
     public static double expScale(double cons, double val) {
     	double e = Math.exp(cons * val);
-    	return (e -1) / e;
+    	return (e - 1) / e;
     }
+    
+    /**
+     * @param cons
+     * @param val
+     * @return
+     */
+    public static double logisticScale(double cons, double val) {
+    	double e = Math.exp(-cons * val);
+    	return 1 / (1 + e);
+    }
+    
+    /**
+     * @param table
+     * @param x
+     * @param withinRange
+     * @return
+     */
+    public static double linearInterpolate(double[][] table, double x, boolean withinRange) {
+    	double y = 0;
+    	boolean found = false;
+    	int numRows = table.length;
+    	
+    	for (int r = 0; r < numRows; ++r) {
+    		if (r < numRows - 1) {
+	    		double[] cRow = table[r];
+	    		double[] nRow = table[r+1];
+	    		if (x > cRow[0] && x <= nRow[0]) {
+	    			y = cRow[1] + (nRow[1] - cRow[1]) / (nRow[0] - cRow[0]);
+	    			found = true;
+	    			break;
+	    		}
+    		}
+    	}
+    	
+    	//outside range
+    	if (!found) {
+    		if (withinRange) {
+    			throw new IllegalStateException("can not interplotate outside range");
+    		} else {
+    			if (x <= table[0][0]) {
+    				//use smallest
+    				y = table[0][1];
+    			} else {
+    				//use largest
+    				y = table[numRows-1][1];
+    			}
+    		}
+    	}
+    	return y;
+    }
+   
  }
