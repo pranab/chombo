@@ -2479,5 +2479,35 @@ public class BasicUtils {
     	}
     	return y;
     }
+    
+    /**
+     * @param table
+     * @return
+     */
+    public static Pair<Double, Double> linearRegression(double[][] table) {
+    	int count = table.length;
+    	
+    	double avX = 0;
+    	double avY = 0;
+    	for (int i = 0; i < count; ++i) {
+    		avX += table[i][0];
+    		avY += table[i][1];
+    	}
+    	avX /= count;
+    	avY /= count;
+    	
+    	double s1 = 0;
+    	double s2 = 0;
+    	for (int i = 0; i < count; ++i) {
+    		double diffX = table[i][0] - avX;
+    		double diffY = table[i][1] - avY;
+    		s1 += (diffX * diffY);
+    		s2 += (diffX * diffX);
+    	}
+    	double b1 = s1 / s2;
+    	double b0 = avY - b1 * avX;
+    	Pair<Double, Double> coeff = new Pair<Double, Double>(b1, b0);
+    	return coeff;
+    }
    
  }
