@@ -126,5 +126,44 @@ public class MathUtils {
     	double[][] inverted = source.inverse().getArray();
     	return inverted;
     }
+    
+    /**
+     * @param data
+     * @param numRows
+     * @return
+     */
+    public static Matrix createColVector(double[] data, int numRows) {
+    	Matrix m = null;
+    	if (data.length == numRows) {
+    		m = new Matrix(data, numRows);
+    	} else {
+    		throw new IllegalStateException("num of rows is not equal to array size");
+    	}
+    	return m;
+    }
+    
+    /**
+     * @param data
+     * @param numCols
+     * @return
+     */
+    public static Matrix createRowVector(double[] data, int numCols) {
+    	Matrix m = null;
+    	if (data.length == numCols) {
+    		m = new Matrix(data, 1);
+    	} else {
+    		throw new IllegalStateException("num of columns is not equal to array size");
+    	}
+    	return m;
+    }
+    
+    /**
+     * @param a
+     * @param b
+     * @return
+     */
+    public static Matrix multiplyMatrix(Matrix a, Matrix b) {
+    	return a.times(b);
+    }
 
 }

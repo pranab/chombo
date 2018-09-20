@@ -2439,6 +2439,5 @@ public class BasicUtils {
     	double e = Math.exp(-cons * val);
     	return 1 / (1 + e);
     }
-    
    
  }
