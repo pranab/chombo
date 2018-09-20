@@ -1,0 +1,130 @@
+/*
+ * chombo: Hadoop Map Reduce utility
+ * Author: Pranab Ghosh
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you
+ * may not use this file except in compliance with the License. You may
+ * obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0 
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+ * implied. See the License for the specific language governing
+ * permissions and limitations under the License.
+ */
+
+
+package org.chombo.util;
+
+import Jama.Matrix;
+
+/**
+ * Math utilities
+ * @author pranab
+ *
+ */
+public class MathUtils {
+	
+    /**
+     * @param cons
+     * @param val
+     * @return
+     */
+    public static double expScale(double cons, double val) {
+    	double e = Math.exp(cons * val);
+    	return (e - 1) / e;
+    }
+    
+    /**
+     * @param cons
+     * @param val
+     * @return
+     */
+    public static double logisticScale(double cons, double val) {
+    	double e = Math.exp(-cons * val);
+    	return 1 / (1 + e);
+    }
+    
+    /**
+     * @param table
+     * @param x
+     * @param withinRange
+     * @return
+     */
+    public static double linearInterpolate(double[][] table, double x, boolean withinRange) {
+    	double y = 0;
+    	boolean found = false;
+    	int numRows = table.length;
+    	
+    	for (int r = 0; r < numRows; ++r) {
+    		if (r < numRows - 1) {
+	    		double[] cRow = table[r];
+	    		double[] nRow = table[r+1];
+	    		if (x > cRow[0] && x <= nRow[0]) {
+	    			y = cRow[1] + (nRow[1] - cRow[1]) / (nRow[0] - cRow[0]);
+	    			found = true;
+	    			break;
+	    		}
+    		}
+    	}
+    	
+    	//outside range
+    	if (!found) {
+    		if (withinRange) {
+    			throw new IllegalStateException("can not interplotate outside range");
+    		} else {
+    			if (x <= table[0][0]) {
+    				//use smallest
+    				y = table[0][1];
+    			} else {
+    				//use largest
+    				y = table[numRows-1][1];
+    			}
+    		}
+    	}
+    	return y;
+    }
+    
+    /**
+     * @param table
+     * @return
+     */
+    public static Pair<Double, Double> linearRegression(double[][] table) {
+    	int count = table.length;
+    	
+    	double avX = 0;
+    	double avY = 0;
+    	for (int i = 0; i < count; ++i) {
+    		avX += table[i][0];
+    		avY += table[i][1];
+    	}
+    	avX /= count;
+    	avY /= count;
+    	
+    	double s1 = 0;
+    	double s2 = 0;
+    	for (int i = 0; i < count; ++i) {
+    		double diffX = table[i][0] - avX;
+    		double diffY = table[i][1] - avY;
+    		s1 += (diffX * diffY);
+    		s2 += (diffX * diffX);
+    	}
+    	double b1 = s1 / s2;
+    	double b0 = avY - b1 * avX;
+    	Pair<Double, Double> coeff = new Pair<Double, Double>(b1, b0);
+    	return coeff;
+    }
+    
+    /**
+     * @param data
+     * @return
+     */
+    public static  double[][] invertMatrix(double[][] data) {
+    	Matrix source = new Matrix(data);
+    	double[][] inverted = source.inverse().getArray();
+    	return inverted;
+    }
+
+}

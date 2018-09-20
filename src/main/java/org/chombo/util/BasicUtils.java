@@ -41,13 +41,13 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.chombo.distance.AttributeDistanceSchema;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import Jama.Matrix;
 
 /**
  * Generic Utility
@@ -2440,74 +2440,5 @@ public class BasicUtils {
     	return 1 / (1 + e);
     }
     
-    /**
-     * @param table
-     * @param x
-     * @param withinRange
-     * @return
-     */
-    public static double linearInterpolate(double[][] table, double x, boolean withinRange) {
-    	double y = 0;
-    	boolean found = false;
-    	int numRows = table.length;
-    	
-    	for (int r = 0; r < numRows; ++r) {
-    		if (r < numRows - 1) {
-	    		double[] cRow = table[r];
-	    		double[] nRow = table[r+1];
-	    		if (x > cRow[0] && x <= nRow[0]) {
-	    			y = cRow[1] + (nRow[1] - cRow[1]) / (nRow[0] - cRow[0]);
-	    			found = true;
-	    			break;
-	    		}
-    		}
-    	}
-    	
-    	//outside range
-    	if (!found) {
-    		if (withinRange) {
-    			throw new IllegalStateException("can not interplotate outside range");
-    		} else {
-    			if (x <= table[0][0]) {
-    				//use smallest
-    				y = table[0][1];
-    			} else {
-    				//use largest
-    				y = table[numRows-1][1];
-    			}
-    		}
-    	}
-    	return y;
-    }
-    
-    /**
-     * @param table
-     * @return
-     */
-    public static Pair<Double, Double> linearRegression(double[][] table) {
-    	int count = table.length;
-    	
-    	double avX = 0;
-    	double avY = 0;
-    	for (int i = 0; i < count; ++i) {
-    		avX += table[i][0];
-    		avY += table[i][1];
-    	}
-    	avX /= count;
-    	avY /= count;
-    	
-    	double s1 = 0;
-    	double s2 = 0;
-    	for (int i = 0; i < count; ++i) {
-    		double diffX = table[i][0] - avX;
-    		double diffY = table[i][1] - avY;
-    		s1 += (diffX * diffY);
-    		s2 += (diffX * diffX);
-    	}
-    	double b1 = s1 / s2;
-    	double b0 = avY - b1 * avX;
-    	Pair<Double, Double> coeff = new Pair<Double, Double>(b1, b0);
-    	return coeff;
-    }
    
  }

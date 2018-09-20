@@ -169,7 +169,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     	<artifactId>config</artifactId>
     	<version>1.2.0</version>
 	</dependency>
-       
+
+	<dependency>
+    	<groupId>gov.nist.math</groupId>
+    	<artifactId>jama</artifactId>
+    	<version>1.0.3</version>
+	</dependency>   
+	    
     </dependencies>
 
     <repositories>
