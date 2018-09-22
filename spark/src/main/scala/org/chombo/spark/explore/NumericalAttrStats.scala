@@ -30,7 +30,7 @@ import org.chombo.stats.NumericalAttrStatsManager
  * Numerical fields tatistics
  * @author pranab
  */
-object NumericalAttrStats extends JobConfiguration {
+object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
   
    /**
     * @param args
@@ -56,44 +56,26 @@ object NumericalAttrStats extends JobConfiguration {
 	  val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", 
 	      "missing quant attribute ordinals").asScala.toArray
 	  val condAttrOrd = getOptionalIntParam(appConfig, "cond.attr.ordinal")
-	  val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
-	  val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
-	  val seasonalAnalyzers = if (seasonalAnalysis) {
-	    val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	  
+	   //seasonal data
+	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
+	   val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
+	   val seasonalAnalyzers = if (seasonalAnalysis) {
+		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
 	        "missing seasonal cycle type").asScala.toArray
-	    val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
-	    val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
+	        val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
+	        val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
 	        "missing time stamp field ordinal")
-	    val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
-	    val analyzers = seasonalCycleTypes.map(sType => {
-	    	val seasonalAnalyzer = new SeasonalAnalyzer(sType)
-	    	if (seasonalAnalyzer.isHourRange()) {
-	    		val hourRangeStr = getMandatoryStringParam(appConfig, "seasonal.hourGroups", "missinfg hour rangen")
-	    		val hourRanges = BasicUtils.integerIntegerMapFromString(hourRangeStr, BasicUtils.DEF_FIELD_DELIM, 
-	    				BasicUtils.DEF_SUB_FIELD_DELIM, true)
-	    		seasonalAnalyzer.setHourRanges(hourRanges)
-	    	}
-	    	if (seasonalAnalyzer.isAnyDay()) {
-	    	  val days = getMandatoryStringListParam(appConfig, "specific.days", "missing days list").asScala.toArray
-	    	  val dateFormatStr = getMandatoryStringParam(appConfig, "date.formatStr", "missinfg date format string")
-	    	  val timeZone = getOptionalStringParam(appConfig, "time.zone") match {
-	    	    case Some(tz : String) => tz
-	    	    case None => null
-	    	  }
-	    	  val anyDays = BasicUtils.epochTimeIntegerMapFromString(days, BasicUtils.DEF_SUB_FIELD_DELIM, dateFormatStr, timeZone, false)
-	    	  seasonalAnalyzer.setAnyDays(anyDays)
-	    	}
-	    	
-	    	if (timeZoneShiftHours > 0) {
-	    		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours)
-	    	}
-	    	seasonalAnalyzer.setTimeStampInMili(timeStampInMili)
+	        val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
+	        
+	        val analyzers = seasonalCycleTypes.map(sType => {
+	    	val seasonalAnalyzer = createSeasonalAnalyzer(this, appConfig, sType, timeZoneShiftHours, timeStampInMili)
 	        seasonalAnalyzer
 	    })
 	    Some((analyzers, timeStampFieldOrdinal))
-	  } else {
-	    None
-	  }
+	   } else {
+		   None
+	   }
 	  
 	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
 	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
@@ -105,12 +87,13 @@ object NumericalAttrStats extends JobConfiguration {
 	    case Some(fields : Array[Integer]) => keyLen +=  fields.length
 	    case None =>
 	  }
+	  val idLen = keyLen
 	  keyLen += (if (seasonalAnalysis) 1 else 0)
 	  keyLen += (if (seasonalAnalysis && partBySeasonCycle) 1 else 0)
 	  keyLen += 2
 	  
 	  val data = sparkCntxt.textFile(inputPath)
-	  val keyedData = data.flatMap(line => {
+	  var keyedRecs = data.flatMap(line => {
 		   val items = line.split(fieldDelimIn, -1)
 		   val fieldStats = numAttrOrdinals.map(attr => {
 		     val key = Record(keyLen)
@@ -156,7 +139,13 @@ object NumericalAttrStats extends JobConfiguration {
 		     (key,value)
 		   })
 		   fieldStats
-	  }).reduceByKey((v1, v2) => {
+	  })
+	  
+	  //filter invalid seasonal index
+	  keyedRecs = filtInvalidSeasonalIndex(keyedRecs, seasonalAnalysis, idLen)
+	  
+	  //aggregate
+	  keyedRecs = keyedRecs.reduceByKey((v1, v2) => {
 	    val aggr = Record(5)
 	    v1.intialize
 	    v2.intialize
@@ -183,7 +172,7 @@ object NumericalAttrStats extends JobConfiguration {
 	  })
 	  
 	  //calculate stats
-	  val stats = keyedData.map(kv => {
+	  val statsRecs = keyedRecs.map(kv => {
 	    val stat = Record(8)
 	    kv._2.intialize
 	    val sum = kv._2.getDouble()
@@ -209,11 +198,11 @@ object NumericalAttrStats extends JobConfiguration {
 	  })
 	  
 	  if (debugOn) {
-	     stats.collect.foreach(s => println(s))
+	     statsRecs.collect.foreach(s => println(s))
 	  }
 	   
 	  if (saveOutput) {
-	     stats.saveAsTextFile(outputPath)
+	     statsRecs.saveAsTextFile(outputPath)
 	  }
 	  
    }

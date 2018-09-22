@@ -55,7 +55,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 		     case Some(fields:Array[Integer]) => fields.length + 1
 		     case None =>1
 	   }
-	   
+	   val idLen = keyLen - 1
 	   
 	   //val keyFieldOrdinals = getMandatoryIntListParam(appConfig, "id.field.ordinals").asScala.toArray
 	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals", "").asScala.toArray
@@ -98,7 +98,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 	   val data = sparkCntxt.textFile(inputPath)
 	   
 	   //key with record key and attr ordinal and value map of counts
-	   val pairedData = data.flatMap(line => {
+	   var keyedRecs = data.flatMap(line => {
 		   val items = line.split(fieldDelimIn, -1)
 		   val attrValCount = binWidths.map(ord => {
 		     //key
@@ -141,8 +141,21 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 		   attrValCount
 	   })
 	   
+	  //filter invalid seasonal index
+	  keyedRecs  = 
+	  if (seasonalAnalysis) {
+	    val filt = keyedRecs.filter(v => {
+	      val key = v._1
+	      val ci = idLen + 1
+	      key.getInt(ci) >= 0
+	    })
+	    filt
+	  } else {
+	    keyedRecs
+	  }
+	   
 	   //merge histograms
-	   val stats = pairedData.reduceByKey((h1, h2) => h1.merge(h2))
+	   val stats = keyedRecs.reduceByKey((h1, h2) => h1.merge(h2))
 	   val colStats = stats.collect
 	   
 	   //reference stats

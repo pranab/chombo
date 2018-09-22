@@ -114,10 +114,11 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 		     case Some(fields:Array[Integer]) => fields.length + 1
 		     case None =>1
 	  }
+	  val idLen = keyLen - 1
 	  keyLen += (if (seasonalAnalysis) 2 else 0)
 
 	  val data = sparkCntxt.textFile(inputPath)
-	  val keyedRecs = data.flatMap(line => {
+	  var keyedRecs = data.flatMap(line => {
 		   val items = line.split(fieldDelimIn, -1)
 		   val fieldStats = numAttrOrdinals.map(attrOrd => {
 		     //val attrOrd = attr
@@ -160,11 +161,15 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 		       val value = items(attrOrd).toDouble
 		       Math.abs(value - med)
 		     }
-		     
-		     (key,quantVal)
+		     val value = Record(1)
+		     value.addDouble(quantVal)
+		     (key,value)
 		   })
 		   fieldStats
-	  })	
+	  })
+	  
+	  //filter invalid seasonal index
+	  keyedRecs = filtInvalidSeasonalIndex(keyedRecs, seasonalAnalysis, idLen)
 	  
       //median or median absolute deviation
 	  val statRecs = keyedRecs.groupByKey.mapValues(v => {
@@ -172,7 +177,11 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
     	Sorting.quickSort(vAr)
     	val size = vAr.length
     	val h = size / 2
-    	var med = if (size % 2 == 1) vAr(h) else (vAr(h -1) + vAr(h)) / 2
+    	var med = if (size % 2 == 1) { 
+    	  vAr(h).getDouble(0) 
+    	} else {
+    	   (vAr(h -1).getDouble(0) + vAr(h).getDouble(0)) / 2
+    	}
     	
     	if (operation.equals("mad")) med *= 1.4296
 	    med

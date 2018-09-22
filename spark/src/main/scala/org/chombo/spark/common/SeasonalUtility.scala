@@ -19,6 +19,7 @@
 package org.chombo.spark.common
 
 import scala.collection.JavaConverters._
+import org.apache.spark.rdd.RDD
 import org.chombo.util.SeasonalAnalyzer;
 import org.chombo.util.BasicUtils
 import com.typesafe.config.ConfigFactory
@@ -31,6 +32,14 @@ import com.typesafe.config.Config
  */
 trait SeasonalUtility {
   
+	/**
+	 * @param jobConfig
+	 * @param appConfig
+	 * @param sType
+	 * @param timeZoneShiftHours
+	 * @param timeStampInMili
+	 * @return
+	 */
 	def createSeasonalAnalyzer(jobConfig : JobConfiguration, appConfig: com.typesafe.config.Config, 
 	    sType : String, timeZoneShiftHours:Int, timeStampInMili:Boolean) : SeasonalAnalyzer = {
 		val seasonalAnalyzer = new SeasonalAnalyzer(sType)
@@ -56,6 +65,28 @@ trait SeasonalUtility {
     	}
     	seasonalAnalyzer.setTimeStampInMili(timeStampInMili)
         seasonalAnalyzer
+	}
+	
+	/**
+	 * @param keyedRecs
+	 * @param seasonalAnalysis
+	 * @param idLen
+	 * @return
+	 */
+	def filtInvalidSeasonalIndex(keyedRecs:RDD[(Record, Record)], seasonalAnalysis: Boolean, idLen:Int) : 
+		RDD[(Record, Record)] = {
+	  val filtKeyedRecs = 
+	  if (seasonalAnalysis) {
+	    val filt = keyedRecs.filter(v => {
+	      val key = v._1
+	      val ci = idLen + 1
+	      key.getInt(ci) >= 0
+	    })
+	    filt
+	  } else {
+	    keyedRecs
+	  }
+	  filtKeyedRecs
 	}
 	
 }
