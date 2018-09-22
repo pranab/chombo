@@ -166,4 +166,33 @@ public class MathUtils {
     	return a.times(b);
     }
 
+    /**
+     * @param a
+     * @param b
+     * @return
+     */
+    public static double[][] multiplyMatrix(double[][] a, double[][] b) {
+    	Matrix am = new Matrix(a);
+    	Matrix bm = new Matrix(b);
+    	Matrix c = am.times(bm);
+    	return c.getArray();
+    }
+
+    /**
+     * @param a
+     * @return
+     */
+    public static Matrix transposeMatrix(Matrix a) {
+    	return a.transpose();
+    }
+    
+    /**
+     * @param a
+     * @return
+     */
+    public static double[][] transposeMatrix(double[][] a) {
+    	Matrix am = new Matrix(a);
+    	Matrix c = am.transpose();
+    	return c.getArray();
+    }
 }
