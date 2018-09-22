@@ -20,10 +20,12 @@ package org.chombo.spark.explore
 import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
+import scala.util.Sorting
 import org.chombo.spark.common.Record
 import org.chombo.util.SeasonalAnalyzer
 import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.BasicUtils
+import org.chombo.stats.MedianStatsManager
 
 /**
  * Numerical fields median stats
@@ -55,6 +57,33 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 	      "missing quant attribute ordinals").asScala.toArray
 	  val numAttrOrdinalsIndx = numAttrOrdinals.zipWithIndex
 	  val operation = getMandatoryStringParam(appConfig, "operation.type")
+	  
+	  val medStatMan = if (operation.equals("mad")) {
+	    val configParams = new java.util.HashMap[String, Object]()
+	    val partIdOrds = getOptionalIntListParam(appConfig, "id.fieldOrdinals");
+	    val idOrdinals = partIdOrds match {
+	     	case Some(idOrdinals: java.util.List[Integer]) => BasicUtils.fromListToIntArray(idOrdinals)
+	     	case None => null
+	    }
+	    configParams.put("id.fieldOrdinals", idOrdinals)
+
+	    val seasonalAnalysis:java.lang.Boolean = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
+	    configParams.put("seasonal.analysis", seasonalAnalysis);
+	       
+	    val isHdfsFile = getBooleanParamOrElse(appConfig, "hdfs.file", false)
+	    configParams.put("hdfs.file", new java.lang.Boolean(isHdfsFile))
+	   	    
+	    val medFilePath = getMandatoryStringParam(appConfig, "med.file.path", "missing median file path")
+	    configParams.put("med.filePath", medFilePath)
+	    
+	    val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
+	    configParams.put("field.delim.in", fieldDelimIn)
+
+	    new MedianStatsManager(configParams, "med.file.path", "field.delim.in", "id.fieldOrdinals", 
+	        "hdfs.file", "seasonal.analysis") 
+	  } else {
+	    null
+	  }
 	   
 	   //seasonal data
 	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
@@ -79,6 +108,7 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
 	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
+	  
 
 	  var keyLen = keyFieldOrdinals match {
 		     case Some(fields:Array[Integer]) => fields.length + 1
@@ -118,26 +148,34 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 		     key.addInt(attrOrd)
 		     
 		     //value
-		     val quantVal = items(attrOrd).toDouble
+		     val quantVal = if (operation.equals("med")) {
+		       items(attrOrd).toDouble
+		     } else {
+		       val med = if (keyLen == 1) {
+		         medStatMan.getMedian(attrOrd)
+		       } else {
+		         val compKey = key.toString(0, key.size - 1)
+		         medStatMan.getKeyedMedian(compKey, attrOrd)
+		       }
+		       val value = items(attrOrd).toDouble
+		       Math.abs(value - med)
+		     }
 		     
 		     (key,quantVal)
 		   })
 		   fieldStats
 	  })	
 	  
+      //median or median absolute deviation
 	  val statRecs = keyedRecs.groupByKey.mapValues(v => {
-	    val value = if (operation.equals("med")) {
-	        //median
-	    	val vAr = v.toArray
-	    	val size = vAr.length
-	    	val h = size / 2
-	    	val med = if (size % 2 == 1) vAr(h) else (vAr(h -1) + vAr(h)) / 2
-	    	med
-	  	} else {
-	  		//median absolute division
-	  		0.0
-	  	}
-	    value
+    	val vAr = v.toArray
+    	Sorting.quickSort(vAr)
+    	val size = vAr.length
+    	val h = size / 2
+    	var med = if (size % 2 == 1) vAr(h) else (vAr(h -1) + vAr(h)) / 2
+    	
+    	if (operation.equals("mad")) med *= 1.4296
+	    med
 	  })
 	  
 	  val serStatsRecs = statRecs.map(v => {

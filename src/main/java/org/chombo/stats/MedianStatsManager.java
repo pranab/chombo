@@ -86,16 +86,48 @@ public class MedianStatsManager {
 	 * @param config
 	 * @param medFilePathParam
 	 * @param madFilePathParam
-	 * @param delim
-	 * @param idOrdinals
+	 * @param fieldDelimParam
+	 * @param idOrdinalsParam
+	 * @param hdfsFilePram
+	 * @param seasonalParam
 	 * @throws IOException
 	 */
-	public MedianStatsManager(Map<String, Object> config, String medFilePath, String madFilePath,  
-			String delim, int[] idOrdinals, boolean hdfsFile, boolean seasonal) 
+	public MedianStatsManager(Map<String, Object> config, String medFilePathParam, String madFilePathParam,  
+			String fieldDelimParam, String idOrdinalsParam, String hdfsFilePram, String seasonalParam) 
 			throws IOException {
-		this.idOrdinals = idOrdinals;
-		loadMedianStat(config, medFilePath,  delim, idOrdinals, medians, keyedMedians,  hdfsFile,  seasonal);
-		loadMedianStat(config, madFilePath,  delim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  hdfsFile,  seasonal);
+		idOrdinals = ConfigUtility.getIntArray(config, idOrdinalsParam);
+		String fieldDelim = ConfigUtility.getString(config, fieldDelimParam, ",");
+		
+		String medFilePath = ConfigUtility.getString(config, medFilePathParam);
+		String madFilePath = ConfigUtility.getString(config, madFilePathParam);
+		boolean hdfsFile = ConfigUtility.getBoolean(config, hdfsFilePram);
+		boolean seasonal = ConfigUtility.getBoolean(config, seasonalParam);
+
+		loadMedianStat(config, medFilePath,  fieldDelim, idOrdinals, medians, keyedMedians,  hdfsFile,  seasonal);
+		loadMedianStat(config, madFilePath,  fieldDelim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  hdfsFile,  seasonal);
+	}
+	
+	
+	/**
+	 * @param config
+	 * @param medFilePathParam
+	 * @param fieldDelimParam
+	 * @param idOrdinalsParam
+	 * @param hdfsFilePram
+	 * @param seasonalParam
+	 * @throws IOException
+	 */
+	public MedianStatsManager(Map<String, Object> config, String medFilePathParam,   
+			String fieldDelimParam, String idOrdinalsParam, String hdfsFilePram, String seasonalParam) 
+			throws IOException {
+		idOrdinals = ConfigUtility.getIntArray(config, idOrdinalsParam);
+		String fieldDelim = ConfigUtility.getString(config, fieldDelimParam, ",");
+		
+		String medFilePath = ConfigUtility.getString(config, medFilePathParam);
+		boolean hdfsFile = ConfigUtility.getBoolean(config, hdfsFilePram);
+		boolean seasonal = ConfigUtility.getBoolean(config, seasonalParam);
+
+		loadMedianStat(config, medFilePath,  fieldDelim, idOrdinals, medians, keyedMedians,  hdfsFile,  seasonal);
 	}
 
 	/**
