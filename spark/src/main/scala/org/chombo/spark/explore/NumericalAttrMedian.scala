@@ -58,6 +58,27 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 	  val numAttrOrdinalsIndx = numAttrOrdinals.zipWithIndex
 	  val operation = getMandatoryStringParam(appConfig, "operation.type")
 	  
+	   //seasonal data
+	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
+	   val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
+	   val seasonalAnalyzers = if (seasonalAnalysis) {
+		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	        "missing seasonal cycle type").asScala.toArray
+	        val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
+	        val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
+	        "missing time stamp field ordinal")
+	        val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
+	        
+	        val analyzers = seasonalCycleTypes.map(sType => {
+	    	val seasonalAnalyzer = createSeasonalAnalyzer(this, appConfig, sType, timeZoneShiftHours, timeStampInMili)
+	        seasonalAnalyzer
+	    })
+	    Some((analyzers, timeStampFieldOrdinal))
+	   } else {
+		   None
+	   }
+
+	  //median stats
 	  val medStatMan = if (operation.equals("mad")) {
 	    val configParams = new java.util.HashMap[String, Object]()
 	    val partIdOrds = getOptionalIntListParam(appConfig, "id.fieldOrdinals");
@@ -79,36 +100,15 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 	    val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	    configParams.put("field.delim.in", fieldDelimIn)
 
-	    new MedianStatsManager(configParams, "med.file.path", "field.delim.in", "id.fieldOrdinals", 
-	        "hdfs.file", "seasonal.analysis") 
+	    new MedianStatsManager(configParams, medFilePath, fieldDelimIn, idOrdinals, 
+	        isHdfsFile, seasonalAnalysis) 
 	  } else {
 	    null
 	  }
 	   
-	   //seasonal data
-	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
-	   val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
-	   val seasonalAnalyzers = if (seasonalAnalysis) {
-		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
-	        "missing seasonal cycle type").asScala.toArray
-	        val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
-	        val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
-	        "missing time stamp field ordinal")
-	        val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
-	        
-	        val analyzers = seasonalCycleTypes.map(sType => {
-	    	val seasonalAnalyzer = createSeasonalAnalyzer(this, appConfig, sType, timeZoneShiftHours, timeStampInMili)
-	        seasonalAnalyzer
-	    })
-	    Some((analyzers, timeStampFieldOrdinal))
-	   } else {
-		   None
-	   }
-	   
 	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
 	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
-	  
 
 	  var keyLen = keyFieldOrdinals match {
 		     case Some(fields:Array[Integer]) => fields.length + 1

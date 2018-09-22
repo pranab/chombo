@@ -92,19 +92,12 @@ public class MedianStatsManager {
 	 * @param seasonalParam
 	 * @throws IOException
 	 */
-	public MedianStatsManager(Map<String, Object> config, String medFilePathParam, String madFilePathParam,  
-			String fieldDelimParam, String idOrdinalsParam, String hdfsFilePram, String seasonalParam) 
+	public MedianStatsManager(Map<String, Object> config, String medFilePath, String madFilePath,  
+			String fieldDelim, int[] idOrdinals, boolean hdfsFile, boolean seasonal) 
 			throws IOException {
-		idOrdinals = ConfigUtility.getIntArray(config, idOrdinalsParam);
-		String fieldDelim = ConfigUtility.getString(config, fieldDelimParam, ",");
-		
-		String medFilePath = ConfigUtility.getString(config, medFilePathParam);
-		String madFilePath = ConfigUtility.getString(config, madFilePathParam);
-		boolean hdfsFile = ConfigUtility.getBoolean(config, hdfsFilePram);
-		boolean seasonal = ConfigUtility.getBoolean(config, seasonalParam);
-
-		loadMedianStat(config, medFilePath,  fieldDelim, idOrdinals, medians, keyedMedians,  hdfsFile,  seasonal);
-		loadMedianStat(config, madFilePath,  fieldDelim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  hdfsFile,  seasonal);
+		this.idOrdinals = idOrdinals;
+		loadMedianStat(medFilePath,  fieldDelim, idOrdinals, medians, keyedMedians,  hdfsFile,  seasonal);
+		loadMedianStat(madFilePath,  fieldDelim, idOrdinals, medAbsDiv, keyedMedAbsDiv,  hdfsFile,  seasonal);
 	}
 	
 	
@@ -117,17 +110,11 @@ public class MedianStatsManager {
 	 * @param seasonalParam
 	 * @throws IOException
 	 */
-	public MedianStatsManager(Map<String, Object> config, String medFilePathParam,   
-			String fieldDelimParam, String idOrdinalsParam, String hdfsFilePram, String seasonalParam) 
+	public MedianStatsManager(Map<String, Object> config, String medFilePath,   
+			String fieldDelim, int[] idOrdinals, boolean hdfsFile, boolean seasonal) 
 			throws IOException {
-		idOrdinals = ConfigUtility.getIntArray(config, idOrdinalsParam);
-		String fieldDelim = ConfigUtility.getString(config, fieldDelimParam, ",");
-		
-		String medFilePath = ConfigUtility.getString(config, medFilePathParam);
-		boolean hdfsFile = ConfigUtility.getBoolean(config, hdfsFilePram);
-		boolean seasonal = ConfigUtility.getBoolean(config, seasonalParam);
-
-		loadMedianStat(config, medFilePath,  fieldDelim, idOrdinals, medians, keyedMedians,  hdfsFile,  seasonal);
+		this.idOrdinals = idOrdinals;
+		loadMedianStat(medFilePath,  fieldDelim, idOrdinals, medians, keyedMedians,  hdfsFile,  seasonal);
 	}
 
 	/**
@@ -170,7 +157,7 @@ public class MedianStatsManager {
 	 * @param keyedStats
 	 * @throws IOException
 	 */
-	private void loadMedianStat(Map<String, Object> config, String statFilePath,   String delim, int[] idOrdinals, 
+	private void loadMedianStat(String statFilePath,  String delim, int[] idOrdinals, 
 			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats, boolean hdfsFile, boolean seasonal) 
 			throws IOException {
 		List<String> lines  = null;
