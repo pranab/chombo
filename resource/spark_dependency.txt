@@ -1,0 +1,22 @@
+Build all necessary jars
+========================
+in chombo
+mvn clean install
+sbt publishLocal
+
+in chombo/spark
+sbt clean package
+sbt publishLocal
+
+Build uber jar
+==============
+ant -f chombo_spark.xml
+
+uber jar file name is uber-chombo-spark-1.0.jar
+
+If you are using Spark 2.0+, please add the following line to chombo_spark.xml, because 
+type safe jar is not included in newer versions of Spark
+
+<zipgroupfileset dir="/Users/pranab/.ivy2/cache/com.typesafe/config/jars" includes="config-1.2.1.jar" />
+
+Please change the directory path, as per your environment
