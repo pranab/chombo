@@ -333,6 +333,19 @@ public class SeasonalAnalyzer implements Serializable {
 	}
 
 	/**
+	 * @param analyzer
+	 * @param timeStamp
+	 * @return
+	 */
+	public static Pair<String, Integer> getCycleIndex(SeasonalAnalyzer analyzer, long timeStamp) {
+		Pair<String, Integer> seasonalCycle = new Pair<String, Integer>("normal", 0);
+		int cycleIndex = analyzer.getCycleIndex(timeStamp);
+		seasonalCycle.setLeft(analyzer.seasonalCycleType);
+		seasonalCycle.setRight(cycleIndex);
+		return seasonalCycle;
+	}
+
+	/**
 	 * @param analyzers
 	 * @param timeStamp
 	 * @return
