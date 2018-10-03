@@ -17,6 +17,8 @@
 
 package org.chombo.stats;
 
+import org.chombo.util.BasicUtils;
+
 
 /**
  * @author pranab
@@ -36,6 +38,7 @@ public class SimpleStat extends MeanStat {
 	 */
 	public SimpleStat(int count, double sum,  double sumSq, double mean, double stdDev) {
 		super(count, sum,  mean);
+		this.sumSq = sumSq;
 		this.stdDev = stdDev;
 	}
 	
@@ -111,6 +114,42 @@ public class SimpleStat extends MeanStat {
 		
 	public int getCount() {
 		return count;
+	}
+
+	public double getSumSq() {
+		return sumSq;
+	}
+
+	public void setSumSq(double sumSq) {
+		this.sumSq = sumSq;
+	}
+
+	public void setStdDev(double stdDev) {
+		this.stdDev = stdDev;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		StringBuilder stBld = new StringBuilder();
+		stBld.append(count).append(delim).append(BasicUtils.formatDouble(sum)).append(delim).
+		append(sumSq).append(delim).append(mean).append(delim).append(stdDev);
+		return stBld.toString();
+	}
+	
+	/**
+	 * @param rec
+	 */
+	public void fromString(String rec) {
+		String[] items = rec.split(delim, -1);
+		int i = 0;
+		count = Integer.parseInt(items[i++]);
+		sum = Double.parseDouble(items[i++]);
+		sumSq = Double.parseDouble(items[i++]);
+		mean = Double.parseDouble(items[i++]);
+		stdDev = Double.parseDouble(items[i]);
+		processed = true;
 	}
 	
 }

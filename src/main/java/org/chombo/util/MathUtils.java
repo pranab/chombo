@@ -27,7 +27,71 @@ import Jama.Matrix;
  */
 public class MathUtils {
 	
-    /**
+	//student t distribution with infinite sample size
+	public static final double[][] tDistr = new double[][] {
+		{0.900, 1.282},
+		{0.950, 1.645},
+		{0.975, 1.960},
+		{0.990, 2.326},
+		{0.995, 2.576}
+	};
+	
+	/**
+	 * @param data
+	 * @return
+	 */
+	public static double average(double[] data) {
+		double sum = 0;
+		for (double d : data){
+			sum += d;
+		}
+		return sum / data.length;
+	}
+	
+	/**
+	 * @param data
+	 * @param weight
+	 * @return
+	 */
+	public static double weightedAverage(double[] data, double[] weight) {
+		double sum = 0;
+		double sumWt = 0;
+		for (int i = 0; i < data.length; ++i){
+			sum += data[i] * weight[i];
+			sumWt += weight[i];
+		}
+		return sum / sumWt;
+	}
+
+	/**
+	 * @param data
+	 * @return
+	 */
+	public static double max(double[] data) {
+		double max = Double.MIN_VALUE;
+		for (double d : data){
+			if (d > max) {
+				max = d;
+			}
+		}
+		return max;
+	}
+
+	/**
+	 * @param data
+	 * @return
+	 */
+	public static double min(double[] data) {
+		double min = Double.MAX_VALUE;
+		for (double d : data){
+			if (d < min) {
+				min = d;
+			}
+		}
+		return min;
+	}
+
+	/**
      * @param cons
      * @param val
      * @return
@@ -46,6 +110,15 @@ public class MathUtils {
     	double e = Math.exp(-cons * val);
     	return 1 / (1 + e);
     }
+
+    /**
+     * @param table
+     * @param x
+     * @return
+     */
+    public static double linearInterpolate(double[][] table, double x) {
+    	return linearInterpolate(table,  x, false);
+    }   
     
     /**
      * @param table
