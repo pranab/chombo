@@ -667,6 +667,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	override def hashCode() : Int = {
 	  var hashCode = 0
 	  array.foreach(a => hashCode += a.hashCode)
+	  hashCode = if (hashCode < 0) -hashCode else hashCode
 	  hashCode
 	}
 	
@@ -678,6 +679,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  for (i <- 0 to (size - 1 - secondaryKeySize)) {
 	    hashCode += array(i).hashCode
 	  }
+	  hashCode = if (hashCode < 0) -hashCode else hashCode
 	  hashCode
 	}
 	

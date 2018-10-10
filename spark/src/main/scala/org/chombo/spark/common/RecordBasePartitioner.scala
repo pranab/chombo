@@ -33,6 +33,7 @@ class RecordBasePartitioner(partitions: Int) extends Partitioner {
 	 */
 	override def getPartition(key: Any): Int = {
       val rec = key.asInstanceOf[Record]
-      rec.baseHashCode() % numPartitions
+      var hCode = rec.baseHashCode()
+      hCode % numPartitions
     }
 }
