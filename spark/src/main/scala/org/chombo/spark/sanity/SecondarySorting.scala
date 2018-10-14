@@ -22,7 +22,7 @@ import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
 import org.chombo.spark.common.RecordBasePartitioner
-//import org.chombo.util.Record
+
 
 object SecondarySorting extends JobConfiguration {
    
@@ -69,7 +69,21 @@ object SecondarySorting extends JobConfiguration {
 	 })
 	 println("keyed data prepared")
 	 
-	 val keyedDataSorted = keyedData.repartitionAndSortWithinPartitions(new RecordBasePartitioner(2))
+	 var keyedDataSorted = keyedData.repartitionAndSortWithinPartitions(new RecordBasePartitioner(2))
+	 
+	 keyedDataSorted.foreachPartition(p => {
+	   val l = p.toList
+	   var curKey = ""
+	   l.foreach(v => {
+	     val items = v._2.split(fieldDelimIn, -1)
+	     val key = items(0)
+	     if (!key.equals(curKey)) {
+	       val ts = items(1)
+	       println(key + fieldDelimOut + ts)
+	       curKey = key
+	     }
+	   })
+	 })
 	 
 	 if (debugOn) {
          val records = keyedDataSorted.collect

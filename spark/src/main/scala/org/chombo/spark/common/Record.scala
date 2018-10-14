@@ -140,6 +140,23 @@ object Record {
 	  }
 	  rec
   }
+  
+  /**
+  * @param fields
+  * @param keyFieldOrdinals
+  * @param rec
+  */
+  def populateFields(fields:Array[String], fieldOrdinals:Option[Array[Integer]], rec:Record)  {
+	  fieldOrdinals match {
+	      case Some(fieldOrds : Array[Integer]) => {
+	    	  for (kf <- fieldOrds) {
+	    		  rec.addString(fields(kf))
+			  }
+	      }
+	      case None =>
+	  }
+   }
+ 
 }
 
 /**
@@ -175,7 +192,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	/**
 	 * @param size
 	 * @param record
-	 * @offset
+	 * @param offset
 	 */
 	def this(size:Int, record:Record, offset:Int) {
 	  this(size)
