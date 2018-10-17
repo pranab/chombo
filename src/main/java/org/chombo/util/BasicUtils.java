@@ -1602,6 +1602,26 @@ public class BasicUtils {
     }
     
     /**
+     * @param filePath
+     * @param keyLen
+     * @param quantFldOrd
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, Double> getKeyedValues(String filePath, int keyLen, int quantFldOrd) throws IOException {
+    	Map<String, Double> keyedValues = new HashMap<String, Double>();
+    	List<String> lines = getFileLines(filePath);
+    	for (String line : lines) {
+    		String[] items = line.split(DEF_FIELD_DELIM, -1);
+    		int pos = findOccurencePosition(line, DEF_FIELD_DELIM, keyLen, true);
+    		String key = line.substring(0, pos);
+    		Double value = Double.parseDouble(items[quantFldOrd]);
+    		keyedValues.put(key, value);
+    	}
+    	return keyedValues;
+    }
+    
+    /**
      * @param values
      * @param value
      * @return
