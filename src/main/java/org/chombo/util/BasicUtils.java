@@ -1609,6 +1609,19 @@ public class BasicUtils {
      * @throws IOException
      */
     public static Map<String, Double> getKeyedValues(String filePath, int keyLen, int quantFldOrd) throws IOException {
+    	return getKeyedValues(filePath, keyLen, quantFldOrd, DEF_FIELD_DELIM);
+    }  
+    
+    /**
+     * @param filePath
+     * @param keyLen
+     * @param quantFldOrd
+     * @param fieldDelim
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, Double> getKeyedValues(String filePath, int keyLen, int quantFldOrd, String fieldDelim) 
+    	throws IOException {
     	Map<String, Double> keyedValues = new HashMap<String, Double>();
     	List<String> lines = getFileLines(filePath);
     	for (String line : lines) {
