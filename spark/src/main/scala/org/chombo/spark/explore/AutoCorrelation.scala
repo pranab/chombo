@@ -47,14 +47,41 @@ object AutoCorrelation extends JobConfiguration {
 	  
 	  //key length
 	  var keyLen = 0
+	  var keyDefined = true
 	  keyFieldOrdinals match {
 	    case Some(fields : Array[Integer]) => keyLen +=  fields.length
-	    case None =>
+	    case None => keyDefined = false
 	  }
 	  keyLen += 4
 	  
 	  val data = sparkCntxt.textFile(inputPath)
-	  val keyedData = data.flatMap(line => {
+	  val seqData = 
+	  if (keyDefined) {
+		  data.map(line => {
+			   val fields = line.split(fieldDelimIn, -1)
+			   val key = Record(keyLen - 3)
+	           Record.populateFields(fields, keyFieldOrdinals, key)
+	           val seq = fields(seqFieldOrd).toLong
+	           key.addLong(key.size-1, seq)
+	           (key, line)
+		  }).sortByKey(true).zipWithIndex.map(z => {
+		    val fields = z._1._2.split(fieldDelimIn, -1)
+		    fields(seqFieldOrd) = z._2.toString
+		    fields.mkString(fieldDelimIn)
+		  })
+	  } else {
+		  data.sortBy(line => {
+		    val fields = line.split(fieldDelimIn, -1)
+		    fields(seqFieldOrd).toLong
+		  }, true).zipWithIndex.map(z => {
+		    val fields = z._1.split(fieldDelimIn, -1)
+		    fields(seqFieldOrd) = z._2.toString
+		    fields.mkString(fieldDelimIn)
+		  })
+	  }
+	  
+	  //key with id fields, quant field, lag, seq pair
+	  val keyedData = seqData.flatMap(line => {
 		   val items = line.split(fieldDelimIn, -1)
 		   val seq = items(seqFieldOrd).toInt
 		   val recs = ArrayBuffer[(Record, Record)]()
@@ -147,14 +174,7 @@ object AutoCorrelation extends JobConfiguration {
    def buildKey(fld:Int, lag:Integer, firstSeq: Int, secondSeq: Int, keyLen:Int, keyFieldOrdinals:Option[Array[Integer]], 
       items: Array[String]) : Record = {
        val key = Record(keyLen)
-       keyFieldOrdinals match {
-         case Some(fields : Array[Integer]) => {
-           for (kf <- fields) {
-             key.addString(items(kf))
-           }
-         }
-         case None =>
-       }
+       Record.populateFields(items, keyFieldOrdinals, key)
        key.addInt(fld)
        key.addInt(lag)
        key.addInt(firstSeq)
