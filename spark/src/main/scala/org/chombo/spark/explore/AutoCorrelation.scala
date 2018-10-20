@@ -40,10 +40,7 @@ object AutoCorrelation extends JobConfiguration {
 	  val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", 
 	      "missing quant attribute ordinals").asScala.toArray
 	  val corrLags = getMandatoryIntListParam(appConfig, "coor.lags", "missing correlation lags").asScala.toArray
-	  val meanValues = this.getMandatoryIntDoubleMapParam(appConfig, "mean.values", "missing mean values")
 	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
-	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
-	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 	  
 	  //key length
 	  var keyLen = 0
@@ -54,6 +51,16 @@ object AutoCorrelation extends JobConfiguration {
 	  }
 	  keyLen += 4
 	  
+	  //mean values from stats output file
+	  val statsPath = getMandatoryStringParam(appConfig, "stats.file.path", "missing stat file path")
+	  var statsKeyLen = keyLen - 4
+	  statsKeyLen += 1
+	  val meanFldOrd = statsKeyLen + getMandatoryIntParam(appConfig, "mean.fldOrd","missing mean field ordinal")
+	  val meanValueMap = BasicUtils.getKeyedValues(statsPath, statsKeyLen, meanFldOrd)
+	  
+	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
+	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
+
 	  val data = sparkCntxt.textFile(inputPath)
 	  val seqData = 
 	  if (keyDefined) {
@@ -111,27 +118,31 @@ object AutoCorrelation extends JobConfiguration {
 		   
 		   recs
 	  })
-
-	  var corRecs = keyedData.groupByKey.mapValues(v => {
-	    val a = v.toArray
-	    if (a.length == 2) {
+	  
+	  //auto correlation terms
+	  var corRecs = keyedData.groupByKey.map(r => {
+	    val key = r._1
+	    val va = r._2.toArray
+	    if (va.length == 2) {
 	      val value = Record(2)
-	      val pair = if (a(0).getInt(0) < a(1).getInt(0)) {
-	        (a(0), a(1))
+	      val pair = if (va(0).getInt(0) < va(1).getInt(0)) {
+	        (va(0), va(1))
 	      } else {
-	        (a(1), a(0))
+	        (va(1), va(0))
 	      }
-	      val fldOrd = pair._1.getInt(1)
-	      val mean = meanValues.get(fldOrd)
+	      
+	      val statsKey = key.toString(0, key.size-3)
+	      val mean = meanValueMap.get(statsKey)
 	      val lagDiff = pair._1.getDouble(2) - mean
 	      val curDiff = pair._2.getDouble(2) - mean
+	      
 	      value.addDouble(curDiff * lagDiff)
 	      value.addDouble(curDiff * curDiff)
-	      value
+	      (key, value)
 	    } else {
-	      val rec = Record(1)
-	      rec.addString("x")
-	      rec
+	      val value = Record(1)
+	      value.addString("x")
+	      (key, value)
 	    }
 	  })
 	  
@@ -145,7 +156,7 @@ object AutoCorrelation extends JobConfiguration {
 	    (newKey, kv._2)
 	  })
 	  
-	  //aggregate
+	  //aggregate correlation terms
 	  corRecs = corRecs.reduceByKey((v1,v2) => {
 	    val rec = Record(2)
 	    rec.addDouble(v1.getDouble(0) + v2.getDouble(0))
@@ -153,6 +164,7 @@ object AutoCorrelation extends JobConfiguration {
 	    rec
 	  }) 
 	  
+	  //auto correlation
 	  val autoCor = corRecs.mapValues(v => v.getDouble(0) / v.getDouble(1))
 	  
 	  if (debugOn) {
