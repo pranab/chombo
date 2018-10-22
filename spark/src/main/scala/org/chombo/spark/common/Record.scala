@@ -157,6 +157,9 @@ object Record {
 	  }
    }
  
+   def setPrecision(floatPrecision : Int) {
+     Record.floatPrecision = floatPrecision
+   }
 }
 
 /**
@@ -168,7 +171,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	var cursor:Int = 0
 	var sortFields:Option[Array[Int]] = None
 	var secondaryKeySize = 1
-
+	var floatPrecision = -1
+	
 	/**
 	 * @param size
 	 * @param record
@@ -734,7 +738,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	def toString(delim : String) : String = {
 	  val stArray = array.map(a => {
 	    if (a.isInstanceOf[Double]) {
-	      BasicUtils.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
+	      val precision = if (this.floatPrecision > 0)   this.floatPrecision else Record.floatPrecision
+	      BasicUtils.formatDouble(a.asInstanceOf[Double], precision)
 	    } else {
 	      a
 	    }
@@ -761,7 +766,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  val sarray = array.slice(beg, end)
 	  val stArray = sarray.map(a => {
 	    if (a.isInstanceOf[Double]) {
-	      BasicUtils.formatDouble(a.asInstanceOf[Double], Record.floatPrecision)
+	      val precision = if (this.floatPrecision > 0)   this.floatPrecision else Record.floatPrecision
+	      BasicUtils.formatDouble(a.asInstanceOf[Double], precision)
 	    } else {
 	      a
 	    }
@@ -855,6 +861,15 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	   hashCode += array(i).hashCode
 	  }
 	  hashCode
+	}
+	
+	/**
+	 * @param floatPrecision
+	 * @return
+	 */
+	def withFloatPrecision(floatPrecision:Int) : Record =  {
+	  this.floatPrecision = floatPrecision
+	  return this
 	}
 	
 }

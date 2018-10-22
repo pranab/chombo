@@ -68,6 +68,7 @@ object TemporalAggregator extends JobConfiguration {
 	   }
 	   val aggrType = getStringParamOrElse(appConfig, "aggr.type", "average") 
 	   val outputCompact = getBooleanParamOrElse(appConfig, "output.compact", true)
+	   val outputPrecision = this.getIntParamOrElse(appConfig, "output.precision", 3)
 	   
 	  //key length
 	  var keyLen = 0
@@ -113,14 +114,32 @@ object TemporalAggregator extends JobConfiguration {
 	    }
 	    value
 	  })
-	  
-	  val formData = aggrData.map(r => r._1.toString + fieldDelimOut + r._2.toString)
+	  val outData = 
+	  if (outputCompact) {
+	    aggrData.map(r => {
+	      val key = r._1
+	      val value = r._2
+	      val newKey = Record(key, 0, key.size - 1)
+	      val newValue = Record(2)
+	      newValue.addInt(key.getInt(key.size - 1))
+	      newValue.addDouble(value.getDouble(0))
+	      (newKey, newValue)
+	    }).groupByKey.map(r => {
+	      val key = r._1
+	      val values = r._2.toList
+	      values.sortBy(v => v.getInt(0))
+	      val aggrValues = values.map(v => BasicUtils.formatDouble(v.getDouble(1), outputPrecision))
+	      key.toString + fieldDelimOut + aggrValues.mkString(fieldDelimOut)
+	    })
+	  } else {
+		  aggrData.map(r => r._1.toString + fieldDelimOut + r._2.withFloatPrecision(outputPrecision).toString)
+	  }
 	  if (debugOn) {
-	     formData.collect.foreach(s => println(s))
+	     outData.collect.foreach(s => println(s))
 	  }
 	   
 	  if (saveOutput) {
-	     formData.saveAsTextFile(outputPath)
+	     outData.saveAsTextFile(outputPath)
 	  }
 	  
 	  
