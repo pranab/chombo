@@ -860,6 +860,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  for (i <- 0 to (array.length - suffixLen - 1)) {
 	   hashCode += array(i).hashCode
 	  }
+	  hashCode = if (hashCode < 0) -hashCode else hashCode
 	  hashCode
 	}
 	

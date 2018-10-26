@@ -47,15 +47,15 @@ object TemporalAggregator extends JobConfiguration {
 	   //configuration params
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val attributes = getMandatoryIntListParam(appConfig, "attributes").asScala.toArray
+	   val attrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals").asScala.toArray
 	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
 	   val keyFieldOrdinals = keyFields match {
 	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
 	     case None => None  
 	   }
-	   val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "timeStamp.fieldOrdinal", 
+	   val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
 	       "missing time stamp field ordinal")
-	   val timeStampInMs = this.getBooleanParamOrElse(appConfig, "timeStamp.inMs", true)
+	   val timeStampInMs = this.getBooleanParamOrElse(appConfig, "time.inMili", true)
 	   val aggrWindowTimeUnit = getMandatoryStringParam(appConfig, "aggr.windowTimeUnit", 
 	       "missing aggr window time unit")
 	   val aggrWindowTimeLength = getMandatoryIntParam(appConfig, "aggr.windowTimeLength", 
@@ -90,7 +90,7 @@ object TemporalAggregator extends JobConfiguration {
 		   val ts = fields(timeStampFieldOrdinal).toLong
 		   val tsPart = (ts / timeWindow) * timeWindow
 		   
-		   val recs = attributes.map(fld => {
+		   val recs = attrOrdinals.map(fld => {
 			   val key = Record(keyLen)
 			   Record.populateFields(fields, keyFieldOrdinals, key)
 			   key.addLong(tsPart)
