@@ -105,7 +105,7 @@ object TemporalAggregator extends JobConfiguration {
 	  })
 	  
 	  //aggregate
-	  val aggrData = keyedData.reduceByKey((v1,v2) => (v1._1 + v2._1, v2._1 + v2._2)).mapValues(v => {
+	  val aggrData = keyedData.reduceByKey((v1,v2) => (v1._1 + v2._1, v1._2 + v2._2)).mapValues(v => {
 	    val value = Record(1)
 	    aggrType match {
 	      case "count" => value.addInt(v._1)
@@ -114,8 +114,11 @@ object TemporalAggregator extends JobConfiguration {
 	    }
 	    value
 	  })
+	  
+	  //formatting
 	  val outData = 
 	  if (outputCompact) {
+	    //all quant fields in one line
 	    aggrData.map(r => {
 	      val key = r._1
 	      val value = r._2
@@ -132,16 +135,17 @@ object TemporalAggregator extends JobConfiguration {
 	      key.toString + fieldDelimOut + aggrValues.mkString(fieldDelimOut)
 	    })
 	  } else {
+		  //one line per quant field
 		  aggrData.map(r => r._1.toString + fieldDelimOut + r._2.withFloatPrecision(outputPrecision).toString)
 	  }
+	  
 	  if (debugOn) {
-	     outData.collect.foreach(s => println(s))
+	     outData.collect.slice(0,50).foreach(s => println(s))
 	  }
 	   
 	  if (saveOutput) {
 	     outData.saveAsTextFile(outputPath)
 	  }
-	  
 	  
    }
 
