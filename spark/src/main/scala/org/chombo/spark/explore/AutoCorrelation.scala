@@ -31,7 +31,7 @@ object AutoCorrelation extends JobConfiguration {
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val seqFieldOrd = getMandatoryIntParam(appConfig, "", "missing sequence filed ordinal")
+	   val seqFieldOrd = getMandatoryIntParam(appConfig, "seq.fieldOrdinal", "missing sequence filed ordinal")
 	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
 	   val keyFieldOrdinals = keyFields match {
 	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
@@ -55,13 +55,15 @@ object AutoCorrelation extends JobConfiguration {
 	  val statsPath = getMandatoryStringParam(appConfig, "stats.file.path", "missing stat file path")
 	  var statsKeyLen = keyLen - 4
 	  statsKeyLen += 1
-	  val meanFldOrd = statsKeyLen + getMandatoryIntParam(appConfig, "mean.fldOrd","missing mean field ordinal")
+	  val meanFldOrd = statsKeyLen + getMandatoryIntParam(appConfig, "mean.fieldOrd","missing mean field ordinal")
 	  val meanValueMap = BasicUtils.getKeyedValues(statsPath, statsKeyLen, meanFldOrd)
 	  
 	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
 	  val data = sparkCntxt.textFile(inputPath)
+	  
+	  //replace ts field with seq
 	  val seqData = 
 	  if (keyDefined) {
 		  data.map(line => {
@@ -69,7 +71,7 @@ object AutoCorrelation extends JobConfiguration {
 			   val key = Record(keyLen - 3)
 	           Record.populateFields(fields, keyFieldOrdinals, key)
 	           val seq = fields(seqFieldOrd).toLong
-	           key.addLong(key.size-1, seq)
+	           key.addLong(seq)
 	           (key, line)
 		  }).sortByKey(true).zipWithIndex.map(z => {
 		    val fields = z._1._2.split(fieldDelimIn, -1)
