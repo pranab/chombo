@@ -94,7 +94,7 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 	  
 	  val data = sparkCntxt.textFile(inputPath)
 	  var keyedRecs = data.flatMap(line => {
-		   val items = line.split(fieldDelimIn, -1)
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   val fieldStats = numAttrOrdinals.map(attr => {
 		     val key = Record(keyLen)
 		     val value = Record(5)

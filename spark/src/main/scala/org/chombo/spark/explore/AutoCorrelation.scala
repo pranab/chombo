@@ -67,7 +67,7 @@ object AutoCorrelation extends JobConfiguration {
 	  val seqData = 
 	  if (keyDefined) {
 		  data.map(line => {
-			   val fields = line.split(fieldDelimIn, -1)
+			   val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 			   val key = Record(keyLen - 3)
 	           Record.populateFields(fields, keyFieldOrdinals, key)
 	           val seq = fields(seqFieldOrd).toLong

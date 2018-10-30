@@ -81,12 +81,12 @@ object TemporalAggregator extends JobConfiguration {
 	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 	  
-	   
+	   //input
 	  val data = sparkCntxt.textFile(inputPath)	  
 
 	  //key by id, ts, field ord
 	  val keyedData = data.flatMap(line => {
-		   val fields = line.split(fieldDelimIn, -1)
+		   val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   val ts = fields(timeStampFieldOrdinal).toLong
 		   val tsPart = (ts / timeWindow) * timeWindow
 		   

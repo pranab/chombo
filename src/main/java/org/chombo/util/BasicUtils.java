@@ -1006,6 +1006,19 @@ public class BasicUtils {
 		return fields;
 	}
 	
+    /**
+     * @param record
+     * @param delimRegex
+     * @return
+     */
+    public static String[] getTrimmedFields(String record, String delimRegex) {
+    	String[] fields = record.split(delimRegex, -1);
+    	for (int i = 0; i < fields.length; ++i) {
+    		fields[i] = fields[i].trim();
+    	}
+    	return fields;
+    }	
+	
 	/**
 	 * @param items
 	 * @return
