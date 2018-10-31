@@ -45,10 +45,10 @@ object MissingValueFilter extends JobConfiguration {
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val maxRowMissingValues = getMandatoryIntParam(appConfig, "max.row.missing.values", "missing row max missing values")
-	   val colMissingValCounts = getMandatoryIntListParam(appConfig, "col.missing.val.count", 
+	   val maxRowMissingValues = getMandatoryIntParam(appConfig, "max.rowMissingValues", "missing row max missing values")
+	   val colMissingValCounts = getMandatoryIntListParam(appConfig, "col.missingValCount", 
 	       "missing column missing value count").asScala.toList
-	   val maxColMissingValuesPercent = getMandatoryIntParam(appConfig, "max.col.missing.values.percent", "missing max missing values")
+	   val maxColMissingValuesPercent = getMandatoryIntParam(appConfig, "max.colMissingValuesPercent", "missing max missing values")
 
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
