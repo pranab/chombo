@@ -65,18 +65,22 @@ object MissingValueFilter extends JobConfiguration {
 	   
 	   //remove rows
 	   var filtData = data.filter(line => {
-		   val items = line.split(fieldDelimIn, -1)
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   BasicUtils.missingFieldCount(items)	< maxRowMissingValues
 	   })
 	   
 	   //remove columns
-	   filtData = filtData.map(line => {
-		   val items = line.split(fieldDelimIn, -1)
+	   filtData = if (exColumns.isEmpty) {
+	     filtData
+	   } else {
+	     filtData.map(line => {
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   val filtItems = for (it <- items.zipWithIndex
 		     if !exColumns.contains(it._2)) yield it._1
 		   filtItems.mkString(fieldDelimOut)
-	   })
-
+	     })
+   	   }
+	   
 	   if (debugOn) {
 	     val filtDataCol = filtData.collect
 	     filtDataCol.slice(0,20).foreach(d => {

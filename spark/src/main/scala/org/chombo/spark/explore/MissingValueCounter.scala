@@ -56,7 +56,7 @@ object MissingValueCounter extends JobConfiguration {
 
 	   val data = sparkCntxt.textFile(inputPath)
 	   var missingCounted = data.flatMap(line => {
-		   val items = line.split(fieldDelimIn, -1)
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   if (operation.equals("row")) {
 		     val key = Record(items, keyOrdinalsArr)
              val count = BasicUtils.missingFieldCount(items, beg);
