@@ -66,7 +66,7 @@ object MissingValueFilter extends JobConfiguration {
 	   //remove rows
 	   var filtData = data.filter(line => {
 		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
-		   BasicUtils.missingFieldCount(items)	< maxRowMissingValues
+		   BasicUtils.missingFieldCount(items)	<= maxRowMissingValues
 	   })
 	   
 	   //remove columns

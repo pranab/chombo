@@ -46,10 +46,16 @@ object MissingValueCounter extends JobConfiguration {
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val operation = getStringParamOrElse(appConfig, "operation.dimension", "row")
-	   val keyOrdinals = getMandatoryIntListParam(appConfig,   "key.ordinals", "missing key field ordinals")
-	   var keyOrdinalsArr = Array[Integer](keyOrdinals.size())
-	   keyOrdinalsArr = keyOrdinals.toArray(keyOrdinalsArr)
-	   val beg = keyOrdinalsArr.length
+	   
+	   var beg = 0
+	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
+	   val keyFieldOrdinals = keyFields match {
+	     case Some(fields:java.util.List[Integer]) => {
+	       beg = fields.size()
+	       Some(fields.asScala.toArray)
+	     }
+	     case None => None  
+	   }
 	   
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
@@ -58,7 +64,12 @@ object MissingValueCounter extends JobConfiguration {
 	   var missingCounted = data.flatMap(line => {
 		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   if (operation.equals("row")) {
-		     val key = Record(items, keyOrdinalsArr)
+		     //row wise
+		     val key =  keyFieldOrdinals match {
+		       case Some(fldOrdinals: Array[Integer]) => Record(items, fldOrdinals)
+		       case None => Record(line)
+		     }
+		     
              val count = BasicUtils.missingFieldCount(items, beg);
              val recs = ArrayBuffer[(Record, Int)]()
 		     if (count > 0) {
@@ -67,6 +78,7 @@ object MissingValueCounter extends JobConfiguration {
 		     }
 		     recs
 		   } else {
+		     //column wise
 		     val recs = ArrayBuffer[(Record, Int)]()
 		     items.zipWithIndex.foreach(f => {
 		       if (f._2 >= beg && f._1.isEmpty()) {
@@ -87,7 +99,7 @@ object MissingValueCounter extends JobConfiguration {
 	     else missingCounted
 	   
 	   
-	   //serilize for output
+	   //serialize for output
 	   val serMissingCounted = missingCounted.map(r => r._1.toString + fieldDelimOut + r._2)
 	   
        if (debugOn) {
