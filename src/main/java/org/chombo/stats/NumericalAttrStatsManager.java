@@ -454,6 +454,7 @@ public class NumericalAttrStatsManager implements Serializable {
 	 * @return
 	 */
 	public double getMean(String compKey, int attr) {
+		//System.out.println("compKey " + compKey + " attr " + attr);
 		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
 		return tuple.getDouble(4);
 	}

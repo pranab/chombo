@@ -1608,6 +1608,7 @@ public class BasicUtils {
     		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
     		String line = null; 
     		while((line = reader.readLine()) != null) {
+    			//System.out.println(line);
     			lines.add(line);
     		}
     	}
@@ -1917,6 +1918,8 @@ public class BasicUtils {
 		int delimLen = delim.length();
 		int pos = -1;
 		int from = 0;
+		//System.out.println(value);
+		//System.out.println(delim + "  " + numOccurence);
 		for (int i = 0;  i < numOccurence; ++i ) {
 			pos = value.indexOf(delim, from);
 			if (pos == -1) {
@@ -1926,7 +1929,7 @@ public class BasicUtils {
 					break;
 				}
 			} else {
-				from += pos + delimLen;
+				from = pos + delimLen;
 			}
 		}
 		return pos;
