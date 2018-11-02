@@ -69,6 +69,7 @@ object RecordSetBulkMutator extends JobConfiguration {
 	     keyedRecs.map(v => {
 	       val recs = v._2.toSeq
 	       recs.sortBy(line => {
+	         //descending order
 	         val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 	         -fields(seqFieldOrd).toLong
 	       })
