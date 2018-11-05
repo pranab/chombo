@@ -18,7 +18,10 @@
 package org.chombo.util;
 
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +40,8 @@ public class SeasonalAnalyzer implements Serializable {
     private long secToYear;
     private int year;
     private Map<Long, Integer> anyDays;
+    private List<Long> dateBegins;
+    private SimpleDateFormat dateFormat;
     
     public  static final String QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
     public static final String  QUARTER_HOUR_OF_WEEK_DAY = "quarterHourOfWeekDay";
@@ -51,6 +56,7 @@ public class SeasonalAnalyzer implements Serializable {
     public static final String  WEEK_DAY_OF_WEEK  = "weekDayOfWeek";
     public static final String  WEEK_END_DAY_OF_WEEK  = "weekEndDayOfWeek";
     public static final String  WEEK_DAY_OR_WEEK_END_OF_WEEK  = "weekDayOrWeekendOfWeek";
+    public static final String  WEEK_DAY_HOLIDAY_OR_WEEK_END_OF_WEEK  = "weekDayHolidayOrWeekendOfWeek";
     public static final String  HOUR_RANGE_OF_WEEK_DAY  = "hourRangeOfWeekDay";
     public static final String  HOUR_RANGE_OF_WEEK_END_DAY  = "hourRangeOfWeekEndDay";
     public static final String  WEEK_OF_YEAR = "weekOfYear";
@@ -95,7 +101,7 @@ public class SeasonalAnalyzer implements Serializable {
     	//convert to sec and adjust for time stamp
     	if (timeStampInMili) {
     		timeStamp /= 1000;
-    	}
+    	} 
     	timeStamp += timeZoneShiftSec;
     	cycleIndex = -1;
     	long  weekDayIndex = 0;
@@ -118,6 +124,17 @@ public class SeasonalAnalyzer implements Serializable {
         	parentCycleIndex = timeStamp / secInWeek;
     		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
     		cycleIndex = cycleIndex > 4 ?  1 : 0;
+    	} else if (seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OR_WEEK_END_OF_WEEK)) {
+        	parentCycleIndex = timeStamp / secInWeek;
+    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+    		cycleIndex = cycleIndex > 4 ?  2 : 0;
+    		for (long  dateBegin : dateBegins) {
+    			long dateEnd = dateBegin + secInDay;
+    			if (timeStamp > dateBegin && timeStamp <= dateEnd) {
+    				cycleIndex = 1;
+    				break;
+    			}
+    		}
     	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
     		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
@@ -209,6 +226,9 @@ public class SeasonalAnalyzer implements Serializable {
 		this.timeRanges = timeRanges;
 	}
 
+	/**
+	 * @param anyDays day begin anf cycle index
+	 */
 	public void setAnyDays(Map<Long, Integer> anyDays) {
 		this.anyDays = anyDays;
 	}
@@ -225,6 +245,28 @@ public class SeasonalAnalyzer implements Serializable {
 	 */
 	public void setTimeZoneShiftHours(long timeZoneShiftHours) {
 		this.timeZoneShiftSec = timeZoneShiftHours * secInHour ;
+	}
+
+	/**
+	 * @param dates
+	 */
+	public void setDates(List<String> dateStrs) {
+		dateBegins = new ArrayList<Long>();
+		try {
+			for (String dateStr : dateStrs) {
+				Date date = dateFormat.parse(dateStr);
+				dateBegins.add(date.getTime() / 1000);
+			}
+		} catch (ParseException e) {
+			throw new IllegalStateException("date parsing error " + e.getMessage());
+		}
+	}
+
+	/**
+	 * @param dateFormatStr
+	 */
+	public void setDateFormat(String dateFormatStr) {
+		this.dateFormat = new SimpleDateFormat(dateFormatStr);
 	}
 
 	/**
