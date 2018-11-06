@@ -43,13 +43,14 @@ trait SeasonalUtility {
 	def createSeasonalAnalyzer(jobConfig : JobConfiguration, appConfig: com.typesafe.config.Config, 
 	    sType : String, timeZoneShiftHours:Int, timeStampInMili:Boolean) : SeasonalAnalyzer = {
 		val seasonalAnalyzer = new SeasonalAnalyzer(sType)
+		
+		//additional configuration
     	if (seasonalAnalyzer.isHourRange()) {
     		val hourRangeStr = jobConfig.getMandatoryStringParam(appConfig, "seasonal.hourGroups", "missinfg hour rangen")
     		val hourRanges = BasicUtils.integerIntegerMapFromString(hourRangeStr, BasicUtils.DEF_FIELD_DELIM, 
     				BasicUtils.DEF_SUB_FIELD_DELIM, true)
     		seasonalAnalyzer.setHourRanges(hourRanges)
-    	}
-    	if (seasonalAnalyzer.isAnyDay()) {
+    	} else if (seasonalAnalyzer.isAnyDay()) {
     	  val days = jobConfig.getMandatoryStringListParam(appConfig, "specific.days", "missing days list").asScala.toArray
     	  val dateFormatStr = jobConfig.getMandatoryStringParam(appConfig, "date.formatStr", "missinfg date format string")
     	  val timeZone = jobConfig.getOptionalStringParam(appConfig, "time.zone") match {
@@ -58,7 +59,11 @@ trait SeasonalUtility {
     	  }
     	  val anyDays = BasicUtils.epochTimeIntegerMapFromString(days, BasicUtils.DEF_SUB_FIELD_DELIM, dateFormatStr, timeZone, false)
     	  seasonalAnalyzer.setAnyDays(anyDays)
-    	}
+    	} else if (seasonalAnalyzer.isWithHoliday()){
+    	  val dateFormatStr = jobConfig.getMandatoryStringParam(appConfig, "date.format", "missinfg date format")
+    	  val holidays = jobConfig.getMandatoryStringListParam(appConfig, "specific.days", "missing days list").asScala.toArray
+    	  seasonalAnalyzer.withDateFormat(dateFormatStr).withDates(holidays)
+		}
     	
     	if (timeZoneShiftHours > 0) {
     		seasonalAnalyzer.setTimeZoneShiftHours(timeZoneShiftHours)

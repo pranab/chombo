@@ -234,6 +234,14 @@ public class SeasonalAnalyzer implements Serializable {
 	}
 
 	/**
+	 * @param hourRanges
+	 */
+	public SeasonalAnalyzer withHourRanges(Map<Integer, Integer> hourRanges) {
+		setHourRanges(hourRanges);
+		return this;
+	}
+
+	/**
 	 * @param timeRanges
 	 */
 	public void setTimeRanges(List<Pair<Integer, Integer>> timeRanges) {
@@ -241,10 +249,26 @@ public class SeasonalAnalyzer implements Serializable {
 	}
 
 	/**
-	 * @param anyDays day begin anf cycle index
+	 * @param timeRanges
+	 */
+	public SeasonalAnalyzer withTimeRanges(List<Pair<Integer, Integer>> timeRanges) {
+		setTimeRanges(timeRanges);
+		return this;
+	}
+
+	/**
+	 * @param anyDays day begin and cycle index
 	 */
 	public void setAnyDays(Map<Long, Integer> anyDays) {
 		this.anyDays = anyDays;
+	}
+
+	/**
+	 * @param anyDays day begin and cycle index
+	 */
+	public SeasonalAnalyzer withAnyDays(Map<Long, Integer> anyDays) {
+		setAnyDays(anyDays);
+		return this;
 	}
 
 	/**
@@ -255,6 +279,14 @@ public class SeasonalAnalyzer implements Serializable {
 	}
 
 	/**
+	 * @param timeStampInMili
+	 */
+	public SeasonalAnalyzer withTimeStampInMili(boolean timeStampInMili) {
+		setTimeStampInMili(timeStampInMili);
+		return this;
+	}
+
+	/**
 	 * @param timeZoneShiftHours
 	 */
 	public void setTimeZoneShiftHours(long timeZoneShiftHours) {
@@ -262,9 +294,20 @@ public class SeasonalAnalyzer implements Serializable {
 	}
 
 	/**
+	 * @param timeZoneShiftHours
+	 */
+	public SeasonalAnalyzer withTimeZoneShiftHours(long timeZoneShiftHours) {
+		setTimeZoneShiftHours(timeZoneShiftHours);
+		return this;
+	}
+
+	/**
 	 * @param dates
 	 */
-	public void setDates(List<String> dateStrs) {
+	public void setDates(String[] dateStrs) {
+		if (null == dateFormat) {
+			throw new IllegalStateException("date format not set");
+		}
 		dateBegins = new ArrayList<Long>();
 		try {
 			for (String dateStr : dateStrs) {
@@ -275,12 +318,27 @@ public class SeasonalAnalyzer implements Serializable {
 			throw new IllegalStateException("date parsing error " + e.getMessage());
 		}
 	}
-
+	/**
+	 * @param dates
+	 */
+	public SeasonalAnalyzer withDates(String[] dateStrs) {
+		setDates(dateStrs);
+		return this;
+	}
+	
 	/**
 	 * @param dateFormatStr
 	 */
 	public void setDateFormat(String dateFormatStr) {
 		this.dateFormat = new SimpleDateFormat(dateFormatStr);
+	}
+
+	/**
+	 * @param dateFormatStr
+	 */
+	public SeasonalAnalyzer withDateFormat(String dateFormatStr) {
+		setDateFormat(dateFormatStr);
+		return this;
 	}
 
 	/**
@@ -367,6 +425,12 @@ public class SeasonalAnalyzer implements Serializable {
 	 */
 	public boolean isAnyDay() {
 		return seasonalCycleType.equals(ANY_DAY);
+	}
+	
+	public boolean isWithHoliday() {
+		return seasonalCycleType.equals(DAY_HOLIDAY_OF_WEEK)  ||  
+			seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OF_WEEK) ||
+			seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OR_WEEK_END_OF_WEEK);
 	}
 	
 	/**
