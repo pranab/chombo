@@ -53,7 +53,9 @@ public class SeasonalAnalyzer implements Serializable {
     public static final String  HOUR_OF_WEEK_DAY = "hourOfWeekDay";
     public static final String  HOUR_OF_WEEK_END_DAY = "hourOfWeekEndDay";
     public static final String  DAY_OF_WEEK  = "dayOfWeek";
+    public static final String  DAY_HOLIDAY_OF_WEEK  = "dayHolidayOfWeek";
     public static final String  WEEK_DAY_OF_WEEK  = "weekDayOfWeek";
+    public static final String  WEEK_DAY_HOLIDAY_OF_WEEK  = "weekDayHolidayOfWeek";
     public static final String  WEEK_END_DAY_OF_WEEK  = "weekEndDayOfWeek";
     public static final String  WEEK_DAY_OR_WEEK_END_OF_WEEK  = "weekDayOrWeekendOfWeek";
     public static final String  WEEK_DAY_HOLIDAY_OR_WEEK_END_OF_WEEK  = "weekDayHolidayOrWeekendOfWeek";
@@ -108,11 +110,27 @@ public class SeasonalAnalyzer implements Serializable {
     	if (seasonalCycleType.equals(DAY_OF_WEEK)) {
         	parentCycleIndex = timeStamp / secInWeek;
     		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+    	} else if (seasonalCycleType.equals(DAY_HOLIDAY_OF_WEEK)) {
+        	parentCycleIndex = timeStamp / secInWeek;
+    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+			if (isWithinAnySpecifiedDay(timeStamp)) {
+				cycleIndex = 7;
+			}
     	} else if (seasonalCycleType.equals(WEEK_DAY_OF_WEEK)) {
         	parentCycleIndex = timeStamp / secInWeek;
     		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
     		if (cycleIndex > 4) {
     			cycleIndex = -1;
+    		}
+    	} else if (seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OF_WEEK)) {
+        	parentCycleIndex = timeStamp / secInWeek;
+    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+    		if (cycleIndex > 4) {
+    			cycleIndex = -1;
+    		} else {
+    			if (isWithinAnySpecifiedDay(timeStamp)) {
+    				cycleIndex = 5;
+    			}
     		}
     	} else if (seasonalCycleType.equals(WEEK_END_DAY_OF_WEEK)) {
         	parentCycleIndex = timeStamp / secInWeek;
@@ -128,12 +146,8 @@ public class SeasonalAnalyzer implements Serializable {
         	parentCycleIndex = timeStamp / secInWeek;
     		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
     		cycleIndex = cycleIndex > 4 ?  2 : 0;
-    		for (long  dateBegin : dateBegins) {
-    			long dateEnd = dateBegin + secInDay;
-    			if (timeStamp > dateBegin && timeStamp <= dateEnd) {
-    				cycleIndex = 1;
-    				break;
-    			}
+    		if (cycleIndex == 0 && isWithinAnySpecifiedDay(timeStamp)) {
+    			cycleIndex = 1;
     		}
     	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
@@ -353,6 +367,22 @@ public class SeasonalAnalyzer implements Serializable {
 	 */
 	public boolean isAnyDay() {
 		return seasonalCycleType.equals(ANY_DAY);
+	}
+	
+	/**
+	 * @param timeStamp
+	 * @return
+	 */
+	public boolean isWithinAnySpecifiedDay(long timeStamp) {
+		boolean withinDay = false;
+		for (long  dateBegin : dateBegins) {
+			long dateEnd = dateBegin + secInDay;
+			if (timeStamp > dateBegin && timeStamp <= dateEnd) {
+				withinDay = true;
+				break;
+			}
+		}
+		return withinDay;
 	}
 	
 	/**
