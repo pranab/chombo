@@ -96,6 +96,7 @@ object RecordSetBulkMutator extends JobConfiguration {
 	         val recs = keyedRecs.map(v => {
 	           val recs = v._2.toSeq
 	           if (recs.length > 1) {
+	             //update
 	             recs.sortBy(line => {
 	               //descending order
 	               val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
