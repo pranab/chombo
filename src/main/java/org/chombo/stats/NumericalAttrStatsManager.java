@@ -375,11 +375,15 @@ public class NumericalAttrStatsManager implements Serializable {
 	private Tuple getKeyedStats(String compKey, int attr, String condAttrVal) {
 		Tuple foundTuple = null;
 		Map<Integer, List<Tuple>> stats = keyedStats.get(compKey);
-		List<Tuple> statList = stats.get(attr);
-		for (Tuple tuple : statList) {
-			if (tuple.getString(0).equals(condAttrVal)) {
-				foundTuple = tuple;
-				break;
+		if (null != stats) {
+			List<Tuple> statList = stats.get(attr);
+			if (null != statList) {
+				for (Tuple tuple : statList) {
+					if (tuple.getString(0).equals(condAttrVal)) {
+						foundTuple = tuple;
+						break;
+					}
+				}
 			}
 		}
 		return foundTuple;
