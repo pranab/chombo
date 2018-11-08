@@ -554,4 +554,14 @@ public class NumericalAttrStatsManager implements Serializable {
 		return tuple.getDouble(8);
 	}
 
+	/**
+	 * @param compKey
+	 * @param attr
+	 * @return
+	 */
+	public boolean statsExists(String compKey, int attr) {
+		Tuple tuple = getKeyedStats(compKey, attr, DEF_COND_ATTR_VAL);
+		return null != tuple;
+	}
+	
 }
