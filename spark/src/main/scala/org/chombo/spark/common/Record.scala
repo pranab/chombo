@@ -64,6 +64,15 @@ object Record {
   def apply(record:Record, beg:Int, end:Int) : Record = new Record(record, beg, end)
   
   /**
+   * @param size
+   * @param record
+   * @param beg
+   * @param end
+   * @return
+  */
+  def apply(size:Int, record:Record, beg:Int, end:Int) : Record = new Record(record, beg, end)
+
+  /**
    * @param data
    * @param beg
    * @param end
@@ -216,6 +225,19 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  cursor += size
 	} 
 	
+	/**
+	* @param size
+ 	* @param record
+ 	* @param beg
+ 	* @param end
+ 	*/	
+	def this(size:Int, record:Record, beg:Int, end:Int) {
+	  this(size)
+	  val copySize = end - beg
+	  Array.copy(record.array, beg, array, 0, copySize)
+	  cursor += copySize
+	} 
+
 	/**
  	* @param data
  	* @param beg
