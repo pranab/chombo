@@ -59,13 +59,14 @@ object CrossCorrelation extends JobConfiguration with GeneralUtility {
 	   
 	  val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", 
 	      "missing quant attribute ordinals").asScala.toArray
+	  val numAttrs = numAttrOrdinals.size
 	  val corrLags = getMandatoryIntListParam(appConfig, "coor.lags", "missing correlation lags").asScala.toArray
 	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
 
 	  //key length
 	  var keyLen = getKeyLen(keyFieldOrdinals)
 	  var keyDefined = keyLen == 0
-	  keyLen += 3
+	  keyLen += 5
 	  
 	  //mean values from stats output file
 	  val statsPath = getMandatoryStringParam(appConfig, "stats.file.path", "missing stat file path")
@@ -91,32 +92,33 @@ object CrossCorrelation extends JobConfiguration with GeneralUtility {
 		   val items = line.split(fieldDelimIn, -1)
 		   val seq = items(seqFieldOrd).toInt
 		   val recs = ArrayBuffer[(Record, Record)]()
-		     
-		   //each lag
-		   corrLags.foreach(lag => {
-		       val laggedSeq = seq - lag
-		       val aheadSeq = seq + lag
-		       val lKey = buildKey(lag, laggedSeq, seq, keyLen, keyFieldOrdinals, items)
-		       val aKey = buildKey(lag, seq, aheadSeq, keyLen, keyFieldOrdinals, items)
-		       val keys = Array[Record](lKey, aKey)
-		       
-		       val fVal = Record(3)
-		       var fld = numAttrOrdinals(0)
-		       fVal.addInt(fld)
-		       fVal.addInt(seq)
-		       fVal.addDouble(items(fld).toDouble)
-		       
-		       val sVal = Record(3)
-		       fld = numAttrOrdinals(1)
-		       sVal.addInt(fld)
-		       sVal.addInt(seq)
-		       sVal.addDouble(items(fld).toDouble)
-		       
-		       val values = Array[Record](fVal, sVal)
-		       for (key <- keys)
-		         for (value <- values)
-		        	 recs += ((lKey, value))
-		   })		   
+		   
+		   //first attribute
+		   for (i <- 0 to (numAttrs - 1)) {
+		     //second attribute
+		     val fField = numAttrOrdinals(i)
+		     for (j <- (i + 1) to (numAttrs - 1)) {
+		    	   val sField = numAttrOrdinals(j)
+				   //each lag
+				   corrLags.foreach(lag => {
+				       val laggedSeq = seq - lag
+				       val aheadSeq = seq + lag
+				       
+				       val lKey = buildKey(fField, sField, lag, laggedSeq, seq, keyLen, keyFieldOrdinals, items)
+				       val aKey = buildKey(fField,sField,lag, seq, aheadSeq, keyLen, keyFieldOrdinals, items)
+				       val keys = Array[Record](lKey, aKey)
+				       
+				       val fVal = buildValue(items, fField, seq)
+				       val sVal = buildValue(items, sField, seq)
+				       val values = Array[Record](fVal, sVal)
+				       
+				       for (key <- keys)
+				         for (value <- values)
+				        	 recs += ((lKey, value))
+				   })		
+		     }
+		   }
+		   
 		   recs
 	  })
 	   
@@ -165,14 +167,30 @@ object CrossCorrelation extends JobConfiguration with GeneralUtility {
    * @param includeAppConfig
    * @return
    */ 
-   def buildKey(lag:Integer, firstSeq: Int, secondSeq: Int, keyLen:Int, keyFieldOrdinals:Option[Array[Integer]], 
+   def buildKey(fField:Int, sField:Int, lag:Integer, firstSeq: Int, secondSeq: Int, keyLen:Int, keyFieldOrdinals:Option[Array[Integer]], 
       items: Array[String]) : Record = {
        val key = Record(keyLen)
        Record.populateFields(items, keyFieldOrdinals, key)
+       key.addInt(fField)
+       key.addInt(sField)
        key.addInt(lag)
        key.addInt(firstSeq)
        key.addInt(secondSeq)
        key
+   }
+   
+   /**
+   * @param items
+   * @param fld
+   * @param seq
+   * @return
+   */
+   def buildValue(items:Array[String], fld:Int, seq:Int) : Record = {
+     val value = Record(3)
+	 value.addInt(fld)
+	 value.addInt(seq)
+     value.addDouble(items(fld).toDouble)
+     value
    }
    
    /**
@@ -200,7 +218,7 @@ object CrossCorrelation extends JobConfiguration with GeneralUtility {
   def corResult(fv:Record, sv:Record, key:Record, keySize:Int, fieldDelimIn:String,  
        meanValueMap:java.util.Map[String,java.lang.Double], stdDevValueMap:java.util.Map[String,java.lang.Double]) : (Record, Double) = {
       val shift = fv.getInt(1) - sv.getInt(1)
-      val cKey = buildCorKey(keySize + 1, key, keySize, shift)
+      val cKey = buildCorKey(keySize + 3, key, keySize + 2, shift)
       
       val fStatsKey = key.toString(0, keySize) + fieldDelimIn + fv.getInt(0)
       val fMean = meanValueMap.get(fStatsKey)
