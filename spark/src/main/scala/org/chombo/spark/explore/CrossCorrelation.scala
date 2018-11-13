@@ -70,7 +70,7 @@ object CrossCorrelation extends JobConfiguration with GeneralUtility {
 	  
 	  //mean values from stats output file
 	  val statsPath = getMandatoryStringParam(appConfig, "stats.file.path", "missing stat file path")
-	  var statsKeyLen = keyLen - 4
+	  var statsKeyLen = keyLen - 5
 	  statsKeyLen += 1
 	  val meanFldOrd = statsKeyLen + getMandatoryIntParam(appConfig, "mean.fieldOrd","missing mean field ordinal")
 	  val meanValueMap = BasicUtils.getKeyedValues(statsPath, statsKeyLen, meanFldOrd)
@@ -114,7 +114,7 @@ object CrossCorrelation extends JobConfiguration with GeneralUtility {
 				       
 				       for (key <- keys)
 				         for (value <- values)
-				        	 recs += ((lKey, value))
+				        	 recs += ((key, value))
 				   })		
 		     }
 		   }

@@ -77,6 +77,7 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 		   None
 	   }
 	  
+	  val minSampleCount = this.getIntParamOrElse(appConfig, "min.sampleCount", 10)
 	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
 	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
@@ -193,16 +194,23 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 	    stat.addDouble(min)
 	    stat.addDouble(max)
 	    
+	    (kv._1, stat)
+	  })
+	  
+	  //filter out low sample count cases
+	  val statsRecsSer = statsRecs.filter(kv => {
+	    kv._2.getInt(keyLen + 2) > minSampleCount
+	  }).map(kv => {
 	    Record.floatPrecision = outputPrecision
-	    kv._1.toString() + fieldDelimOut + stat.toString
+	    kv._1.toString() + fieldDelimOut + kv._2.toString
 	  })
 	  
 	  if (debugOn) {
-	     statsRecs.collect.foreach(s => println(s))
+	     statsRecsSer.collect.foreach(s => println(s))
 	  }
 	   
 	  if (saveOutput) {
-	     statsRecs.saveAsTextFile(outputPath)
+	     statsRecsSer.saveAsTextFile(outputPath)
 	  }
 	  
    }
