@@ -35,7 +35,7 @@ object RecordSetBulkMutator extends JobConfiguration {
   * @return
   */
    def main(args: Array[String]) {
-	   val appName = "normalizer"
+	   val appName = "recordSetBulkMutator"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)
@@ -120,7 +120,7 @@ object RecordSetBulkMutator extends JobConfiguration {
 	   }
 	   
 	  if (debugOn) {
-	     updatedRecs.collect.foreach(s => println(s))
+	     updatedRecs.collect.slice(0, 50).foreach(s => println(s))
 	  }
 	   
 	  if (saveOutput) {
@@ -140,13 +140,13 @@ object RecordSetBulkMutator extends JobConfiguration {
    def getKeyedRecs(data:RDD[String], fieldDelimIn:String, keyFieldsOrdinals:Array[Integer],  
      mutOp:Option[String], recPrefix:String) : RDD[(Record, Iterable[String])] = {
      data.map(line => {
-		   val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
-		   val key = Record(fields, keyFieldsOrdinals)
-		   val value = mutOp match {
-		     case Some(op:String) => line
-		     case None => recPrefix + line
-		   }
-		   (key, value)
-	   }).groupByKey()
+		val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+		val key = Record(fields, keyFieldsOrdinals)
+		val value = mutOp match {
+		    case Some(op:String) => line
+		    case None => recPrefix + line
+		}
+		(key, value)
+	 }).groupByKey()
    }
 }
