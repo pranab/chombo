@@ -199,7 +199,7 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 	  
 	  //filter out low sample count cases
 	  val statsRecsSer = statsRecs.filter(kv => {
-	    kv._2.getInt(keyLen + 2) > minSampleCount
+	    kv._2.getInt(2) > minSampleCount
 	  }).map(kv => {
 	    Record.floatPrecision = outputPrecision
 	    kv._1.toString() + fieldDelimOut + kv._2.toString
