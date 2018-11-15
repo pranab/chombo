@@ -7,8 +7,8 @@ MASTER=spark://akash:7077
 case "$1" in
 
 "crBaseFile")
-./prod_inv.py ini > $2
-ls -l $2
+./prod_inv.py ini $2 $3 $4 > $5
+ls -l $5
 ;;
 
 "crBaseDcFile")
@@ -19,11 +19,12 @@ ls -l $3
 "crUpsert")
 ./prod_inv.py upi $2 $3 $4 > $5
 ls -l $5
-echo "before mutation"
+echo "base file before mutation"
 ls -l $2
+cp $2 old_$2
 cat $3 > $2
 cat $5 >> $2
-echo "after mutation"
+echo "base file after mutation"
 ls -l $2
 ;;
 
@@ -47,6 +48,15 @@ hdfs dfs -put $2 /input/bmu
 hdfs dfs -ls /input/bmu
 ;;
 
+"rmIncInput")
+hdfs dfs -rm /other/bmu/inc/*
+hdfs dfs -ls  /other/bmu/inc
+;;
+
+"cpIncInput")
+hdfs dfs -put $2 /other/bmu/inc
+hdfs dfs -ls /other/bmu/inc
+;;
 
 "bulkMutator")
 	echo "running RecordSetBulkMutator"

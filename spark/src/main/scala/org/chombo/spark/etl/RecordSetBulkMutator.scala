@@ -56,19 +56,29 @@ object RecordSetBulkMutator extends JobConfiguration {
 	   val prefixLen = baseRecPrefix.length()
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
+
+	   val updateCounter = sparkCntxt.accumulator(0)
+	   val insertCounter = sparkCntxt.accumulator(0)
+	   val deleteCounter = sparkCntxt.accumulator(0)
 	   
 	   //base and incremental data
 	   val baseData = sparkCntxt.textFile(inputPath)
 	   val keyedBaseRecs =  getKeyedRecs(baseData, fieldDelimIn, keyFieldsOrdinals, mutOp, baseRecPrefix)
 	   keyedBaseRecs.cache
 	   
+	   //val baseCount = keyedBaseRecs.count
+	   
 	   //incremental keyed data
 	   val incrData = sparkCntxt.textFile(incrFilePath)
 	   val keyedIncrRecs =  getKeyedRecs(incrData, fieldDelimIn, keyFieldsOrdinals, mutOp, incrRecPrefix)
 	   
+	   //val incCount = keyedIncrRecs.count
+	   
 	   //merge
 	   val keyedRecs = keyedBaseRecs ++ keyedIncrRecs
 	   
+	   //val totCount = keyedRecs.count
+	   //println("baseCount=" + baseCount + " incCount=" + incCount + " totCount=" + totCount)
 
 	   val updatedRecs = 
 	     mutOp match {
@@ -83,10 +93,16 @@ object RecordSetBulkMutator extends JobConfiguration {
 	               val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 	               -fields(seqFieldOrd).toLong
 	             })
+	             if (recs.size == 1) {
+	               insertCounter += 1
+	             } else {
+	               updateCounter += 1
+	             }
 	             recs(0)
 	           })
 	         } else {
 	           //delete
+	           deleteCounter += 1
 	           keyedRecs.filter(v => v._2.toSeq.length == 1).map(v => v._2.toSeq(0))
 	         }
 		     recs
@@ -94,23 +110,33 @@ object RecordSetBulkMutator extends JobConfiguration {
 	       case None => {
 	         //automatic
 	         val recs = keyedRecs.map(v => {
-	           val recs = v._2.toSeq
+	           val recs = v._2.toList
 	           if (recs.length > 1) {
+	             println("update")
 	             //update
 	             recs.sortBy(line => {
 	               //descending order
 	               val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 	               -fields(seqFieldOrd).toLong
 	             })
+	             updateCounter += 1
 	             recs(0).substring(prefixLen)
 	           } else {
 	             val prefix = recs(0).substring(0, prefixLen)
 	             val rec = recs(0).substring(prefixLen)
 	             if (prefix.equals(baseRecPrefix)) {
 	               //delete or leave alone
-	               if (syncMode.equals("partial")) rec else delRecPrefix + rec
+	               if (syncMode.equals("partial")) {
+	                 rec
+	               } else {
+	                 println("delete")
+	            	 deleteCounter += 1	                 
+	            	 delRecPrefix + rec
+	               }
 	             } else {
+	               println("insert")
 	               //insert
+	               insertCounter += 1
 	               rec
 	             }
 	           }
@@ -126,6 +152,11 @@ object RecordSetBulkMutator extends JobConfiguration {
 	  if (saveOutput) {
 	     updatedRecs.saveAsTextFile(outputPath)
 	  }
+	 
+	  println("** counters **")
+	  println("insert count " + insertCounter.value)
+	  println("update count " + updateCounter.value)
+	  println("delete count " + deleteCounter.value)
 	   
    }
    
