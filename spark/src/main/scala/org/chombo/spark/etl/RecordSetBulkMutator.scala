@@ -75,7 +75,7 @@ object RecordSetBulkMutator extends JobConfiguration {
 	   //val incCount = keyedIncrRecs.count
 	   
 	   //merge
-	   val keyedRecs = keyedBaseRecs ++ keyedIncrRecs
+	   val keyedRecs = (keyedBaseRecs ++ keyedIncrRecs).groupByKey
 	   
 	   //val totCount = keyedRecs.count
 	   //println("baseCount=" + baseCount + " incCount=" + incCount + " totCount=" + totCount)
@@ -169,7 +169,7 @@ object RecordSetBulkMutator extends JobConfiguration {
    * @return
    */  
    def getKeyedRecs(data:RDD[String], fieldDelimIn:String, keyFieldsOrdinals:Array[Integer],  
-     mutOp:Option[String], recPrefix:String) : RDD[(Record, Iterable[String])] = {
+     mutOp:Option[String], recPrefix:String) : RDD[(Record, String)] = {
      data.map(line => {
 		val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		val key = Record(fields, keyFieldsOrdinals)
@@ -178,6 +178,6 @@ object RecordSetBulkMutator extends JobConfiguration {
 		    case None => recPrefix + line
 		}
 		(key, value)
-	 }).groupByKey()
+	 })
    }
 }
