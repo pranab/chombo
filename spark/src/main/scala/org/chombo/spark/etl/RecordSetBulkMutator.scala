@@ -112,8 +112,7 @@ object RecordSetBulkMutator extends JobConfiguration {
 	         val recs = keyedRecs.map(v => {
 	           val recs = v._2.toList
 	           if (recs.length > 1) {
-	             println("update")
-	             //update
+	             //update or duplicate for full synchronization
 	             recs.sortBy(line => {
 	               //descending order
 	               val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
@@ -129,12 +128,10 @@ object RecordSetBulkMutator extends JobConfiguration {
 	               if (syncMode.equals("partial")) {
 	                 rec
 	               } else {
-	                 println("delete")
 	            	 deleteCounter += 1	                 
 	            	 delRecPrefix + rec
 	               }
 	             } else {
-	               println("insert")
 	               //insert
 	               insertCounter += 1
 	               rec
@@ -155,7 +152,7 @@ object RecordSetBulkMutator extends JobConfiguration {
 	 
 	  println("** counters **")
 	  println("insert count " + insertCounter.value)
-	  println("update count " + updateCounter.value)
+	  println("update or duplicate count " + updateCounter.value)
 	  println("delete count " + deleteCounter.value)
 	   
    }
