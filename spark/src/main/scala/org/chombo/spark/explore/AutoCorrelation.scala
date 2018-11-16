@@ -123,18 +123,20 @@ object AutoCorrelation extends JobConfiguration {
 		     corrLags.foreach(lag => {
 		       val laggedSeq = seq - lag
 		       val aheadSeq = seq + lag
-		       val value = Record(3)
-		       value.addInt(seq)
-		       value.addInt(fld)
-		       value.addDouble(fieldVal)
+		       
+		       val lValue = Record(3)
+		       lValue.addInt(seq)
+		       lValue.addInt(fld)
+		       lValue.addDouble(fieldVal)
 		       
 		       //pair with lagged
 		       val lKey = buildKey(fld, lag, laggedSeq, seq, keyLen, keyFieldOrdinals, items)
-		       recs += ((lKey, value))
+		       recs += ((lKey, lValue))
 		       
 		       //pair with ahead
 		       val aKey = buildKey(fld, lag, seq, aheadSeq, keyLen, keyFieldOrdinals, items)
-		       recs += ((aKey, value))
+		       val aValue = Record(lValue)
+		       recs += ((aKey, aValue))
 		     })
 		   })
 		   
