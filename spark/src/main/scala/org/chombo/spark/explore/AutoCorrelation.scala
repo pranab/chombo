@@ -187,7 +187,14 @@ object AutoCorrelation extends JobConfiguration {
 	  }) 
 	  
 	  //auto correlation
-	  val autoCor = corRecs.mapValues(v => v.getDouble(0) / v.getDouble(1))
+	  val autoCor = corRecs.mapValues(v => {
+	    var ac = 0.0
+	    if (v.getDouble(1) > 0) {
+	    	ac = v.getDouble(0) / v.getDouble(1)
+	    }
+	    ac
+	  }).sortBy(v => v._2, false, 1)
+	  
 	  
 	  if (debugOn) {
 	     autoCor.collect.foreach(s => println(s))
