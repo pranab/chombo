@@ -23,6 +23,7 @@ import scala.collection.JavaConverters._
 import org.apache.spark.rdd.RDD
 import org.chombo.util.BasicUtils
 import org.chombo.spark.common.Record
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * bulk data mutation
@@ -50,10 +51,26 @@ object RecordSetBulkMutator extends JobConfiguration {
 	   val incrFilePath = getMandatoryStringParam(appConfig, "incr.filePath", "missing incremental file path")
 	   val keyFieldsOrdinals = getMandatoryIntListParam(appConfig, "id.fieldOrdinals", "missing key field ordinals").asScala.toArray
 	   val seqFieldOrd = getMandatoryIntParam(appConfig, "seq.fieldOrdinal", "missing sequence filed ordinal")
+	   val maintainVersion = getBooleanParamOrElse(appConfig, "maintain.version", false)
+	   val verOutputPath = getOptionalStringParam(appConfig, "versioned.filePath")
+	   if (maintainVersion) {
+	     verOutputPath match {
+	       case Some(path : String ) => 
+	       case None => throw new IllegalStateException("missing verioned data output path")
+	     }
+	   }
+	   
+	   val inUpsert = mutOp match {
+	     case Some(op:String) => op.equals("upsert")
+	     case None => syncMode.equals("partial")
+	   }
+	   
 	   val baseRecPrefix = "$base"
 	   val incrRecPrefix = "$incr"
 	   val delRecPrefix = "$del"
+	   val versionPrefix = "$ver"
 	   val prefixLen = baseRecPrefix.length()
+	   val verPrefLen = versionPrefix.length()
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
@@ -84,9 +101,11 @@ object RecordSetBulkMutator extends JobConfiguration {
 	     mutOp match {
 	       case Some(op:String) => {
 	         //mutation operation specified
-		     val recs = if (op.equals("upsert")) {
+		     val recs = 
+		     if (op.equals("upsert")) {
 			   //insert and update
-	           keyedRecs.map(v => {
+	           keyedRecs.flatMap(v => {
+	             val values = ArrayBuffer[String]()
 	             val recs = v._2.toSeq
 	             recs.sortBy(line => {
 	               //descending order
@@ -98,7 +117,14 @@ object RecordSetBulkMutator extends JobConfiguration {
 	             } else {
 	               updateCounter += 1
 	             }
-	             recs(0)
+	             val r = recs(0)
+	             values += r
+	             for (i  <- 1 to recs.length - 1) {
+	                 val v = versionPrefix + recs(i).substring(prefixLen)
+	                 values += v
+	                 //println("versioned rec")
+	             }
+	             values
 	           })
 	         } else {
 	           //delete
@@ -109,45 +135,89 @@ object RecordSetBulkMutator extends JobConfiguration {
 	       }
 	       case None => {
 	         //automatic
-	         val recs = keyedRecs.map(v => {
+	         val recs = keyedRecs.flatMap(v => {
+	           val values = ArrayBuffer[String]()
 	           val recs = v._2.toList
 	           if (recs.length > 1) {
-	             //update or duplicate for full synchronization
+	             //multiple recs per key, update or duplicate for full synchronization
 	             recs.sortBy(line => {
 	               //descending order
 	               val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 	               -fields(seqFieldOrd).toLong
 	             })
 	             updateCounter += 1
-	             recs(0).substring(prefixLen)
+	             
+	             //recent
+	             val v = recs(0).substring(prefixLen)
+	             values += v
+	             
+	             if (maintainVersion) {
+	               //versioned for update
+	               if (syncMode.equals("partial")){
+		               for (i  <- 1 to recs.length - 1) {
+		                 val v = versionPrefix + recs(i).substring(prefixLen)
+		                 values += v
+		                 //println("versioned rec")
+		               }
+	               }
+	               values
+	             } else {
+	              values
+	           	}
 	           } else {
+	             //one record per key insert or delete
 	             val prefix = recs(0).substring(0, prefixLen)
 	             val rec = recs(0).substring(prefixLen)
 	             if (prefix.equals(baseRecPrefix)) {
-	               //delete or leave alone
 	               if (syncMode.equals("partial")) {
-	                 rec
+	                 //leave alone
+	                 values += rec
+	                 values
 	               } else {
+	                 //delete
 	            	 deleteCounter += 1	                 
-	            	 delRecPrefix + rec
+	            	 val r = delRecPrefix + rec
+	                 values += r
+	                 values
 	               }
 	             } else {
 	               //insert
 	               insertCounter += 1
-	               rec
+	               values += rec
+	               values
 	             }
 	           }
 	         })
 	         recs.filter(r => !r.startsWith(delRecPrefix))
 	       }
 	   }
+	   updatedRecs.cache
+	   
+	   //normal records
+	   val normRecs = if (maintainVersion && inUpsert) updatedRecs.filter(r => !r.startsWith(versionPrefix)) else updatedRecs
+	   
+	   //versioned records
+	   if (maintainVersion && inUpsert) {
+	     verOutputPath match {
+	       case Some(outputPath : String) => {
+	         val verRecs = updatedRecs.filter(r => r.startsWith(versionPrefix)).map(r => r.substring(verPrefLen))
+	         if (debugOn) {
+	        	 println("versioned records")
+	        	 verRecs.collect.slice(0, 10).foreach(s => println(s))
+	         }
+	         verRecs.saveAsTextFile(outputPath)
+	       }
+	       case None => 
+	     }
+	   } 
 	   
 	  if (debugOn) {
-	     updatedRecs.collect.slice(0, 50).foreach(s => println(s))
+	     println("normal records")
+	     normRecs.collect.slice(0, 50).foreach(s => println(s))
 	  }
 	   
 	  if (saveOutput) {
-	     updatedRecs.saveAsTextFile(outputPath)
+	     normRecs.saveAsTextFile(outputPath)
 	  }
 	 
 	  println("** counters **")

@@ -68,7 +68,9 @@ case "$1" in
 	CLASS_NAME=org.chombo.spark.etl.RecordSetBulkMutator
 	INPUT=hdfs:///input/bmu/*
 	OUTPUT=hdfs:///output/bmu
+	VER_OUTPUT=hdfs:///other/bmu/ver
 	hdfs dfs -rm -r $OUTPUT
+	hdfs dfs -rm -r $VER_OUTPUT
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;
@@ -85,6 +87,21 @@ case "$1" in
 	echo "** input dir after mv"
 	hdfs dfs -ls /input/bmu
 ;;
+
+"mvIncOutput")
+	for sFile in `hdfs dfs -ls /other/bmu/ver | awk '{print $NF}' | grep part | tr '\n' ' '`
+	do 
+  		sleep 1
+  		echo $sFile
+  		ts=`date +%s`
+  		dFile=/other/bmu/veb/part-$ts
+  		echo $dFile
+  		hdfs dfs -mv $sFile $dFile
+	done
+	echo "destination"
+	hdfs dfs -ls /other/bmu/veb
+;;
+
 
 *) 
 	echo "unknown operation $1"
