@@ -1,6 +1,7 @@
 This tutorial is for data integration in a HDFS data lake, allowing insert, update and delete. We will
 assume that the source data is from 3 distribution centers dc1, dc2 and dc3 for an inventory
-management use case.
+management use case. We will use the second approach as outlined in the blog article
+
 
 Environment
 ===========
@@ -52,9 +53,18 @@ Run spark job
 =============
 ./bmu.sh bulkMutator
 
+Move output to input directory
+==============================
+The output replaces the current base data through a mv operation as below
+./bmu.sh mvOutput
+
+If versioining is enabled, the versioned data is moved to another directory from the output 
+directory, where it accumulates
+./bmu.sh mvIncOutput
+
 More insert update
 ==================
-Repeat the last 3 steps for any of the 3 distr centers
+Repeat the last 4 steps for any of the 3 distr centers
 
 Create delete data for any distr center
 =======================================
