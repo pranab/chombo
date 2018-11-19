@@ -198,8 +198,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 */
 	def this(size:Int, record:Record) {
 	  this(size)
-	  Array.copy(record.array, 0, array, 0, record.size)
-	  cursor += record.size
+	  Array.copy(record.array, 0, array, 0, size)
+	  cursor += size
 	}
 
 	/**
@@ -209,8 +209,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 */
 	def this(size:Int, record:Record, offset:Int) {
 	  this(size)
-	  Array.copy(record.array, 0, array, offset, record.size)
-	  cursor += (offset + record.size)
+	  Array.copy(record.array, 0, array, offset, size)
+	  cursor += (offset + size)
 	}
 
 	/**

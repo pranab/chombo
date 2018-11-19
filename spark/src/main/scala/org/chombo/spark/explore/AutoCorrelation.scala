@@ -58,7 +58,9 @@ object AutoCorrelation extends JobConfiguration {
 	      "missing quant attribute ordinals").asScala.toArray
 	  val corrLags = getMandatoryIntListParam(appConfig, "coor.lags", "missing correlation lags").asScala.toArray
 	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
-	  
+	  val outputMaxCorr = getBooleanParamOrElse(appConfig, "output.maxCorr", false)
+	    
+	    
 	  //key length
 	  var keyLen = 0
 	  var keyDefined = true
@@ -188,21 +190,47 @@ object AutoCorrelation extends JobConfiguration {
 	  }) 
 	  
 	  //auto correlation
-	  val autoCor = corRecs.mapValues(v => {
+	  var autoCor = corRecs.mapValues(v => {
 	    var ac = 0.0
 	    if (v.getDouble(1) > 0) {
 	    	ac = v.getDouble(0) / v.getDouble(1)
 	    }
 	    ac
-	  }).sortBy(v => v._2, false, 1)
+	  })
+	  
+	  //move lag from key to value
+	  val autoCorWithLag = autoCor.map(r => {
+	      //move lag from key to value
+	      val key = r._1
+	      val value = r._2
+	      val nKey = Record(key.size -1 , key)
+	      val nVal = Record(2)
+	      nVal.addInt(key.getInt(key.size -1))
+	      nVal.addDouble(value)
+	      (nKey, nVal)
+	  })
+	  
+	  //max or all 
+	  val autoCorFilt = if (outputMaxCorr) {
+	    //retain max autocor only
+	    autoCorWithLag.reduceByKey((v1, v2) => if (v1.getDouble(1) > v2.getDouble(1)) v1 else v2)
+	  } else {
+	    //retain all
+	    autoCorWithLag
+	  }
+	  
+	  //sort by descending corr value
+	  val autoCorSer = autoCorFilt.
+			  sortBy(r => r._2.getDouble(1), false, 1).
+			  map(r => r._1.toString() + fieldDelimOut + r._2.toString())
 	  
 	  
 	  if (debugOn) {
-	     autoCor.collect.foreach(s => println(s))
+	     autoCorSer.collect.slice(0,100).foreach(s => println(s))
 	  }
 	   
 	  if (saveOutput) {
-	     autoCor.saveAsTextFile(outputPath)
+	     autoCorSer.saveAsTextFile(outputPath)
 	  }
 	  
    }
