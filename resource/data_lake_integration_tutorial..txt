@@ -1,0 +1,96 @@
+This tutorial is for data integration in a HDFS data lake, allowing insert, update and delete. We will
+assume that the source data is from 3 distribution centers dc1, dc2 and dc3 for an inventory
+management use case.
+
+Environment
+===========
+Please modify bmu.sh based on you environment
+
+Build
+=====
+Please refer to spark_dependency.txt
+
+Runtime
+=======
+Start HDFS and Spark
+
+Create base product data
+========================
+./bmu.sh crBaseFile <num_brands> <num_cat> <num_prod> pbase.txt
+
+where
+num_brands = number of product brands e.g. 10
+num_cat = number of product category e.g 20
+num_prod = number of products  e.g 5000
+
+Create distr center base data
+=============================
+./bmu.sh crBaseDcFile pbase.txt dc1.txt
+./bmu.sh crBaseDcFile pbase.txt dc2.txt
+./bmu.sh crBaseDcFile pbase.txt dc3.txt
+
+Copy distr center base data
+===========================
+./bmu.sh cpInput  dc1.txt 
+./bmu.sh cpInput  dc2.txt 
+./bmu.sh cpInput  dc3.txt 
+
+Create insert update data for any distr center
+==============================================
+Update and insert with dc1 data
+./bmu.sh crUpsert dc1.txt dc1_rm.txt <percent_upsert> dc1_up1.txt
+
+where 
+percent_upsert = percentage of data inserted and updated
+
+Copy upsert incremental data
+============================
+./bmu.sh rmIncInput
+./bmu.sh cpIncInput dc1_up1.txt
+
+Run spark job
+=============
+./bmu.sh bulkMutator
+
+More insert update
+==================
+Repeat the last 3 steps for any of the 3 distr centers
+
+Create delete data for any distr center
+=======================================
+./bmu.sh crDel dc2.txt 1 dc2_rm1.txt
+
+For delete copy all data for full synchronization
+=================================================
+Deleting some records from dc2 data
+./bmu.sh rmIncInput
+./bmu.sh cpIncInput dc2_rm1.txt
+./bmu.sh cpIncInput dc1.txt
+./bmu.sh cpIncInput dc3.txt
+
+Run spark job
+=============
+./bmu.sh bulkMutator
+
+More delete
+========== 
+Repeat the last 3 steps for any of the 3 distr centers
+
+Any sequence of operation
+=========================
+Feel free to inter mingle upsert and delete operations in any order
+
+Versioning 
+==========
+If you want to preserve the old data in case of updates, set the following 2 parameters 
+as below
+
+maintain.version = true
+versioned.filePath = "hdfs:///other/bmu/ver"
+ 
+Configuration
+=============
+Change configuration in etl.conf as needed
+
+
+
