@@ -65,6 +65,7 @@ public class SeasonalAnalyzer implements Serializable {
     public static final String  MONTH_OF_YEAR = "monthOfYear";
     public static final String  ANY_TIME_RANGE = "anyTimeRange";
     public static final String  ANY_DAY = "anyDay";
+    public static final String  NO_CYCLE = "noCycle";
     
     private static long secInWeek =7L * 24 * 60 * 60;
     private static long secInDay =24L * 60 * 60;
@@ -107,7 +108,11 @@ public class SeasonalAnalyzer implements Serializable {
     	timeStamp += timeZoneShiftSec;
     	cycleIndex = -1;
     	long  weekDayIndex = 0;
-    	if (seasonalCycleType.equals(DAY_OF_WEEK)) {
+    	
+    	if (seasonalCycleType.equals(NO_CYCLE)) {
+    		parentCycleIndex = 0;
+    		cycleIndex = 0;
+    	} else if (seasonalCycleType.equals(DAY_OF_WEEK)) {
         	parentCycleIndex = timeStamp / secInWeek;
     		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
     	} else if (seasonalCycleType.equals(DAY_HOLIDAY_OF_WEEK)) {
