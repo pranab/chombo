@@ -222,7 +222,7 @@ object AutoCorrelation extends JobConfiguration {
 	  //sort by descending corr value
 	  val autoCorSer = autoCorFilt.
 	    sortBy(r => r._2.getDouble(1), false, 1).
-		map(r => r._1.toString() + fieldDelimOut + r._2.toString())
+		map(r => r._1.toString(fieldDelimOut) + fieldDelimOut + r._2.toString(fieldDelimOut))
 	  
 	  
 	  if (debugOn) {

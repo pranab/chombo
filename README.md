@@ -46,6 +46,7 @@ including sifarish, avenir etc. Blogs related to thos projects are also relevant
 * https://pkghosh.wordpress.com/2017/12/05/data-normalization-with-spark/
 * https://pkghosh.wordpress.com/2018/01/10/data-type-auto-discovery-with-spark/
 * https://pkghosh.wordpress.com/2018/08/20/pluggable-rule-driven-data-validation-with-spark/
+* https://pkghosh.wordpress.com/2018/11/19/bulk-mutation-in-an-integration-data-lake-with-spark/
 
 
 ## Build
