@@ -18,14 +18,70 @@
 package org.chombo.spark.common
 
 import org.apache.spark.rdd.RDD
+import scala.collection.JavaConverters._
 import org.chombo.util.BasicUtils
 
 trait GeneralUtility {
-	
+
   /**
- * @param keyFieldOrdinals
- * @return
- */
+  * @param keyFields
+  * @return
+  */
+  def getKeyFieldOrdinals(keyFields:Option[java.util.List[Integer]]) : Option[Array[Integer]] = {
+    keyFields match {
+	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
+	     case None => None  
+	}
+  }
+  
+  /**
+  * @param list
+  * @return
+  */
+  def toOptionalIntArray(list:Option[java.util.List[Integer]]) : Option[Array[Int]] = {
+    list match {
+	     case Some(list:java.util.List[Integer]) => {
+	       val sArray = list.asScala.toArray.map(i => i.toInt)
+	       Some(sArray)
+	     }
+	     case None => None  
+	}
+  }
+
+  /**
+  * @param list
+  * @return
+  */
+  def toIntArray(list:java.util.List[Integer]) : Array[Int] = {
+    list.asScala.toArray.map(i => i.toInt)
+  }
+
+  /**
+  * @param list
+  * @return
+  */
+  def toOptionalIntList(list:Option[java.util.List[Integer]]) : Option[List[Int]] = {
+    list match {
+	     case Some(list:java.util.List[Integer]) => {
+	       val sArray = list.asScala.toList.map(i => i.toInt)
+	       Some(sArray)
+	     }
+	     case None => None  
+	}
+  }
+  
+  /**
+  * @param list
+  * @return
+  */
+  def toIntList(list:java.util.List[Integer]) : List[Int] = {
+    list.asScala.toList.map(i => i.toInt)
+  }
+
+  /**
+  * @param keyFieldOrdinals
+  * @return
+  */
   def getKeyLen(keyFieldOrdinals:Option[Array[Integer]]) : Int = {
 	  var keyLen = 0
 	  keyFieldOrdinals match {

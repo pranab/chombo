@@ -23,13 +23,14 @@ import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
 import org.chombo.util.BasicUtils
 import java.text.SimpleDateFormat
+import org.chombo.spark.common.GeneralUtility
 
 /**
  * Range partitions. Adds new field with partition index
  * @author pranab
  *
  */
-object RangePartitioner extends JobConfiguration  {
+object RangePartitioner extends JobConfiguration with GeneralUtility {
   
    /**
     * @param args
@@ -47,10 +48,7 @@ object RangePartitioner extends JobConfiguration  {
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
-	   val keyFieldOrdinals = keyFields match {
-	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
-	     case None => None  
-	   }
+	   val keyFieldOrdinals = getKeyFieldOrdinals(keyFields)
 	   
 	   val seqFieldOrdinal = getMandatoryIntParam(appConfig, "seq.fieldOrdinal", 
 	       "missing seq field ordinal")
@@ -63,10 +61,9 @@ object RangePartitioner extends JobConfiguration  {
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
-	   var keyLen = 0
-	   keyFieldOrdinals match {
-	     case Some(fields : Array[Integer]) => keyLen +=  fields.length
-	     case None => 
+	   val keyLen = keyFieldOrdinals match {
+	     case Some(fields : Array[Integer]) =>  fields.length
+	     case None => 0
 	   }
 
 	   //input
@@ -179,7 +176,7 @@ object RangePartitioner extends JobConfiguration  {
    */
    def getPartField(value:String, dateFormat: Option[java.text.SimpleDateFormat]) : Double = {
      dateFormat match {
-       case Some(dateFmt) => BasicUtils.getEpochTime(value, dateFmt)
+       case Some(dateFmt) => BasicUtils.getEpochTime(value, dateFmt).toDouble
        case None => value.toDouble
      }
    }
