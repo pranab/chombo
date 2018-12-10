@@ -73,6 +73,12 @@ object Record {
   def apply(size:Int, record:Record, beg:Int, end:Int) : Record = new Record(record, beg, end)
 
   /**
+  * @param recOne
+  * @param reTwo
+  */	
+  def apply(recOne:Record, recTwo:Record) : Record = new Record(recOne, recTwo)
+  
+  /**
    * @param data
    * @param beg
    * @param end
@@ -165,8 +171,11 @@ object Record {
 	      case None =>
 	  }
    }
- 
-   def setPrecision(floatPrecision : Int) {
+
+  /**
+  * @param floatPrecision
+  */
+  def setPrecision(floatPrecision : Int) {
      Record.floatPrecision = floatPrecision
    }
 }
@@ -235,6 +244,18 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  this(size)
 	  val copySize = end - beg
 	  Array.copy(record.array, beg, array, 0, copySize)
+	  cursor += copySize
+	} 
+
+	/**
+	* @param recOne
+ 	* @param reTwo
+ 	*/	
+	def this(recOne:Record, recTwo:Record) {
+	  this(recOne.size + recTwo.size)
+	  val copySize = recOne.size + recTwo.size
+	  Array.copy(recOne.array, 0, array, 0, recOne.size)
+	  Array.copy(recTwo.array, 0, array, recOne.size, copySize)
 	  cursor += copySize
 	} 
 

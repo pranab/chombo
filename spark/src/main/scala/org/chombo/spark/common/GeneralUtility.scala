@@ -34,6 +34,7 @@ trait GeneralUtility {
 	}
   }
   
+  
   /**
   * @param list
   * @return
@@ -82,7 +83,7 @@ trait GeneralUtility {
   * @param keyFieldOrdinals
   * @return
   */
-  def getKeyLen(keyFieldOrdinals:Option[Array[Integer]]) : Int = {
+  def  getKeyLen(keyFieldOrdinals:Option[Array[Integer]]) : Int = {
 	  var keyLen = 0
 	  keyFieldOrdinals match {
 	    case Some(fields : Array[Integer]) => keyLen +=  fields.length
@@ -90,6 +91,44 @@ trait GeneralUtility {
 	  }
 	  keyLen
   }
+  
+  /**
+  * @param arr
+  * @return
+  */
+  def getOptinalArrayLength[T](arr:Option[Array[T]]) : Int = {
+	  arr match {
+	    case Some(arr : Array[T]) => arr.length
+	    case None => 0
+	  }
+  }
+  
+  /**
+  * @param list
+  * @return
+  */
+  def getOptinalListLength[T](list:Option[List[T]]) : Int = {
+	  list match {
+	    case Some(list : List[T]) => list.length
+	    case None => 0
+	  }
+  }
+
+  /**
+  * @param fields
+  * @param keyFieldOrdinals
+  * @param rec
+  */
+  def populateFields(fields:Array[String], fieldOrdinals:Option[Array[Int]], rec:Record)  {
+	  fieldOrdinals match {
+	      case Some(fieldOrds : Array[Int]) => {
+	    	  for (kf <- fieldOrds) {
+	    		  rec.addString(fields(kf))
+			  }
+	      }
+	      case None =>
+	  }
+   }
   
   /**
  * @param data
