@@ -20,6 +20,7 @@ package org.chombo.spark.common
 import org.apache.spark.rdd.RDD
 import scala.collection.JavaConverters._
 import org.chombo.util.BasicUtils
+import scala.collection.mutable.HashSet
 
 trait GeneralUtility {
 
@@ -39,12 +40,9 @@ trait GeneralUtility {
   * @param list
   * @return
   */
-  def toOptionalIntArray(list:Option[java.util.List[Integer]]) : Option[Array[Int]] = {
+  def toOptionalIntegerArray(list:Option[java.util.List[Integer]]) : Option[Array[Integer]] = {
     list match {
-	     case Some(list:java.util.List[Integer]) => {
-	       val sArray = list.asScala.toArray.map(i => i.toInt)
-	       Some(sArray)
-	     }
+	     case Some(list:java.util.List[Integer]) => Some(list.asScala.toArray)
 	     case None => None  
 	}
   }
@@ -53,10 +51,25 @@ trait GeneralUtility {
   * @param list
   * @return
   */
-  def toIntArray(list:java.util.List[Integer]) : Array[Int] = {
-    list.asScala.toArray.map(i => i.toInt)
+  def toOptionalIntArray(list:Option[java.util.List[Integer]]) : Option[Array[Int]] = {
+    list match {
+	     case Some(list:java.util.List[Integer]) => Some(list.asScala.toArray.map(i => i.toInt))
+	     case None => None  
+	}
   }
 
+  /**
+  * @param list
+  * @return
+  */
+  def toIntArray(list:java.util.List[Integer]) : Array[Int] = list.asScala.toArray.map(i => i.toInt)
+
+  /**
+  * @param list
+  * @return
+  */
+  def toIntegerArray(list:java.util.List[Integer]) : Array[Integer] = list.asScala.toArray
+ 
   /**
   * @param list
   * @return
@@ -80,37 +93,56 @@ trait GeneralUtility {
   }
 
   /**
+  * @param list
+  * @return
+  */
+  def toIntegerList(list:java.util.List[Integer]) : List[Integer] = {
+    list.asScala.toList
+  }
+
+  /**
+  * @param arr
+  * @return
+  */
+  def fromOptionalIntegerToIntArray(arr:Option[Array[Integer]]) : Option[Array[Int]] = {
+    arr match {
+	     case Some(a:Array[Integer]) => Some(a.map(i => i.toInt))
+	     case None => None  
+	}
+  }
+  
+  /**
   * @param keyFieldOrdinals
   * @return
   */
-  def  getKeyLen(keyFieldOrdinals:Option[Array[Integer]]) : Int = {
-	  var keyLen = 0
+  def getKeyLen(keyFieldOrdinals:Option[Array[Integer]]) : Int = {
 	  keyFieldOrdinals match {
-	    case Some(fields : Array[Integer]) => keyLen +=  fields.length
-	    case None => 
+	    case Some(fields : Array[Integer]) => fields.length
+	    case None => 0
 	  }
-	  keyLen
   }
   
   /**
   * @param arr
   * @return
   */
-  def getOptinalArrayLength[T](arr:Option[Array[T]]) : Int = {
+  def getOptinalArrayLength[T](arr:Option[Array[T]], defLen:Int = 0) : Int = {
 	  arr match {
 	    case Some(arr : Array[T]) => arr.length
-	    case None => 0
+	    case None => defLen
 	  }
   }
   
+
   /**
   * @param list
+  * @param defLen
   * @return
   */
-  def getOptinalListLength[T](list:Option[List[T]]) : Int = {
+  def getOptinalListLength[T](list:Option[List[T]], defLen:Int = 0) : Int = {
 	  list match {
 	    case Some(list : List[T]) => list.length
-	    case None => 0
+	    case None => defLen
 	  }
   }
 
@@ -126,10 +158,48 @@ trait GeneralUtility {
 	    		  rec.addString(fields(kf))
 			  }
 	      }
-	      case None =>
+	      case None => 
 	  }
    }
   
+  /**
+  * @param fields
+  * @param keyFieldOrdinals
+  * @param rec
+  * @param defKey
+  */
+  def populateFields(fields:Array[String], fieldOrdinals:Option[Array[Int]], rec:Record, defKey:String)  {
+	  fieldOrdinals match {
+	      case Some(fieldOrds : Array[Int]) => {
+	    	  for (kf <- fieldOrds) {
+	    		  rec.addString(fields(kf))
+			  }
+	      }
+	      case None => rec.add(defKey)
+	  }
+   }
+  
+  /**
+  * @param recOne
+  * @param recTwo
+  * @return
+  */
+  def combineWithUniqueFields(recOne:Record, recTwo:Record) : Record = {
+    val uniqueItems = HashSet[Any]()
+    recOne.initialize()
+    while(recOne.hasNext()) {
+      uniqueItems.add(recOne.getAny)
+    }
+    recTwo.initialize()
+    while(recTwo.hasNext()) {
+      uniqueItems += recTwo.getAny
+    }
+    
+    val newRec = Record(uniqueItems.size)
+    uniqueItems.foreach(i => newRec.add(i))
+    newRec
+  }
+
   /**
  * @param data
  * @param fieldDelimIn

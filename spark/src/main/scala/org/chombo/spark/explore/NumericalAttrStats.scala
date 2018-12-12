@@ -148,8 +148,8 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 	  //aggregate
 	  keyedRecs = keyedRecs.reduceByKey((v1, v2) => {
 	    val aggr = Record(5)
-	    v1.intialize
-	    v2.intialize
+	    v1.initialize
+	    v2.initialize
 	    
 	    //sum
 	    aggr.addDouble(v1.getDouble() + v2.getDouble())
@@ -175,7 +175,7 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 	  //calculate stats
 	  val statsRecs = keyedRecs.map(kv => {
 	    val stat = Record(8)
-	    kv._2.intialize
+	    kv._2.initialize
 	    val sum = kv._2.getDouble()
 	    val min = kv._2.getDouble()
 	    val max = kv._2.getDouble()

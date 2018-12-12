@@ -19,7 +19,7 @@
 package org.chombo.spark.common
 
 import org.chombo.util.Utility
-import scala.collection.mutable.Buffer
+import scala.collection.mutable.ArrayBuffer
 import org.chombo.util.BasicUtils
 import org.chombo.util.BaseAttribute
 import scala.reflect.ClassTag
@@ -134,7 +134,7 @@ object Record {
    * @param fieldOrdinals
    * @return
   */
-  def extractFields(fields: Array[String], fieldOrdinals: Buffer[Integer]) : Record = {
+  def extractFields(fields: Array[String], fieldOrdinals: Array[Integer]) : Record = {
 	  val keyRec = new Record(fieldOrdinals.length)
 	  fieldOrdinals.foreach(ord => {
 	      keyRec.addString(fields(ord))
@@ -331,17 +331,25 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 
 	/**
 	 * @param sortFields
+	 * @return
 	 */
 	def withSortFields(sortFields : Array[Int]) : Record = {
 	  this.sortFields = Some(sortFields)
 	  this
 	}
 	
+	/**
+	 * @param secondaryKeySize
+	 * @return
+	 */
 	def withSecondaryKeySize(secondaryKeySize : Int) : Record = {
 	  this.secondaryKeySize = secondaryKeySize
 	  this
 	}
 
+	/**
+	 * @return
+	 */
 	def getArray() :Array[Any] = array
 	
 	/**
@@ -721,7 +729,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	/**
 	 * 
 	 */
-	def intialize() {
+	def initialize() {
 	  cursor = 0
 	}
 	
@@ -860,38 +868,19 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @return
 	 */
 	def compareElement(thisEl:Any, thatEl:Any) : Int = {
-	    if (thisEl.isInstanceOf[String] ) {
-	      if (thatEl.isInstanceOf[String]) {
-	    	thisEl.asInstanceOf[String] compareTo thatEl.asInstanceOf[String] match { case 0 => 0; case c => return c }
-	      } else {
-	        return 1
-	      }
+		var ret = 0
+	    if (thisEl.isInstanceOf[String] && thatEl.isInstanceOf[String]) {
+	    	ret = thisEl.asInstanceOf[String] compareTo thatEl.asInstanceOf[String]
+	    } else if (thisEl.isInstanceOf[Int] && thatEl.isInstanceOf[Int]) {
+	    	ret = thisEl.asInstanceOf[Int] compareTo thatEl.asInstanceOf[Int]
+	    } else if (thisEl.isInstanceOf[Long] && thatEl.isInstanceOf[Long]) {
+	    	ret = thisEl.asInstanceOf[Long] compareTo thatEl.asInstanceOf[Long]
+	    } else if (thisEl.isInstanceOf[Double] && thatEl.isInstanceOf[Double]) {
+	    	ret = thisEl.asInstanceOf[Double] compareTo thatEl.asInstanceOf[Double]
+	    } else {
+	      throw new IllegalStateException("for sorting all elements need to be same type")
 	    }
-	    
-	    if (thisEl.isInstanceOf[Int] ) {
-	      if (thatEl.isInstanceOf[Int]) {
-	    	thisEl.asInstanceOf[Int] compareTo thatEl.asInstanceOf[Int] match { case 0 => 0; case c => return c }
-	      } else {
-	        return 1
-	      }
-	    }
-
-	    if (thisEl.isInstanceOf[Long] ) {
-	      if (thatEl.isInstanceOf[Long]) {
-	    	thisEl.asInstanceOf[Long] compareTo thatEl.asInstanceOf[Long] match { case 0 => 0; case c => return c }
-	      } else {
-	        return 1
-	      }
-	    }
-	    
-	    if (thisEl.isInstanceOf[Double] ) {
-	      if (thatEl.isInstanceOf[Double]) {
-	    	thisEl.asInstanceOf[Double] compareTo thatEl.asInstanceOf[Double] match { case 0 => 0; case c => return c }
-	      } else {
-	        return 1
-	      }
-	    }
-	    0
+	    ret
 	}
 	
 	/**
@@ -916,4 +905,72 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  return this
 	}
 	
+	/**
+	 * @param field
+	 * @return
+	 */
+	def findString(field:String) : Boolean = {
+	  var found = false
+	  for (i <- 0 to array.length -1 if !found) {
+	    val strVal = array(i).asInstanceOf[String]
+	    found = strVal.equals(field)
+	  }
+	  found
+	}
+	
+	
+	/**
+	 * @param field
+	 * @param indexes
+	 * @return
+	 */
+	def findString(field:String, indexes:Array[Int]) : Boolean = {
+	  var found = false
+	  for (i <- indexes if !found) {
+	    val strVal = array(i).asInstanceOf[String]
+	    found = strVal.equals(field)
+	  }
+	  found
+	}
+	
+	/**
+	 * @param field
+	 * @return
+	 */
+	def findInt(field:Int) : Boolean = {
+	  var found = false
+	  for (i <- 0 to array.length -1 if !found) {
+	    val intVal = array(i).asInstanceOf[Int]
+	    found = intVal == field
+	  }
+	  found
+	}
+	
+	/**
+	 * @param field
+	 * @return
+	 */
+	def findInt(field:Int, indexes:Array[Int]) : Boolean = {
+	  var found = false
+	  for (i <- indexes if !found) {
+	    val intVal = array(i).asInstanceOf[Int]
+	    found = intVal == field
+	  }
+	  found
+	}
+	
+	/**
+	 * @return
+	 */
+	def hasNext() : Boolean = {cursor < array.length}
+	
+	/**
+	 * @return
+	 */
+	def sort() {
+	  val buf = ArrayBuffer[Any]()
+	  for (a <- array) {buf += a}
+	  val sList = buf.toList.sortWith((v1, v2) => {compareElement(v1, v2) < 0})
+	  sList.zipWithIndex.foreach(v => array(v._2) = v._1)
+	}
 }
