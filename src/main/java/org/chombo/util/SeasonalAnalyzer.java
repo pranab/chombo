@@ -52,6 +52,12 @@ public class SeasonalAnalyzer implements Serializable {
     public static final String  HOUR_OF_DAY = "hourOfDay";
     public static final String  HOUR_OF_WEEK_DAY = "hourOfWeekDay";
     public static final String  HOUR_OF_WEEK_END_DAY = "hourOfWeekEndDay";
+    public static final String  SIX_HOUR_OF_DAY = "sixHourOfDay";
+    public static final String  SIX_HOUR_OF_WEEK_DAY = "sixHourOfWeekDay";
+    public static final String  SIX_HOUR_OF_WEEKEND_DAY = "sixHourOfWeekEndDay";
+    public static final String  TWELVE_HOUR_OF_DAY = "twelveHourOfDay";
+    public static final String  TWELVE_HOUR_OF_WEEK_DAY = "twelveHourOfWeekDay";
+    public static final String  TWELVE_HOUR_OF_WEEKEND_DAY = "twelveHourOfWeekEndDay";
     public static final String  DAY_OF_WEEK  = "dayOfWeek";
     public static final String  DAY_HOLIDAY_OF_WEEK  = "dayHolidayOfWeek";
     public static final String  WEEK_DAY_OF_WEEK  = "weekDayOfWeek";
@@ -72,6 +78,8 @@ public class SeasonalAnalyzer implements Serializable {
     private static long secInHour = 60L * 60;
     private static long secInHalfHour = 30L * 60;
     private static long secInQuarterHour = 15L * 60;
+    private static long secInSixHour = 6 * secInHour;
+    private static long secInTwelveHour = 12 * secInHour;
     private static long secInYear = secInDay * 365;
     private static int[] daysInMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     
@@ -186,6 +194,28 @@ public class SeasonalAnalyzer implements Serializable {
         	parentCycleIndex = timeStamp / secInDay;
         	weekDayIndex = parentCycleIndex % 7;
         	cycleIndex = weekDayIndex > 4 ? (int)((timeStamp % secInDay) / secInQuarterHour) : -1;
+    	} else  if (seasonalCycleType.equals(SIX_HOUR_OF_DAY)) {
+        	parentCycleIndex = timeStamp / secInDay;
+    		cycleIndex = (int)((timeStamp % secInDay) / secInSixHour);
+    	}  else  if (seasonalCycleType.equals(SIX_HOUR_OF_WEEK_DAY)) {
+        	parentCycleIndex = timeStamp / secInDay;
+        	weekDayIndex = parentCycleIndex % 7;
+        	cycleIndex = weekDayIndex < 5 ? (int)((timeStamp % secInDay) / secInSixHour) : -1;
+    	} else  if (seasonalCycleType.equals(SIX_HOUR_OF_WEEKEND_DAY)) {
+        	parentCycleIndex = timeStamp / secInDay;
+        	weekDayIndex = parentCycleIndex % 7;
+        	cycleIndex = weekDayIndex > 4 ? (int)((timeStamp % secInDay) / secInSixHour) : -1;
+    	} else  if (seasonalCycleType.equals(TWELVE_HOUR_OF_DAY)) {
+        	parentCycleIndex = timeStamp / secInDay;
+    		cycleIndex = (int)((timeStamp % secInDay) / secInTwelveHour);
+    	} else  if (seasonalCycleType.equals(TWELVE_HOUR_OF_WEEK_DAY)) {
+        	parentCycleIndex = timeStamp / secInDay;
+        	weekDayIndex = parentCycleIndex % 7;
+        	cycleIndex = weekDayIndex < 5 ? (int)((timeStamp % secInDay) / secInTwelveHour) : -1;
+    	} else  if (seasonalCycleType.equals(TWELVE_HOUR_OF_WEEKEND_DAY)) {
+        	parentCycleIndex = timeStamp / secInDay;
+        	weekDayIndex = parentCycleIndex % 7;
+        	cycleIndex = weekDayIndex > 4 ? (int)((timeStamp % secInDay) / secInTwelveHour) : -1;
     	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)) {
     		parentCycleIndex = timeStamp / secInDay;
     		weekDayIndex = parentCycleIndex % 7;

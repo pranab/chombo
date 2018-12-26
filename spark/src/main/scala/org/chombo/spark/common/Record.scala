@@ -911,9 +911,11 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 */
 	def findString(field:String) : Boolean = {
 	  var found = false
-	  for (i <- 0 to array.length -1 if !found) {
-	    val strVal = array(i).asInstanceOf[String]
-	    found = strVal.equals(field)
+	  for (el <- array if !found) {
+	    if (el.isInstanceOf[String]) {
+	    	val strVal = el.asInstanceOf[String]
+	        found = strVal.equals(field)
+	    }
 	  }
 	  found
 	}
@@ -927,10 +929,27 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	def findString(field:String, indexes:Array[Int]) : Boolean = {
 	  var found = false
 	  for (i <- indexes if !found) {
-	    val strVal = array(i).asInstanceOf[String]
-	    found = strVal.equals(field)
+	    val el = array(i)
+	    if (el.isInstanceOf[String]) {
+	    	val strVal = el.asInstanceOf[String]
+	        found = strVal.equals(field)
+	    }
 	  }
 	  found
+	}
+	
+	/**
+	 * @param that
+	 * @return
+	 */
+	def containsAllStrings(that:Record) : Boolean = {
+	  that.initialize()
+	  var foundAll = true;
+	  while(that.hasNext()){
+	    val thatStr = that.getString()
+	    foundAll = foundAll && findString(thatStr)
+	  }
+	  foundAll
 	}
 	
 	/**
@@ -939,9 +958,11 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 */
 	def findInt(field:Int) : Boolean = {
 	  var found = false
-	  for (i <- 0 to array.length -1 if !found) {
-	    val intVal = array(i).asInstanceOf[Int]
-	    found = intVal == field
+	  for (el <- array if !found) {
+	    if (el.isInstanceOf[Int]) {
+	    	val intVal = el.asInstanceOf[Int]
+	        found = intVal == field
+	    }
 	  }
 	  found
 	}
@@ -953,8 +974,11 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	def findInt(field:Int, indexes:Array[Int]) : Boolean = {
 	  var found = false
 	  for (i <- indexes if !found) {
-	    val intVal = array(i).asInstanceOf[Int]
-	    found = intVal == field
+	    val el = array(i)
+	    if (el.isInstanceOf[Int]) {
+	    	val intVal = el.asInstanceOf[Int]
+	        found = intVal == field
+	    }
 	  }
 	  found
 	}
