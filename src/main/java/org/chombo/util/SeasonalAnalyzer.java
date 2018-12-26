@@ -43,7 +43,7 @@ public class SeasonalAnalyzer implements Serializable {
     private List<Long> dateBegins;
     private SimpleDateFormat dateFormat;
     
-    public  static final String QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
+    public static final String  QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
     public static final String  QUARTER_HOUR_OF_WEEK_DAY = "quarterHourOfWeekDay";
     public static final String  QUARTER_HOUR_OF_WEEK_END_DAY = "quarterHourOfWeekEndDay";
     public static final String  HALF_HOUR_OF_DAY = "halfHourOfDay";
@@ -83,6 +83,14 @@ public class SeasonalAnalyzer implements Serializable {
     private static long secInYear = secInDay * 365;
     private static int[] daysInMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     
+    /**
+     * @param seasonalCycleType
+     */
+    public SeasonalAnalyzer() {
+		super();
+		this.seasonalCycleType = NO_CYCLE;
+	}
+
     /**
      * @param seasonalCycleType
      */
@@ -474,6 +482,9 @@ public class SeasonalAnalyzer implements Serializable {
 	 */
 	public boolean isWithinAnySpecifiedDay(long timeStamp) {
 		boolean withinDay = false;
+		if (null == dateBegins) {
+			throw new IllegalStateException("specif dates not set");
+		}
 		for (long  dateBegin : dateBegins) {
 			long dateEnd = dateBegin + secInDay;
 			if (timeStamp > dateBegin && timeStamp <= dateEnd) {
@@ -534,6 +545,31 @@ public class SeasonalAnalyzer implements Serializable {
 			}
 		}
 		return seasonalCycles;
+	} 
+	
+	/**
+	 * @param timeStamp
+	 * @return
+	 */
+	public boolean isWeekDay(long timeStamp) {
+		int cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+		return cycleIndex < 5;
 	}
 	
+	/**
+	 * @param timeStamp
+	 * @return
+	 */
+	public boolean isWeekEndDay(long timeStamp) {
+		int cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+		return cycleIndex >= 5;
+	}
+	
+	/**
+	 * @param timeStamp
+	 * @return
+	 */
+	public boolean isWeekEndOrHoliDay(long timeStamp) {
+		return isWeekEndDay(timeStamp) || isWithinAnySpecifiedDay(timeStamp);
+	}
 }
