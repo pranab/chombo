@@ -2488,5 +2488,14 @@ public class BasicUtils {
     	double e = Math.exp(-cons * val);
     	return 1 / (1 + e);
     }
+    
+    /**
+     * @param obj
+     * @param msg
+     */
+    public static void assertNotNull(Object obj, String msg) {
+    	if (null == obj)
+    		throw new IllegalStateException(msg);
+    }
    
  }
