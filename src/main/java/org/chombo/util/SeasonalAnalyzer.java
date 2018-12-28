@@ -128,7 +128,6 @@ public class SeasonalAnalyzer implements Serializable {
     	timeStamp += timeZoneShiftSec;
     	cycleIndex = -1;
     	long  weekDayIndex = 0;
-    	long dayIndex = 0;
     	if (seasonalCycleType.equals(NO_CYCLE)) {
     		parentCycleIndex = 0;
     		cycleIndex = 0;
@@ -136,44 +135,17 @@ public class SeasonalAnalyzer implements Serializable {
         	parentCycleIndex = timeStamp / secInWeek;
     		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
     	} else if (seasonalCycleType.equals(DAY_HOLIDAY_OF_WEEK)) {
-        	parentCycleIndex = timeStamp / secInWeek;
-    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-			if (isWithinAnySpecifiedDay(timeStamp)) {
-				cycleIndex = 7;
-			}
+    		dayHolidayOfWeekCycleIndex(timeStamp);
     	} else if (seasonalCycleType.equals(WEEK_DAY_OF_WEEK)) {
-        	parentCycleIndex = timeStamp / secInWeek;
-    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-    		if (cycleIndex > 4) {
-    			cycleIndex = -1;
-    		}
+    		weekDayOfWeekCycleIndex(timeStamp);
     	} else if (seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OF_WEEK)) {
-        	parentCycleIndex = timeStamp / secInWeek;
-    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-    		if (cycleIndex > 4) {
-    			cycleIndex = -1;
-    		} else {
-    			if (isWithinAnySpecifiedDay(timeStamp)) {
-    				cycleIndex = 5;
-    			}
-    		}
+    		weekDayHolidayOfWeekCycleIndex(timeStamp);
     	} else if (seasonalCycleType.equals(WEEK_END_DAY_OF_WEEK)) {
-        	parentCycleIndex = timeStamp / secInWeek;
-    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-    		if (cycleIndex < 5) {
-    			cycleIndex = -1;
-    		}
+    		weekEndDayOfWeekCycleIndex(timeStamp);
     	} else if (seasonalCycleType.equals(WEEK_DAY_OR_WEEK_END_OF_WEEK)) {
-        	parentCycleIndex = timeStamp / secInWeek;
-    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-    		cycleIndex = cycleIndex > 4 ?  1 : 0;
+    		weekDayOrWeekendOfWeekCycleIndex(timeStamp);
     	} else if (seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OR_WEEK_END_OF_WEEK)) {
-        	parentCycleIndex = timeStamp / secInWeek;
-    		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
-    		cycleIndex = cycleIndex > 4 ?  2 : 0;
-    		if (cycleIndex == 0 && isWithinAnySpecifiedDay(timeStamp)) {
-    			cycleIndex = 1;
-    		}
+    		weekDayHolidayOrWeekendOfWeekCycleIndex(timeStamp);
     	} else if (seasonalCycleType.equals(HOUR_OF_DAY)) {
         	parentCycleIndex = timeStamp / secInDay;
     		cycleIndex = (int)((timeStamp % secInDay) / secInHour);
@@ -229,61 +201,34 @@ public class SeasonalAnalyzer implements Serializable {
         	weekDayIndex = parentCycleIndex % 7;
         	cycleIndex = weekDayIndex > 4 ? (int)((timeStamp % secInDay) / secInTwelveHour) : -1;
     	} else  if (seasonalCycleType.equals(MONTH_RANGE_OF_YEAR)) {
-    		monthOfYearCycleIndex(timeStamp);
-    		BasicUtils.assertNotNull(monthOfYearRanges, "month ranges are not defined");
-    		Integer monthGroup = dayOfWeekRanges.get(cycleIndex);
-			cycleIndex = monthGroup != null ? monthGroup : -1;
+    		monthRangeOfYearCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(DAY_RANGE_OF_WEEK)) {
-    		parentCycleIndex = timeStamp / secInDay;
-    		dayIndex = parentCycleIndex % 7;
-    		BasicUtils.assertNotNull(dayOfWeekRanges, "day of week ranges are not defined");
-    		Integer dayGroup = dayOfWeekRanges.get(dayIndex);
-			cycleIndex = dayGroup != null ? dayGroup : -1;
+    		dayRangeOfWeekCycleIndex(timeStamp);
+    	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)) {
+    		hourRangeOfWeekDayCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY)) {
-    		parentCycleIndex = timeStamp / secInDay;
-    		weekDayIndex = parentCycleIndex % 7;
-    		if (weekDayIndex >= 5) {
-    			int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
-        		BasicUtils.assertNotNull(dayOfWeekRanges, "hour ranges are not defined");
-    			Integer hourGroup = hourRanges.get(hourCycleIndex);
-    			cycleIndex = hourGroup != null ? hourGroup : -1;
-    		} 
-    	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY)) {
-    		parentCycleIndex = timeStamp / secInDay;
-    		weekDayIndex = parentCycleIndex % 7;
-    		if (weekDayIndex >= 5) {
-    			int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
-        		BasicUtils.assertNotNull(dayOfWeekRanges, "hour ranges are not defined");
-    			Integer hourGroup = hourRanges.get(hourCycleIndex);
-    			cycleIndex = hourGroup != null ? hourGroup : -1;
-    		} 
+    		hourRangeOfWeekEndDayCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(MONTH_OF_YEAR)) {
     		monthOfYearCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(WEEK_OF_YEAR)) {
     		weekOfYearCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(ANY_TIME_RANGE)) {
-    		int indx = 0;
-    		for (Pair<Integer, Integer> timeRange :  timeRanges) {
-    			if (timeStamp >= timeRange.getLeft() && timeStamp <= timeRange.getRight()) {
-    				cycleIndex = indx;
-    				break;
-    			}
-    			++indx;
-    		}
+    		anyTimeRangeCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(ANY_DAY)) {
-    		parentCycleIndex = 0;
-    		for (long  dayBegin :  anyDays.keySet()) {
-    			long dayEnd = dayBegin + secInDay;
-    			if (timeStamp >= dayBegin && timeStamp < dayEnd) {
-    				cycleIndex = anyDays.get(dayBegin);
-    				break;
-    			}
-    		}
+    		anyDayCycleIndex(timeStamp);
     	} else {
     		throw new IllegalArgumentException("invalid cycle type");
     	}
     	
     	return cycleIndex;
+    }
+    
+    /**
+     * @param timeStamp
+     * @return
+     */
+    public boolean withinSeasonalCycle(long timeStamp) {
+    	return getCycleIndex(timeStamp) != -1;
     }
 
 	/**
@@ -428,7 +373,7 @@ public class SeasonalAnalyzer implements Serializable {
 	/**
 	 * @param timeStamp
 	 */
-	private  void  monthOfYearCycleIndex(long timeStamp) {
+	private void monthOfYearCycleIndex(long timeStamp) {
 		//go up to year beginning
 		secToYearBeginning(timeStamp);
 		
@@ -449,7 +394,7 @@ public class SeasonalAnalyzer implements Serializable {
 	/**
 	 * @param timeStamp
 	 */
-	private  void  weekOfYearCycleIndex(long timeStamp) {
+	private  void weekOfYearCycleIndex(long timeStamp) {
 		//go up to year beginning
 		secToYearBeginning(timeStamp);
 		
@@ -471,7 +416,7 @@ public class SeasonalAnalyzer implements Serializable {
 	/**
 	 * @param timeStamp
 	 */
-	private void  secToYearBeginning(long timeStamp) {
+	private void secToYearBeginning(long timeStamp) {
 		//go upto year
 		secToYear = 0;
 		year = 1971;
@@ -488,11 +433,163 @@ public class SeasonalAnalyzer implements Serializable {
 		//back up to beginning of year
 		secToYear -= secInCurYear;
 	}	
+
+	/**
+	 * @param timeStamp
+	 */
+	private void monthRangeOfYearCycleIndex(long timeStamp) {
+		monthOfYearCycleIndex(timeStamp);
+		BasicUtils.assertNotNull(monthOfYearRanges, "month ranges are not defined");
+		Integer monthGroup = dayOfWeekRanges.get(cycleIndex);
+		cycleIndex = monthGroup != null ? monthGroup : -1;
+	}	
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void dayRangeOfWeekCycleIndex(long timeStamp) {
+		parentCycleIndex = timeStamp / secInDay;
+		long dayIndex = parentCycleIndex % 7;
+		BasicUtils.assertNotNull(dayOfWeekRanges, "day of week ranges are not defined");
+		Integer dayGroup = dayOfWeekRanges.get(dayIndex);
+		cycleIndex = dayGroup != null ? dayGroup : -1;
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void hourRangeOfWeekDayCycleIndex(long timeStamp){
+		cycleIndex = -1;
+		parentCycleIndex = timeStamp / secInDay;
+		long weekDayIndex = parentCycleIndex % 7;
+		if (weekDayIndex < 5) {
+			int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
+    		BasicUtils.assertNotNull(hourRanges, "hour ranges are not defined");
+			Integer hourGroup = hourRanges.get(hourCycleIndex);
+			cycleIndex = hourGroup != null ? hourGroup : -1;
+		} 
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void hourRangeOfWeekEndDayCycleIndex(long timeStamp){
+		cycleIndex = -1;
+		parentCycleIndex = timeStamp / secInDay;
+		long weekDayIndex = parentCycleIndex % 7;
+		if (weekDayIndex >= 5) {
+			int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
+    		BasicUtils.assertNotNull(hourRanges, "hour ranges are not defined");
+			Integer hourGroup = hourRanges.get(hourCycleIndex);
+			cycleIndex = hourGroup != null ? hourGroup : -1;
+		} 
+	}
+
+	/**
+	 * @param timeStamp
+	 */
+	private void anyTimeRangeCycleIndex(long timeStamp) {
+		cycleIndex = -1;
+		BasicUtils.assertNotNull(timeRanges, "time ranges are not defined");
+		int indx = 0;
+		for (Pair<Integer, Integer> timeRange :  timeRanges) {
+			if (timeStamp >= timeRange.getLeft() && timeStamp <= timeRange.getRight()) {
+				cycleIndex = indx;
+				break;
+			}
+			++indx;
+		}
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void anyDayCycleIndex(long timeStamp) {
+		cycleIndex = -1;
+		BasicUtils.assertNotNull(anyDays, "days are not defined");
+		parentCycleIndex = 0;
+		for (long  dayBegin :  anyDays.keySet()) {
+			long dayEnd = dayBegin + secInDay;
+			if (timeStamp >= dayBegin && timeStamp < dayEnd) {
+				cycleIndex = anyDays.get(dayBegin);
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void weekDayHolidayOrWeekendOfWeekCycleIndex(long timeStamp) {
+    	parentCycleIndex = timeStamp / secInWeek;
+		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+		cycleIndex = cycleIndex > 4 ?  2 : 0;
+		if (cycleIndex == 0 && isWithinAnySpecifiedDay(timeStamp)) {
+			cycleIndex = 1;
+		}
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void weekDayOrWeekendOfWeekCycleIndex(long timeStamp) {
+    	parentCycleIndex = timeStamp / secInWeek;
+		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+		cycleIndex = cycleIndex >= 5 ?  1 : 0;
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void weekEndDayOfWeekCycleIndex(long timeStamp) {
+    	parentCycleIndex = timeStamp / secInWeek;
+		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+		if (cycleIndex < 5) {
+			cycleIndex = -1;
+		}
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void weekDayHolidayOfWeekCycleIndex(long timeStamp) {
+    	parentCycleIndex = timeStamp / secInWeek;
+		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+		if (cycleIndex > 4) {
+			cycleIndex = -1;
+		} else {
+			if (isWithinAnySpecifiedDay(timeStamp)) {
+				cycleIndex = 5;
+			}
+		}
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void weekDayOfWeekCycleIndex(long timeStamp) {
+    	parentCycleIndex = timeStamp / secInWeek;
+		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+		if (cycleIndex > 4) {
+			cycleIndex = -1;
+		}
+	}
+
+	/**
+	 * @param timeStamp
+	 */
+	private void dayHolidayOfWeekCycleIndex(long timeStamp) {
+    	parentCycleIndex = timeStamp / secInWeek;
+		cycleIndex = (int)((timeStamp % secInWeek) / secInDay);
+		if (isWithinAnySpecifiedDay(timeStamp)) {
+			cycleIndex = 7;
+		}
+	}
 	
 	/**
 	 * @return
 	 */
-	public  boolean isHourRange() {
+	public boolean isHourRange() {
 		return seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_DAY)  ||  
 			seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY);
 	}
@@ -504,30 +601,15 @@ public class SeasonalAnalyzer implements Serializable {
 		return seasonalCycleType.equals(ANY_DAY);
 	}
 	
+	/**
+	 * @return
+	 */
 	public boolean isWithHoliday() {
 		return seasonalCycleType.equals(DAY_HOLIDAY_OF_WEEK)  ||  
 			seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OF_WEEK) ||
 			seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OR_WEEK_END_OF_WEEK);
 	}
 	
-	/**
-	 * @param timeStamp
-	 * @return
-	 */
-	public boolean isWithinAnySpecifiedDay(long timeStamp) {
-		boolean withinDay = false;
-		if (null == dateBegins) {
-			throw new IllegalStateException("specif dates not set");
-		}
-		for (long  dateBegin : dateBegins) {
-			long dateEnd = dateBegin + secInDay;
-			if (timeStamp > dateBegin && timeStamp <= dateEnd) {
-				withinDay = true;
-				break;
-			}
-		}
-		return withinDay;
-	}
 	
 	/**
 	 * @param analyzers
@@ -581,6 +663,43 @@ public class SeasonalAnalyzer implements Serializable {
 		return seasonalCycles;
 	} 
 	
+	/**
+	 * @param timeStamp
+	 * @return
+	 */
+	public boolean isWithinAnySpecifiedDay(long timeStamp) {
+		boolean withinDay = false;
+		if (null == dateBegins) {
+			throw new IllegalStateException("specif dates not set");
+		}
+		for (long  dateBegin : dateBegins) {
+			long dateEnd = dateBegin + secInDay;
+			if (timeStamp > dateBegin && timeStamp <= dateEnd) {
+				withinDay = true;
+				break;
+			}
+		}
+		return withinDay;
+	}
+	
+	/**
+	 * @param timeStamp
+	 * @return
+	 */
+	public boolean isWithinDayRangeOfWeek(long timeStamp) {
+		dayRangeOfWeekCycleIndex(timeStamp);
+		return cycleIndex != -1;
+	}
+	
+	/**
+	 * @param timeStamp
+	 * @return
+	 */
+	public boolean isWithinMonthRangeOfYear(long timeStamp) {
+		monthRangeOfYearCycleIndex(timeStamp);
+		return cycleIndex != -1;
+	}
+
 	/**
 	 * @param timeStamp
 	 * @return
