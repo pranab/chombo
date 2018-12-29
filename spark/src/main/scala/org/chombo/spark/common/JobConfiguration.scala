@@ -729,4 +729,27 @@ trait JobConfiguration {
 	  paramMap
 	}
 	
+	/**
+	 * @param value
+	 * @param members
+	 * @param errMsg
+	 */
+	def assertStringMember(value:String, members:Array[String], errMsg:String) {
+	  members.find(v => value.equals(v)) match {
+	    case Some(found) => 
+	    case None => BasicUtils.assertCondition(false, errMsg)
+	  }
+	}
+	
+	/**
+	 * @param value
+	 * @param members
+	 * @param errMsg
+	 */
+	def assertIntMember(value:Int, members:Array[Int], errMsg:String) {
+	  members.find(v => value == v) match {
+	    case Some(found) => 
+	    case None => BasicUtils.assertCondition(false, errMsg)
+	  }
+	}
 }
