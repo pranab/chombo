@@ -63,6 +63,16 @@ trait SeasonalUtility {
     	  val dateFormatStr = jobConfig.getMandatoryStringParam(appConfig, "date.format", "missinfg date format")
     	  val holidays = jobConfig.getMandatoryStringListParam(appConfig, "specific.days", "missing days list").asScala.toArray
     	  seasonalAnalyzer.withDateFormat(dateFormatStr).withDates(holidays)
+		} else if (seasonalAnalyzer.isDayRangeOfWeek()){
+    		val dayRangeStr = jobConfig.getMandatoryStringParam(appConfig, "seasonal.dayGroups", "missinfg day ranges")
+    		val dayRanges = BasicUtils.integerIntegerMapFromString(dayRangeStr, BasicUtils.DEF_FIELD_DELIM, 
+    				BasicUtils.DEF_SUB_FIELD_DELIM, true)
+    		seasonalAnalyzer.setDayOfWeekRanges(dayRanges)
+		} else if (seasonalAnalyzer.isMonthRangeOfYear()){
+    		val monthRangeStr = jobConfig.getMandatoryStringParam(appConfig, "seasonal.monthGroups", "missinfg month ranges")
+    		val monthRanges = BasicUtils.integerIntegerMapFromString(monthRangeStr, BasicUtils.DEF_FIELD_DELIM, 
+    				BasicUtils.DEF_SUB_FIELD_DELIM, true)
+    		seasonalAnalyzer.setMonthOfYearRanges(monthRanges)
 		}
     	
     	if (timeZoneShiftHours > 0) {

@@ -249,9 +249,24 @@ public class SeasonalAnalyzer implements Serializable {
 	/**
 	 * @param dayOfWeekRanges
 	 */
+	public void setDayOfWeekRanges(Map<Integer, Integer> dayOfWeekRanges) {
+		this.dayOfWeekRanges = dayOfWeekRanges;
+	}
+	
+	/**
+	 * @param dayOfWeekRanges
+	 */
 	public SeasonalAnalyzer withDayOfWeekRanges(Map<Integer, Integer> dayOfWeekRanges) {
 		this.dayOfWeekRanges = dayOfWeekRanges;
 		return this;
+	}
+
+	/**
+	 * @param monthOfYearRanges
+	 * @return
+	 */
+	public void setMonthOfYearRanges(Map<Integer, Integer> monthOfYearRanges) {
+		this.monthOfYearRanges = monthOfYearRanges;
 	}
 
 	/**
@@ -610,7 +625,20 @@ public class SeasonalAnalyzer implements Serializable {
 			seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OR_WEEK_END_OF_WEEK);
 	}
 	
+	/**
+	 * @return
+	 */
+	public boolean isDayRangeOfWeek() {
+		return seasonalCycleType.equals(DAY_RANGE_OF_WEEK);
+	}
 	
+	/**
+	 * @return
+	 */
+	public boolean isMonthRangeOfYear() {
+		return seasonalCycleType.equals(MONTH_RANGE_OF_YEAR);
+	}
+
 	/**
 	 * @param analyzers
 	 * @param timeStamp
