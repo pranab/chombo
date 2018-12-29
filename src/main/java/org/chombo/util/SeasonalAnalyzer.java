@@ -619,6 +619,13 @@ public class SeasonalAnalyzer implements Serializable {
 	/**
 	 * @return
 	 */
+	public boolean isAnyTimeRange() {
+		return seasonalCycleType.equals(ANY_TIME_RANGE);
+	}
+
+	/**
+	 * @return
+	 */
 	public boolean isWithHoliday() {
 		return seasonalCycleType.equals(DAY_HOLIDAY_OF_WEEK)  ||  
 			seasonalCycleType.equals(WEEK_DAY_HOLIDAY_OF_WEEK) ||

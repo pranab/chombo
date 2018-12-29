@@ -2494,8 +2494,15 @@ public class BasicUtils {
      * @param msg
      */
     public static void assertNotNull(Object obj, String msg) {
-    	if (null == obj)
-    		throw new IllegalStateException(msg);
+    	assertCondition(null != obj, msg);
     }
    
+    /**
+     * @param cond
+     * @param msg
+     */
+    public static void assertCondition(boolean cond, String msg) {
+    	if (!cond)
+    		throw new IllegalStateException(msg);
+    }
  }

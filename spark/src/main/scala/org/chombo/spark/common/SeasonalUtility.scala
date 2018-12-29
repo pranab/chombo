@@ -59,7 +59,11 @@ trait SeasonalUtility {
     	  }
     	  val anyDays = BasicUtils.epochTimeIntegerMapFromString(days, BasicUtils.DEF_SUB_FIELD_DELIM, dateFormatStr, timeZone, false)
     	  seasonalAnalyzer.setAnyDays(anyDays)
-    	} else if (seasonalAnalyzer.isWithHoliday()){
+    	} else if (seasonalAnalyzer.isAnyTimeRange()){
+    		val timeRangeStr = jobConfig.getMandatoryStringParam(appConfig, "seasonal.timeRanges", "missinfg time ranges")
+    		val timeRanges = BasicUtils.getIntPairList(timeRangeStr, BasicUtils.DEF_FIELD_DELIM, BasicUtils.DEF_SUB_FIELD_DELIM)
+    		seasonalAnalyzer.setTimeRanges(timeRanges)
+		} else if (seasonalAnalyzer.isWithHoliday()){
     	  val dateFormatStr = jobConfig.getMandatoryStringParam(appConfig, "date.format", "missinfg date format")
     	  val holidays = jobConfig.getMandatoryStringListParam(appConfig, "specific.days", "missing days list").asScala.toArray
     	  seasonalAnalyzer.withDateFormat(dateFormatStr).withDates(holidays)
