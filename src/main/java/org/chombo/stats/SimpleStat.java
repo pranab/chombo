@@ -34,6 +34,7 @@ public class SimpleStat extends MeanStat {
 	protected double min = Double.MAX_VALUE;
 	protected double max = Double.MIN_VALUE;
 	protected double median;
+	protected double medianAbsDev;
 	protected List<Double> values = new ArrayList<Double>();
 	
 	public SimpleStat() {
@@ -60,6 +61,7 @@ public class SimpleStat extends MeanStat {
 		stdDev = 0;
 		min = Double.MAX_VALUE;
 		max = Double.MIN_VALUE;
+		values.clear();
 	}
 	
 	/* (non-Javadoc)
@@ -118,13 +120,21 @@ public class SimpleStat extends MeanStat {
 	}
 
 	/**
+	 * @return
+	 */
+	public double getMedianAbsDev() {
+		return medianAbsDev;
+	}
+
+	/**
 	 * 
 	 */
 	private void process() {
 		if (!processed) {
 			super.getMean();
 			calculateStdDev();
-			calculateMedian();
+			median = calculateMedian(values);
+			calculateMedianAbsDev();
 		}
 	}
 	
@@ -138,9 +148,11 @@ public class SimpleStat extends MeanStat {
 	}
 	
 	/**
-	 * 
+	 * @param values
+	 * @return
 	 */
-	private void calculateMedian() {
+	private double calculateMedian(List<Double> values) {
+		double median = 0;
 		Collections.sort(values);
 		int size = values.size();
 		int mid = size / 2;
@@ -149,7 +161,21 @@ public class SimpleStat extends MeanStat {
 		} else {
 			median = (values.get(mid -1) + values.get(mid)) / 2;
 		}
+		return median;
 	}
+
+	/**
+	 * 
+	 */
+	private void calculateMedianAbsDev() {
+		//median absolute deviation
+		List<Double> mad = new ArrayList<Double>();
+		for (double value : values) {
+			double dev = Math.abs(value - median);
+			mad.add(dev);
+		}
+		medianAbsDev = calculateMedian(mad);
+	}	
 	
 	/* (non-Javadoc)
 	 * @see org.chombo.stats.AverageValue#setMean(double)
