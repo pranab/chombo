@@ -17,6 +17,10 @@
 
 package org.chombo.stats;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.chombo.util.BasicUtils;
 
 
@@ -29,6 +33,8 @@ public class SimpleStat extends MeanStat {
 	protected double  stdDev;
 	protected double min = Double.MAX_VALUE;
 	protected double max = Double.MIN_VALUE;
+	protected double median;
+	protected List<Double> values = new ArrayList<Double>();
 	
 	public SimpleStat() {
 	}
@@ -67,6 +73,7 @@ public class SimpleStat extends MeanStat {
 			min = value;
 		if (value > max)
 			max = value;
+		values.add(value);
 	}
 	
 	/* (non-Javadoc)
@@ -104,12 +111,20 @@ public class SimpleStat extends MeanStat {
 	}
 
 	/**
+	 * @return
+	 */
+	public double getMedian() {
+		return median;
+	}
+
+	/**
 	 * 
 	 */
 	private void process() {
 		if (!processed) {
 			super.getMean();
 			calculateStdDev();
+			calculateMedian();
 		}
 	}
 	
@@ -120,6 +135,20 @@ public class SimpleStat extends MeanStat {
 		double var = sumSq / count - mean * mean;
 		var = (var * (count -1)) / count;
 		stdDev = Math.sqrt(var);
+	}
+	
+	/**
+	 * 
+	 */
+	private void calculateMedian() {
+		Collections.sort(values);
+		int size = values.size();
+		int mid = size / 2;
+		if (size % 2 == 1) {
+			median = values.get(mid);
+		} else {
+			median = (values.get(mid -1) + values.get(mid)) / 2;
+		}
 	}
 	
 	/* (non-Javadoc)
