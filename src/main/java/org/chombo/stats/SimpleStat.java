@@ -27,6 +27,8 @@ import org.chombo.util.BasicUtils;
 public class SimpleStat extends MeanStat {
 	protected double sumSq;
 	protected double  stdDev;
+	protected double min = Double.MAX_VALUE;
+	protected double max = Double.MIN_VALUE;
 	
 	public SimpleStat() {
 	}
@@ -50,6 +52,8 @@ public class SimpleStat extends MeanStat {
 		super.initialize();
 		sumSq = 0;
 		stdDev = 0;
+		min = Double.MAX_VALUE;
+		max = Double.MIN_VALUE;
 	}
 	
 	/* (non-Javadoc)
@@ -59,6 +63,10 @@ public class SimpleStat extends MeanStat {
 	public void add(double value) {
 		super.add(value);
 		sumSq += value * value;
+		if (value < min)
+			min = value;
+		if (value > max)
+			max = value;
 	}
 	
 	/* (non-Javadoc)
@@ -66,10 +74,7 @@ public class SimpleStat extends MeanStat {
 	 */
 	@Override
 	public double getMean() {
-		if (!processed) {
-			super.getMean();
-			stdDev = Math.sqrt(sumSq / count - mean * mean);
-		}
+		process();		
 		return mean;
 	}
 
@@ -77,13 +82,46 @@ public class SimpleStat extends MeanStat {
 	 * @return
 	 */
 	public double getStdDev() {
-		if (!processed) {
-			super.getMean();
-			stdDev = Math.sqrt(sumSq / count - mean * mean);
-		}
+		process();
 		return stdDev;
 	}
+	
 
+	/**
+	 * @return
+	 */
+	public double getMin() {
+		process();
+		return min;
+	}
+
+	/**
+	 * @return
+	 */
+	public double getMax() {
+		process();
+		return max;
+	}
+
+	/**
+	 * 
+	 */
+	private void process() {
+		if (!processed) {
+			super.getMean();
+			calculateStdDev();
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	private void calculateStdDev(){
+		double var = sumSq / count - mean * mean;
+		var = (var * (count -1)) / count;
+		stdDev = Math.sqrt(var);
+	}
+	
 	/* (non-Javadoc)
 	 * @see org.chombo.stats.AverageValue#setMean(double)
 	 */
