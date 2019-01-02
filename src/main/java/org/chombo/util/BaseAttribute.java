@@ -42,6 +42,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_FLOAT = "float";
 	public static final String DATA_TYPE_DOUBLE = "double";
 	public static final String DATA_TYPE_BOOLEAN = "boolean";
+	public static final String DATA_TYPE_NUMERIC_BOOLEAN = "numericBoolean";
 	public static final String DATA_TYPE_TEXT = "text";
 	public static final String DATA_TYPE_DATE = "date";
 	public static final String DATA_TYPE_EPOCH_TIME = "epochTime";

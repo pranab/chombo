@@ -16,6 +16,8 @@
  */
 package org.chombo.types;
 
+import java.util.Set;
+
 /**
  * @author pranab
  *
@@ -24,6 +26,8 @@ public class IntDataType extends DataType{
 	protected int min;
 	protected int max;
 	private boolean withLimitCheck;
+	protected Set<Integer> valueSet;
+	private boolean withSetCheck;
 
 	/**
 	 * @param name
@@ -47,13 +51,31 @@ public class IntDataType extends DataType{
 		withLimitCheck = true;
 	}
 	
+	/**
+	 * @param name
+	 * @param valueSet
+	 * @param strength
+	 */
+	public IntDataType(String name, Set<Integer> valueSet, int strength) {
+		super(name, strength);
+		this.valueSet = valueSet;
+		withSetCheck = true;
+	}
+
 	@Override
 	public boolean isMatched(String value) {
 		boolean matched = false;
 		int iVal = 0;
 		try {
 			iVal = Integer.parseInt(value);
-			matched = withLimitCheck ? (iVal >= min && iVal <= max) : true;
+			
+			if (withLimitCheck) {
+				matched = (iVal >= min && iVal <= max);
+			} else if (withSetCheck) {
+				matched = valueSet.contains(iVal);
+			} else {
+				matched = true;
+			}
 		} catch (Exception ex) {
 		}
 		return matched;

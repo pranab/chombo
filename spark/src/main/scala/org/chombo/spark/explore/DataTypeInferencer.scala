@@ -20,6 +20,7 @@ package org.chombo.spark.explore
 import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
+import org.apache.spark.rdd.RDD
 import org.chombo.util.BasicUtils
 import com.typesafe.config.Config
 import org.chombo.spark.common.Record
@@ -113,6 +114,11 @@ object DataTypeInferencer extends JobConfiguration  {
 		   numericTypeHandler.addAgeType(0, maxAge, 90)
 	   }
 	   
+	   //numeric boolean
+	   if (getBooleanParamOrElse(appConfig, "verify.numericBoolean", true)) {
+		   numericTypeHandler.addNumericBooleanType(95)
+	   }
+	   
 	   //custom types
 	   setCustomStringTypes(appConfig, stringTypeHandler)
 	   setCustomIntTypes(appConfig, numericTypeHandler)
@@ -137,11 +143,11 @@ object DataTypeInferencer extends JobConfiguration  {
 	   stringTypeHandler.prepare()
 	   
 	   //input
-	   val data = sparkCntxt.textFile(inputPath)
+	   val data = sparkCntxt.textFile(inputPath).cache
 	   
 	   //attribute index for key and count for different type as value
 	   val typeCounts = data.flatMap(line => {
-	     val items  =  line.split(fieldDelimIn, -1) 
+	     val items  =  BasicUtils.getTrimmedFields(line, fieldDelimIn)
 	     val size = items.length
 	     
 	     val attrTypeCount = attrList.map(attr => {
@@ -149,12 +155,16 @@ object DataTypeInferencer extends JobConfiguration  {
 	       val value = items(attr)
 	       initializeCount(countRec, allDataTypes, debugOn)
 	       
+	       //all matched types
 	       val matchedNumericTypes = numericTypeHandler.findTypes(value).asScala.toList
 	       //if (debugOn)
 	       //  println("matched numeric types:" + matchedNumericTypes)
+	       
+	       //set count flag for each numeric type matched
 	       setMatchedTypeCount(countRec, matchedNumericTypes, countRecIndex, debugOn)
 	       val isNumeric = matchedNumericTypes.size > 0
 	       
+	       //set count flag for each string type matched
 	       val matchedStringTypes = stringTypeHandler.findTypes(value).asScala.toList
 	       //if (debugOn)
 	       //  println("matched string types:" + matchedStringTypes)
@@ -190,7 +200,7 @@ object DataTypeInferencer extends JobConfiguration  {
 	     println("inferring types")
 	   val numericTypes = stringTypeHandler.getAllNumericDataTypes()
 	   val stringTypes = stringTypeHandler.getAllStringDataTypes()
-	   val inferredTypes = aggrTypeCounts.map(r => {
+	   var inferredTypes = aggrTypeCounts.map(r => {
 	     if (debugOn) 
 	       println("attr ordinal:" + r._1 + " count rec: " + r._2)
 	     var dataType = BaseAttribute.DATA_TYPE_STRING
@@ -249,8 +259,12 @@ object DataTypeInferencer extends JobConfiguration  {
 	     val typeInfo = dataType + info
 	     (r._1, typeInfo)
 	   })
+	   
 	   if (debugOn)
 	     println("done")
+	   
+	   //for numerical boolean type check cardinality
+	   inferredTypes = verifyNumericalBooleanType(data, inferredTypes, fieldDelimIn)
 	   
        if (debugOn) {
          val records = inferredTypes.collect
@@ -412,5 +426,40 @@ object DataTypeInferencer extends JobConfiguration  {
 	 }
      typeCounts
    }
+     
+     /**
+     * @param data
+     * @param inferredTypes
+     * @param fieldDelimIn
+     * @return
+     */
+    def verifyNumericalBooleanType(data:RDD[String], inferredTypes:RDD[(Int, String)], fieldDelimIn:String) : RDD[(Int, String)] = {
+	   //for numerical boolean check cardinality
+	   val numBooleanFields = inferredTypes.filter(r => {
+	     r._2.equals(BaseAttribute.DATA_TYPE_NUMERIC_BOOLEAN)
+	   }).map(r => r._1).collect
+	   
+	   if (numBooleanFields.length > 0) {
+		   val modInferredTypes = data.flatMap(line => {
+			   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+			   numBooleanFields.map(i => {
+			     val value = items(i).toInt
+			     (i, value)
+			   })
+		   }).groupByKey(1).map(r => {
+		     val cardinality = r._2.toSet.size
+		     val dType = if (cardinality == 2) BaseAttribute.DATA_TYPE_NUMERIC_BOOLEAN else BaseAttribute.DATA_TYPE_INT
+		     (r._1, dType)
+		   })
+	       inferredTypes.cogroup(modInferredTypes).map(r => {
+	         val dTypes = r._2._1.toList ++ r._2._2.toList
+	         val dType = if (dTypes.size == 1) dTypes.head else BaseAttribute.DATA_TYPE_INT
+	         (r._1, dType)
+	       })
+	   } else {
+	     inferredTypes
+	   }
+       
+     }
    
 }

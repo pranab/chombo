@@ -16,6 +16,7 @@
  */
 package org.chombo.types;
 
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,6 +27,7 @@ import java.util.regex.Pattern;
 public class StringDataType extends DataType{
 	protected String patternStr;
 	protected Pattern pattern;
+	protected Set<String> categories;
 
 	/**
 	 * @param name
@@ -38,10 +40,26 @@ public class StringDataType extends DataType{
 		pattern = Pattern.compile(patternStr);
 	}
 	
+	/**
+	 * @param name
+	 * @param categories
+	 * @param strength
+	 */
+	public StringDataType(String name, Set<String> categories, int strength) {
+		super(name, strength);
+		this.categories = categories;
+	}
+
+	/**
+	 * @return
+	 */
 	public String getPatternStr() {
 		return patternStr;
 	}
 
+	/**
+	 * @param patternStr
+	 */
 	public void setPatternStr(String patternStr) {
 		this.patternStr = patternStr;
 		pattern = Pattern.compile(patternStr);
@@ -49,8 +67,14 @@ public class StringDataType extends DataType{
 	
 	@Override
 	public boolean isMatched(String value) {
-		Matcher matcher = pattern.matcher(value.trim());
-		return matcher.matches();
+		boolean matched = false;
+		if (null != pattern) {
+			Matcher matcher = pattern.matcher(value.trim());
+			matched =  matcher.matches();
+		} else if (null != categories) {
+			matched = categories.contains(value);
+		}
+		return matched;
 	}
 
 }
