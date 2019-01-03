@@ -119,6 +119,9 @@ object DataTypeInferencer extends JobConfiguration  {
 		   numericTypeHandler.addNumericBooleanType(95)
 	   }
 	   
+	   //max cardinality for string categorical
+	   val maxCategoricalCardinality = getIntParamOrElse(appConfig, "max.categoricalCardinality", 10)
+	   
 	   //custom types
 	   setCustomStringTypes(appConfig, stringTypeHandler)
 	   setCustomIntTypes(appConfig, numericTypeHandler)
@@ -263,8 +266,11 @@ object DataTypeInferencer extends JobConfiguration  {
 	   if (debugOn)
 	     println("done")
 	   
-	   //for numerical boolean type check cardinality
-	   inferredTypes = verifyNumericalBooleanType(data, inferredTypes, fieldDelimIn)
+	   //down grades numerical boolean to numerical if necessary
+	   inferredTypes = downgradeNumericalBooleanType(data, inferredTypes, fieldDelimIn)
+	   
+	   //upgrades string type to categorical depending on cardinality
+	   inferredTypes = upgradeStringCategoricalType(data, inferredTypes, fieldDelimIn, maxCategoricalCardinality)
 	   
        if (debugOn) {
          val records = inferredTypes.collect
@@ -428,12 +434,13 @@ object DataTypeInferencer extends JobConfiguration  {
    }
      
      /**
+     * down grades numerical boolean to numerical if necessary
      * @param data
      * @param inferredTypes
      * @param fieldDelimIn
      * @return
      */
-    def verifyNumericalBooleanType(data:RDD[String], inferredTypes:RDD[(Int, String)], fieldDelimIn:String) : RDD[(Int, String)] = {
+    def downgradeNumericalBooleanType(data:RDD[String], inferredTypes:RDD[(Int, String)], fieldDelimIn:String) : RDD[(Int, String)] = {
 	   //for numerical boolean check cardinality
 	   val numBooleanFields = inferredTypes.filter(r => {
 	     r._2.equals(BaseAttribute.DATA_TYPE_NUMERIC_BOOLEAN)
@@ -447,6 +454,7 @@ object DataTypeInferencer extends JobConfiguration  {
 			     (i, value)
 			   })
 		   }).groupByKey(1).map(r => {
+		     //demote to int type id cardinality is not 2
 		     val cardinality = r._2.toSet.size
 		     val dType = if (cardinality == 2) BaseAttribute.DATA_TYPE_NUMERIC_BOOLEAN else BaseAttribute.DATA_TYPE_INT
 		     (r._1, dType)
@@ -461,5 +469,43 @@ object DataTypeInferencer extends JobConfiguration  {
 	   }
        
      }
-   
+
+    
+     /**
+     * upgrades string type to categorical depending on cardinality
+     * @param data
+     * @param inferredTypes
+     * @param fieldDelimIn
+     * @return
+     */
+    def upgradeStringCategoricalType(data:RDD[String], inferredTypes:RDD[(Int, String)], fieldDelimIn:String, maxCardinality:Int) : RDD[(Int, String)] = {
+	   //for numerical boolean check cardinality
+	   val stringFields = inferredTypes.filter(r => {
+	     r._2.equals(BaseAttribute.DATA_TYPE_STRING)
+	   }).map(r => r._1).collect
+	   
+	   if (stringFields.length > 0) {
+		   val modInferredTypes = data.flatMap(line => {
+			   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+			   stringFields.map(i => {
+			     val value = items(i)
+			     (i, value)
+			   })
+		   }).groupByKey(1).map(r => {
+		     //demote to int type id cardinality is not 2
+		     val cardinality = r._2.toSet.size
+		     val dType = if (cardinality <= maxCardinality) BaseAttribute.DATA_TYPE_CATEGORICAL else BaseAttribute.DATA_TYPE_STRING
+		     (r._1, dType)
+		   })
+	       inferredTypes.cogroup(modInferredTypes).map(r => {
+	         val dTypes = r._2._1.toList ++ r._2._2.toList
+	         val dType = if (dTypes.size == 1) dTypes.head else BaseAttribute.DATA_TYPE_CATEGORICAL
+	         (r._1, dType)
+	       })
+	   } else {
+	     inferredTypes
+	   }
+       
+     }
+    
 }
