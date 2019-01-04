@@ -21,6 +21,7 @@ import org.apache.spark.rdd.RDD
 import scala.collection.JavaConverters._
 import org.chombo.util.BasicUtils
 import scala.collection.mutable.HashSet
+import org.chombo.util.BasicUtils
 
 trait GeneralUtility {
 
@@ -238,5 +239,63 @@ trait GeneralUtility {
 	  }
   }
   
+  /**
+  * @param data
+  * @return
+  */
+  def findAverageDouble(data:RDD[(Record, (Int, Double))]) : RDD[(Record, Double)] = {
+    data.reduceByKey((v1, v2) => {
+      val count = v1._1 + v2._1
+      val sum = v1._2 + v2._2
+      (count, sum)
+	}).mapValues(v => v._2 / v._1)
+  }
   
+  def findAverageInt(data:RDD[(Record, (Int, Int))]) : RDD[(Record, Int)] = {
+    data.reduceByKey((v1, v2) => {
+      val count = v1._1 + v2._1
+      val sum = v1._2 + v2._2
+      (count, sum)
+	}).mapValues(v => v._2 / v._1)
+  }
+
+  /**
+  * @param data
+  * @return
+  */
+  def findMinMaxDouble(data:RDD[(Record,(Double,Double))]) : RDD[(Record, (Double,Double))] = {
+    data.reduceByKey((v1, v2) => {
+	  val min = if (v1._1 < v2._1) v1._1 else v2._1
+	  val max = if (v1._2 > v2._2) v1._2 else v2._2
+	  (min, max)
+      (min, max)
+	})
+  }
+  
+  /**
+  * @param data
+  * @return
+  */
+  def findMinMaxInt(data:RDD[(Record,(Int,Int))]) : RDD[(Record, (Int,Int))] = {
+    data.reduceByKey((v1, v2) => {
+	  val min = if (v1._1 < v2._1) v1._1 else v2._1
+	  val max = if (v1._2 > v2._2) v1._2 else v2._2
+	  (min, max)
+      (min, max)
+	})
+  }
+  
+  /**
+  * @param map
+  * @param key
+  * @param errMsg
+  * @return
+  */
+  def getMapValue[K,V](map:scala.collection.Map[K,V], key:K, errMsg:String) : V = {
+     val va = map.get(key) match {
+       case Some(v) => v
+       case None => BasicUtils.assertCondition(false, errMsg)
+     }
+     va.asInstanceOf[V]
+  }
 }
