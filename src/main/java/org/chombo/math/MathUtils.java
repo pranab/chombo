@@ -270,4 +270,44 @@ public class MathUtils {
     	Matrix c = am.transpose();
     	return c.getArray();
     }
+    
+    /**
+     * @param number
+     * @return
+     */
+    public static boolean isPowerOfTwo(int value) { 
+    	//power of 2 is 1 followed by by bunch of 0 and  a number 1 less is 0 followed by bunch of 1
+    	boolean isPower = false;
+        if (value > 0) {
+        	isPower = value == 1? true :  ((value & (value - 1)) == 0);
+        }
+        return isPower;
+    }  
+    
+    /**
+     * @param value
+     * @return
+     */
+    public static int binaryPowerFloor(int value) {
+    	int shifted = 1;
+    	while(shifted < value) {
+    		shifted <<= 1;
+    	}
+    	if (shifted > value){
+    		shifted >>= 1;
+    	}
+    	return shifted;
+    }
+
+    /**
+     * @param value
+     * @return
+     */
+    public static int binaryPowerCeiling(int value) {
+    	int shifted = 1;
+    	while(shifted < value) {
+    		shifted <<= 1;
+    	}
+    	return shifted;
+    }
 }

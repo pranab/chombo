@@ -13,14 +13,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
  * implied. See the License for the specific language governing
  * permissions and limitations under the License.
- * Credit: Robert Sedgewick and Kevin Wayne of Princeton University
+ * Credit: Robert Sedgewick and Kevin Wayne of Princeton University 
+ * Made additional  changes
  */
 
 package org.chombo.math;
 
+import java.io.Serializable;
 import java.util.Objects;
 
-public class Complex {
+public class Complex implements Serializable {
 	private final double re;   
 	private final double im;   
 	
