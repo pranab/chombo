@@ -16,7 +16,10 @@
  */
 
 
-package org.chombo.util;
+package org.chombo.math;
+
+import org.chombo.util.BasicUtils;
+import org.chombo.util.DoubleTable;
 
 /**
  * @author pranab

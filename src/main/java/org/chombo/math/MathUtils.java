@@ -16,7 +16,9 @@
  */
 
 
-package org.chombo.util;
+package org.chombo.math;
+
+import org.chombo.util.Pair;
 
 import Jama.Matrix;
 
