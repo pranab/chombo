@@ -206,11 +206,17 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @param record
 	 */
 	def this(size:Int, record:Record) {
-	  //leave room at end
 	  this(size)
-	  BasicUtils.assertCondition(size > record.size , "invalid record size parameters")
-	  Array.copy(record.array, 0, array, 0, record.size)
-	  cursor += record.size
+	  if (size < record.size) {
+		  //partial copy from source
+		  Array.copy(record.array, 0, array, 0, size)
+		  cursor += size
+	  } else {
+	      //full copy from source and leave room at end
+		  Array.copy(record.array, 0, array, 0, record.size)
+		  cursor += record.size
+	  }
+	  
 	}
 
 	/**
@@ -221,7 +227,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	def this(size:Int, record:Record, offset:Int) {
 	  //leave room at beginning
 	  this(size)
-	  BasicUtils.assertCondition(size > record.size , "invalid record size parameters")
+	  BasicUtils.assertCondition(size == (offset +  record.size) , "invalid record size parameters")
 	  Array.copy(record.array, 0, array, offset, record.size)
 	  cursor += (offset + record.size)
 	}
