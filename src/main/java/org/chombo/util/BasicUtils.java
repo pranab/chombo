@@ -72,6 +72,21 @@ public class BasicUtils {
 	public static final long MILISEC_PER_WEEK = 7 * MILISEC_PER_DAY;
 	public static final long MILISEC_PER_MONTH = 730 * MILISEC_PER_HOUR;
 	public static final long MILISEC_PER_QUARTER = 2190 * MILISEC_PER_HOUR;
+	public static final long MILISEC_PER_YEAR = 365 * MILISEC_PER_DAY;
+
+	public static final long SEC_PER_MIN = 60L ;
+	public static final long SEC_PER_HOUR = 60L * SEC_PER_MIN;
+	public static final long SEC_PER_HALF_DAY = 12 * SEC_PER_HOUR;
+	public static final long SEC_PER_DAY = 24 * SEC_PER_HOUR;
+	public static final long SEC_PER_WEEK = 7 * SEC_PER_DAY;
+	public static final long SEC_PER_MONTH = 730 * SEC_PER_HOUR;
+	public static final long SEC_PER_QUARTER = 2190 * SEC_PER_HOUR;
+	public static final long SEC_PER_YEAR = 365 * SEC_PER_DAY;
+
+	public static final long MIN_PER_HOUR = 60L;
+	public static final long MIN_PER_DAY = 24 * MIN_PER_HOUR;
+	
+	public static final long HOURS_PER_DAY = 24L;
 
 	public static final String TIME_UNIT_MS = "ms";
     public static final String TIME_UNIT_SEC = "sec";
@@ -83,6 +98,15 @@ public class BasicUtils {
     public static final String TIME_UNIT_QUARTER = "quarter";
     public static final String TIME_UNIT_SEMI_ANNUAL = "semiAnnual";
     public static final String TIME_UNIT_YEAR = "year";
+    
+    private static String[] timeUnits = {TIME_UNIT_MS, TIME_UNIT_SEC, TIME_UNIT_MIN, TIME_UNIT_HOUR, TIME_UNIT_DAY};
+    private static long[][] timeUnitConversionTable = {
+    	{1, -1, -1, -1, -1},
+    	{MILISEC_PER_SEC, 1, -1, -1, -1},
+    	{MILISEC_PER_MIN, SEC_PER_MIN, 1, -1, -1},
+    	{MILISEC_PER_HOUR, SEC_PER_HOUR, MIN_PER_HOUR, 1, -1},
+       	{MILISEC_PER_DAY, SEC_PER_DAY, MIN_PER_DAY, HOURS_PER_DAY, 1}
+    };
     
     public static final String EPOCH_TIME = "epochTime";
     public static final String EPOCH_TIME_SEC = "epochTimeSec";
@@ -2504,5 +2528,46 @@ public class BasicUtils {
     public static void assertCondition(boolean cond, String msg) {
     	if (!cond)
     		throw new IllegalStateException(msg);
+    }
+    
+    /**
+     * @param arr
+     * @param value
+     * @return
+     */
+    public static int indexOfStringArray(String[] arr, String value) {
+    	int index = -1;
+    	for (int i = 0; i < arr.length; ++i) {
+    		if (value.equals(arr[i])) {
+    			index = i;
+    			break;
+    		}
+    	}
+    	if (-1 == index) {
+    		throw new ArrayIndexOutOfBoundsException("string element " + value + " not found in array");
+    	}
+    	return index;
+    }
+    
+    /**
+     * @param timeVal
+     * @param fromUnit
+     * @param toUnit
+     * @return
+     */
+    public static double convertTimeUnit(double timeVal, String fromUnit, String toUnit) {
+    	double converted = 0;
+    	int fromIndex = indexOfStringArray(timeUnits, fromUnit);
+    	int toIndex = indexOfStringArray(timeUnits, toUnit);
+    	long convFactor = timeUnitConversionTable[fromIndex][toIndex];
+    	if (convFactor > 0) {
+    		//smaller to larger
+    		converted = timeVal * convFactor;
+    	} else {
+    		//larger to smaller
+    		convFactor = timeUnitConversionTable[toIndex][fromIndex];
+    		converted = timeVal / convFactor;
+    	}
+    	return converted;
     }
  }
