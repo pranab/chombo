@@ -21,12 +21,23 @@ package org.chombo.stats;
  * @author pranab
  *
  */
-public interface ProbabilityDistribution {
+public abstract class ProbabilityDistribution {
 	
 	/**
 	 * @param ord
 	 * @return probability of x less than ord
 	 */
-	public double getDistr(double ord);
+	public abstract double getDistr(double ord);
+	
+	/**
+	 * probability of x between ordOne and ordTwo
+	 * @param ordOne
+	 * @param ordTwo
+	 * @return
+	 */
+	public double getDistrBetween(double ordOne, double ordTwo) {
+		double distr = getDistr(ordOne) - getDistr(ordTwo);
+		return Math.abs(distr);
+	}
 
 }

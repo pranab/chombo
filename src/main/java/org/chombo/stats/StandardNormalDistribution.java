@@ -23,7 +23,7 @@ package org.chombo.stats;
  * @author pranab
  *
  */
-public class StandardNormalDistribution implements ProbabilityDistribution {
+public class StandardNormalDistribution extends ProbabilityDistribution {
 	private double mean;
 	private double stdDev;
 	private double[] distr = 
@@ -66,4 +66,5 @@ public class StandardNormalDistribution implements ProbabilityDistribution {
 
 		return di;
 	}
+
 }

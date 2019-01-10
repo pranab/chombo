@@ -2536,6 +2536,16 @@ public class BasicUtils {
      * @return
      */
     public static int indexOfStringArray(String[] arr, String value) {
+    	return indexOfStringArray(arr, value, true);
+    }
+    
+    /**
+     * @param arr
+     * @param value
+     * @param throwEx
+     * @return
+     */
+    public static int indexOfStringArray(String[] arr, String value, boolean throwEx) {
     	int index = -1;
     	for (int i = 0; i < arr.length; ++i) {
     		if (value.equals(arr[i])) {
@@ -2543,8 +2553,66 @@ public class BasicUtils {
     			break;
     		}
     	}
-    	if (-1 == index) {
+    	if (throwEx && -1 == index) {
     		throw new ArrayIndexOutOfBoundsException("string element " + value + " not found in array");
+    	}
+    	return index;
+    }
+
+    /**
+     * @param arr
+     * @param value
+     * @return
+     */
+    public static int indexOfIntArray(int[] arr, int value) {
+    	return indexOfIntArray(arr, value, true);
+    }
+    
+    /**
+     * @param arr
+     * @param value
+     * @param throwEx
+     * @return
+     */
+    public static int indexOfIntArray(int[] arr, int value, boolean throwEx) {
+    	int index = -1;
+    	for (int i = 0; i < arr.length; ++i) {
+    		if (value == arr[i]) {
+    			index = i;
+    			break;
+    		}
+    	}
+    	if (throwEx && -1 == index) {
+    		throw new ArrayIndexOutOfBoundsException("int element " + value + " not found in array");
+    	}
+    	return index;
+    }
+ 
+    /**
+     * @param arr
+     * @param value
+     * @return
+     */
+    public static int indexOfDoubleArray(double[] arr, double value) {
+    	return indexOfDoubleArray(arr, value, true);
+    }    
+
+    /**
+     * @param arr
+     * @param value
+     * @param throwEx
+     * @return
+     */
+    public static int indexOfDoubleArray(double[] arr, double value, boolean throwEx) {
+    	int index = -1;
+    	for (int i = 0; i < arr.length; ++i) {
+    		if (value == arr[i]) {
+    			index = i;
+    			break;
+    		}
+    	}
+    	if (throwEx && -1 == index) {
+    		throw new ArrayIndexOutOfBoundsException("double element " + value + " not found in array");
     	}
     	return index;
     }

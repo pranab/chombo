@@ -121,7 +121,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 			       rec.addInt(ord._1.toInt)
 			       rec
 			     }
-			     //filed ordinal only
+			     //field ordinal only
 			     case None => Record(1, ord._1.toInt)
 			 }
 		     

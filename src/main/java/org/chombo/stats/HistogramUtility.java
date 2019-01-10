@@ -85,9 +85,11 @@ public class HistogramUtility {
 		
 		Pair<Double, Integer> result = new Pair<Double, Integer>();
 		if (keyMatched < firstDistr.size() / 2) {
+			//not enough overlap between the 2 distributions
 			result.setLeft(0.0);
 			result.setRight(keyMatched);
 		} else {
+			//calculate KL divergence
 			divergence /= prSum;
 			result.setLeft(divergence);
 			result.setRight(keyMatched);
@@ -102,6 +104,7 @@ public class HistogramUtility {
 	 * @return
 	 */
 	private static Map<Integer, Double> roundfOffKey(Map<Double, Double> distr) {
+		//convert keys to integer and sort by key
 		Map<Integer, Double> newDistr = new TreeMap<Integer, Double>();
 		for (Double key : distr.keySet()) {
 			newDistr.put((int)Math.round(key * 100), distr.get(key));
@@ -122,5 +125,36 @@ public class HistogramUtility {
 		}
 		mean = (int)Math.round(sum);
 		return mean;
+	}
+	
+	/**
+	 * Whether the given sample distribution fits normal distr
+	 * @param firstStat
+	 * @param reafMean
+	 * @param refStdDev
+	 * @return true if fits normal
+	 */
+	public boolean doesChiSquareDistrFitNormal(HistogramStat stat, double reafMean, double refStdDev, double confIntervalFactor) {
+		Map<Double, Double> distr = stat.getDistribution();
+		double binWidth = stat.getBinWidth();
+		int count = stat.getCount();
+		StandardNormalDistribution stdDistr = new StandardNormalDistribution(reafMean, refStdDev);
+		double sum = 0;
+		for (double base : distr.keySet()) {
+			double actualDistr = distr.get(base);
+			double xMin = base - binWidth / 2;
+			double xMax = base + binWidth / 2;
+			double expectedDistr = stdDistr.getDistrBetween(xMin, xMax);
+			double actualCount = actualDistr * count;
+			double expectedCount = expectedDistr * count;
+			double delta = actualCount - expectedCount;
+			sum += delta * delta / expectedCount;
+		}
+		double chiSquareStat = sum;
+		
+		//mean and std dev calculated from the same data set
+		int degOfFreedom = distr.size() - 3;
+		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor);
+		return chiSquareStat < critValue;
 	}
 }

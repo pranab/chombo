@@ -297,6 +297,11 @@ public class HistogramStat implements Serializable {
 		sumSq += value * value * count;
 	}
 	
+	public double getBinWidth() {
+		return binWidth;
+	}
+
+
 	/**
 	 * @return
 	 */
@@ -364,7 +369,8 @@ public class HistogramStat implements Serializable {
 	 */
 	public double getStdDev() {
 		double mean = getMean();
-		double stdDev = Math.sqrt(sumSq / count - mean * mean);
+		double var = ((sumSq / count - mean * mean) * count ) / (count - 1);
+		double stdDev = Math.sqrt(var);
 		return stdDev;
 	}
 	
