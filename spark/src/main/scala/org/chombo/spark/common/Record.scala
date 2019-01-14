@@ -1007,4 +1007,29 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  val sList = buf.toList.sortWith((v1, v2) => {compareElement(v1, v2) < 0})
 	  sList.zipWithIndex.foreach(v => array(v._2) = v._1)
 	}
+	
+	/**
+	 * @param index
+	 * @return
+	 */
+	def isIndexValid(index:Int) : Boolean = index < size
+	
+	/**
+	 * @param index
+	 * @return
+	 */
+	def isElementInstanceOfString(index: Int) : Boolean = array(index).isInstanceOf[String]
+	
+	/**
+	 * @param index
+	 * @return
+	 */
+	def isElementInstanceOfInt(index: Int) : Boolean = array(index).isInstanceOf[Int]
+	
+	/**
+	 * @param index
+	 * @return
+	 */
+	def isElementInstanceOfDouble(index: Int) : Boolean = array(index).isInstanceOf[Double]
+	
 }

@@ -1671,7 +1671,45 @@ public class BasicUtils {
     	}
     	return keyedValues;
     }
-    
+
+    /**
+     * @param filePath
+     * @param keyLen
+     * @param firstQuantFldOrd
+     * @param secondQuantFldOrd
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, Pair<Double, Double>> getKeyedValuePairs(String filePath, int keyLen, 
+    		int firstQuantFldOrd, int secondQuantFldOrd) throws IOException {
+    	return getKeyedValuePairs(filePath, keyLen, firstQuantFldOrd, secondQuantFldOrd, DEF_FIELD_DELIM);
+    }
+   
+    /**
+     * @param filePath
+     * @param keyLen
+     * @param firstQuantFldOrd
+     * @param secondQuantFldOrd
+     * @param fieldDelim
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, Pair<Double, Double>> getKeyedValuePairs(String filePath, int keyLen, 
+		int firstQuantFldOrd, int secondQuantFldOrd, String fieldDelim) 
+    	throws IOException {
+    	Map<String, Pair<Double, Double>> keyedValues = new HashMap<String, Pair<Double, Double>>();
+    	List<String> lines = getFileLines(filePath);
+    	for (String line : lines) {
+    		String[] items = line.split(DEF_FIELD_DELIM, -1);
+    		int pos = findOccurencePosition(line, DEF_FIELD_DELIM, keyLen, true);
+    		String key = line.substring(0, pos);
+    		Double fValue = Double.parseDouble(items[firstQuantFldOrd]);
+    		Double sValue = Double.parseDouble(items[secondQuantFldOrd]);
+    		keyedValues.put(key, new Pair<Double, Double>(fValue, sValue));
+    	}
+    	return keyedValues;
+      }
+
     /**
      * @param values
      * @param value
@@ -2531,6 +2569,13 @@ public class BasicUtils {
     }
     
     /**
+     * @param msg
+     */
+    public static void assertFail(String msg) {
+    	throw new IllegalStateException(msg);
+    }
+
+    /**
      * @param arr
      * @param value
      * @return
@@ -2637,5 +2682,17 @@ public class BasicUtils {
     		converted = timeVal / convFactor;
     	}
     	return converted;
+    }
+    
+    /**
+     * @param arr
+     * @return
+     */
+    public static int[] fromIntegerArraytoIntArray(Integer[] arr) {
+    	int[] intArray = new int[arr.length];
+    	for (int i = 0; i < arr.length; ++i) {
+    		intArray[i] = arr[i];
+    	}
+    	return intArray;
     }
  }

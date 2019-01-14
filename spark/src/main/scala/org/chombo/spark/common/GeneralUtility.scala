@@ -167,6 +167,17 @@ trait GeneralUtility {
   * @param fields
   * @param keyFieldOrdinals
   * @param rec
+  */
+  def populateFields(fields:Array[String], fieldOrdinals:Array[Int], rec:Record)  {
+	  for (kf <- fieldOrdinals) {
+		  rec.addString(fields(kf))
+	  }
+   }
+
+  /**
+  * @param fields
+  * @param keyFieldOrdinals
+  * @param rec
   * @param defKey
   */
   def populateFields(fields:Array[String], fieldOrdinals:Option[Array[Int]], rec:Record, defKey:String)  {
@@ -298,4 +309,40 @@ trait GeneralUtility {
      }
      va.asInstanceOf[V]
   }
+  
+  /**
+   * transform values of a map based on a function
+  * @param m
+  * @param k
+  * @param f
+  * @return
+  */
+  def updateMapValue[A, B](m: Map[A, B], k: A)(f: B => B) = m.updated(k, f(m(k))) 
+  
+  /**
+  * updates all keys 
+  * @param m
+  * @param f
+  * @return
+  */
+  def updateMapKeys[K, V, NK](m: Map[K, V], f: K => NK) : Map[NK, V] = {
+    m.map(v => {
+      val nk = f(v._1)
+      (nk, v._2)
+    })
+  }
+  
+  /**
+  * updates all values
+  * @param m
+  * @param f
+  * @return
+  */
+  def updateMapValues[K, V, NV](m: Map[K, V], f: V => NV) : Map[K, NV] = {
+    m.map(v => {
+      val nv = f(v._2)
+      (v._1, nv)
+    })
+  }
+ 
 }

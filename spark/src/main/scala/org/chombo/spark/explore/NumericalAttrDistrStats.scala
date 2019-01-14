@@ -28,8 +28,11 @@ import java.io.FileInputStream
 import scala.collection.mutable.Map
 import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.SeasonalAnalyzer
+import org.chombo.stats.NumericalAttrStatsManager
+import org.chombo.util.BasicUtils
+import org.chombo.spark.common.GeneralUtility
 
-object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
+object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility with GeneralUtility{
   
    /**
     * @param args
@@ -47,32 +50,95 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val keyFields = getOptionalIntListParam(appConfig, "id.field.ordinals")
-	   val keyFieldOrdinals = keyFields match {
-	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
-	     case None => None  
-	   }
-	   var keyLen = keyFieldOrdinals match {
-		     case Some(fields:Array[Integer]) => fields.length + 1
-		     case None =>1
-	   }
+	   val keyFieldOrdinals = toOptionalIntArray(keyFields)
+	   var keyLen = getOptinalArrayLength(keyFieldOrdinals) + 1
 	   val idLen = keyLen - 1
 	   
-	   //val keyFieldOrdinals = getMandatoryIntListParam(appConfig, "id.field.ordinals").asScala.toArray
-	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals", "").asScala.toArray
+	   //seasonal
+	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
+
+	   //stats file record key length
+	   var statsKeyLen = idLen
+	   statsKeyLen += (if (seasonalAnalysis) 2 else 0)
+	   statsKeyLen += 1
 	   
-	   //field ordinal and bin width
-	   val binWidths = numAttrOrdinals.map(ord => {
-	     //attribute bin width tuple
-	     val key = "attrBinWidth." + ord
-	     (ord, getMandatoryIntParam(appConfig, key, "missing bin width"))
-	   })
+	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "num.attr.ordinals", "").asScala.toArray
+
+	   //bin widths
+	   var keyBasedBinWidth = false;
+	   val binWidthFile = getOptionalStringParam(appConfig, "bin.widthFile")
+	   val binWidths = binWidthFile match {
+	     case Some(filePath) => {
+	       //based on key
+	       keyBasedBinWidth = true
+	       val binWidthFieldOrd = statsKeyLen
+	       val binWidths = Map[Record, Double]()
+	       BasicUtils.getKeyedValues(filePath, statsKeyLen, binWidthFieldOrd).asScala.foreach(v => {
+	         val binWidthKey = Record(1)
+	         binWidthKey.add(v._1)
+	         binWidths += {binWidthKey -> v._2}
+	       })
+	       binWidths.toMap
+	     }
+	     
+	     case None  => {
+		   //based on field ordinal
+	       val binWidths = Map[Record, Double]()
+		   numAttrOrdinals.foreach(ord => {
+		     //attribute bin width tuple
+		     val keyStr = "attrBinWidth." + ord
+		     val binWidthKey = Record(1)
+		     binWidthKey.add(ord.toInt)
+		     val width = getMandatoryIntParam(appConfig, keyStr, "missing bin width")
+		     binWidths += {binWidthKey -> width}
+		   })
+		   binWidths.toMap
+	     }
+	   }
 	   
 	   val extendedOutput = getBooleanParamOrElse(appConfig, "extended.output", true)
 	   val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
+	   
+	   //distribution fitness algo
+	   val distrFitnessAlgo = getStringParamOrElse(appConfig, "distr.fitnessAlgo", "none")
+	   distrFitnessAlgo match {
+	     case ("none") => 
+	     case (algo:String) => {
+	    	 val algos = Array[String]("chiSquare", "klDiverge")
+	         assertStringMember(algo, algos, "invalid distribution fitness algorithm")
+	     }
+	   }
+	  
+	   var confIntervalFactor = -1.0
+	   if (distrFitnessAlgo.equals("chiSquare")) {
+	     confIntervalFactor = getMandatoryDoubleParam(appConfig, "conf.intervalFactor", 
+	         "missinginterval factor confidence ")
+	   }
+	   
+	   //either sample distribution or sample mean and std deviation
 	   val refDistrFilePath = getOptionalStringParam(appConfig, "reference.distr.file.path")
+	   var statsValueMap = scala.collection.mutable.Map[String,org.chombo.util.Pair[java.lang.Double,java.lang.Double]]()
+	   refDistrFilePath match {
+	     case Some (filePath) => 
+	     case None => {
+	       if (!distrFitnessAlgo.equals("none")) {
+	         //mean and std deviation from stats output file
+	    	 val refStatsFilePath = getMandatoryStringParam(appConfig, "ref.statsFilePath", "missing stats file path")
+	    	 val meanFldOrd = statsKeyLen + 4
+	    	 val stdDevFldOrd = statsKeyLen + 6
+	    	 statsValueMap = BasicUtils.getKeyedValuePairs(refStatsFilePath, statsKeyLen, meanFldOrd, stdDevFldOrd).asScala
+	       }
+	     }
+	   }
+	   var statsValueImmMap = statsValueMap.toMap
+	   val statsMap = updateMapKeys(statsValueImmMap, ((k:String) => {
+	     val fields = BasicUtils.getTrimmedFields(k, fieldDelimIn)
+	     Record(fields)
+	   }))
+	   
+	   
 	   
 	   //seasonal data
-	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
 	   val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
 	   val seasonalAnalyzers = if (seasonalAnalysis) {
 		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
@@ -99,13 +165,14 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 	   
 	   //key with record key and attr ordinal and value map of counts
 	   var keyedRecs = data.flatMap(line => {
-		   val items = line.split(fieldDelimIn, -1)
-		   val attrValCount = binWidths.map(ord => {
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+		   val attrValCount = numAttrOrdinals.map(ord => {
 		     //key
 			 val attrKeyRec = keyFieldOrdinals match {
 			     //with partition key and field ordinal
-			     case Some(fields:Array[Integer]) => {
-			       val rec = Record(keyLen, items, fields)
+			     case Some(fields:Array[Int]) => {
+			       val rec = Record(keyLen) 
+			       populateFields(items, fields, rec) 
 			       
 			       //seasonality cycle
 		           seasonalAnalyzers match {
@@ -118,19 +185,21 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 		             case None => 
 			       }	  
 			       
-			       rec.addInt(ord._1.toInt)
+			       rec.addInt(ord.toInt)
 			       rec
 			     }
 			     //field ordinal only
-			     case None => Record(1, ord._1.toInt)
+			     case None => Record(1, ord.toInt)
 			 }
 		     
 			 //value is histogram
-		     val attrValRec =new HistogramStat(ord._2)
+			 val binWidthKey = if (keyBasedBinWidth) attrKeyRec else Record(1, ord.toInt)
+			 val binWidth = getMapValue(binWidths, binWidthKey, "missing bin width")
+		     val attrValRec = new HistogramStat(binWidth)
 		     attrValRec.
 		     	withExtendedOutput(extendedOutput).
 		     	withOutputPrecision(outputPrecision)
-		     val attrVal = items(ord._1).toDouble
+		     val attrVal = items(ord.toInt).toDouble
 		     if (debugOn) {
 		       //println("attrVal: " + attrVal)
 		     }
@@ -158,6 +227,88 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 	   val stats = keyedRecs.reduceByKey((h1, h2) => h1.merge(h2))
 	   val colStats = stats.collect
 	   
+	   //fitness
+	   var withFitness = false
+	   val modStats = refDistrFilePath match {
+         case Some(filePath) => {
+           //distr file path
+	       val refStats = HistogramUtility.createHiostograms(new FileInputStream(filePath), keyLen, true)
+	       val stats = refStats.asScala.map(kv => {
+	         //last element of key is field ordinal
+	         val rec = Record(kv._1)
+	         rec.addInt(keyLen-1, kv._1(keyLen-1).toInt)
+	         (rec, kv._2)
+	       })
+	       
+	       //algos
+	       val modStats = distrFitnessAlgo match {
+	         case "chiSquare" =>  {
+	           withFitness = true
+			   colStats.map(v => {
+		         val key = v._1
+		         val refDistr = stats.get(key).get
+		         val thisDistr = v._2
+		         val fitted = HistogramUtility.doesDistrFitReferenceWithChiSquare(refDistr, thisDistr, confIntervalFactor)
+		         val fitness = Record(1)
+		         fitness.add(fitted)
+		         (v._1, v._2, fitness)
+			   })	       
+	         }
+	         case "klDiverge" =>  {
+	           withFitness = true
+			   colStats.map(v => {
+		         val key = v._1
+		         val refDistr = stats.get(key).get
+		         val thisDistr = v._2
+		         val diverge = HistogramUtility.findKullbackLeiblerDivergence(refDistr, thisDistr)
+		         val fitness = Record(2)
+		         fitness.add(diverge.getLeft().toDouble, diverge.getRight().toInt)
+		         (v._1, v._2, fitness)
+			   })
+	         }
+	         case "none" => {
+	           outputWithoutFitness(colStats)
+	         }
+	       }
+           modStats
+         } 
+         
+         case None => {  
+             if (!statsValueMap.isEmpty) {
+            	 //ref stats specified
+	        	 val modStats = distrFitnessAlgo match {
+	        	   case "chiSquare" =>  {
+	        		 withFitness = true
+	        		 colStats.map(v => {
+				       val key = v._1
+				       val thisDistr = v._2
+				         
+				       val stat = statsMap.get(key).get
+				       val fitted = HistogramUtility.doesDistrFitNormalWithChiSquare(thisDistr, stat.getLeft(), stat.getRight(), 
+				             confIntervalFactor)
+				       val fitness = Record(1)
+				       fitness.add(fitted)
+				       (v._1, v._2, fitness)
+	        	     })
+	        	   }
+	        	   case "klDiverge" =>  {
+	        	     //not supported yet
+	        	     outputWithoutFitness(colStats)
+	        	   }
+	        	   case "none" => {
+	        	     outputWithoutFitness(colStats)
+	        	   }
+	        	 }
+	        	 modStats
+             } else {
+               outputWithoutFitness(colStats)
+             }
+   
+         }
+	   }
+	   
+	   
+	   /*
 	   //reference stats
 	   val refStats = refDistrFilePath match {
 	     case Some(path:String) => {
@@ -187,18 +338,42 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility {
 	     }
 	     stat
 	   })
+	   */
+	   
 	   
 	   if (debugOn) {
 	     modStats.foreach(s => {
 	       println("id:" + s._1)
 	       println("distr:" + s._2)
-	       println("dvergence:" + s._3 + " " + s._4)
+	       println("fitness:" + s._3 )
 	     })
 	   }
 	   
 	   if (saveOutput) {
-	     val stats = sparkCntxt.parallelize(modStats)
+	     val stats = sparkCntxt.parallelize(modStats).map(v => {
+	       val baseOutput = v._1.toString() + fieldDelimOut + v._2.toString() 
+	       val fitness = v._3
+	       if(!withFitness) {
+	         baseOutput
+	       } else {
+	         baseOutput + fieldDelimOut + fitness.withFloatPrecision(6).toString()
+	       }
+	     })
 	     stats.saveAsTextFile(outputPath)
 	   }
 	   
-   }}
+   }
+   
+   
+   /*
+    * @param colStats
+    */
+   def outputWithoutFitness(colStats:Array[(Record, HistogramStat)]) : Array[(Record, HistogramStat, Record)] = {
+       colStats.map(v => {
+         val fitness = Record(1)
+         fitness.add("none")
+         (v._1, v._2, fitness)
+       })
+   }
+   
+}

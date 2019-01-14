@@ -18,7 +18,7 @@
 package org.chombo.stats;
 
 
-public class ExponentialDistribution implements ProbabilityDistribution{
+public class ExponentialDistribution extends ProbabilityDistribution{
 	private double beta;
 	
 	/**

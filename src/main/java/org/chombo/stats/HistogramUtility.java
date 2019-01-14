@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.chombo.util.BasicUtils;
@@ -107,9 +109,25 @@ public class HistogramUtility {
 		//convert keys to integer and sort by key
 		Map<Integer, Double> newDistr = new TreeMap<Integer, Double>();
 		for (Double key : distr.keySet()) {
-			newDistr.put((int)Math.round(key * 100), distr.get(key));
+			int iKey = scaleAndRound(key, 100);
+			newDistr.put(iKey, distr.get(key));
 		}
 		return newDistr;
+	}
+	
+	/**
+	 * @param value
+	 * @param min
+	 * @return
+	 */
+	private static int scaleAndRound(double value, int min) {
+		int k = 1;
+		int iValue = (int)Math.round((value * k));
+		while (iValue < min) {
+			k *= 10;
+			iValue = (int)Math.round((value * k));
+		}
+		return iValue;
 	}
 
 	/**
@@ -134,7 +152,8 @@ public class HistogramUtility {
 	 * @param refStdDev
 	 * @return true if fits normal
 	 */
-	public boolean doesChiSquareDistrFitNormal(HistogramStat stat, double reafMean, double refStdDev, double confIntervalFactor) {
+	public static boolean doesDistrFitNormalWithChiSquare(HistogramStat stat, double reafMean, double refStdDev, 
+		double confIntervalFactor) {
 		Map<Double, Double> distr = stat.getDistribution();
 		double binWidth = stat.getBinWidth();
 		int count = stat.getCount();
@@ -157,4 +176,46 @@ public class HistogramUtility {
 		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor);
 		return chiSquareStat < critValue;
 	}
+	
+	/**
+	 * @param refStat
+	 * @param currentStat
+	 * @param confIntervalFactor
+	 * @return
+	 */
+	public static boolean doesDistrFitReferenceWithChiSquare(HistogramStat refStat, 
+		HistogramStat currentStat, double confIntervalFactor) {
+		double divergence = 0;
+		Map<Double, Double> distr = refStat.getDistribution();
+		int count = refStat.getCount();
+
+		Map<Integer, Double> refDistr = roundfOffKey(refStat.getDistribution());
+		Map<Integer, Double> currentDistr = roundfOffKey(currentStat.getDistribution());
+		
+		Set<Integer> superKeySet = new HashSet<Integer>();
+		superKeySet.addAll(refDistr.keySet());
+		superKeySet.addAll(currentDistr.keySet());
+		
+		double sum = 0;
+		for (Integer key : superKeySet) {
+			Double refVal = refDistr.get(key);
+			Double currentVal = currentDistr.get(key); 
+			double expectedCount = null != refVal? refVal * count : 0;
+			double actualCount = null != currentVal ? currentVal * count : 0;
+			if (0 == expectedCount) {
+				++expectedCount;
+				++actualCount;
+			}
+			
+			double delta = actualCount - expectedCount;
+            sum += delta * delta / expectedCount;				
+		}
+		double chiSquareStat = sum;
+		
+		//mean and std dev calculated from the same data set
+		int degOfFreedom = distr.size() - 3;
+		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor);
+		return chiSquareStat < critValue;
+	}
+	
 }
