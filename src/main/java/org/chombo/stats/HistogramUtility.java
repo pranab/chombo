@@ -152,7 +152,7 @@ public class HistogramUtility {
 	 * @param refStdDev
 	 * @return true if fits normal
 	 */
-	public static boolean doesDistrFitNormalWithChiSquare(HistogramStat stat, double reafMean, double refStdDev, 
+	public static Pair<Double, Double> distrFittnessNormalWithChiSquare(HistogramStat stat, double reafMean, double refStdDev, 
 		double confIntervalFactor) {
 		Map<Double, Double> distr = stat.getDistribution();
 		double binWidth = stat.getBinWidth();
@@ -174,7 +174,8 @@ public class HistogramUtility {
 		//mean and std dev calculated from the same data set
 		int degOfFreedom = distr.size() - 3;
 		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor);
-		return chiSquareStat < critValue;
+		//return chiSquareStat < critValue;
+		return new Pair<Double, Double>(chiSquareStat, critValue);
 	}
 	
 	/**
@@ -183,7 +184,7 @@ public class HistogramUtility {
 	 * @param confIntervalFactor
 	 * @return
 	 */
-	public static boolean doesDistrFitReferenceWithChiSquare(HistogramStat refStat, 
+	public static Pair<Double, Double> distrFittnessReferenceWithChiSquare(HistogramStat refStat, 
 		HistogramStat currentStat, double confIntervalFactor) {
 		double divergence = 0;
 		Map<Double, Double> distr = refStat.getDistribution();
@@ -215,7 +216,7 @@ public class HistogramUtility {
 		//mean and std dev calculated from the same data set
 		int degOfFreedom = distr.size() - 3;
 		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor);
-		return chiSquareStat < critValue;
+		return new Pair<Double, Double>(chiSquareStat, critValue);
 	}
 	
 }
