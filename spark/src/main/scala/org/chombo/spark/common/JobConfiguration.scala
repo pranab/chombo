@@ -742,6 +742,15 @@ trait JobConfiguration {
 	}
 	
 	/**
+	 * @param values
+	 * @param members
+	 * @param errMsg
+	 */
+	def assertMultipleStringMember(values:Array[String], members:Array[String], errMsg:String) {
+	  values.foreach(value => assertStringMember(value, members, errMsg))
+	}
+
+	/**
 	 * @param value
 	 * @param members
 	 * @param errMsg

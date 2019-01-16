@@ -87,6 +87,32 @@ trait SeasonalUtility {
 	}
 	
 	/**
+	 * @param jobConfig
+	 * @param appConfig
+	 * @param seasonalAnalysis
+	 * @return
+	 */
+	def creatSeasonalAnalyzerMap(jobConfig : JobConfiguration, appConfig: com.typesafe.config.Config, seasonalAnalysis:Boolean) :
+		(Map[String, SeasonalAnalyzer], Int, Boolean) = {
+	   val analyzerMap = scala.collection.mutable.Map[String, SeasonalAnalyzer]()
+	   var timeStampFieldOrdinal = -1
+	   var  timeStampInMili = true
+	   if (seasonalAnalysis) {
+		   	val seasonalCycleTypes = jobConfig.getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	        "missing seasonal cycle type").asScala.toArray
+	        val timeZoneShiftHours = jobConfig.getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
+	        timeStampFieldOrdinal = jobConfig.getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
+	        "missing time stamp field ordinal")
+	        val timeStampInMili = jobConfig.getBooleanParamOrElse(appConfig, "time.inMili", true)
+	        seasonalCycleTypes.foreach(sType => {
+	        	val seasonalAnalyzer = createSeasonalAnalyzer(jobConfig, appConfig, sType, timeZoneShiftHours, timeStampInMili)
+	        	analyzerMap += (sType -> seasonalAnalyzer)
+	        })
+	   } 
+	   (analyzerMap.toMap, timeStampFieldOrdinal, timeStampInMili)
+	}
+	
+	/**
 	 * @param keyedRecs
 	 * @param seasonalAnalysis
 	 * @param idLen

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.chombo.util.BasicUtils;
@@ -181,7 +182,7 @@ public class NumericalAttrStatsManager implements Serializable {
     		items = line.split(delim);
     		Tuple tuple = new Tuple();
     		
-    		//comp key
+    		//comp key is composite IDs plus seasonal type and index
     		int i = 0;
     		String compKey = BasicUtils.join(items, 0, idOrdinals.length);
     		i  += idOrdinals.length;
@@ -214,7 +215,7 @@ public class NumericalAttrStatsManager implements Serializable {
     			statList = new ArrayList<Tuple>();
     			stats.put(attr, statList );
     		}
-    		statList.add( tuple);
+    		statList.add(tuple);
     	}
 		
 	}	
@@ -374,11 +375,14 @@ public class NumericalAttrStatsManager implements Serializable {
 	 */
 	private Tuple getKeyedStats(String compKey, int attr, String condAttrVal) {
 		Tuple foundTuple = null;
+		//keyed by comp key
 		Map<Integer, List<Tuple>> stats = keyedStats.get(compKey);
 		if (null != stats) {
+			//keyed by attribute ordinal
 			List<Tuple> statList = stats.get(attr);
 			if (null != statList) {
 				for (Tuple tuple : statList) {
+					//one for each conditional attribute
 					if (tuple.getString(0).equals(condAttrVal)) {
 						foundTuple = tuple;
 						break;
@@ -387,6 +391,13 @@ public class NumericalAttrStatsManager implements Serializable {
 			}
 		}
 		return foundTuple;
+	}
+	
+	/**
+	 * @return
+	 */
+	public Set<String> getAllKeys() {
+		return keyedStats.keySet();
 	}
 
 	/**

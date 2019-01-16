@@ -1,5 +1,5 @@
 /*
- `* chombo-spark: etl on spark
+ * chombo-spark: etl on spark
  * Author: Pranab Ghosh
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you
@@ -201,8 +201,7 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 	  val statsRecsSer = statsRecs.filter(kv => {
 	    kv._2.getInt(2) > minSampleCount
 	  }).map(kv => {
-	    Record.floatPrecision = outputPrecision
-	    kv._1.toString() + fieldDelimOut + kv._2.toString
+	    kv._1.toString() + fieldDelimOut + kv._2.withFloatPrecision(outputPrecision).toString
 	  })
 	  
 	  if (debugOn) {
