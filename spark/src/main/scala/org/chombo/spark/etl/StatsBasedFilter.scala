@@ -75,6 +75,10 @@ object StatsBasedFilter extends JobConfiguration with GeneralUtility with Season
 	   //keys to be discarded
 	   val statsManager =  new NumericalAttrStatsManager(statsFilePath, ",",idOrdinals, seasonalAnalysis, false);
 	   val retainedKeys = getRetainedKeys(statsManager, filterTypes, numAttrOrdinals, thresholds, fieldDelimOut)
+	   if (debugOn) {
+	     println("keys to be retained")
+	     retainedKeys.foreach(k => println(k))
+	   }
 	   
 	   //seasonality
 	   val seasonalTypeFldOrd = getOptionalIntParam(appConfig, "seasonal.typeFldOrd")

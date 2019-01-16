@@ -101,6 +101,8 @@ public class NumericalAttrStatsManager implements Serializable {
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
     		
     		List<Tuple> statList = stats.get(attr);
     		if (null ==  statList ) {
@@ -132,6 +134,8 @@ public class NumericalAttrStatsManager implements Serializable {
 	    		tuple.add(Tuple.DOUBLE, items[i++]);
 	    		tuple.add(Tuple.DOUBLE, items[i++]);
 	    		tuple.add(Tuple.INT, items[i++]);
+	    		tuple.add(Tuple.DOUBLE, items[i++]);
+	    		tuple.add(Tuple.DOUBLE, items[i++]);
 	    		tuple.add(Tuple.DOUBLE, items[i++]);
 	    		tuple.add(Tuple.DOUBLE, items[i++]);
 	    		tuple.add(Tuple.DOUBLE, items[i++]);
@@ -191,13 +195,16 @@ public class NumericalAttrStatsManager implements Serializable {
     			i += 2;
     		}
     		
+    		//atr ordinal
     		Integer attr = Integer.parseInt(items[i++]);
     		
-    		//stats
+    		//stats condional var, sum, sum sq, count, mean, variance, std dev, min , max
     		tuple.add(Tuple.STRING, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.INT, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
@@ -247,6 +254,8 @@ public class NumericalAttrStatsManager implements Serializable {
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.INT, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
+    		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
     		tuple.add(Tuple.DOUBLE, items[i++]);
