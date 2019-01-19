@@ -9,7 +9,7 @@ case "$1" in
 "numStat")
 	echo "running NumericalAttrStats Spark job"
 	CLASS_NAME=org.chombo.spark.explore.NumericalAttrStats
-	INPUT=file:///Users/pranab/Projects/bin/chombo/input/teg/cusage.csv
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/teg/*
 	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/mea
 	rm -rf ./output/mea
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
@@ -18,13 +18,16 @@ case "$1" in
 
 "crStatsFile")
 	echo "copying and consolidating stats file"
+	DDIR="$2"
+	echo "destination directory $PROJECT_HOME/bin/chombo/other/$DDIR/"
 	rm $PROJECT_HOME/bin/chombo/output/mea/_SUCCESS
-	> $PROJECT_HOME/bin/chombo/other/auc/stats.txt
+	> $PROJECT_HOME/bin/chombo/other/$DDIR/stats.txt
 	for filename in $PROJECT_HOME/bin/chombo/output/mea/*; do
 	  echo "copying  $filename"
-	  cat $filename >> $PROJECT_HOME/bin/chombo/other/auc/stats.txt
+	  cat $filename >> $PROJECT_HOME/bin/chombo/other/$DDIR/stats.txt
 	done
-	ls -l $PROJECT_HOME/bin/chombo/other/auc
+	echo "copied file"
+	ls -l $PROJECT_HOME/bin/chombo/other/$DDIR
 ;;
 
 "tempAggr")
@@ -57,7 +60,7 @@ case "$1" in
 "numDistrStat")
 	echo "running NumericalAttrDistrStats Spark job"
 	CLASS_NAME=org.chombo.spark.explore.NumericalAttrDistrStats
-	INPUT=file:///Users/pranab/Projects/bin/chombo/input/teg/cusage.csv
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/csf/*
 	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/csf
 	rm -rf ./output/auc
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
@@ -73,6 +76,21 @@ case "$1" in
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $CHOMBO_JAR_NAME  $INPUT $OUTPUT cen.conf
 ;;
+
+"cpFiltFile")
+	echo "copying filtered data"
+	DDIR="$2"
+	rm $PROJECT_HOME/bin/chombo/output/sfi/_SUCCESS
+	rm $PROJECT_HOME/bin/chombo/input/$DDIR/*
+	echo "destination directory $PROJECT_HOME/bin/chombo/input/$DDIR/"
+	for filename in $PROJECT_HOME/bin/chombo/output/sfi/*; do
+	  echo "copying  $filename"
+	  cp $filename $PROJECT_HOME/bin/chombo/input/$DDIR/
+	done
+	echo "copied files"
+	ls -l $PROJECT_HOME/bin/chombo/input/$DDIR/
+;;
+
 
 *) 
 	echo "unknown operation $1"

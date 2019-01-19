@@ -31,6 +31,7 @@ import org.chombo.util.SeasonalAnalyzer
 import org.chombo.stats.NumericalAttrStatsManager
 import org.chombo.util.BasicUtils
 import org.chombo.spark.common.GeneralUtility
+import org.chombo.util.Pair
 
 object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility with GeneralUtility{
   
@@ -58,9 +59,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
 
 	   //stats file record key length
-	   var statsKeyLen = idLen
-	   statsKeyLen += (if (seasonalAnalysis) 2 else 0)
-	   statsKeyLen += 1
+	   val statsKeyLen = idLen + (if (seasonalAnalysis) 2 else 0) + 1
 	   
 	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", "missing quant field ordinals").asScala.toArray
 
@@ -75,7 +74,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	       val binWidths = Map[Record, Double]()
 	       BasicUtils.getKeyedValues(filePath, statsKeyLen, binWidthFieldOrd).asScala.foreach(v => {
 	         val binWidthKey = Record(1)
-	         binWidthKey.add(v._1)
+	         binWidthKey.addString(v._1)
 	         binWidths += {binWidthKey -> v._2}
 	       })
 	       binWidths.toMap
@@ -88,7 +87,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 		     //attribute bin width tuple
 		     val keyStr = "attrBinWidth." + ord
 		     val binWidthKey = Record(1)
-		     binWidthKey.add(ord.toInt)
+		     binWidthKey.addInt(ord.toInt)
 		     val width = getMandatoryIntParam(appConfig, keyStr, "missing bin width")
 		     binWidths += {binWidthKey -> width}
 		   })
@@ -117,7 +116,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   
 	   //either sample distribution or sample mean and std deviation
 	   val refDistrFilePath = getOptionalStringParam(appConfig, "reference.distrFilePath")
-	   var statsValueMap = scala.collection.mutable.Map[String,org.chombo.util.Pair[java.lang.Double,java.lang.Double]]()
+	   var statsValueMap = scala.collection.mutable.Map[String,Pair[java.lang.Double,java.lang.Double]]()
 	   refDistrFilePath match {
 	     case Some (filePath) => 
 	     case None => {
@@ -161,6 +160,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 	   
+	   //input
 	   val data = sparkCntxt.textFile(inputPath)
 	   
 	   //key with record key and attr ordinal and value map of counts
@@ -212,19 +212,17 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   })
 	   
 	  //filter invalid seasonal index
-	  keyedRecs  = 
-	  if (seasonalAnalysis) {
-	    val filt = keyedRecs.filter(v => {
+	  keyedRecs  = if (seasonalAnalysis) {
+	    keyedRecs.filter(v => {
 	      val key = v._1
 	      val ci = idLen + 1
 	      key.getInt(ci) >= 0
 	    })
-	    filt
 	  } else {
 	    keyedRecs
 	  }
 	   
-	   //merge histograms
+	   //merge histograms and collect output
 	   val stats = keyedRecs.reduceByKey((h1, h2) => h1.merge(h2))
 	   val colStats = stats.collect
 	   
