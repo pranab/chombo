@@ -90,7 +90,7 @@ object StatsBasedFilter extends JobConfiguration with GeneralUtility with Season
 	   
 	   //input
 	   val data = sparkCntxt.textFile(inputPath)
-	   val filtData = data.filter(line => {
+	   var filtData = data.filter(line => {
 	     val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		 val key = Record(keyLen - 1)
 		 populateFields(fields, keyFieldOrdinals, key)
@@ -110,6 +110,11 @@ object StatsBasedFilter extends JobConfiguration with GeneralUtility with Season
 	    toBeRetained
 	   })
 	   
+	  filtData = filtData.map(line => {
+	     val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+	     fields.mkString(fieldDelimOut)
+	  }) 
+	  
 	  if (debugOn) {
 	     filtData.collect.slice(0,100).foreach(s => println(s))
 	  }

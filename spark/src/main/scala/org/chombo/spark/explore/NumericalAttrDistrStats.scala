@@ -195,7 +195,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 		     
 			 //value is histogram
 			 val binWidthKey = if (keyBasedBinWidth) attrKeyRec else Record(1, ord.toInt)
-			 val binWidth = getMapValue(binWidths, binWidthKey, "missing bin width")
+			 val binWidth = getMapValue(binWidths, binWidthKey, "missing bin width for key " + binWidthKey.toString)
 		     val attrValRec = new HistogramStat(binWidth)
 		     attrValRec.
 		     	withExtendedOutput(extendedOutput).

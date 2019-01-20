@@ -6,6 +6,14 @@ MASTER=spark://akash.local:7077
 
 case "$1" in
 
+"cpStatInp")
+	fn="$2"
+	rm $PROJECT_HOME/bin/chombo/input/teg/*
+	cp $fn $PROJECT_HOME/bin/chombo/input/teg/
+	echo "copied files"
+	ls -l $PROJECT_HOME/bin/chombo/input/teg/
+;;
+
 "numStat")
 	echo "running NumericalAttrStats Spark job"
 	CLASS_NAME=org.chombo.spark.explore.NumericalAttrStats
@@ -62,7 +70,7 @@ case "$1" in
 	CLASS_NAME=org.chombo.spark.explore.NumericalAttrDistrStats
 	INPUT=file:///Users/pranab/Projects/bin/chombo/input/csf/*
 	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/csf
-	rm -rf ./output/auc
+	rm -rf ./output/csf
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $CHOMBO_JAR_NAME  $INPUT $OUTPUT cen.conf
 ;;
@@ -70,9 +78,9 @@ case "$1" in
 "statsFilter")
 	echo "running StatsBasedFilter Spark job"
 	CLASS_NAME=org.chombo.spark.etl.StatsBasedFilter
-	INPUT=file:///Users/pranab/Projects/bin/chombo/input/teg/cusage.csv
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/sfi/cusage.csv
 	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/sfi
-	rm -rf ./output/auc
+	rm -rf ./output/sfi
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $CHOMBO_JAR_NAME  $INPUT $OUTPUT cen.conf
 ;;
@@ -91,6 +99,15 @@ case "$1" in
 	ls -l $PROJECT_HOME/bin/chombo/input/$DDIR/
 ;;
 
+"uniqueValCounter")
+	echo "running StatsBasedFilter Spark job"
+	CLASS_NAME=org.chombo.spark.explore.UniqueCompositeValueConunter
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/uvc/*
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/uvc
+	rm -rf ./output/uvc
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $CHOMBO_JAR_NAME  $INPUT $OUTPUT cen.conf
+;;
 
 *) 
 	echo "unknown operation $1"

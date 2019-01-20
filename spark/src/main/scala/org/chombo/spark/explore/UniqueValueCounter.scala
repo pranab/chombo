@@ -22,6 +22,11 @@ import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
 
+/**
+ * Finds unique values column wise
+ * @author pranab
+ *
+ */
 object UniqueValueCounter extends JobConfiguration {
    /**
     * @param args
