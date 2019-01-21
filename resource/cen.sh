@@ -109,6 +109,31 @@ case "$1" in
 	--conf spark.ui.killEnabled=true --master $MASTER $CHOMBO_JAR_NAME  $INPUT $OUTPUT cen.conf
 ;;
 
+"numMedStat")
+	echo "running NumericalAttrMedian Spark job"
+	CLASS_NAME=org.chombo.spark.explore.NumericalAttrMedian
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/med/*
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/mea
+	rm -rf ./output/mea
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $CHOMBO_JAR_NAME  $INPUT $OUTPUT cen.conf
+;;
+
+"olPred")
+	echo "running StatsBasedOutlierPredictor Spark job"
+	CLASS_NAME=org.beymani.spark.dist.StatsBasedOutlierPredictor
+	INPUT=file:///Users/pranab/Projects/bin/beymani/input/olp/*
+	OUTPUT=file:///Users/pranab/Projects/bin/beymani/output/olp
+	rm -rf ./output/olp
+	rm -rf ./other/olp/clean
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $BEYMANI_JAR_NAME  $INPUT $OUTPUT and.conf
+	echo "number of outliers"
+	wc -l ./output/olp/part-00000
+	wc -l ./output/olp/part-00001
+;;
+
+
 *) 
 	echo "unknown operation $1"
 	;;

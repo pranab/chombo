@@ -26,12 +26,13 @@ import org.chombo.util.SeasonalAnalyzer
 import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.BasicUtils
 import org.chombo.stats.MedianStatsManager
+import org.chombo.spark.common.GeneralUtility
 
 /**
  * Numerical fields median stats
  * @author pranab
  */
-object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
+object NumericalAttrMedian extends JobConfiguration with SeasonalUtility with GeneralUtility {
    /**
     * @param args
     * @return
@@ -49,10 +50,8 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
-	   val keyFieldOrdinals = keyFields match {
-	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
-	     case None => None  
-	   }
+	   val keyFieldOrdinals = toOptionalIntArray(keyFields)
+	   
 	  val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", 
 	      "missing quant attribute ordinals").asScala.toArray
 	  val numAttrOrdinalsIndx = numAttrOrdinals.zipWithIndex
@@ -111,7 +110,7 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
 	  var keyLen = keyFieldOrdinals match {
-		     case Some(fields:Array[Integer]) => fields.length + 1
+		     case Some(fields:Array[Int]) => fields.length + 1
 		     case None =>1
 	  }
 	  val idLen = keyLen - 1
@@ -126,7 +125,7 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility {
 		     
 		     //partioning fields
 		     keyFieldOrdinals match {
-	           case Some(fields : Array[Integer]) => {
+	           case Some(fields : Array[Int]) => {
 	             for (kf <- fields) {
 	               key.addString(items(kf))
 	             }
