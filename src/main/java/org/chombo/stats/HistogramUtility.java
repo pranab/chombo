@@ -153,10 +153,11 @@ public class HistogramUtility {
 	 * @return true if fits normal
 	 */
 	public static Pair<Double, Double> distrFittnessNormalWithChiSquare(HistogramStat stat, double reafMean, double refStdDev, 
-		double confIntervalFactor) {
+		double confIntervalFactor, boolean failOnOutOfRange) {
 		Map<Double, Double> distr = stat.getDistribution();
 		double binWidth = stat.getBinWidth();
 		int count = stat.getCount();
+		System.out.println("total count " + count);
 		StandardNormalDistribution stdDistr = new StandardNormalDistribution(reafMean, refStdDev);
 		double sum = 0;
 		for (double base : distr.keySet()) {
@@ -166,14 +167,16 @@ public class HistogramUtility {
 			double expectedDistr = stdDistr.getDistrBetween(xMin, xMax);
 			double actualCount = actualDistr * count;
 			double expectedCount = expectedDistr * count;
+			System.out.println("actualCount " + (int)actualCount + "  expected count "  + (int)expectedCount);
 			double delta = actualCount - expectedCount;
-			sum += delta * delta / expectedCount;
+			sum += (delta * delta / expectedCount);
 		}
 		double chiSquareStat = sum;
+		System.out.println("chiSquareStat " + chiSquareStat);
 		
 		//mean and std dev calculated from the same data set
 		int degOfFreedom = distr.size() - 3;
-		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor);
+		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor, failOnOutOfRange);
 		//return chiSquareStat < critValue;
 		return new Pair<Double, Double>(chiSquareStat, critValue);
 	}
@@ -185,7 +188,7 @@ public class HistogramUtility {
 	 * @return
 	 */
 	public static Pair<Double, Double> distrFittnessReferenceWithChiSquare(HistogramStat refStat, 
-		HistogramStat currentStat, double confIntervalFactor) {
+		HistogramStat currentStat, double confIntervalFactor, boolean failOnOutOfRange) {
 		double divergence = 0;
 		Map<Double, Double> distr = refStat.getDistribution();
 		int count = refStat.getCount();
@@ -215,7 +218,7 @@ public class HistogramUtility {
 		
 		//mean and std dev calculated from the same data set
 		int degOfFreedom = distr.size() - 3;
-		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor);
+		double critValue = ChiSquareDistributionCriticalValues.getCriticalPoint(degOfFreedom, confIntervalFactor, failOnOutOfRange);
 		return new Pair<Double, Double>(chiSquareStat, critValue);
 	}
 	

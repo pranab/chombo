@@ -283,10 +283,23 @@ public class ChiSquareDistributionCriticalValues {
 	 * @param confInterval
 	 * @return
 	 */
-	public static double getCriticalPoint(int degOfFreedom, double confIntervalFactor) {
-		double critPoint = 0;
-		BasicUtils.assertCondition(degOfFreedom >= 1 && degOfFreedom <= 250, "degree of freedom out of range");
-		BasicUtils.assertCondition(confIntervalFactor >= .001 && degOfFreedom <= .050, "conf interval factor out of range");
+	/**
+	 * @param degOfFreedom
+	 * @param confIntervalFactor
+	 * @param failOnOutOfRange
+	 * @return
+	 */
+	public static double getCriticalPoint(int degOfFreedom, double confIntervalFactor, boolean failOnOutOfRange) {
+		double critPoint = -1;
+		if (failOnOutOfRange) {
+			BasicUtils.assertCondition(degOfFreedom >= 1 && degOfFreedom <= 250, "degree of freedom out of range value " + degOfFreedom);
+			BasicUtils.assertCondition(confIntervalFactor >= .001 && confIntervalFactor <= .050, "conf interval factor out of range value " 
+			+ BasicUtils.formatDouble(confIntervalFactor, 3));
+		}
+		
+		//force within range
+		degOfFreedom = BasicUtils.between(degOfFreedom, 1, 250);
+		
 		int row = degOfFreedom - 1;
 		int col = BasicUtils.indexOfDoubleArray(confIntervals, confIntervalFactor, false);
 		if (-1 != col) {

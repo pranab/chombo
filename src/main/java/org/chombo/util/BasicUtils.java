@@ -1668,6 +1668,7 @@ public class BasicUtils {
     		String key = line.substring(0, pos);
     		Double value = Double.parseDouble(items[quantFldOrd]);
     		keyedValues.put(key, value);
+    		//System.out.println("key: " + key + "value: " + value);
     	}
     	return keyedValues;
     }

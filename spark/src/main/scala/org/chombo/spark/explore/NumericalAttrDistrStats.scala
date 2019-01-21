@@ -72,9 +72,11 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	       keyBasedBinWidth = true
 	       val binWidthFieldOrd = statsKeyLen
 	       val binWidths = Map[Record, Double]()
+	       val bwMap = BasicUtils.getKeyedValues(filePath, statsKeyLen, binWidthFieldOrd).asScala
+	       println("bin width map size " + bwMap.size)
 	       BasicUtils.getKeyedValues(filePath, statsKeyLen, binWidthFieldOrd).asScala.foreach(v => {
-	         val binWidthKey = Record(1)
-	         binWidthKey.addString(v._1)
+	         println("binwidths: " + v)
+	         val binWidthKey = buildTypedKey(v._1, fieldDelimIn, seasonalAnalysis)
 	         binWidths += {binWidthKey -> v._2}
 	       })
 	       binWidths.toMap
@@ -109,10 +111,13 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   }
 	  
 	   var confIntervalFactor = -1.0
+	   var chiSqureFailOnRangeCheck = false
 	   if (distrFitnessAlgo.equals("chiSquare")) {
 	     confIntervalFactor = getMandatoryDoubleParam(appConfig, "conf.intervalFactor", 
 	         "missinginterval factor confidence ")
+	     chiSqureFailOnRangeCheck = getBooleanParamOrElse(appConfig, "chiSqure.failOnRangeCheck", false)
 	   }
+	   
 	   
 	   //either sample distribution or sample mean and std deviation
 	   val refDistrFilePath = getOptionalStringParam(appConfig, "reference.distrFilePath")
@@ -131,8 +136,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   }
 	   var statsValueImmMap = statsValueMap.toMap
 	   val statsMap = updateMapKeys(statsValueImmMap, ((k:String) => {
-	     val fields = BasicUtils.getTrimmedFields(k, fieldDelimIn)
-	     Record(fields)
+	     buildTypedKey(k, fieldDelimIn, seasonalAnalysis)
 	   }))
 	   
 	   
@@ -195,8 +199,11 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 		     
 			 //value is histogram
 			 val binWidthKey = if (keyBasedBinWidth) attrKeyRec else Record(1, ord.toInt)
+			 //println("binWidths size " + binWidths.size)
+			 //binWidths.foreach(v => println(v))
 			 val binWidth = getMapValue(binWidths, binWidthKey, "missing bin width for key " + binWidthKey.toString)
-		     val attrValRec = new HistogramStat(binWidth)
+		     //val binWidth = binWidths.get(binWidthKey).get
+			 val attrValRec = new HistogramStat(binWidth)
 		     attrValRec.
 		     	withExtendedOutput(extendedOutput).
 		     	withOutputPrecision(outputPrecision)
@@ -225,7 +232,10 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   //merge histograms and collect output
 	   val stats = keyedRecs.reduceByKey((h1, h2) => h1.merge(h2))
 	   val colStats = stats.collect
-	   
+	    
+	   if(debugOn)
+	     println("done with distributions")
+	     
 	   //fitness
 	   var withFitness = false
 	   val modStats = refDistrFilePath match {
@@ -247,7 +257,8 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 		         val key = v._1
 		         val refDistr = stats.get(key).get
 		         val thisDistr = v._2
-		         val fitnessScore = HistogramUtility.distrFittnessReferenceWithChiSquare(refDistr, thisDistr, confIntervalFactor)
+		         val fitnessScore = HistogramUtility.distrFittnessReferenceWithChiSquare(refDistr, thisDistr, confIntervalFactor, 
+		             chiSqureFailOnRangeCheck)
 		         val fitness = Record(3)
 				 val fitted = fitnessScore.getLeft() < fitnessScore.getRight();
 				 fitness.add(fitnessScore.getLeft(), fitnessScore.getRight(), fitted)
@@ -285,7 +296,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 				         
 				       val stat = statsMap.get(key).get
 				       val fitnessScore = HistogramUtility.distrFittnessNormalWithChiSquare(thisDistr, stat.getLeft(), stat.getRight(), 
-				             confIntervalFactor)
+				             confIntervalFactor, chiSqureFailOnRangeCheck)
 				       val fitness = Record(3)
 				       val fitted = fitnessScore.getLeft() < fitnessScore.getRight();
 				       fitness.add(fitnessScore.getLeft(), fitnessScore.getRight(), fitted)
@@ -341,6 +352,38 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
          fitness.add("none")
          (v._1, v._2, fitness)
        })
+   }
+   
+   /**
+  * @param key
+  * @param fieldDelimIn
+  * @param seasonality
+  * @return
+  */
+  def buildTypedKey(key:String, fieldDelimIn:String, seasonality:Boolean) : Record = {
+     val fields = BasicUtils.getTrimmedFields(key, fieldDelimIn)
+     val len = fields.length
+     val idLen = len - 1 - (if(seasonality) 2 else 0)
+     val typedKey = Record(len)
+     
+     //id
+     var k = 0
+     for (i <- 0 to idLen - 1) {
+       typedKey.addString(fields(k))
+       k += 1
+     }
+     
+     //seasonality
+     if (seasonality) {
+       typedKey.addString(fields(k))
+       k += 1
+       typedKey.addInt(fields(k).toInt)
+       k += 1
+     }
+     
+     //atr ordinal
+     typedKey.addInt(fields(k).toInt)
+     typedKey
    }
    
 }

@@ -311,6 +311,20 @@ trait GeneralUtility {
   }
   
   /**
+  * @param map
+  * @param key
+  * @param errMsg
+  * @return
+  */
+  def getMapValue[K,V](map:scala.collection.immutable.Map[K,V], key:K, errMsg:String) : V = {
+     val va = map.get(key) match {
+       case Some(v) => v
+       case None => BasicUtils.assertCondition(false, errMsg)
+     }
+     va.asInstanceOf[V]
+  }
+
+  /**
    * transform values of a map based on a function
   * @param m
   * @param k
