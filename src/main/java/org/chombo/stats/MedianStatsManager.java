@@ -19,6 +19,7 @@
 package org.chombo.stats;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ import org.chombo.util.Utility;
  * @author pranab
  *
  */
-public class MedianStatsManager {
+public class MedianStatsManager implements Serializable{
     private Map<Integer, Double> medians = new HashMap<Integer, Double>();
     private Map<String, Map<Integer, Double>> keyedMedians = new HashMap<String, Map<Integer, Double>>();
     private Map<Integer, Double> medAbsDiv = new HashMap<Integer, Double>();
