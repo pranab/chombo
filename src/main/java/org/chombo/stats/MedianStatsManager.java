@@ -26,7 +26,6 @@ import java.util.Scanner;
 
 import org.apache.hadoop.conf.Configuration;
 import org.chombo.util.BasicUtils;
-import org.chombo.util.ConfigUtility;
 import org.chombo.util.Utility;
 
 /**
@@ -179,7 +178,7 @@ public class MedianStatsManager {
 	 */
 	private void loadMedianStat(String statFilePath,   String delim, int[] idOrdinals, 
 			Map<Integer, Double> stats, Map<String, Map<Integer, Double>> keyedStats, boolean seasonal) throws IOException {
-		List<String> lines = Utility.getFileLines(statFilePath);
+		List<String> lines = BasicUtils.getFileLines(statFilePath);
 		loadMedianStat(lines, delim, stats,  keyedStats,  seasonal);
 	}
 	
@@ -189,13 +188,20 @@ public class MedianStatsManager {
 	 * @param stats
 	 * @param keyedStats
 	 */
+	/**
+	 * @param lines
+	 * @param delim
+	 * @param stats
+	 * @param keyedStats
+	 * @param seasonal
+	 */
 	private void loadMedianStat(List<String> lines, String delim, Map<Integer, Double> stats, Map<String, 
 			Map<Integer, Double>> keyedStats, boolean seasonal) {
 		for (String line : lines) {
 			String[] items = line.split(delim);
 			if (null != idOrdinals) {
 				//with IDs
-				String compId = Utility.join(items, 0, idOrdinals.length, delim);
+				String compId = BasicUtils.join(items, 0, idOrdinals.length, delim);
 				int i = idOrdinals.length;
 	    		if (seasonal) {
 	    			compId = compId + delim + items[i] + delim + items[i+1];
@@ -250,7 +256,7 @@ public class MedianStatsManager {
     		items = line.split(delim);
 			if (null != idOrdinals) {
 				//with IDs
-				String compId = Utility.join(items, 0, idOrdinals.length, delim);
+				String compId = BasicUtils.join(items, 0, idOrdinals.length, delim);
 				Map<Integer, Double> medians = keyedStats.get(compId);
 				if (null == medians) {
 					medians = new HashMap<Integer, Double>();

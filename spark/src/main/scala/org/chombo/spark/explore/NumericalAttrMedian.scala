@@ -77,7 +77,7 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility with Ge
 		   None
 	   }
 
-	  //median stats
+	  //mad requires median stats
 	  val medStatMan = if (operation.equals("mad")) {
 	    val configParams = new java.util.HashMap[String, Object]()
 	    val partIdOrds = getOptionalIntListParam(appConfig, "id.fieldOrdinals");
@@ -118,7 +118,7 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility with Ge
 
 	  val data = sparkCntxt.textFile(inputPath)
 	  var keyedRecs = data.flatMap(line => {
-		   val items = line.split(fieldDelimIn, -1)
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   val fieldStats = numAttrOrdinals.map(attrOrd => {
 		     //val attrOrd = attr
 		     val key = Record(keyLen)
@@ -149,8 +149,10 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility with Ge
 		     
 		     //value
 		     val quantVal = if (operation.equals("med")) {
+		       //value itself
 		       items(attrOrd).toDouble
 		     } else {
+		       //deviation from median
 		       val med = if (keyLen == 1) {
 		         medStatMan.getMedian(attrOrd)
 		       } else {
