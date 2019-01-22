@@ -495,6 +495,9 @@ public class HistogramStat implements Serializable {
 	 * @return
 	 */
 	public double findDistr(double base) {
+		getDistribution();
+		
+		//find nearest bucket
 		double minDiff = Double.MAX_VALUE;
 		double distr = 0;
 		for (double thisBase : histogram.keySet()) {
@@ -503,6 +506,11 @@ public class HistogramStat implements Serializable {
 				minDiff = diff;
 				distr = histogram.get(thisBase);
 			}
+		}
+		
+		//if not within any bin
+		if (minDiff > binWidth / 2) {
+			distr = 0;
 		}
 		return distr;
 	}
