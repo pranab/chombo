@@ -2,6 +2,7 @@
 
 PROJECT_HOME=/Users/pranab/Projects
 CHOMBO_JAR_NAME=$PROJECT_HOME/bin/chombo/uber-chombo-spark-1.0.jar
+BEYMANI_JAR_NAME=$PROJECT_HOME/bin/beymani/uber-beymani-spark-1.0.jar
 MASTER=spark://akash.local:7077
 
 case "$1" in
@@ -26,13 +27,15 @@ case "$1" in
 
 "crStatsFile")
 	echo "copying and consolidating stats file"
-	DDIR="$2"
+	SDIR="$2"
+	DDIR="$3"
+	DFILE="$4"
 	echo "destination directory $PROJECT_HOME/bin/chombo/other/$DDIR/"
-	rm $PROJECT_HOME/bin/chombo/output/mea/_SUCCESS
-	> $PROJECT_HOME/bin/chombo/other/$DDIR/stats.txt
-	for filename in $PROJECT_HOME/bin/chombo/output/mea/*; do
+	rm $PROJECT_HOME/bin/chombo/output/$SDIR/_SUCCESS
+	> $PROJECT_HOME/bin/chombo/other/$DDIR/$DFILE
+	for filename in $PROJECT_HOME/bin/chombo/output/$SDIR/*; do
 	  echo "copying  $filename"
-	  cat $filename >> $PROJECT_HOME/bin/chombo/other/$DDIR/stats.txt
+	  cat $filename >> $PROJECT_HOME/bin/chombo/other/$DDIR/$DFILE
 	done
 	echo "copied file"
 	ls -l $PROJECT_HOME/bin/chombo/other/$DDIR
@@ -122,12 +125,12 @@ case "$1" in
 "olPred")
 	echo "running StatsBasedOutlierPredictor Spark job"
 	CLASS_NAME=org.beymani.spark.dist.StatsBasedOutlierPredictor
-	INPUT=file:///Users/pranab/Projects/bin/beymani/input/olp/*
-	OUTPUT=file:///Users/pranab/Projects/bin/beymani/output/olp
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/olp/*
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/olp
 	rm -rf ./output/olp
 	rm -rf ./other/olp/clean
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
-	--conf spark.ui.killEnabled=true --master $MASTER $BEYMANI_JAR_NAME  $INPUT $OUTPUT and.conf
+	--conf spark.ui.killEnabled=true --master $MASTER $BEYMANI_JAR_NAME  $INPUT $OUTPUT cen.conf
 	echo "number of outliers"
 	wc -l ./output/olp/part-00000
 	wc -l ./output/olp/part-00001
