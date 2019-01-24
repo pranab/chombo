@@ -106,10 +106,10 @@ public class HistogramStat implements Serializable {
 	 * @param offset
 	 */
 	public void initializeBins(String[] items, int offset) {
-		int i = 0;
+		int i = offset;
 		binWidth = BasicUtils.getDoubleField(items, i++);
-		int numBins = BasicUtils.getIntField(items, offset);
-		for (i = offset + 1; i < 2 * numBins; ) {
+		int numBins = BasicUtils.getIntField(items, i++);
+		for (int k = 0 ; k < numBins; ++k) {
 			int binIndex = BasicUtils.getIntField(items, i++);
 			int binCount = BasicUtils.getIntField(items, i++);
 			Bin bin = binMap.get(binIndex);
