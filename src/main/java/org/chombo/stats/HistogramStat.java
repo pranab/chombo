@@ -106,8 +106,9 @@ public class HistogramStat implements Serializable {
 	 * @param offset
 	 */
 	public void initializeBins(String[] items, int offset) {
-		int numBins = BasicUtils.getIntField(items, offset);
 		int i = 0;
+		binWidth = BasicUtils.getDoubleField(items, i++);
+		int numBins = BasicUtils.getIntField(items, offset);
 		for (i = offset + 1; i < 2 * numBins; ) {
 			int binIndex = BasicUtils.getIntField(items, i++);
 			int binCount = BasicUtils.getIntField(items, i++);
@@ -122,13 +123,14 @@ public class HistogramStat implements Serializable {
 		this.count = BasicUtils.getIntField(items, i++);
 		this.sum = BasicUtils.getDoubleField(items, i++);
 		this.sumSq = BasicUtils.getDoubleField(items, i);
+		normalized = false;
 	}
 	
 	/**
 	 * @throws IOException 
 	 * 
 	 */
-	public static Map<String[], HistogramStat> createHiostograms(InputStream inStr, int keyLen, boolean normalized) 
+	public static Map<String[], HistogramStat> createHistograms(InputStream inStr, int keyLen, boolean normalized) 
 			throws IOException {
 		Map<String[], HistogramStat> histStats = new HashMap<String[], HistogramStat>();
 
@@ -139,7 +141,11 @@ public class HistogramStat implements Serializable {
 			String[] items = line.split(fieldDelim);
 			String[] key = Arrays.copyOfRange(items, 0, keyLen);
 			
-			stat.initialize(items, keyLen, normalized);
+			if (normalized) {
+				stat.initialize(items, keyLen, normalized);
+			} else {
+				stat.initializeBins(items, keyLen);
+			}
 			histStats.put(key, stat);
 		}
 		
@@ -482,7 +488,12 @@ public class HistogramStat implements Serializable {
 	public Map<Double, Double> getDistribution() {
 		if (histogram.isEmpty()) {
 			for (Integer index : binMap.keySet()) {
-				double val = index * binWidth + binWidth / 2;
+				double val = 0;
+				if (index > 0) {
+					val = index * binWidth + binWidth / 2;
+				} else {
+					val = index * binWidth - binWidth / 2;
+				}
 				histogram.put(val,  ((double)binMap.get(index).count) / count);
 			}
 			normalized = true;
@@ -499,14 +510,18 @@ public class HistogramStat implements Serializable {
 		
 		//find nearest bucket
 		double minDiff = Double.MAX_VALUE;
+		double nearestBase = 0;
 		double distr = 0;
 		for (double thisBase : histogram.keySet()) {
 			double diff = Math.abs(thisBase - base);
 			if (diff < minDiff) {
 				minDiff = diff;
 				distr = histogram.get(thisBase);
+				nearestBase = thisBase;
 			}
 		}
+		System.out.println("base " + BasicUtils.formatDouble(base) + " nearestBase " + BasicUtils.formatDouble(nearestBase) + 
+				" minDiff " + BasicUtils.formatDouble(minDiff) + " binWidth " + BasicUtils.formatDouble(binWidth));
 		
 		//if not within any bin
 		if (minDiff > binWidth / 2) {
@@ -591,7 +606,7 @@ public class HistogramStat implements Serializable {
 	public String toStringBins() {
 		StringBuilder stBld = new StringBuilder(binsToString());
 		stBld.append(fieldDelim).append(count).append(fieldDelim).
-			append(BasicUtils.formatDouble(sum, outputPrecision)).append(BasicUtils.formatDouble(sumSq, outputPrecision));
+			append(BasicUtils.formatDouble(sum, outputPrecision)).append(fieldDelim).append(BasicUtils.formatDouble(sumSq, outputPrecision));
 		return stBld.toString();
 	}
 	
@@ -648,8 +663,9 @@ public class HistogramStat implements Serializable {
 	 */
 	public String binsToString() {
 		StringBuilder stBld = new StringBuilder();
-
-		//distribution
+		stBld.append(BasicUtils.formatDouble(binWidth, outputPrecision)).append(fieldDelim);
+		
+		//bin distribution
 		stBld.append(binMap.size()).append(fieldDelim);
 		for(int x : binMap.keySet()) {
 			Bin y = binMap.get(x);

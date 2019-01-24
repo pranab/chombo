@@ -322,19 +322,19 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   if (debugOn) {
 	     modStats.foreach(s => {
 	       println("id:" + s._1)
-	       println("distr:" + s._2)
+	       println("distr:" + s._2.withSerializeBins(true).withOutputPrecision(outputPrecision))
 	       println("fitness:" + s._3 )
 	     })
 	   }
 	   
 	   if (saveOutput) {
 	     val stats = sparkCntxt.parallelize(modStats).map(v => {
-	       val baseOutput = v._1.toString() + fieldDelimOut + v._2.toString() 
+	       val baseOutput = v._1.toString() + fieldDelimOut + v._2.withSerializeBins(true).withOutputPrecision(outputPrecision).toString() 
 	       val fitness = v._3
 	       if(!withFitness) {
 	         baseOutput
 	       } else {
-	         baseOutput + fieldDelimOut + fitness.withFloatPrecision(6).toString()
+	         baseOutput + fieldDelimOut + fitness.withFloatPrecision(outputPrecision).toString()
 	       }
 	     })
 	     stats.saveAsTextFile(outputPath)
