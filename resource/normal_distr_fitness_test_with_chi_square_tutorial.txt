@@ -1,0 +1,49 @@
+This tutorial is for checking normal distribution fitness using chi square.
+
+Dependent script
+================
+Checkout the project avenir. Copy the lib directory under python and copy it at the same level
+as your working directory
+
+Build and Deployment
+====================
+Please refer to building_spark_uber_jar.txt
+
+Generate input data
+===================
+./spending.py usage <num_says_in _past> <num_cust> <transaction_interva> > sp.txt
+
+where
+num_says_in _past = number of days in past to generate data over (e.g 365
+<num_cust> = number of customers e.g 1000
+<transaction_interva> = transaction interval in minute e.g 3
+
+Copy the generated file to Spark job input directoies
+=====================================================
+./spe.sh cpInp sp.txt
+
+Run sparb for stats
+===================
+./spe.sh numStat
+
+Copy and consolidate stats output files
+=======================================
+./spe.sh  crStatsFile  sst sdi stats.txt
+sst, sdi stas.txt are the directory where stats files are created by Spark, output directory 
+and the condolidated file name respectively
+
+The destination directory and file as per configurations for NumericalAttrDistrStats spark job
+
+Calculate bucket width
+======================
+./bw.py <stats_fiile_path> <key_len>  <num_samples_per_bucket> > bw.txt
+
+<stats_fiile_path> = path to stats file created in the last step
+<key_len> = length of key in stats file (2 in our case)
+<num_samples_per_bucket> = number of samples perbucket e.g 200
+
+copy bw.txt to  directory path specified for the configuration for NumericalAttrDistrStats spark job
+
+
+
+
