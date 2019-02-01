@@ -298,6 +298,14 @@ public class MedianStatsManager implements Serializable{
 	
 	/**
 	 * @param key
+	 * @return
+	 */
+	public Map<Integer, Double> getAllKeyedMedian(String key) {
+		return keyedMedians.get(key);
+	}
+	
+	/**
+	 * @param key
 	 * @param attribute
 	 * @return
 	 */
