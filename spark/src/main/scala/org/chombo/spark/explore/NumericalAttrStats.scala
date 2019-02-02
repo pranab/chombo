@@ -77,7 +77,7 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 		   None
 	   }
 	  
-	  val minSampleCount = this.getIntParamOrElse(appConfig, "min.sampleCount", 10)
+	  val minSampleCount = getOptionalIntParam(appConfig, "min.sampleCount")
 	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
 	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
@@ -173,7 +173,7 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 	  })
 	  
 	  //calculate stats
-	  val statsRecs = keyedRecs.map(kv => {
+	  var statsRecs = keyedRecs.map(kv => {
 	    val stat = Record(8)
 	    kv._2.initialize
 	    val sum = kv._2.getDouble()
@@ -198,9 +198,12 @@ object NumericalAttrStats extends JobConfiguration with SeasonalUtility {
 	  })
 	  
 	  //filter out low sample count cases
-	  val statsRecsSer = statsRecs.filter(kv => {
-	    kv._2.getInt(2) > minSampleCount
-	  }).map(kv => {
+	  statsRecs = minSampleCount match {
+	    case Some(minCount) =>  statsRecs.filter(kv => kv._2.getInt(2) > minCount)
+	    case None => statsRecs
+	  }
+	  
+	  val statsRecsSer = statsRecs.map(kv => {
 	    kv._1.toString() + fieldDelimOut + kv._2.withFloatPrecision(outputPrecision).toString
 	  })
 	  

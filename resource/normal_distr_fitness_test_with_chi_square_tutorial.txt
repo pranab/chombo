@@ -22,7 +22,7 @@ Copy the generated file to Spark job input directoies
 =====================================================
 ./spe.sh cpInp sp.txt
 
-Run sparb for stats
+Run Spark for stats
 ===================
 ./spe.sh numStat
 
@@ -43,6 +43,14 @@ Calculate bucket width
 <num_samples_per_bucket> = number of samples perbucket e.g 200
 
 copy bw.txt to  directory path specified for the configuration for NumericalAttrDistrStats spark job
+
+Run Spark for histogram and chi square fitness
+==============================================
+./spe.sh numDistrStat
+
+Shell script and configuration
+==============================
+They are spe.sh and spe.conf
 
 
 

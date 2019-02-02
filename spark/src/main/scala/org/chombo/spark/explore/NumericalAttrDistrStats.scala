@@ -99,6 +99,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   
 	   val extendedOutput = getBooleanParamOrElse(appConfig, "extended.output", true)
 	   val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
+	   val minSampleCount = getOptionalIntParam(appConfig, "min.sampleCount")
 	   
 	   //distribution fitness algo
 	   val distrFitnessAlgo = getStringParamOrElse(appConfig, "distr.fitnessAlgo", "none")
@@ -229,8 +230,16 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	    keyedRecs
 	  }
 	   
-	   //merge histograms and collect output
-	   val stats = keyedRecs.reduceByKey((h1, h2) => h1.merge(h2))
+	  //merge histograms  
+	  var stats = keyedRecs.reduceByKey((h1, h2) => h1.merge(h2))
+	   
+	  //filter out low sample count cases
+	  stats = minSampleCount match {
+	    case Some(minCount) =>  stats.filter(r => r._2.getCount() > minCount)
+	    case None => stats
+	  }
+	   
+	   //collect
 	   val colStats = stats.collect
 	    
 	   if(debugOn)
