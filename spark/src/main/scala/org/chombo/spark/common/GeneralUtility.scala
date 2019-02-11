@@ -59,6 +59,18 @@ trait GeneralUtility {
 	}
   }
 
+
+  /**
+  * @param list
+  * @return
+  */
+  def toOptionalStringArray(list:Option[java.util.List[String]]) : Option[Array[String]] = {
+    list match {
+	     case Some(list:java.util.List[String]) => Some(list.asScala.toArray)
+	     case None => None  
+	}
+  }
+  
   /**
   * @param list
   * @return
