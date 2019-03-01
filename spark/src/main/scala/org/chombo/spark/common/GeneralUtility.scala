@@ -274,6 +274,10 @@ trait GeneralUtility {
 	}).mapValues(v => v._2 / v._1)
   }
   
+  /**
+  * @param data
+  * @return
+  */
   def findAverageInt(data:RDD[(Record, (Int, Int))]) : RDD[(Record, Int)] = {
     data.reduceByKey((v1, v2) => {
       val count = v1._1 + v2._1
