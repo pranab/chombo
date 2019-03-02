@@ -24,6 +24,7 @@ import org.chombo.spark.common.Record
 import org.chombo.spark.common.GeneralUtility
 import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.BasicUtils
+import org.chombo.util.BaseAttribute
 
 /**
  * Counts unique values as typed data
@@ -55,10 +56,11 @@ object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility with
 	     attrTypes += (a -> aType)
 	   })
 	   val keyFields = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
-	   val keyLen = getOptinalArrayLength(keyFields, 2)
+	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
+	   val keyLen = if (seasonalAnalysis) getOptinalArrayLength(keyFields, 2) + 2
+	     else getOptinalArrayLength(keyFields, 2)
 	   
 	   //seasonal data
-	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
 	   val seasonalAnalyzers = if (seasonalAnalysis) {
 		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
 	        "missing seasonal cycle type").asScala.toArray
@@ -75,8 +77,6 @@ object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility with
 	   } else {
 		   None
 	   }
-	   
-	   
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 	   
@@ -100,9 +100,9 @@ object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility with
 			   key.addInt(a)
 			   val aType = getMapValue(attrTypes, a, "missing data type for attribute at " + a)
 			   aType match {
-			     case "string" => key.addString(fields(a))
-			     case "int" => key.addInt(fields(a).toInt)
-			     case "double" => key.addDouble(fields(a).toDouble)
+			     case BaseAttribute.DATA_TYPE_STRING => key.addString(fields(a))
+			     case BaseAttribute.DATA_TYPE_INT => key.addInt(fields(a).toInt)
+			     case BaseAttribute.DATA_TYPE_DOUBLE => key.addDouble(fields(a).toDouble)
 			     case _ => BasicUtils.assertFail("unsupported data type " + aType)
 			   }
 			   (key, 1)
