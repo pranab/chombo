@@ -25,6 +25,7 @@ import org.chombo.util.BasicUtils
 import scala.collection.mutable.ArrayBuffer
 import org.chombo.spark.common.GeneralUtility
 import org.chombo.stats.NumericalAttrStatsManager
+import org.chombo.stats.UniqueValueCounterStatsManager
 import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.SeasonalAnalyzer
 
@@ -74,7 +75,16 @@ object StatsBasedFilter extends JobConfiguration with GeneralUtility with Season
 	   
 	   //keys to be discarded
 	   val statsManager =  new NumericalAttrStatsManager(statsFilePath, ",",idOrdinals, seasonalAnalysis, false);
-	   val retainedKeys = getRetainedKeys(statsManager, filterTypes, numAttrOrdinals, thresholds, fieldDelimOut)
+	   val cardFilter = filterTypes.find(s => s.equals("cardinalityBelow") || s.equals("cardinalityAbove"))
+	   val uniqueCountManager = cardFilter match {
+	     case Some(filt) => {
+	       val uniqueCountFilePath = getMandatoryStringParam(appConfig, "uniqueCount.filePath", "missing unique count file path")
+	       val uniqueCountManager = new UniqueValueCounterStatsManager(uniqueCountFilePath, ",",idOrdinals, seasonalAnalysis, false); 
+	       Some(uniqueCountManager)
+	     }
+	     case None => None
+	   }
+	   val retainedKeys = getRetainedKeys(statsManager, uniqueCountManager, filterTypes, numAttrOrdinals, thresholds, fieldDelimOut)
 	   if (debugOn) {
 	     println("keys to be retained")
 	     retainedKeys.foreach(k => println(k))
@@ -164,7 +174,8 @@ object StatsBasedFilter extends JobConfiguration with GeneralUtility with Season
    * @param fieldDelimOut
    * @return
    */
-   def getRetainedKeys(statsManager:NumericalAttrStatsManager, filterTypes:Array[String], numAttrOrdinals:Array[Int], 
+   def getRetainedKeys(statsManager:NumericalAttrStatsManager, uniqueCountManager:Option[UniqueValueCounterStatsManager],
+       filterTypes:Array[String], numAttrOrdinals:Array[Int], 
        thresholds:Map[String,Double], fieldDelimOut:String) : Set[String] = {
 	   //keys to be discarded
 	   val retainedKeys = scala.collection.mutable.Set[String]()
@@ -213,6 +224,27 @@ object StatsBasedFilter extends JobConfiguration with GeneralUtility with Season
 		           val range = statsManager.getMax(k, a) - statsManager.getMin(k, a)
 		           retain &&= (range >= threshold)
 		         }
+		         
+		         case "cardinalityBelow" => {
+		           uniqueCountManager match {
+		             case Some(countManager) => {
+		               val count = countManager.getCount(k, a)
+		               retain &&= (count < threshold.toInt)
+		             }
+		             case None =>
+		           }
+		         }
+		         case "cardinalityAbove" => {
+		           uniqueCountManager match {
+		             case Some(countManager) => {
+		               val count = countManager.getCount(k, a)
+		               retain &&= (count >= threshold.toInt)
+		             }
+		             case None =>
+		           }
+		         }
+
+		         
 		       }
 		     })
 		     if (retain) {
