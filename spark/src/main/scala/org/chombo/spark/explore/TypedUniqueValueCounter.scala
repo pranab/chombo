@@ -22,6 +22,7 @@ import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
 import org.chombo.spark.common.GeneralUtility
+import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.BasicUtils
 
 /**
@@ -29,14 +30,14 @@ import org.chombo.util.BasicUtils
  * @author pranab
  */
 
-object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility {
+object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility with SeasonalUtility {
   
    /**
     * @param args
     * @return
     */
    def main(args: Array[String]) {
-	   val appName = "autoCorrelation"
+	   val appName = "typedUniqueValueCounter"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)
@@ -49,12 +50,32 @@ object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility {
 	   val attrOrdinals = toIntArray(getMandatoryIntListParam(appConfig, "attr.ordinals"))
 	   var attrTypes = Map[Int, String]()
 	   attrOrdinals.foreach(a => {
-	     val key = a + ".type"
+	     val key = "attr." + a + ".type"
 	     val aType = getMandatoryStringParam(appConfig, key, "missing attribute type")
 	     attrTypes += (a -> aType)
 	   })
 	   val keyFields = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
 	   val keyLen = getOptinalArrayLength(keyFields, 2)
+	   
+	   //seasonal data
+	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
+	   val seasonalAnalyzers = if (seasonalAnalysis) {
+		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	        "missing seasonal cycle type").asScala.toArray
+	        val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
+	        val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
+	          "missing time stamp field ordinal")
+	        val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
+	        
+	        val analyzers = seasonalCycleTypes.map(sType => {
+	    	val seasonalAnalyzer = createSeasonalAnalyzer(this, appConfig, sType, timeZoneShiftHours, timeStampInMili)
+	        seasonalAnalyzer
+	    })
+	    Some((analyzers, timeStampFieldOrdinal))
+	   } else {
+		   None
+	   }
+	   
 	   
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
@@ -72,6 +93,9 @@ object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility {
 			     case None =>  
 			   }
 			   
+			   //seasonal type and index
+			   addSeasonalKeys(seasonalAnalyzers, fields, key)
+	    
 			   //filed index and typed value
 			   key.addInt(a)
 			   val aType = getMapValue(attrTypes, a, "missing data type for attribute at " + a)
@@ -100,7 +124,6 @@ object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility {
 	  if (saveOutput) {
 	     uniqValueCounts.saveAsTextFile(outputPath)
 	  }
-	   
 	   
    }
 

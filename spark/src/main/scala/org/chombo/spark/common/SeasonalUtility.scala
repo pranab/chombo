@@ -134,4 +134,22 @@ trait SeasonalUtility {
 	  filtKeyedRecs
 	}
 	
+	/**
+	 * @param seasonalAnalyzers
+	 * @param items
+	 * @param key
+	 */
+	def addSeasonalKeys(seasonalAnalyzers:Option[(Array[org.chombo.util.SeasonalAnalyzer], Int)], items:Array[String], 
+	    key:Record) {
+	     seasonalAnalyzers match {
+	       case Some(seAnalyzers : (Array[SeasonalAnalyzer], Int)) => {
+	         val timeStamp = items(seAnalyzers._2).toLong
+	         val cIndex = SeasonalAnalyzer.getCycleIndex(seAnalyzers._1, timeStamp)
+	         key.addString(cIndex.getLeft())
+	         key.addInt(cIndex.getRight())
+	       }
+	       case None => 
+	     }	  
+  
+	}
 }
