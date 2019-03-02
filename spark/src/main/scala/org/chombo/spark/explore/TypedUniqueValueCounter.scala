@@ -57,8 +57,7 @@ object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility with
 	   })
 	   val keyFields = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
 	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
-	   val keyLen = if (seasonalAnalysis) getOptinalArrayLength(keyFields, 2) + 2
-	     else getOptinalArrayLength(keyFields, 2)
+	   val keyLen = getOptinalArrayLength(keyFields, seasonalAnalysis, 2)
 	   
 	   //seasonal data
 	   val seasonalAnalyzers = if (seasonalAnalysis) {
@@ -96,7 +95,7 @@ object TypedUniqueValueCounter extends JobConfiguration with GeneralUtility with
 			   //seasonal type and index
 			   addSeasonalKeys(seasonalAnalyzers, fields, key)
 	    
-			   //filed index and typed value
+			   //field index and typed value
 			   key.addInt(a)
 			   val aType = getMapValue(attrTypes, a, "missing data type for attribute at " + a)
 			   aType match {

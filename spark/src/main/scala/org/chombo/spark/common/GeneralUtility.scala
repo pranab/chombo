@@ -160,6 +160,22 @@ trait GeneralUtility {
   }
 
   /**
+  * @param array
+  * @param seasonality
+  * @param baseLen
+  * @return
+  */
+  def getOptinalArrayLength[T](arr:Option[Array[T]], seasonality:Boolean, baseLen:Int) : Int = {
+	  var keyLen = arr match {
+	    case Some(arr : Array[T]) => arr.length + baseLen
+	    case None => baseLen
+	  }
+	  if (seasonality)
+	    keyLen += 2
+	  keyLen
+  }
+
+  /**
   * @param fields
   * @param keyFieldOrdinals
   * @param rec

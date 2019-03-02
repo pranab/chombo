@@ -60,7 +60,7 @@ object StatsBasedFilter extends JobConfiguration with GeneralUtility with Season
 	   //data with these conditions will be filtered out
 	   val filterTypes = getMandatoryStringListParam(appConfig, "filter.types", "missing filter type").asScala.toArray
 	   val allFilterTypes = Array[String]("countBelow", "countAbove", "meanBelow", "meanAbove", "stdDevBelow", "stdDevAbove", 
-	       "rangeBelow", "rangeAbove")
+	       "rangeBelow", "rangeAbove", "cardinalityBelow", "cardinalityAbove")
 	   assertMultipleStringMember(filterTypes, allFilterTypes, "invalid filter type")
 	   var thresholds = Map[String,Double]()
 	   filterTypes.foreach(fi => {
