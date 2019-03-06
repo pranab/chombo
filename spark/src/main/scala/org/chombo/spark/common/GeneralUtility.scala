@@ -19,8 +19,8 @@ package org.chombo.spark.common
 
 import org.apache.spark.rdd.RDD
 import scala.collection.JavaConverters._
-import org.chombo.util.BasicUtils
 import scala.collection.mutable.HashSet
+import scala.reflect.ClassTag
 import org.chombo.util.BasicUtils
 
 trait GeneralUtility {
@@ -390,5 +390,52 @@ trait GeneralUtility {
       (v._1, nv)
     })
   }
- 
+
+  /**
+  * create Option from raw object 
+  * @param obj
+  * @return
+  */
+  def asOption[T:ClassTag](obj : T) : Option[T] = {
+    if (null != obj) {
+      Some(obj)
+    } else {
+      None
+    }
+  }
+
+  /**
+  * get raw array from option array
+  * @param arr
+  * @return
+  */
+  def filterNoneFromArray[T:ClassTag](arr : Array[Option[T]]) : Array[T] = {
+      //remove None
+	  val filtArr = arr.filter(a => {
+	    a match {
+	      case Some(x:T) => true
+	      case None => false
+	    }
+	  })
+		  
+	  //peel off Some wrapper
+	  val rawArr = filtArr.map(a => {
+	    a match {
+	      case Some(x:T) => x
+	      case None => throw new IllegalStateException("no None exccepted")
+	    }
+	    
+	  })
+	rawArr 
+  }
+  
+  /**
+  * @param name
+  * @return
+  */
+  def createInstance[T:ClassTag](name: String): T = {
+    val obj = Class.forName(name).newInstance()
+	obj.asInstanceOf[T]
+  }  
+  
 }

@@ -26,9 +26,9 @@ import com.typesafe.config.Config
 import org.chombo.util.ProcessorAttributeSchema
 import org.chombo.transformer.AttributeTransformer
 import scala.collection.JavaConverters._
-import org.chombo.spark.common.CommonUtil
 import org.chombo.util.ProcessorAttribute
 import org.chombo.transformer.ContextAwareTransformer
+import org.chombo.spark.common.GeneralUtility
 
 
 /**
@@ -53,11 +53,11 @@ abstract trait TransformerBuilder {
  * @author pranab
  *
  */
-object DataTransformer extends JobConfiguration with TransformerRegistration  {
+object DataTransformer extends JobConfiguration with TransformerRegistration  with GeneralUtility {
     val mutTransformers : scala.collection.mutable.HashMap[Int, Array[AttributeTransformer]]   = scala.collection.mutable.HashMap()
     lazy val transformers :  Map[Int, Array[AttributeTransformer]]   = mutTransformers.toMap
     var mutGenerators : Array[Option[AttributeTransformer]] = _
-    lazy val generators = CommonUtil.filterNoneFromArray(mutGenerators)
+    lazy val generators = filterNoneFromArray(mutGenerators)
     val context : java.util.Map[String, Object] = new java.util.HashMap[String, Object]()
     
     /**
@@ -118,7 +118,7 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  {
 	   //apply transformers or generators to each field in each line 
 	   val data = sparkCntxt.textFile(inputPath)
 	   val transformedData = data.map(line => {
-	     val items = line.split(fieldDelimIn, -1)
+	     val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
          val itemsOut = new Array[String](transformerSchema.findDerivedAttributeCount());
 	     
 	     getTranformedAttributes(transformerSchema,  true, items, itemsOut,brTransformers.value, brGenerators.value)
@@ -143,11 +143,12 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  {
         items : Array[String], itemsOut : Array[String], transformers : Map[Int, Array[AttributeTransformer]],
         generators : Array[AttributeTransformer]) {
     	transformerSchema.getAttributes().asScala.toList.foreach(prAttr => {
-	       val targetOrdsOpt = CommonUtil.asOption(prAttr.getTargetFieldOrdinals())
+	       val targetOrdsOpt = asOption(prAttr.getTargetFieldOrdinals())
 	       targetOrdsOpt match {
 	         case Some(targetOrds : Array[Int]) => {
 	        	 	var  source:String = ""
-	                val transformerList = if (isTransformer) {
+	                val transformerList = 
+	                if (isTransformer) {
 	                	val fieldOrd = prAttr.getOrdinal();
 	                	source = items(fieldOrd);
 	                	transformers.get(fieldOrd);
@@ -175,6 +176,7 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  {
 	        	 	  }
 	        	 	}
 	        	 	
+	        	 	//target attributes
 	        	 	val targetfieldOrdinals = prAttr.getTargetFieldOrdinals()
 	        	 	
 	        	    //check output size with target attribute count
@@ -182,6 +184,7 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  {
             	    	throw new IllegalStateException("transformed output size does not match with target attribute count");
             	    }
 	        	 	
+	        	 	//populated target attributes
 	        	 	targetfieldOrdinals.zipWithIndex.foreach(tf => {
 	        	 	  itemsOut(tf._1) = transformedValues(tf._2)
 	        	 	})
