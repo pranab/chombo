@@ -48,6 +48,7 @@ public class HistogramStat implements Serializable {
 	protected int outputPrecision = 3;
 	private boolean debugOn = false;
 	private boolean serializeBins;
+	private Map<Integer, Double> percentiles = new HashMap<Integer, Double>();
 	public static String fieldDelim = ",";
 	
 	/**
@@ -80,6 +81,7 @@ public class HistogramStat implements Serializable {
 	public void initialize() {
 		binMap.clear();
 		histogram.clear();
+		percentiles.clear();
 		count = 0;
 		sum = 0;
 		sumSq = 0;
@@ -434,7 +436,20 @@ public class HistogramStat implements Serializable {
 	 * @return
 	 */
 	public double getMedian() {
-		return getQuantile(0.5);
+		return getQuantile(50);
+	}
+	
+	/**
+	 * @param quantile
+	 * @return
+	 */
+	public double getQuantile(int quantile) {
+		Double percentileValue = percentiles.get(quantile);
+		if (null == percentileValue) {
+			percentileValue = getQuantile(quantile/100.0);
+			percentiles.put(quantile, percentileValue);
+		}
+		return percentileValue;
 	}
 	
 	/**
