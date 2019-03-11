@@ -115,6 +115,38 @@ public class StringTransformer {
 	 * @author pranab
 	 *
 	 */
+	public static class UpperCaseFirstTransformer extends AttributeTransformer  {
+		
+		/**
+		 * @param prAttr
+		 */
+		public UpperCaseFirstTransformer(ProcessorAttribute prAttr) {
+			super(prAttr.getTargetFieldOrdinals().length);
+		}
+		
+		/**
+		 * 
+		 */
+		public UpperCaseFirstTransformer() {
+			super(1);
+		}
+
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
+		@Override
+		public String[] tranform(String value) {
+			transformed[0] =  value.substring(0, 1).toUpperCase();
+			return transformed;
+		}
+		
+	}
+	
+	
+	/**
+	 * @author pranab
+	 *
+	 */
 	public static class PatternBasedTransformer extends AttributeTransformer {
 		private Pattern pattern;
 		private Matcher matcher;

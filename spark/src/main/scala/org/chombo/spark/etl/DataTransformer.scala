@@ -29,6 +29,8 @@ import scala.collection.JavaConverters._
 import org.chombo.util.ProcessorAttribute
 import org.chombo.transformer.ContextAwareTransformer
 import org.chombo.spark.common.GeneralUtility
+import java.io.InputStream
+import org.chombo.util.Utility
 
 
 /**
@@ -78,9 +80,9 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val transformerSchema = BasicUtils.getProcessingSchema(
-	       getMandatoryStringParam(appConfig, "schema.file.path", "missing schema file path configuration"))
+	       getMandatoryStringParam(appConfig, "schema.filePath", "missing schema file path configuration"))
 	   transformerSchema.validateTargetAttributeMapping()
-	   val customClass = if (appConfig.hasPath("custom.trans.factory.class"))
+	   val customClass = if (appConfig.hasPath("custom.transFactoryClass"))
 	     appConfig.getString("custom.trans.factory.class")
 	   else
 	     null
@@ -315,7 +317,19 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
        transTags : Array[String],   ord : Int) {
         val prAttr = transformerSchema.findAttributeByOrdinal(ord)
          val transArr = transTags.map(tag => {
-          TransformerFactory.createTransformer(tag, prAttr, config)
+           //check if side data is needed
+           val tranConfig = TransformerFactory.getTransformerConfig(config , tag, prAttr)
+           var  inStrm:InputStream  = null;
+		   if (tranConfig.hasPath("hdfsDataPath")) {
+				inStrm = Utility.getFileStream(tranConfig.getString("hdfsDataPath"));
+		   } else if (tranConfig.hasPath("fsDataPath")) {
+				inStrm = BasicUtils.getFileStream(tranConfig.getString("fsDataPath"));
+		   }
+           val fiStrm = asOption[InputStream](inStrm)
+           fiStrm match {
+             case Some(strm) => TransformerFactory.createTransformer(tag, prAttr, config, strm) 
+             case None => TransformerFactory.createTransformer(tag, prAttr, config)
+           }
         })
         //add transformers to map
 	    mutTransformers += ord -> transArr

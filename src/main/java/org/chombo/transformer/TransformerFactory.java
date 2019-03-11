@@ -36,6 +36,7 @@ import com.typesafe.config.ConfigException;
 public class TransformerFactory {
 	public static final String LOWER_CASE_TRANSFORMER  = "lowerCaseTrans";
 	public static final String UPPER_CASE_TRANSFORMER  = "upperCaseTrans";
+	public static final String UPPER_CASE_FIRST_TRANSFORMER  = "upperCaseFirstTrans";
 	public static final String PATTERN_BASED_TRANSFORMER  = "patternBasedTrans";
 	public static final String SEARCH_REPLACE_TRANSFORMER  = "searchReplaceTrans";
 	public static final String PATTREN_BASED_SEARCH_REPLACE_TRANSFORMER  = "patternBasedSearchReplaceTrans";
@@ -128,6 +129,8 @@ public class TransformerFactory {
 			transformer = new StringTransformer.LowerCaseTransformer(prAttr);
 		} else if (transformerTag.equals(UPPER_CASE_TRANSFORMER)) {
 			transformer = new StringTransformer.UpperCaseTransformer(prAttr);
+		} else if (transformerTag.equals(UPPER_CASE_FIRST_TRANSFORMER)) {
+			transformer = new StringTransformer.UpperCaseFirstTransformer(prAttr);
 		} else if (transformerTag.equals(PATTERN_BASED_TRANSFORMER)) {
 			transformer = new StringTransformer.PatternBasedTransformer(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(SEARCH_REPLACE_TRANSFORMER)) {
