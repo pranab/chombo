@@ -147,6 +147,7 @@ public class HistogramStat implements Serializable {
 				stat.initialize(items, keyLen, normalized);
 			} else {
 				stat.initializeBins(items, keyLen);
+				stat.getDistribution();
 			}
 			histStats.put(key, stat);
 		}

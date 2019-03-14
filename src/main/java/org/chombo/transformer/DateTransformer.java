@@ -795,4 +795,109 @@ public class DateTransformer  {
 	}
 
 	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class MultiTimeCycleTransformer extends AttributeTransformer  {
+		private SimpleDateFormat sourceDateFormat;
+		private boolean sourceEpochTime;
+		private List<String> timeCycles;
+		private int hourGranularity;
+		private Calendar cal = Calendar.getInstance();
+		
+		/**
+		 * @param prAttr
+		 * @param config
+		 */
+		public MultiTimeCycleTransformer(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			BasicUtils.assertCondition(prAttr.getTargetFieldOrdinals().length == config.getStringList("timeCycles").size(), 
+					"number of target fields do not match with number of time cycles");
+			intialize(config.getString("sourceDateFormat"), config.getString("sourceTimeZone"), config.getStringList("timeCycles"), 
+					config.getInt("hourGranularity"));
+
+		}
+		
+		/**
+		 * @param sourceDateFormatStr
+		 * @param sourceTimeZone
+		 * @param timeCycle
+		 * @param hourGranularity
+		 */
+		public MultiTimeCycleTransformer(String sourceDateFormatStr, String sourceTimeZone, List<String> timeCycles, int hourGranularity) {
+			super(timeCycles.size());
+			intialize(sourceDateFormatStr, sourceTimeZone, timeCycles, hourGranularity);
+		}
+		
+		/**
+		 * @param sourceDateFormatStr
+		 * @param sourceTimeZone
+		 * @param timeCycle
+		 * @param hourGranularity
+		 */
+		private void intialize(String sourceDateFormatStr, String sourceTimeZone, List<String> timeCycles, int hourGranularity) {
+			if (sourceDateFormatStr.equals("epochTime")) {
+				sourceEpochTime = true;
+			} else  {
+				sourceDateFormat = new SimpleDateFormat(sourceDateFormatStr);
+				if (!Utility.isBlank(sourceTimeZone)) {
+					sourceDateFormat.setTimeZone(TimeZone.getTimeZone(sourceTimeZone));
+				}
+			}
+			this.timeCycles = timeCycles;
+			if (hourGranularity % 2 == 1) {
+				throw new IllegalStateException("hour granularity should be even");
+			}
+			this.hourGranularity = hourGranularity;
+		}
+		
+		/* (non-Javadoc)
+		 * @see org.chombo.transformer.AttributeTransformer#tranform(java.lang.String)
+		 */
+		@Override
+		public String[] tranform(String value) {
+			try {
+				Date date = null;
+				if (null != sourceDateFormat) {
+					//date format
+					date = sourceDateFormat.parse(value);
+				} else {
+					//epoch time
+					date = new Date(Long.parseLong(value));
+				}
+				cal.setTime(date);
+				
+				for (int i = 0; i < timeCycles.size(); ++i) {
+					String timeCycle = timeCycles.get(i);
+					if (timeCycle.equals("hourOfDay")) {
+						int hour = cal.get(Calendar.HOUR_OF_DAY);
+						hour /= hourGranularity;
+						transformed[i] = "" + hour;
+					} else if (timeCycle.equals("dayOfWeek")) {
+						int day = cal.get(Calendar.DAY_OF_WEEK);
+						transformed[i] = "" + day;
+					} else if (timeCycle.equals("dayOfMonth")) {
+						int day = cal.get(Calendar.DAY_OF_MONTH);
+						transformed[i] = "" + day;
+					} else if (timeCycle.equals("monthOfYear")) {
+						int month = cal.get(Calendar.MONTH) + 1;
+						transformed[i] = "" + month;
+					} else if (timeCycle.equals("quarterOfYear")) {
+						int month = cal.get(Calendar.MONTH) + 1;
+						int quarter = (month + 2) / 3;
+						transformed[i] = "" + quarter;
+					} else {
+						throw new IllegalStateException("invalid time cycle");
+					}
+				}
+				
+			} catch (ParseException ex) {
+				throw new IllegalArgumentException("failed to parse date " + ex.getMessage());
+			}
+			return transformed;
+		}
+		
+	}
+	
 }
