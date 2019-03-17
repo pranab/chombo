@@ -49,12 +49,27 @@ if op == "usage":
 		#make one distribution skewed
 		if (cl == 1):
 			if amount < 60:
-				amount *= 1.1
+				amount *= 1.2
 			else:
 				amount *= 0.8
 		print "%d,%s,%s,%d,%.2f" %(cl, custId, xactionId, xactionTime, amount)
 		interval = int(intervalDistr.sample()) * 60
 		xactionTime += interval
 		
+elif op == "loyalty":
+	fileName = sys.argv[2]
+	for rec in fileRecGen(fileName, ","):
+		cluster = int(rec[0])
+		custID = rec[1]
+		if cluster == 0:
+			loyalty = sampleBinaryEvents(("L", "M"), 80)
+		elif cluster == 1:
+			loyalty = sampleBinaryEvents(("L", "M"), 40)
+		elif cluster == 2:
+			loyalty = sampleBinaryEvents(("M", "H"), 70)
+		else:
+			loyalty = sampleBinaryEvents(("M", "H"), 10)
 		
+		print "1,%s,%s" %(custID, loyalty)
+
 

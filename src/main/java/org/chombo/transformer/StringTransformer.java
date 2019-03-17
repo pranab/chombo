@@ -404,7 +404,7 @@ public class StringTransformer {
 		 * @throws IOException
 		 */
 		public KeyValueTransformer(ProcessorAttribute prAttr, Config config, InputStream inStrm) throws IOException {
-			super(1);
+			super(prAttr.getTargetFieldOrdinals().length);
 			int fieldOrd = prAttr.getOrdinal();
 			String delim = config.getString("fieldDelim");
 			try {
@@ -440,7 +440,15 @@ public class StringTransformer {
 				newValue = kayValues.get(value);
 			}
 			
-			transformed[0] = null != newValue ? newValue  :  value;
+			if (transformed.length == 1) {
+				//replace source attribute
+				transformed[0] = null != newValue ? newValue  :  value;
+			} else if (transformed.length == 2) {
+				transformed[0] = value;
+				transformed[1] = null != newValue ? newValue  :  value;
+			} else {
+				throw new IllegalStateException("invalid number of target fields");
+			}
 			return transformed;
 		}		
 	}	

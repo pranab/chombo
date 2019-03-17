@@ -1,0 +1,32 @@
+{
+		"attributes" :
+		[
+			{
+				"name" : "custID",
+				"ordinal" : 1,
+				"dataType" : "string",
+				"transformers" : ["keyValueTrans"],
+				"targetFieldOrdinals" : [0, 1]
+			},
+			{
+				"name" : "xactionID",
+				"ordinal" : 2,
+				"dataType" : "string",
+				"targetFieldOrdinals" : [2]
+			},
+			{
+				"name" : "xactionTime",
+				"ordinal" : 3,
+				"dataType" : "int",
+				"transformers" : ["multiTimeCycleTrans"],
+				"targetFieldOrdinals" : [3, 4]
+			},
+			{
+				"name" : "amount",
+				"ordinal" : 4,
+				"dataType" : "double",
+				"targetFieldOrdinals" : [5]
+			}
+		]
+		
+}
