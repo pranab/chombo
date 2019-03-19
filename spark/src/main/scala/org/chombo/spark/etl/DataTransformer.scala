@@ -59,7 +59,9 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
     val mutTransformers : scala.collection.mutable.HashMap[Int, Array[AttributeTransformer]]   = scala.collection.mutable.HashMap()
     lazy val transformers :  Map[Int, Array[AttributeTransformer]]   = mutTransformers.toMap
     var mutGenerators : Array[Option[AttributeTransformer]] = _
-    lazy val generators = filterNoneFromArray(mutGenerators)
+    lazy val generators : Array[AttributeTransformer] = 
+    	if (null != mutGenerators ) filterNoneFromArray(mutGenerators)
+    	else Array[AttributeTransformer]()
     val context : java.util.Map[String, Object] = new java.util.HashMap[String, Object]()
     
     /**
@@ -94,13 +96,19 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 	   //create trassformers and generator
 	   var foundinConfig = createTransformersFromConfig(transformerSchema, appConfig)
 	   var foundinSchema = false
+	   if (debugOn)
+	     println("foundinConfig: " + foundinConfig)
 	   if (foundinConfig) {
 	       //found transformers in configuration, so expect generator also there
 	       createGeneratorsFromConfig(transformerSchema, appConfig)
 	   } else {
 	     //since not in config, use schema
-	     var foundinSchema = createTransformersFromSchema(transformerSchema, appConfig)
-	     createGeneratorsFromSchema(transformerSchema, appConfig)
+	     foundinSchema = createTransformersFromSchema(transformerSchema, appConfig)
+	     if (debugOn)
+	       println("foundinSchema: " + foundinSchema)
+	     if (foundinSchema) {
+	    	 createGeneratorsFromSchema(transformerSchema, appConfig)
+	     }
 	   }
        
        //last option is custom 
@@ -270,15 +278,20 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 	* @param config
 	* @return
 	*/    
-    private def createTransformersFromSchema(transformerSchema : ProcessorAttributeSchema, appConfig: Config) {
+    private def createTransformersFromSchema(transformerSchema : ProcessorAttributeSchema, appConfig: Config) : 
+      Boolean = {
+       var foundinSchema = false 
     	transformerSchema.getAttributes().asScala.toList.foreach(prAttr => {
     	  val fieldOrd = prAttr.getOrdinal()
     	  val transformerTagList = prAttr.getTransformers()
     	  if (null != transformerTagList) {
     	    val transTags =  transformerTagList.asScala.toArray
     	    createTransformers(transformerSchema, appConfig, transTags,  prAttr.getOrdinal())
+    	    foundinSchema = true
+    	    println("found transformers for " + fieldOrd)
     	  }
     	})
+    	foundinSchema
     }
     
     /**
@@ -287,23 +300,26 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 	* @return
 	*/    
     private def createGeneratorsFromSchema(transformerSchema : ProcessorAttributeSchema, appConfig: Config) {
-    	mutGenerators = transformerSchema.getAttributeGenerators().asScala.toArray.map(prAttr => {
-    	  val fieldOrd = prAttr.getOrdinal()
-    	  val generatorTagList = prAttr.getTransformers()
-    	  val generatorTag = if (null != generatorTagList) {
-    	    val generatorTags =  generatorTagList.asScala.toArray
-    	    Some(generatorTags(0))
-    	  } else {
-    	    None
-    	  }
-    	  generatorTag match {
-		  	 case Some(genTag:String) => {
-			   	  Some(createGenerator(transformerSchema, appConfig, genTag,  fieldOrd))
-			 }
-			 case None => None
-		  }  
-  
-    	})
+        val generators = transformerSchema.getAttributeGenerators()
+        if (null != generators) {
+	    	mutGenerators = transformerSchema.getAttributeGenerators().asScala.toArray.map(prAttr => {
+	    	  val fieldOrd = prAttr.getOrdinal()
+	    	  val generatorTagList = prAttr.getTransformers()
+	    	  val generatorTag = if (null != generatorTagList) {
+	    	    val generatorTags =  generatorTagList.asScala.toArray
+	    	    Some(generatorTags(0))
+	    	  } else {
+	    	    None
+	    	  }
+	    	  generatorTag match {
+			  	 case Some(genTag:String) => {
+				   	  Some(createGenerator(transformerSchema, appConfig, genTag,  fieldOrd))
+				 }
+				 case None => None
+			  }  
+	  
+	    	})
+        }
     }     
     
     /**

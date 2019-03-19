@@ -17,6 +17,7 @@
 
 package org.chombo.transformer;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -36,7 +37,7 @@ import com.typesafe.config.Config;
  * @author pranab
  *
  */
-public class DateTransformer  {
+public class DateTransformer implements Serializable {
 	
 	/**
 	 * @author pranab

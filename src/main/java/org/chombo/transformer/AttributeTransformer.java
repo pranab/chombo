@@ -17,6 +17,8 @@
 
 package org.chombo.transformer;
 
+import java.io.Serializable;
+
 import com.typesafe.config.Config;
 
 
@@ -24,7 +26,7 @@ import com.typesafe.config.Config;
  * @author pranab
  *
  */
-public abstract class  AttributeTransformer {
+public abstract class  AttributeTransformer implements Serializable{
 	protected String[] transformed;
 	
 	public AttributeTransformer() {
