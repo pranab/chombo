@@ -139,6 +139,11 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 	     itemsOut.mkString(fieldDelimOut)
 	   })
 	   
+	   if (debugOn) {
+	     val records = transformedData.collect.slice(0, 20)
+         records.foreach(r => println(r))
+	   }
+	   
        if(saveOutput) {	   
 		   transformedData.saveAsTextFile(outputPath) 
    	   }

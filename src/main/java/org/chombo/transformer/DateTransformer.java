@@ -598,7 +598,6 @@ public class DateTransformer implements Serializable {
 		private Map<String, SimpleDateFormat> componentDateFormats = new HashMap<String, SimpleDateFormat>();
 		private boolean sourceEpochTime;
 		private List<String> dateComponents;
-		private Calendar cal = Calendar.getInstance();
 
 		/**
 		 * @param prAttr
@@ -667,6 +666,7 @@ public class DateTransformer implements Serializable {
 		@Override
 		public String[] tranform(String value) {
 			try {
+				Calendar cal = Calendar.getInstance();
 				Date date = null;
 				if (null != sourceDateFormat) {
 					//date format
@@ -701,10 +701,10 @@ public class DateTransformer implements Serializable {
 	 */
 	public static class TimeCycleTransformer extends AttributeTransformer  {
 		private SimpleDateFormat sourceDateFormat;
+		private String sourceDateFormatStr;
 		private boolean sourceEpochTime;
 		private String timeCycle;
 		private int hourGranularity;
-		private Calendar cal = Calendar.getInstance();
 		
 		/**
 		 * @param prAttr
@@ -735,7 +735,8 @@ public class DateTransformer implements Serializable {
 		 * @param hourGranularity
 		 */
 		private void intialize(String sourceDateFormatStr, String sourceTimeZone, String timeCycle, int hourGranularity) {
-			if (sourceDateFormatStr.equals("epochTime")) {
+			this.sourceDateFormatStr = sourceDateFormatStr;
+			if (sourceDateFormatStr.equals(BasicUtils.EPOCH_TIME) || sourceDateFormatStr.equals(BasicUtils.EPOCH_TIME_SEC)) {
 				sourceEpochTime = true;
 			} else  {
 				sourceDateFormat = new SimpleDateFormat(sourceDateFormatStr);
@@ -762,8 +763,13 @@ public class DateTransformer implements Serializable {
 					date = sourceDateFormat.parse(value);
 				} else {
 					//epoch time
-					date = new Date(Long.parseLong(value));
+					long lValue = Long.parseLong(value);
+					if (sourceDateFormatStr.equals(BasicUtils.EPOCH_TIME_SEC)) {
+						lValue *= 1000;
+					}
+					date = new Date(lValue);
 				}
+				Calendar cal = Calendar.getInstance();
 				cal.setTime(date);
 				
 				if (timeCycle.equals("hourOfDay")) {
@@ -802,10 +808,10 @@ public class DateTransformer implements Serializable {
 	 */
 	public static class MultiTimeCycleTransformer extends AttributeTransformer  {
 		private SimpleDateFormat sourceDateFormat;
+		private String sourceDateFormatStr;
 		private boolean sourceEpochTime;
 		private List<String> timeCycles;
 		private int hourGranularity;
-		private Calendar cal = Calendar.getInstance();
 		
 		/**
 		 * @param prAttr
@@ -838,7 +844,8 @@ public class DateTransformer implements Serializable {
 		 * @param hourGranularity
 		 */
 		private void intialize(String sourceDateFormatStr, String sourceTimeZone, List<String> timeCycles, int hourGranularity) {
-			if (sourceDateFormatStr.equals("epochTime")) {
+			this.sourceDateFormatStr = sourceDateFormatStr;
+			if (sourceDateFormatStr.equals(BasicUtils.EPOCH_TIME) || sourceDateFormatStr.equals(BasicUtils.EPOCH_TIME_SEC)) {
 				sourceEpochTime = true;
 			} else  {
 				sourceDateFormat = new SimpleDateFormat(sourceDateFormatStr);
@@ -865,8 +872,13 @@ public class DateTransformer implements Serializable {
 					date = sourceDateFormat.parse(value);
 				} else {
 					//epoch time
-					date = new Date(Long.parseLong(value));
+					long lValue = Long.parseLong(value);
+					if (sourceDateFormatStr.equals(BasicUtils.EPOCH_TIME_SEC)) {
+						lValue *= 1000;
+					}
+					date = new Date(lValue);
 				}
+				Calendar cal = Calendar.getInstance();
 				cal.setTime(date);
 				
 				for (int i = 0; i < timeCycles.size(); ++i) {
