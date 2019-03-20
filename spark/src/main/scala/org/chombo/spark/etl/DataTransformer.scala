@@ -132,7 +132,9 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
          val itemsOut = new Array[String](transformerSchema.findDerivedAttributeCount());
 	     
 	     getTranformedAttributes(transformerSchema,  true, items, itemsOut,brTransformers.value, brGenerators.value)
-	     getTranformedAttributes(transformerSchema,  false, items, itemsOut, brTransformers.value, brGenerators.value)
+	     if (brGenerators.value.length > 0) {
+	    	 getTranformedAttributes(transformerSchema,  false, items, itemsOut, brTransformers.value, brGenerators.value)
+	     }
 	     
 	     itemsOut.mkString(fieldDelimOut)
 	   })
@@ -151,9 +153,14 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
      */
     private def getTranformedAttributes(transformerSchema : ProcessorAttributeSchema,  isTransformer : Boolean,
         items : Array[String], itemsOut : Array[String], transformers : Map[Int, Array[AttributeTransformer]],
-        generators : Array[AttributeTransformer]) {
+        generators : Array[AttributeTransformer]) {     
+        //println("operation transformer " + isTransformer)
+    	//for all attributes
     	transformerSchema.getAttributes().asScala.toList.foreach(prAttr => {
-	       val targetOrdsOpt = asOption(prAttr.getTargetFieldOrdinals())
+	       //target attributes
+	       val targetfieldOrdinals = prAttr.getTargetFieldOrdinals()
+	       val targetOrdsOpt = asOption(targetfieldOrdinals)
+	       val attr = prAttr.getOrdinal()
 	       targetOrdsOpt match {
 	         case Some(targetOrds : Array[Int]) => {
 	        	 	var  source:String = ""
@@ -174,6 +181,7 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 	        	 	    transformers.zipWithIndex.foreach(ztrans => {
 	        	 	      setTransformerContext(ztrans._1, items, context)
 	        	 	      transformedValues = ztrans._1.tranform(source)
+	        	 	      //println("num trans fields " + transformedValues.length + " for attr " + attr)
 	        	 	      if (ztrans._2 < transformers.length -1 && transformedValues.length > 1) {
 	        	 	        throw new  IllegalStateException(
 	        	 	            "for cascaded transformers only last transformer is allowed to emit multiple values")
@@ -182,16 +190,16 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 	        	 	    })
 	        	 	  }
 	        	 	  case None => {
+	        	 	    //no transformers, retain source
 	        	 	    transformedValues(0) = source
 	        	 	  }
 	        	 	}
 	        	 	
-	        	 	//target attributes
-	        	 	val targetfieldOrdinals = prAttr.getTargetFieldOrdinals()
 	        	 	
 	        	    //check output size with target attribute count
             	    if (transformedValues.length != targetfieldOrdinals.length) {
-            	    	throw new IllegalStateException("transformed output size does not match with target attribute count");
+            	    	throw new IllegalStateException("transformed output size does not match with target attribute size expected " + 
+            	    	    targetfieldOrdinals.length + " found " + transformedValues.length + " for field " + attr);
             	    }
 	        	 	
 	        	 	//populated target attributes
@@ -199,6 +207,7 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 	        	 	  itemsOut(tf._1) = transformedValues(tf._2)
 	        	 	})
 	         }
+	         //no target field, discard source
 	         case None =>
 	       }
 	       
@@ -343,8 +352,14 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
 		   }
            val fiStrm = asOption[InputStream](inStrm)
            fiStrm match {
-             case Some(strm) => TransformerFactory.createTransformer(tag, prAttr, config, strm) 
-             case None => TransformerFactory.createTransformer(tag, prAttr, config)
+             case Some(strm) => {
+               println("creating transformer with side data for " + tag)
+               TransformerFactory.createTransformer(tag, prAttr, config, strm) 
+             }
+             case None => {
+               println("creating transformer for " + tag)
+               TransformerFactory.createTransformer(tag, prAttr, config)
+             }
            }
         })
         //add transformers to map

@@ -2,6 +2,11 @@
 		"attributes" :
 		[
 			{
+				"name" : "segmentID",
+				"ordinal" : 0,
+				"dataType" : "int"
+			},
+			{
 				"name" : "custID",
 				"ordinal" : 1,
 				"dataType" : "string",
