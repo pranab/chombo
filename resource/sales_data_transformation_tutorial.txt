@@ -4,7 +4,7 @@ according to your environment.
 
 Dependent script
 ================
-Checkout the project visitante. Take the script util.py and sampler.py  from that project and 
+Checkout the project avenir. Take the script util.py and sampler.py  from that project and 
 place them in ../lib directory with respect the directory containing store_order.py
 
 Deployment

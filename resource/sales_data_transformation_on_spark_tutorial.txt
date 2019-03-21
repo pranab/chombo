@@ -1,0 +1,42 @@
+This tutorial is data transformation. Set of out of the box transformers are used to 
+transform data.  Make necessary changes in the file path and other parameters  according 
+to your environment.
+
+Dependent script
+================
+Checkout the project avenir. Copy the directory ../python/lib  from that project and 
+paste it in ../lib directory with respect the directory containing spending.py
+
+Build and Deployment
+====================
+Please refer to building_spark_uber_jar.txt
+
+Generate input data
+===================
+./spending.py usage <num_says_in _past> <num_cust> <transaction_interva> > sp.txt
+
+where
+num_days_in_past = number of days in past to generate data over (e.g 365
+<num_cust> = number of customers e.g 1000
+<transaction_interva> = transaction interval in minute e.g 3
+
+
+Copy input data file
+====================
+Copy the the data file to the Spark input directory as specified in etl_spark.sh
+
+Copy metadata
+=============
+Copy spend_behave.json to the the meta data directory path as defined with the config parameter
+schema.filePath 
+
+
+Run transformation spark job
+============================
+./etl_spark.sh transformer
+
+Configuration
+================
+Sample configuration is in etl.conf
+
+
