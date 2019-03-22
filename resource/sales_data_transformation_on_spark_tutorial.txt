@@ -20,10 +20,20 @@ num_days_in_past = number of days in past to generate data over (e.g 365
 <num_cust> = number of customers e.g 1000
 <transaction_interva> = transaction interval in minute e.g 3
 
-
 Copy input data file
 ====================
 Copy the the data file to the Spark input directory as specified in etl_spark.sh
+
+Generate loyalty data
+=====================
+Using the input data file, generate loyalty data as follows. In real life this will come
+from a database
+./spending.py loyalty sp.txt > loyalty.txt
+
+Copy loyalty data
+=================
+Copy the the loyalty data file to the path specified through the parameter fsDataPath for 
+the transformer keyValueTrans in etl.conf
 
 Copy metadata
 =============
