@@ -85,6 +85,17 @@ public class TabularData {
 	}
 	
 	/**
+	 * sets value to cell
+	 * @param rowLabel
+	 * @param colLabel
+	 * @param val
+	 */
+	public void set(String rowLabel, String colLabel, int val) {
+		int[] rowCol = getRowCol(rowLabel, colLabel);
+		table[rowCol[0]][rowCol[1]] = val;
+	}
+	
+	/**
 	 * @param row
 	 * @param col
 	 * @return

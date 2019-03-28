@@ -2696,4 +2696,33 @@ public class BasicUtils {
     	}
     	return intArray;
     }
+    
+    /**
+     * Finds all occurences of a sub sequence
+     * @param source
+     * @param sub
+     * @return
+     */
+    public static int[] findStringSubSequencePositions(String[] source, String[] sub) {
+    	int lastPos = source.length - sub.length;
+    	List<Integer> matchedPositions = new ArrayList<Integer>();
+    	for (int i = 0; i <= lastPos; ) {
+    		boolean matched = true;
+    		for (int j = 0; j < sub.length; ++j) {
+    			if (!source[i+j].equals(sub[j])) {
+    				matched = false;
+    				break;
+    			}
+    		}
+			if (matched) {
+				matchedPositions.add(i);
+				i += sub.length;
+			} else {
+				++i;
+			}
+    	}
+    	
+    	return fromListToIntArray(matchedPositions);
+    }
+    
  }
