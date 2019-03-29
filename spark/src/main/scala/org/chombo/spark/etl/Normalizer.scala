@@ -46,8 +46,8 @@ object Normalizer extends JobConfiguration {
 	   val appConfig = config.getConfig(appName)
 	   
 	   //configuration params
-	   val fieldDelimIn = appConfig.getString("field.delim.in")
-	   val fieldDelimOut = appConfig.getString("field.delim.out")
+	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
+	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val attrConfigs = appConfig.getConfigList("num.attrs").asScala
 	   val attrConfigDetails = attrConfigs.map(c => {
 	     (c.getInt("ordinal"), c.getString("type"))
@@ -66,7 +66,7 @@ object Normalizer extends JobConfiguration {
 	   
 	   //filed ordinal and value
 	   val fieldVals = data.flatMap(line => {
-	     val items = line.split(fieldDelimIn)
+	     val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 	     val allFields = attrConfigDetails.map(attr => {
 	       val ord = attr._1
 	       val fieldVal = items(ord).toDouble 
@@ -100,7 +100,7 @@ object Normalizer extends JobConfiguration {
        
        //normalize data
        val normalized = data.map(line => {
-         val items = line.split(fieldDelimIn)
+         val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
          
          var outlier = false
          attrConfigDetails.foreach(attr => {

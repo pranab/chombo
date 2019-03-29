@@ -177,6 +177,17 @@ public class TabularData {
 		return sum;
 	}
 	
+	/**
+	 * @return
+	 */
+	public int getSum() {
+		int sum = 0;
+		for (int r = 0; r < numRow; ++r) {
+			sum += getRowSum(r);
+		}
+		return sum;
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */

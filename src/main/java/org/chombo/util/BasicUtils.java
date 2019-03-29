@@ -1043,6 +1043,17 @@ public class BasicUtils {
     	return fields;
     }	
 	
+    /**
+     * @param fields
+     * @return
+     */
+    public static String[] getTrimmedFields(String[] fields) {
+    	for (int i = 0; i < fields.length; ++i) {
+    		fields[i] = fields[i].trim();
+    	}
+    	return fields;
+    }	
+    
 	/**
 	 * @param items
 	 * @return
@@ -2046,7 +2057,7 @@ public class BasicUtils {
 	 * @return
 	 */
 	public static String slice(String value, int offset) {
-		return slice( value, offset);
+		return slice( value, offset, 0);
 	}	
 	
 	/**
