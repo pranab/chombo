@@ -18,12 +18,18 @@
 
 package org.chombo.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Serializable;
+
 /**
  * Tabular data structure
  * @author pranab
  *
  */
-public class TabularData {
+public class TabularData implements Serializable {
 	protected int[][] table;
 	protected int numRow;
 	protected int numCol;
@@ -31,7 +37,61 @@ public class TabularData {
 	protected String[] colLabels;
 	protected static final String DELIMETER = ",";
 	
+	/**
+	 * 
+	 */
 	public TabularData() {
+	}
+	
+	/**
+	 * @param fs
+	 * @throws IOException
+	 */
+	public TabularData(InputStream fs) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+		String line = null; 
+    	int row = 0;
+    	String[] rowLabels = null;
+    	String[] colLabels = null;
+    	int cellCount = 0;
+		while((line = reader.readLine()) != null) {
+			if (row == 0) {
+				rowLabels = line.split(DELIMETER);
+			} else if (row == 1) {
+				colLabels = line.split(DELIMETER);
+				initialize(rowLabels.length,  colLabels.length);
+				setLabels(rowLabels, colLabels); 
+			} else {
+				String[] values = line.split(DELIMETER);
+				for (int col = 0; col < values.length; ++col) {
+					set(row - 2, col, Integer.parseInt(values[col]));
+					++cellCount;
+				}
+			}
+			++row;
+		}
+		if (row - 2 != numRow) {
+			BasicUtils.assertFail("incorrect number of row data");
+		}
+		
+		if (cellCount < numRow * numCol) {
+			//lower triangular defined
+			if (numRow == numCol) {
+				if (cellCount == numRow * (numRow -1)) {
+					for (int r = 0; r < numRow; ++r) {
+						for (int c = 0; c < numCol; ++c) {
+							if (c > r) {
+								table[r][c] = table[c][r];
+							}
+						}
+					}
+				} else {
+					BasicUtils.assertFail("incorrect number of lower disagonal elements for square matrix");
+				}
+			} else {
+				BasicUtils.assertFail("only square matrix can be partically specified");
+			}
+		}
 	}
 	
 	/**
@@ -47,7 +107,7 @@ public class TabularData {
 	 * @param colLabels
 	 */
 	public TabularData(String[] rowLabels, String[] colLabels) {
-		initialize( rowLabels.length,  colLabels.length);
+		initialize(rowLabels.length,  colLabels.length);
 		setLabels(rowLabels, colLabels); 
 	}
 
@@ -98,12 +158,35 @@ public class TabularData {
 	/**
 	 * @param row
 	 * @param col
+	 * @param val
+	 */
+	public void setAll(int val) {
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				table[r][c] = val;
+			}
+		}
+	}
+
+	/**
+	 * @param row
+	 * @param col
 	 * @return
 	 */
 	public int get(int row, int col) {
 		return table[row][col];
 	}
 
+	/**
+	 * @param rowLabel
+	 * @param colLabel
+	 * @return
+	 */
+	public int get(String rowLabel, String colLabel) {
+		int[] rowCol = getRowCol(rowLabel, colLabel);
+		return table[rowCol[0]][rowCol[1]];
+	}
+	
 	/**
 	 * @param row
 	 * @return
@@ -280,6 +363,20 @@ public class TabularData {
 		}
 
 		return rowCol;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getNumRow() {
+		return numRow;
+	}
+
+	/**
+	 * @return
+	 */
+	public int getNumCol() {
+		return numCol;
 	}
 
 }

@@ -164,7 +164,23 @@ public class DoubleTable implements Serializable {
 		int col = ArrayUtils.indexOf(colLabels, colLabel);
 		table[row][col] = val;
 	}
+	
+	/**
+	 * @param row
+	 * @param col
+	 * @param val
+	 */
+	public void setAll(double val) {
+		for (int r = 0; r < numRow; ++r) {
+			for (int c = 0; c < numCol; ++c) {
+				table[r][c] = val;
+			}
+		}
+	}
 
+	/**
+	 * @param outputPrecision
+	 */
 	public void setOutputPrecision(int outputPrecision) {
 		this.outputPrecision = outputPrecision;
 	}
@@ -322,6 +338,17 @@ public class DoubleTable implements Serializable {
 	 */
 	public double getColumnSum(String colLabel) {
 		return getColumnSum(getColIndex(colLabel));
+	}
+	
+	/**
+	 * @return
+	 */
+	public double getSum() {
+		double sum = 0;
+		for (int r = 0; r < numRow; ++r) {
+			sum += getRowSum(r);
+		}
+		return sum;
 	}
 
 	/**
