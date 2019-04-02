@@ -18,6 +18,10 @@
 
 package org.chombo.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.List;
 
@@ -33,7 +37,7 @@ public class DoubleTable implements Serializable {
 	protected int numCol;
 	protected String[] rowLabels;
 	protected String[] colLabels;
-	protected static final String DELIMETER = ",";
+	protected String delimeter = ",";
 	private int outputPrecision = 6;
 	
 	/**
@@ -69,6 +73,56 @@ public class DoubleTable implements Serializable {
 		String[] colLabelsAr = colLabels.toArray(new String[0]);
 		setLabels(rowLabelsAr, colLabelsAr); 
 	}
+	/**
+	 * @param fs
+	 * @throws IOException
+	 */
+	public DoubleTable(InputStream fs) throws IOException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(fs));
+		String line = null; 
+    	int row = 0;
+    	String[] rowLabels = null;
+    	String[] colLabels = null;
+    	int cellCount = 0;
+		while((line = reader.readLine()) != null) {
+			if (row == 0) {
+				rowLabels = line.split(delimeter);
+			} else if (row == 1) {
+				colLabels = line.split(delimeter);
+				initialize(rowLabels.length,  colLabels.length);
+				setLabels(rowLabels, colLabels); 
+			} else {
+				String[] values = line.split(delimeter);
+				for (int col = 0; col < values.length; ++col) {
+					set(row - 2, col, Double.parseDouble(values[col]));
+					++cellCount;
+				}
+			}
+			++row;
+		}
+		if (row - 2 != numRow) {
+			BasicUtils.assertFail("incorrect number of row data");
+		}
+		
+		if (cellCount < numRow * numCol) {
+			//lower triangular defined
+			if (numRow == numCol) {
+				if (cellCount == numRow * (numRow -1)) {
+					for (int r = 0; r < numRow; ++r) {
+						for (int c = 0; c < numCol; ++c) {
+							if (c > r) {
+								table[r][c] = table[c][r];
+							}
+						}
+					}
+				} else {
+					BasicUtils.assertFail("incorrect number of lower disagonal elements for square matrix");
+				}
+			} else {
+				BasicUtils.assertFail("only square matrix can be partically specified");
+			}
+		}
+	}
 
 	/**
 	 * @param numRow
@@ -92,6 +146,15 @@ public class DoubleTable implements Serializable {
 		}
 		this.numRow = numRow;
 		this.numCol = numCol;
+		return this;
+	}
+	
+	/**
+	 * @param delimeter
+	 * @return
+	 */
+	public DoubleTable withDeilmeter(String delimeter) {
+		this.delimeter = delimeter;
 		return this;
 	}
 	
@@ -465,7 +528,7 @@ public class DoubleTable implements Serializable {
 		StringBuilder stBld = new StringBuilder();
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
-				stBld.append(BasicUtils.formatDouble(table[r][c], outputPrecision)).append(DELIMETER);
+				stBld.append(BasicUtils.formatDouble(table[r][c], outputPrecision)).append(delimeter);
 			}
 			
 		}
@@ -499,7 +562,7 @@ public class DoubleTable implements Serializable {
 	public String serializeRow(int row) {
 		StringBuilder stBld = new StringBuilder();
 		for (int c = 0; c < numCol; ++c) {
-			stBld.append(BasicUtils.formatDouble(table[row][c], outputPrecision)).append(DELIMETER);
+			stBld.append(BasicUtils.formatDouble(table[row][c], outputPrecision)).append(delimeter);
 		}
 		
 		return stBld.substring(0, stBld.length()-1);
@@ -519,7 +582,7 @@ public class DoubleTable implements Serializable {
 	 * @param data
 	 */
 	public void deseralize(String data) {
-		String[] items = data.split(DELIMETER);
+		String[] items = data.split(delimeter);
 		int k = 0;
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
@@ -548,7 +611,7 @@ public class DoubleTable implements Serializable {
 	 * @param row
 	 */
 	public void deseralizeRow(String data, int row) {
-		String[] items = data.split(DELIMETER);
+		String[] items = data.split(delimeter);
 		int k = 0;
 		for (int c = 0; c < numCol; ++c) {
 			table[row][c]  = Double.parseDouble(items[k++]);
@@ -614,4 +677,5 @@ public class DoubleTable implements Serializable {
 		int col = BasicUtils.getIndex(colLabels, colLabel);
 		return col;
 	}
+	
 }

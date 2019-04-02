@@ -35,7 +35,7 @@ public class TabularData implements Serializable {
 	protected int numCol;
 	protected String[] rowLabels;
 	protected String[] colLabels;
-	protected static final String DELIMETER = ",";
+	protected String delimeter = ",";
 	
 	/**
 	 * 
@@ -56,13 +56,13 @@ public class TabularData implements Serializable {
     	int cellCount = 0;
 		while((line = reader.readLine()) != null) {
 			if (row == 0) {
-				rowLabels = line.split(DELIMETER);
+				rowLabels = line.split(delimeter);
 			} else if (row == 1) {
-				colLabels = line.split(DELIMETER);
+				colLabels = line.split(delimeter);
 				initialize(rowLabels.length,  colLabels.length);
 				setLabels(rowLabels, colLabels); 
 			} else {
-				String[] values = line.split(DELIMETER);
+				String[] values = line.split(delimeter);
 				for (int col = 0; col < values.length; ++col) {
 					set(row - 2, col, Integer.parseInt(values[col]));
 					++cellCount;
@@ -124,6 +124,15 @@ public class TabularData implements Serializable {
 		}
 		this.numRow = numRow;
 		this.numCol = numCol;
+	}
+	
+	/**
+	 * @param delimeter
+	 * @return
+	 */
+	public TabularData withDeilmeter(String delimeter) {
+		this.delimeter = delimeter;
+		return this;
 	}
 	
 	/**
@@ -286,7 +295,7 @@ public class TabularData implements Serializable {
 		StringBuilder stBld = new StringBuilder();
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
-				stBld.append(table[r][c]).append(DELIMETER);
+				stBld.append(table[r][c]).append(delimeter);
 			}
 		}
 		
@@ -301,7 +310,7 @@ public class TabularData implements Serializable {
 	public String serializeRow(int row) {
 		StringBuilder stBld = new StringBuilder();
 		for (int c = 0; c < numCol; ++c) {
-			stBld.append(table[row][c]).append(DELIMETER);
+			stBld.append(table[row][c]).append(delimeter);
 		}
 		
 		return stBld.substring(0, stBld.length()-1);
@@ -312,7 +321,7 @@ public class TabularData implements Serializable {
 	 * @param data
 	 */
 	public void deseralize(String data) {
-		String[] items = data.split(DELIMETER);
+		String[] items = data.split(delimeter);
 		int k = 0;
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
@@ -327,7 +336,7 @@ public class TabularData implements Serializable {
 	 * @param row
 	 */
 	public void deseralizeRow(String data, int row) {
-		String[] items = data.split(DELIMETER);
+		String[] items = data.split(delimeter);
 		int k = 0;
 		for (int c = 0; c < numCol; ++c) {
 			table[row][c]  = Integer.parseInt(items[k++]);
