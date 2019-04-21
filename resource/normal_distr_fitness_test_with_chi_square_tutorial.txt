@@ -14,7 +14,7 @@ Generate input data
 ./spending.py usage <num_says_in _past> <num_cust> <transaction_interva> > sp.txt
 
 where
-num_says_in _past = number of days in past to generate data over (e.g 365
+num_days_in_past = number of days in past to generate data over (e.g 365
 <num_cust> = number of customers e.g 1000
 <transaction_interva> = transaction interval in minute e.g 3
 

@@ -2736,4 +2736,12 @@ public class BasicUtils {
     	return fromListToIntArray(matchedPositions);
     }
     
+    /**
+     * @param value
+     * @return
+     */
+    public static double log2(double value) {
+    	return Math.log10(value) / Math.log10(2.0);
+    }
+    
  }

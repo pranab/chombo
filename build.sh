@@ -7,7 +7,7 @@ check()
     exit 1
   fi
 }
-echo "building hadoop..."
+echo "building hadoop ..."
 mvn clean install
 check 
 sbt publishLocal
