@@ -549,5 +549,63 @@ public class NumericTransformer  {
 			return transformed;
 		}
 	}
+	
+	/**
+	 * @author pranab
+	 *
+	 */
+	public static class MathFunction  extends AttributeTransformer {
+		private String function;
+		private String dataType;
+		private int precision;
+		private double power;
+		private double constant;
+		
+		public MathFunction(ProcessorAttribute prAttr, Config config) {
+			super(prAttr.getTargetFieldOrdinals().length);
+			dataType = prAttr.getDataType();
+			function = config.getString("function");
+			if (dataType.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+				precision = config.getInt("floatPrecision");
+			}
+			if (function.equals("power")) {
+				power = config.getDouble("power");
+			}
+			if (function.equals("sigmoid")) {
+				constant = config.getDouble("constant");
+			}
+		}
+		
+		@Override
+		public String[] tranform(String value) {
+			double  dVal = Double.parseDouble(value);
+			double tVal = 0;
+			if (function.equals("log")) {
+				tVal = Math.log(dVal);
+			} else if (function.equals("logTen")) {
+				tVal = Math.log10(dVal);
+			} else if (function.equals("sqRoot")) {
+				tVal = Math.sqrt(dVal);
+			} else if (function.equals("power")) {
+				tVal = Math.pow(dVal, power);
+			} else if (function.equals("exp")) {
+				tVal = Math.exp(dVal);
+			} else if (function.equals("sigmoid")) {
+				tVal = BasicUtils.logisticScale(constant, dVal);
+			}
+			
+			if (dataType.equals(BaseAttribute.DATA_TYPE_INT)) {
+				transformed[0] = "" + (int)tVal;
+			} else if (dataType.equals(BaseAttribute.DATA_TYPE_LONG)) {
+				transformed[0] = "" + (long)tVal;
+			} else if (dataType.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+				transformed[0] = BasicUtils.formatDouble(tVal, precision);
+			} else {
+				throw new IllegalArgumentException("only numeric data can be discretized");
+			}
+			return transformed;
+		}
+	}
+	
 
 }

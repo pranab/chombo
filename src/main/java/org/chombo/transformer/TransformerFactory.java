@@ -84,6 +84,7 @@ public class TransformerFactory {
 	public static final String BINARY_CONST_OPERATOR_TRANSFORMER = "binaryConstOperatorTrans";
 	public static final String INTEGER_ROUND_OFF_TRANSFORMER = "intRoundOffTrans";
 	public static final String FLOAT_ROUND_OFF_TRANSFORMER = "floatRoundOffTrans";
+	public static final String MATH_FUNCTION = "mathFunction";
 	
 	private static Map<String,String> custTransformerClasses = new HashMap<String,String>();
 	private static Map<String,AttributeTransformer> custTransformers = new HashMap<String,AttributeTransformer>();
@@ -218,6 +219,8 @@ public class TransformerFactory {
 			transformer = new NumericTransformer.IntegerRoundOff(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else if (transformerTag.equals(FLOAT_ROUND_OFF_TRANSFORMER)) {
 			transformer = new NumericTransformer.FloatingRoundOff(prAttr, getTransformerConfig(config , transformerTag, prAttr));
+		} else if (transformerTag.equals(MATH_FUNCTION)) {
+			transformer = new NumericTransformer.MathFunction(prAttr, getTransformerConfig(config , transformerTag, prAttr));
 		} else {
 			//custom transformer with configured transformer class names
 			transformer = createCustomTransformer(transformerTag, prAttr,  config);
