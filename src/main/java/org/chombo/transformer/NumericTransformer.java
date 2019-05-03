@@ -592,6 +592,8 @@ public class NumericTransformer  {
 				tVal = Math.exp(dVal);
 			} else if (function.equals("sigmoid")) {
 				tVal = BasicUtils.logisticScale(constant, dVal);
+			} else {
+				throw new IllegalArgumentException("invalid function for numeric field");
 			}
 			
 			if (dataType.equals(BaseAttribute.DATA_TYPE_INT)) {

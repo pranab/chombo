@@ -23,7 +23,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -2742,6 +2746,50 @@ public class BasicUtils {
      */
     public static double log2(double value) {
     	return Math.log10(value) / Math.log10(2.0);
+    }
+    
+    /**
+     * @param urlStr
+     * @param inputJson
+     * @return
+     */
+    public static String httpJsonPost(String urlStr, String inputJson) {
+  		StringBuilder stBld = new StringBuilder();
+  		HttpURLConnection conn = null;
+  		try {
+  			//set up connection
+	  		URL url = new URL(urlStr);
+	  		conn = (HttpURLConnection) url.openConnection();
+	  		conn.setDoOutput(true);
+	  		conn.setRequestMethod("POST");
+	  		conn.setRequestProperty("Content-Type", "application/json");
+	
+	  		//send request
+	  		OutputStream os = conn.getOutputStream();
+	  		os.write(inputJson.getBytes());
+	  		os.flush();
+	
+	  		//HttpURLConnection.HTTP_OK
+	  		if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+	  			throw new RuntimeException("Failed : HTTP error code : "+ conn.getResponseCode());
+	  		}
+	
+	  		//process response
+	  		BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+	  		String output;
+	  		while ((output = br.readLine()) != null) {
+	  			stBld.append(output);
+	  		}
+  		} catch (MalformedURLException e) {
+  			throw new RuntimeException("URL frmat error " + e.getMessage());
+  		} catch (IOException e) {
+  			throw new RuntimeException("URL frmat error " + e.getMessage());
+  		} finally {
+  			if (null != conn) {
+  				conn.disconnect();
+  			}
+  		}
+    	return stBld.toString();
     }
     
  }
