@@ -2792,4 +2792,155 @@ public class BasicUtils {
     	return stBld.toString();
     }
     
+    /**
+     * @param ref
+     * @param step
+     * @param numSteps
+     * @param direction
+     * @return
+     */
+    public static int[] traverse(int ref, int step, int numSteps, int direction) {
+    	int[] grid = null;
+    	if (direction > 0) {
+    		//positive
+    		grid = traversePos(ref, step, numSteps);
+    	} else if (direction < 0) {
+    		//negative
+    		grid = traverseNeg(ref, step, numSteps);
+    	} else {
+    		//both
+    		int[] gridNeg = traverseNeg(ref, step, numSteps);
+    		int[] gridPos = traversePos(ref, step, numSteps);
+    		grid = new int[2 * numSteps + 1];
+    		int k = 0;
+    		for (int i = 0; i < numSteps; ++i) {
+    			grid[k++] = gridNeg[i];
+    		}
+    		for (int i = 0; i <= numSteps; ++i) {
+    			grid[k++] = gridPos[i];
+    		}
+    	}
+    	return grid;
+    }
+    
+    /**
+     * @param ref
+     * @param step
+     * @param numSteps
+     * @return
+     */
+    public static int[] traversePos(int ref, int step, int numSteps) {
+    	int[] grid = new int[numSteps + 1];
+    	int cur = ref;
+    	for (int i = 0; i <= numSteps; ++i){
+    		grid[i] = cur;
+    		cur += step;
+    	}
+    	return grid;
+    }
+    
+    /**
+     * @param ref
+     * @param step
+     * @param numSteps
+     * @return
+     */
+    public static int[] traverseNeg(int ref, int step, int numSteps) {
+    	int[] grid = new int[numSteps + 1];
+    	int cur = ref - step * numSteps;
+    	for (int i = 0; i <= numSteps; ++i){
+    		grid[i] = cur;
+    		cur += step;
+    	}
+    	return grid;
+    }
+    
+    /**
+     * @param ref
+     * @param step
+     * @param numSteps
+     * @param direction
+     * @return
+     */
+    public static double[] traverse(double ref, double step, int numSteps, int direction) {
+    	double[] grid = null;
+    	if (direction > 0) {
+    		//positive
+    		grid = traversePos(ref, step, numSteps);
+    	} else if (direction < 0) {
+    		//negative
+    		grid = traverseNeg(ref, step, numSteps);
+    	} else {
+    		//both
+    		double[] gridNeg = traverseNeg(ref, step, numSteps);
+    		double[] gridPos = traversePos(ref, step, numSteps);
+    		grid = new double[2 * numSteps + 1];
+    		int k = 0;
+    		for (int i = 0; i < numSteps; ++i) {
+    			grid[k++] = gridNeg[i];
+    		}
+    		for (int i = 0; i <= numSteps; ++i) {
+    			grid[k++] = gridPos[i];
+    		}
+    	}
+    	return grid;
+    }
+   
+    /**
+     * @param ref
+     * @param step
+     * @param numSteps
+     * @return
+     */
+    public static double[] traversePos(double ref, double step, int numSteps) {
+    	double[] grid = new double[numSteps + 1];
+    	double cur = ref;
+    	for (int i = 0; i <= numSteps; ++i){
+    		grid[i] = cur;
+    		cur += step;
+    	}
+    	return grid;
+    }
+    
+    /**
+     * @param ref
+     * @param step
+     * @param numSteps
+     * @return
+     */
+    public static double[] traverseNeg(double ref, double step, int numSteps) {
+    	double[] grid = new double[numSteps + 1];
+    	double cur = ref - step * numSteps;
+    	for (int i = 0; i <= numSteps; ++i){
+    		grid[i] = cur;
+    		cur += step;
+    	}
+    	return grid;
+    }
+    
+    /**
+     * @param dim
+     * @param value
+     * @return
+     */
+    public static int[] initIntArray(int dim, int value) {
+    	int[] arr = new int[dim];
+    	for (int i = 0; i < dim; ++i) {
+    		arr[i] = value;
+    	}
+    	return arr;
+    }
+    
+    /**
+     * @param dim
+     * @param value
+     * @return
+     */
+    public static double[] initDoubleArray(int dim, double value) {
+    	double[] arr = new double[dim];
+    	for (int i = 0; i < dim; ++i) {
+    		arr[i] = value;
+    	}
+    	return arr;
+    }
  }
