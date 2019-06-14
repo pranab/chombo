@@ -41,6 +41,7 @@ object Record {
  */
   def apply(record:Record) : Record = new Record(record)
 
+
   /**
  * @param size
  * @param record
@@ -109,12 +110,27 @@ object Record {
   def apply(fields: Array[String], fieldOrdinals: Array[Integer]) : Record = new Record(fields, fieldOrdinals)
   
   /**
+   * @param fields
+   * @param fieldOrdinals
+   * @return
+  */
+  def apply(fields: Array[String], fieldOrdinals: Array[Int]) : Record = new Record(fields, fieldOrdinals)
+
+  /**
    * @param size
    * @param fields
    * @param fieldOrdinals
    * @return
   */
   def apply(size: Int, fields: Array[String], fieldOrdinals: Array[Integer]) : Record = new Record(size, fields, fieldOrdinals)
+
+  /**
+   * @param size
+   * @param fields
+   * @param fieldOrdinals
+   * @return
+  */
+  def apply(size: Int, fields: Array[String], fieldOrdinals: Array[Int]) : Record = new Record(size, fields, fieldOrdinals)
 
   /**
    * @param size
@@ -203,6 +219,17 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	
 	/**
 	 * @param size
+	 * @param recOne
+	 * @param recTwo
+	 */
+	def this(recOne:Record, recTwo:Record) {
+	  this(recOne.size + recTwo.size)
+	  Array.copy(recOne.array, 0, array, 0, recOne.size)
+	  Array.copy(recTwo.array, 0, array, recOne.size, recTwo.size)
+	}
+
+	/**
+	 * @param size
 	 * @param record
 	 */
 	def this(size:Int, record:Record) {
@@ -257,17 +284,6 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  cursor += copySize
 	} 
 
-	/**
-	* @param recOne
- 	* @param reTwo
- 	*/	
-	def this(recOne:Record, recTwo:Record) {
-	  this(recOne.size + recTwo.size)
-	  val copySize = recOne.size + recTwo.size
-	  Array.copy(recOne.array, 0, array, 0, recOne.size)
-	  Array.copy(recTwo.array, 0, array, recOne.size, copySize)
-	  cursor += copySize
-	} 
 
 	/**
  	* @param data
@@ -315,6 +331,17 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @param fields
 	 * @param fieldOrdinals
 	 */
+	def this(fields: Array[String], fieldOrdinals: Array[Int]) {
+	  this(fieldOrdinals.length)
+	  fieldOrdinals.foreach(ord => {
+	      addString(fields(ord))
+	  })
+	}
+
+	/**
+	 * @param fields
+	 * @param fieldOrdinals
+	 */
 	def this(size : Int, fields: Array[String], fieldOrdinals: Array[Integer]) {
 	  this(size)
 	  require(size > fieldOrdinals.length, "size should be greater than supplied fields length")
@@ -323,6 +350,18 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  })
 	}
 	
+	/**
+	 * @param fields
+	 * @param fieldOrdinals
+	 */
+	def this(size : Int, fields: Array[String], fieldOrdinals: Array[Int]) {
+	  this(size)
+	  require(size > fieldOrdinals.length, "size should be greater than supplied fields length")
+	  fieldOrdinals.foreach(ord => {
+	      addString(fields(ord))
+	  })
+	}
+
 	/**
 	* @param intVal
 	*/
