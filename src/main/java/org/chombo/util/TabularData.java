@@ -36,6 +36,7 @@ public class TabularData implements Serializable {
 	protected String[] rowLabels;
 	protected String[] colLabels;
 	protected String delimeter = ",";
+	protected String rowDelimeter = "\\n";
 	
 	/**
 	 * 

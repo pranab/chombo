@@ -615,10 +615,10 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	def addStringAsTyped(strVal:String, fieldType:String) : Record = {
 	  val rec = fieldType match {
 	    case BaseAttribute.DATA_TYPE_STRING => addString(strVal)
-	    case BaseAttribute.DATA_TYPE_INT => addInt(strVal)
-	    case BaseAttribute.DATA_TYPE_LONG => addLong(strVal)
-	    case BaseAttribute.DATA_TYPE_FLOAT => addFloat(strVal)
-	    case BaseAttribute.DATA_TYPE_DOUBLE => addDouble(strVal)
+	    case BaseAttribute.DATA_TYPE_INT => addInt(strVal.toInt)
+	    case BaseAttribute.DATA_TYPE_LONG => addLong(strVal.toLong)
+	    case BaseAttribute.DATA_TYPE_FLOAT => addFloat(strVal.toFloat)
+	    case BaseAttribute.DATA_TYPE_DOUBLE => addDouble(strVal.toDouble)
 	  }
 	  rec
 	}
@@ -632,10 +632,10 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	def addStringAsTyped(index:Int, strVal:String, fieldType:String) : Record = {
 	  val rec = fieldType match {
 	    case BaseAttribute.DATA_TYPE_STRING => addString(index, strVal)
-	    case BaseAttribute.DATA_TYPE_INT => addInt(index, strVal)
-	    case BaseAttribute.DATA_TYPE_LONG => addLong(index, strVal)
-	    case BaseAttribute.DATA_TYPE_FLOAT => addFloat(index, strVal)
-	    case BaseAttribute.DATA_TYPE_DOUBLE => addDouble(index, strVal)
+	    case BaseAttribute.DATA_TYPE_INT => addInt(index, strVal.toInt)
+	    case BaseAttribute.DATA_TYPE_LONG => addLong(index, strVal.toLong)
+	    case BaseAttribute.DATA_TYPE_FLOAT => addFloat(index, strVal.toFloat)
+	    case BaseAttribute.DATA_TYPE_DOUBLE => addDouble(index, strVal.toDouble)
 	  }
 	  rec
 	}
