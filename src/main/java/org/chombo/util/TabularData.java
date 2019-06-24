@@ -293,10 +293,22 @@ public class TabularData implements Serializable {
 	 * @return
 	 */
 	public String serialize() {
+		return serialize(true);
+	}
+
+	/**
+	 * serializes table
+	 * @return
+	 */
+	public String serialize(boolean compact) {
 		StringBuilder stBld = new StringBuilder();
 		for (int r = 0; r < numRow; ++r) {
 			for (int c = 0; c < numCol; ++c) {
-				stBld.append(table[r][c]).append(delimeter);
+				if (compact || c < numCol - 1){
+					stBld.append(table[r][c]).append(delimeter);
+				} else {
+					stBld.append(table[r][c]).append(rowDelimeter);
+				}
 			}
 		}
 		
