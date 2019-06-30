@@ -92,7 +92,7 @@ object StatsBasedFilter extends JobConfiguration with GeneralUtility with Season
 	   
 	   //seasonality
 	   val seasonalTypeFldOrd = getOptionalIntParam(appConfig, "seasonal.typeFldOrd")
-	   val (analyzersMap, timeStampFieldOrdinal, timeStampInMili) = creatSeasonalAnalyzerMap(this, appConfig, seasonalAnalysis)
+	   val (analyzersMap, timeStampFieldOrdinal, timeStampInMili) = creatSeasonalAnalyzerMap(this, appConfig, seasonalAnalysis, true)
 	   val analyzers = analyzersMap.values.toArray
 	   
 	   //key length

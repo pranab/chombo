@@ -92,12 +92,13 @@ trait SeasonalUtility {
 	 * @param seasonalAnalysis
 	 * @return
 	 */
-	def creatSeasonalAnalyzerMap(jobConfig : JobConfiguration, appConfig: com.typesafe.config.Config, seasonalAnalysis:Boolean) :
+	def creatSeasonalAnalyzerMap(jobConfig : JobConfiguration, appConfig: com.typesafe.config.Config, 
+	    seasonalAnalysis:Boolean, seasonalTypeInData:Boolean) :
 		(Map[String, SeasonalAnalyzer], Int, Boolean) = {
 	   val analyzerMap = scala.collection.mutable.Map[String, SeasonalAnalyzer]()
 	   var timeStampFieldOrdinal = -1
 	   var  timeStampInMili = true
-	   if (seasonalAnalysis) {
+	   if (seasonalAnalysis && seasonalTypeInData) {
 		   	val seasonalCycleTypes = jobConfig.getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
 	        "missing seasonal cycle type").asScala.toArray
 	        val timeZoneShiftHours = jobConfig.getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
@@ -110,6 +111,35 @@ trait SeasonalUtility {
 	        })
 	   } 
 	   (analyzerMap.toMap, timeStampFieldOrdinal, timeStampInMili)
+	}
+	
+	/**
+	 * @param jobConfig
+	 * @param appConfig
+	 * @param seasonalAnalysis
+	 * @return
+	 */
+	def creatSeasonalAnalyzerArray(jobConfig : JobConfiguration, appConfig: com.typesafe.config.Config, 
+	    seasonalAnalysis:Boolean, seasonalTypeInData:Boolean) :
+	   (Array[SeasonalAnalyzer],Int) = {
+	   var analyzers = Array[SeasonalAnalyzer]()
+	   val seasonalAnalyzers = if (seasonalAnalysis && !seasonalTypeInData) {
+		   	val seasonalCycleTypes = jobConfig.getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	        "missing seasonal cycle type").asScala.toArray
+	        val timeZoneShiftHours = jobConfig.getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
+	        val timeStampFieldOrdinal = jobConfig.getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
+	        "missing time stamp field ordinal")
+	        val timeStampInMili = jobConfig.getBooleanParamOrElse(appConfig, "time.inMili", true)
+	        
+	        analyzers = seasonalCycleTypes.map(sType => {
+	        	val seasonalAnalyzer = createSeasonalAnalyzer(jobConfig, appConfig, sType, timeZoneShiftHours, timeStampInMili)
+	        	seasonalAnalyzer
+	        })
+	        (analyzers, timeStampFieldOrdinal)
+	   } else {
+		   	(analyzers, 0)
+	   }
+	   seasonalAnalyzers
 	}
 	
 	/**
@@ -135,6 +165,26 @@ trait SeasonalUtility {
 	}
 	
 	/**
+	 * @param items
+	 * @param keyFieldOrdinals
+	 * @param key
+	 */
+	def addPrimarykeys(items:Array[String], keyFieldOrdinals: Option[Array[Int]], globalModel:Boolean, key:Record)  {
+	   keyFieldOrdinals match {
+           case Some(fields : Array[Int]) => {
+             if (globalModel) {
+            	 key.addString("all")
+             } else {
+	             for (kf <- fields) {
+	               key.addString(items(kf))
+	             }
+             }
+           }
+           case None =>
+       }
+	}
+	
+	/**
 	 * @param seasonalAnalyzers
 	 * @param items
 	 * @param key
@@ -150,6 +200,73 @@ trait SeasonalUtility {
 	       }
 	       case None => 
 	     }	  
-  
+ 	}
+	
+	/**
+	 * @param jobConfig
+	 * @param appConfig
+	 * @param analyzerMap
+	 * @param analyzers
+	 * @param items
+	 * @param key
+	 */
+	def addSeasonalKeys(jobConfig:JobConfiguration, appConfig: com.typesafe.config.Config,
+	    analyzerMap:(Map[String, SeasonalAnalyzer], Int, Boolean), 
+	    analyzers:(Array[SeasonalAnalyzer],Int), items:Array[String], key:Record) {
+		val seasonalTypeFldOrd = jobConfig.getOptionalIntParam(appConfig, "seasonal.typeFldOrd")
+		   seasonalTypeFldOrd match {
+		     //seasonal type field in data
+		     case Some(seasonalOrd:Int) => {
+		       val seasonalType = items(seasonalOrd)
+		       val analyzer = analyzerMap._1.get(seasonalType)
+		       analyzer match {
+		         case Some(an:SeasonalAnalyzer) => {
+		            val analyzer = an
+		        	val tsFldOrd = analyzerMap._2
+		            val timeStamp = items(tsFldOrd).toLong
+		            val cIndex = SeasonalAnalyzer.getCycleIndex(analyzer, timeStamp)
+		            key.addString(cIndex.getLeft())
+		            key.addInt(cIndex.getRight())
+		         }
+		         //unexpected
+		         case None => throw new IllegalStateException("missing seasonal analyzer")
+		       }
+		     }
+		     
+		     //seasonal type in configuration
+		     case None => {
+		       if (analyzers._1.length > 0) {
+		    	 val tsFldOrd = analyzers._2
+		         val timeStamp = items(tsFldOrd).toLong
+		         val cIndex = SeasonalAnalyzer.getCycleIndex(analyzers._1, timeStamp)
+		         key.addString(cIndex.getLeft())
+		         key.addInt(cIndex.getRight())
+		       } else {
+		         throw new IllegalStateException("missing seasonal analyzer raray")
+		       }
+		     }
+		   }
+	}
+	
+	
+	/**
+	 * @param keyFieldOrdinals
+	 * @param seasonalAnalysis
+	 * @return
+	 */
+	def getKeyLength(keyFieldOrdinals: Option[Array[Int]], seasonalAnalysis:Boolean, globalModel:Boolean) : Int = {
+	     var keyLen = 0
+	     keyFieldOrdinals match {
+	     	case Some(fields : Array[Int]) => {
+	     	  if (globalModel)
+	     		  keyLen += 1
+	     	  else
+	     		  keyLen +=  fields.length
+	     	}
+	     	case None =>
+	     }
+	     keyLen += (if (seasonalAnalysis) 2 else 0)
+	     keyLen += 1
+	     keyLen
 	}
 }
