@@ -169,15 +169,11 @@ trait SeasonalUtility {
 	 * @param keyFieldOrdinals
 	 * @param key
 	 */
-	def addPrimarykeys(items:Array[String], keyFieldOrdinals: Option[Array[Int]], globalModel:Boolean, key:Record)  {
+	def addPrimarykeys(items:Array[String], keyFieldOrdinals: Option[Array[Int]], key:Record)  {
 	   keyFieldOrdinals match {
            case Some(fields : Array[Int]) => {
-             if (globalModel) {
-            	 key.addString("all")
-             } else {
-	             for (kf <- fields) {
-	               key.addString(items(kf))
-	             }
+             for (kf <- fields) {
+               key.addString(items(kf))
              }
            }
            case None =>
@@ -212,8 +208,9 @@ trait SeasonalUtility {
 	 */
 	def addSeasonalKeys(jobConfig:JobConfiguration, appConfig: com.typesafe.config.Config,
 	    analyzerMap:(Map[String, SeasonalAnalyzer], Int, Boolean), 
-	    analyzers:(Array[SeasonalAnalyzer],Int), items:Array[String], key:Record) {
-		val seasonalTypeFldOrd = jobConfig.getOptionalIntParam(appConfig, "seasonal.typeFldOrd")
+	    analyzers:(Array[SeasonalAnalyzer],Int), items:Array[String], seasonal:Boolean, key:Record) {
+		if (seasonal) {
+		   val seasonalTypeFldOrd = jobConfig.getOptionalIntParam(appConfig, "seasonal.typeFldOrd")
 		   seasonalTypeFldOrd match {
 		     //seasonal type field in data
 		     case Some(seasonalOrd:Int) => {
@@ -245,7 +242,8 @@ trait SeasonalUtility {
 		         throw new IllegalStateException("missing seasonal analyzer raray")
 		       }
 		     }
-		   }
+		 }
+	  }
 	}
 	
 	
@@ -254,19 +252,34 @@ trait SeasonalUtility {
 	 * @param seasonalAnalysis
 	 * @return
 	 */
-	def getKeyLength(keyFieldOrdinals: Option[Array[Int]], seasonalAnalysis:Boolean, globalModel:Boolean) : Int = {
+	def getKeyLength(keyFieldOrdinals: Option[Array[Int]], seasonalAnalysis:Boolean) : Int = {
 	     var keyLen = 0
 	     keyFieldOrdinals match {
-	     	case Some(fields : Array[Int]) => {
-	     	  if (globalModel)
-	     		  keyLen += 1
-	     	  else
-	     		  keyLen +=  fields.length
-	     	}
+	     	case Some(fields : Array[Int]) => keyLen +=  fields.length
 	     	case None =>
 	     }
 	     keyLen += (if (seasonalAnalysis) 2 else 0)
-	     keyLen += 1
 	     keyLen
+	}
+	
+	/**
+	 * @param key
+	 * @param seasonal
+	 * @param globalModel
+	 * @return
+	 */
+	def getModelKey(key:Record, seasonal:Boolean, globalModel:Boolean): Record = {
+	  if (globalModel) {
+	    val keyLen = 1 + (if (seasonal) 2 else 0) + 1
+ 	    val mKey = Record(keyLen)
+ 	    mKey.addString("all")
+ 	    if (seasonal) {
+ 	    	mKey.addString(key.getString(-2))
+ 	    	mKey.addInt(key.getInt(-1))
+ 	    }
+ 	    mKey
+	  } else {
+	    Record(key)
+	  }
 	}
 }

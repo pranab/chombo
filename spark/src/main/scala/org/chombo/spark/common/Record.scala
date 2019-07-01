@@ -712,7 +712,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @return
 	 */
 	def getString(index:Int) : String = {
-	  array(index).asInstanceOf[String]
+	  val newIndex = if (index < 0) size + index else index
+	  array(newIndex).asInstanceOf[String]
 	}
 	
 	/**
@@ -729,7 +730,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @return
 	 */
 	def getInt(index:Int) : Int = {
-	  array(index).asInstanceOf[Int]
+	  val newIndex = if (index < 0) size + index else index
+	  array(newIndex).asInstanceOf[Int]
 	}
 	
 	/**
@@ -746,7 +748,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @return
 	 */
 	def getLong(index:Int) : Long = {
-	  array(index).asInstanceOf[Long]
+	  val newIndex = if (index < 0) size + index else index
+	  array(newIndex).asInstanceOf[Long]
 	}
 	
 	/**
@@ -763,7 +766,8 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @return
 	 */
 	def getDouble(index:Int) : Double = {
-	  array(index).asInstanceOf[Double]
+	  val newIndex = if (index < 0) size + index else index
+	  array(newIndex).asInstanceOf[Double]
 	}
 	
 	/**
