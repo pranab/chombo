@@ -2,7 +2,7 @@
 
 PROJECT_HOME=/Users/pranab/Projects
 JAR_NAME=$PROJECT_HOME/bin/chombo/uber-chombo-spark-1.0.jar
-MASTER=spark://akash:7077
+MASTER=spark://akash.local:7077
 
 case "$1" in
 
@@ -26,6 +26,17 @@ case "$1" in
 	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
 ;;
+
+"transformer")
+	echo "running DataTransformer"
+	CLASS_NAME=org.chombo.spark.etl.DataTransformer
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/etl/trans/*
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/etl/trans
+	rm -rf ./output/etl/trans
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT etl.conf
+;;
+
 
 "jsonExtractor")
 	echo "running FlatRecordExtractorFromJson"

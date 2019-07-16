@@ -226,6 +226,7 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  this(recOne.size + recTwo.size)
 	  Array.copy(recOne.array, 0, array, 0, recOne.size)
 	  Array.copy(recTwo.array, 0, array, recOne.size, recTwo.size)
+	  cursor += (recOne.size + recTwo.size)
 	}
 
 	/**
@@ -645,7 +646,6 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 * @return
 	 */
 	def add(values:Any*) : Record = {
-	  cursor = 0
 	  for (value <- values) {
 		array(cursor) = value
 		cursor += 1
@@ -784,6 +784,18 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	 */
 	def initialize() {
 	  cursor = 0
+	}
+	
+	
+	/**
+	 * check sanity
+	 */
+	def check(length:Int) {
+	  if (length > 0)
+		require(array.length == length, "record expected length " + length + " actual length " + array.length)
+	  for (i  <- 0 to array.length -1) {
+	    require(null != array(i), "null at position " + i)
+	  }
 	}
 	
 	/* (non-Javadoc)
