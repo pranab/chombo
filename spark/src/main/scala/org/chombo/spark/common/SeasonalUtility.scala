@@ -270,7 +270,7 @@ trait SeasonalUtility {
 	 */
 	def getModelKey(key:Record, seasonal:Boolean, globalModel:Boolean): Record = {
 	  if (globalModel) {
-	    val keyLen = 1 + (if (seasonal) 2 else 0) + 1
+	    val keyLen = 1 + (if (seasonal) 2 else 0)
  	    val mKey = Record(keyLen)
  	    mKey.addString("all")
  	    if (seasonal) {
