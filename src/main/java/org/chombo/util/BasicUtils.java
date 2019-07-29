@@ -2943,4 +2943,16 @@ public class BasicUtils {
     	}
     	return arr;
     }
+    
+    /**
+     * @param nestedList
+     * @return
+     */
+    public static <T> List<T> flatten(List<List<T>> nestedList) {
+    	List<T> list = new ArrayList<T>();
+    	for( List<T> l : nestedList) {
+    		list.addAll(l);
+    	}
+    	return list;
+    }
  }
