@@ -17,6 +17,7 @@
 
 package org.chombo.stats;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ import org.chombo.util.BasicUtils;
  * @author pranab
  *
  */
-public class CategoricalHistogramStat {
+public class CategoricalHistogramStat implements Serializable {
 	protected Map<String, Integer> binMap = new HashMap<String, Integer>();
 	protected Map<String, Double> histogram = new HashMap<String, Double>();
 	protected int  sampleCount;

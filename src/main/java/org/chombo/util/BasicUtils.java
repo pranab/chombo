@@ -42,6 +42,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -460,7 +462,22 @@ public class BasicUtils {
     	}
     	return fieldValues;
     }
-  
+    
+    /**
+     * @param items
+     * @param fields
+     * @return
+     */
+    public static String[]  extractRemainingFieldsAsStringArray(String[] items , int[] fields) {
+    	String[] fieldValues = new String[items.length - fields.length];
+    	for (int i = 0, j = 0; i < items.length; ++i) {
+    		if (!ArrayUtils.contains(fields, i)) {
+    			fieldValues[j++] = items[i];
+    		}
+    	}
+    	return fieldValues;
+    }  
+    
     /**
      * @param items
      * @param fields
@@ -2954,5 +2971,96 @@ public class BasicUtils {
     		list.addAll(l);
     	}
     	return list;
+    }
+    
+    /**
+     * string hash with various algorithm. Always returns positive
+     * @param value
+     * @return positive hash code
+     */
+    public static int hashCode(String value, String algo)  {
+    	int hashCode = 0;
+    	if (algo.equals("default")) {
+    		hashCode = value.hashCode();
+    		if (hashCode < 0)
+    			hashCode = - hashCode;
+    	} else if (algo.equals("simple")) {
+    		//simple
+    		long hash = 7;
+    		for (byte ch : value.getBytes()) {
+    		    hash = hash * 31 + ch;
+    		} 
+    		hashCode = (int)(hash % Integer.MAX_VALUE);
+    	} else if (algo.equals("FNV")) {
+    		//FowlerNashVo
+	    	long hash = 2166136261L;
+	    	for (byte ch : value.getBytes()) {
+	    		hash = hash ^ ch;
+	    		hash *= 16777619;
+	    	}
+	       	hashCode = (int)(hash % Integer.MAX_VALUE);
+    	} else if (algo.equals("mumur")){
+    		//murmur
+    		byte[] data = value.getBytes();
+    		int seed = 101;
+			int m = 0x5bd1e995;
+			int r = 24;
+
+			int len = data.length;
+			long h = seed ^ len;
+			int lenFour = len >> 2;
+		    for (int i = 0;  i < lenFour;  i++) {
+		    	int iFour = i << 2;
+		    	long k = data[iFour + 3];
+		    	k = k << 8;
+		    	k = k | (data[iFour + 2] & 0xff);
+		    	k = k << 8;
+		    	k = k | (data[iFour + 1] & 0xff);
+		    	k = k << 8;
+		    	k = k | (data[iFour + 0] & 0xff);
+		    	k *= m;
+		    	k ^= k >>> r;
+		    	k *= m;
+		    	h *= m;
+		    	h ^= k;
+		    }
+
+		    int lenM = lenFour << 2;
+		    int left = len - lenM;
+		    if (left != 0) {
+		    	if (left >= 3) {
+		    			h ^= (int) data[len - 3] << 16;
+		    	}
+		    	if (left >= 2) {
+		    			h ^= (int) data[len - 2] << 8;
+		    	}
+		    	if (left >= 1) {
+		    			h ^= (int) data[len - 1];
+		    	}
+		    	h *= m;
+		    }
+
+		    h ^= h >>> 13;
+		    h *= m;
+		    h ^= h >>> 15;
+		    hashCode = (int)(h % Integer.MAX_VALUE);
+    	} else if (algo.equals("encryption")) {
+    		//encrypt and then default hash code
+    		MessageDigest messageDigest = null;
+			try {
+				messageDigest = MessageDigest.getInstance("SHA-256");
+			} catch (NoSuchAlgorithmException e) {
+				assertFail("invalid encryption algorithm");
+			}
+    		messageDigest.update(value.getBytes());
+    		String encryptedString = new String(messageDigest.digest());  
+    		hashCode = encryptedString.hashCode();
+    		if (hashCode < 0)
+    			hashCode = - hashCode;
+    	} else {
+    		throw new IllegalArgumentException("invalid hash algorithms");
+    	}
+    	
+    	return hashCode;
     }
  }
