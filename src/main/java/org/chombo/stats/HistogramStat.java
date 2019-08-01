@@ -609,6 +609,22 @@ public class HistogramStat implements Serializable {
 		return mergedHistStat;
 	}
 	
+	/**
+	 * @param base
+	 * @return
+	 */
+	public double findMetaDistr(double base) {
+		double metaDistr = 0;
+		double maxDistr = findDistr(base);
+		for (double key : histogram.keySet()) {
+			double thisDistr = histogram.get(key);
+			if (thisDistr <= maxDistr) {
+				metaDistr += thisDistr;
+			}
+		}
+		return metaDistr;
+	}
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
