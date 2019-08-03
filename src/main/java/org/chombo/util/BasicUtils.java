@@ -2990,6 +2990,8 @@ public class BasicUtils {
     		for (byte ch : value.getBytes()) {
     		    hash = hash * 31 + ch;
     		} 
+	    	if (hash < 0)
+	    		hash = -hash;
     		hashCode = (int)(hash % Integer.MAX_VALUE);
     	} else if (algo.equals("FNV")) {
     		//FowlerNashVo
@@ -2998,6 +3000,8 @@ public class BasicUtils {
 	    		hash = hash ^ ch;
 	    		hash *= 16777619;
 	    	}
+	    	if (hash < 0)
+	    		hash = -hash;
 	       	hashCode = (int)(hash % Integer.MAX_VALUE);
     	} else if (algo.equals("mumur")){
     		//murmur
@@ -3043,6 +3047,8 @@ public class BasicUtils {
 		    h ^= h >>> 13;
 		    h *= m;
 		    h ^= h >>> 15;
+		    if (h < 0)
+		    	h = -h;
 		    hashCode = (int)(h % Integer.MAX_VALUE);
     	} else if (algo.equals("encryption")) {
     		//encrypt and then default hash code
