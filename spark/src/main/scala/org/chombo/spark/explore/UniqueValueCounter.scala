@@ -21,6 +21,7 @@ import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
+import org.chombo.util.BasicUtils
 
 /**
  * Finds unique values column wise
@@ -43,8 +44,9 @@ object UniqueValueCounter extends JobConfiguration {
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val catFieldOrdinals = getMandatoryIntListParam(appConfig, "cat.field.ordinals").asScala.toArray
+	   val catFieldOrdinals = getMandatoryIntListParam(appConfig, "cat.fieldOrdinals").asScala.toArray
 	   val uniqueValCount = getBooleanParamOrElse(appConfig, "count.values", false)
+	   val compUniqueValCount = getConditionalMandatoryBooleanParam(uniqueValCount, appConfig, "count.compValues", "")
 	   val caseInsensitive = getBooleanParamOrElse(appConfig, "case.insensitive", false)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
@@ -52,48 +54,55 @@ object UniqueValueCounter extends JobConfiguration {
 	   //input
 	   val data = sparkCntxt.textFile(inputPath)
 	   
-	   //values for each column
-	   val colValues = data.flatMap(line => {
-		   val items = line.split(fieldDelimIn, -1)
-		   val values = catFieldOrdinals.map(i => {
-		     val colIndex = i.toInt
-		     var colValue = items(colIndex)
-		     colValue = if (caseInsensitive) colValue.toLowerCase() else colValue
-		     val colValSet = Set[String](colValue)
-		     (colIndex, colValSet)
-		   })
-		   values
-	   })
-	   
-	   //reduce
-	   val colUniqueValues = colValues.reduceByKey((v1, v2) => v1 ++ v2)
-	   
-	   if (uniqueValCount) {
-		   //unique values count
-		   val colUniqueValuesCount = colUniqueValues.mapValues(v => v.size)
-
-	      if (debugOn) {
-		     val uniqueValuesCount = colUniqueValuesCount.collect
-		     uniqueValuesCount.foreach(line => println(line))
-		   }
+	   val serUniqueData = if (uniqueValCount) {
+		   var colValues = data.flatMap(line => {
+			   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+			   if (compUniqueValCount) {
+			     val key = Record(items, catFieldOrdinals)
+			     val value = (key, 1)
+			     Array.fill[(Record, Int)](1)(value)
+			   } else {
+			     catFieldOrdinals.map(i => {
+			       val colValue = items(i)
+			       val key = Record(2)
+			       key.add(i,colValue)
+			       (key, 1)
+			     })
+			   }
+		   }).reduceByKey((v1, v2) => v1 + v2)	
 		   
-		   if (saveOutput) {
-		     colUniqueValuesCount.saveAsTextFile(outputPath)
+		   if (!compUniqueValCount) {
+		       //from per unique value count to all value value count
+			   colValues = colValues.map(r => {
+			     val key = r._1
+	             val newKey = Record(key.size - 1, key)
+	             (newKey, 1)
+		       }).reduceByKey((v1, v2) => v1 + v2)		     
 		   }
-	     
+		   colValues.map(r => r._1.toString + fieldDelimOut + r._2)
 	   } else {
-		   //values as delim separated string
-		   val colUniqueValueStr = colUniqueValues.mapValues(v => v.mkString(fieldDelimOut))
-	       
-		   //actual unique values
-		   if (debugOn) {
-		     val uniqueValues = colUniqueValueStr.collect
-		     uniqueValues.foreach(line => println(line))
-		   }
-		   
-		   if (saveOutput) {
-		     colUniqueValueStr.saveAsTextFile(outputPath)
-		   }
+	      //unique values
+	      val colValues = data.flatMap(line => {
+		    val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+		    catFieldOrdinals.map(i => {
+		      val colIndex = i.toInt
+		      var colValue = items(colIndex)
+		      colValue = if (caseInsensitive) colValue.toLowerCase() else colValue
+		      val colValSet = Set[String](colValue)
+		      (colIndex, colValSet)
+		   })
+	     }).reduceByKey((v1, v2) => v1 ++ v2)
+	     colValues.map(r => "" + r._1 + fieldDelimOut + r._2.mkString(fieldDelimOut))
 	   }
+	   
+	   if (debugOn) {
+	     val uniqueValues = serUniqueData.collect
+		 uniqueValues.foreach(line => println(line))
+	   }
+		   
+	   if (saveOutput) {
+	     serUniqueData.saveAsTextFile(outputPath)
+	   }
+	   
    }
 }
