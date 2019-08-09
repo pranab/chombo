@@ -189,6 +189,22 @@ object Record {
    }
 
   /**
+  * @param fields
+  * @param keyFieldOrdinals
+  * @param rec
+  */
+  def populateFieldsWithIndex(fields:Array[String], fieldOrdinals:Option[Array[Int]], rec:Record)  {
+	  fieldOrdinals match {
+	      case Some(fieldOrds : Array[Int]) => {
+	    	  for (kf <- fieldOrds) {
+	    		  rec.addString(fields(kf))
+			  }
+	      }
+	      case None =>
+	  }
+   }
+
+  /**
   * @param floatPrecision
   */
   def setPrecision(floatPrecision : Int) {

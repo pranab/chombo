@@ -49,7 +49,6 @@ object MultiVarNumericalDistrStats extends JobConfiguration with SeasonalUtility
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
 	   val keyFields = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
-	   val seqFieldOrd = getMandatoryIntParam(appConfig, "seq.fieldOrd", "missing seq field ordinal")
 	   val numAttrOrdinals = toIntArray(getMandatoryIntListParam(appConfig, "attr.ordinals", "missing quant field ordinals"))
 	   val seasonalTypeFldOrd = getOptionalIntParam(appConfig, "seasonal.typeFldOrd")
 	   val seasonalTypeInData = seasonalTypeFldOrd match {
