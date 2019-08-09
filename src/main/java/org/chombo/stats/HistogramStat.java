@@ -49,6 +49,7 @@ public class HistogramStat implements Serializable {
 	private boolean debugOn = false;
 	private boolean serializeBins;
 	private Map<Integer, Double> percentiles = new HashMap<Integer, Double>();
+	protected Map<Double, Double> cumHistogram = new TreeMap<Double, Double>();
 	public static String fieldDelim = ",";
 	
 	/**
@@ -523,16 +524,23 @@ public class HistogramStat implements Serializable {
 	 */
 	public double findDistr(double base) {
 		getDistribution();
-		
+		return findDistrValue(base, histogram) ;
+	}
+
+	/**
+	 * @param base
+	 * @return
+	 */
+	private double findDistrValue(double base, Map<Double, Double> distribution) {
 		//find nearest bucket
 		double minDiff = Double.MAX_VALUE;
 		double nearestBase = 0;
 		double distr = 0;
-		for (double thisBase : histogram.keySet()) {
+		for (double thisBase : distribution.keySet()) {
 			double diff = Math.abs(thisBase - base);
 			if (diff < minDiff) {
 				minDiff = diff;
-				distr = histogram.get(thisBase);
+				distr = distribution.get(thisBase);
 				nearestBase = thisBase;
 			}
 		}
@@ -544,6 +552,54 @@ public class HistogramStat implements Serializable {
 			distr = 0;
 		}
 		return distr;
+	}
+
+	/**
+	 * @return
+	 */
+	public Map<Double, Double> getCumDistribution() {
+		if (cumHistogram.isEmpty()) {
+			Object[] keys = binMap.keySet().toArray();
+			int firstBinIndex = (Integer)keys[0];
+			int lasttBinIndex = (Integer)keys[keys.length - 1];
+			double sum = 0;
+			Map<Integer, Double> cumCount = new TreeMap<Integer, Double>();
+			for (int indx = firstBinIndex; indx <= lasttBinIndex; ++indx) {
+				Bin bin = binMap.get(indx);
+				if (null != bin) {
+					sum += bin.getCount();
+				}
+				cumCount.put(indx, sum);
+			}
+			
+			//normalize
+			double lastIndx = 0;
+			for (Integer index : cumCount.keySet()) {
+				double base = 0;
+				if (index > 0) {
+					base = index * binWidth + binWidth / 2;
+				} else {
+					base = index * binWidth - binWidth / 2;
+				}
+				cumHistogram.put(base,  cumCount.get(index) / count);
+				lastIndx = base;
+			}
+			
+			//check normalization
+			BasicUtils.assertCondition(Math.abs(1.0 - cumHistogram.get(lastIndx)) > .01, 
+					"cumulative distribution normalization failed");
+			cumHistogram.put(lastIndx, 1.0);
+		}
+		return histogram;
+	}
+	
+	/**
+	 * @param base
+	 * @return
+	 */
+	public double findCumDistr(double base) {
+		getCumDistribution();
+		return findDistrValue(base, cumHistogram) ;
 	}
 	
 	/**
