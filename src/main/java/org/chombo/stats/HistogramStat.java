@@ -50,6 +50,7 @@ public class HistogramStat implements Serializable {
 	private boolean serializeBins;
 	private Map<Integer, Double> percentiles = new HashMap<Integer, Double>();
 	protected Map<Double, Double> cumHistogram = new TreeMap<Double, Double>();
+	protected Map<Integer, Double> cumCount = new TreeMap<Integer, Double>();
 	public static String fieldDelim = ",";
 	
 	/**
@@ -130,8 +131,22 @@ public class HistogramStat implements Serializable {
 	}
 	
 	/**
-	 * @throws IOException 
-	 * 
+	 * @param inStr
+	 * @param keyLen
+	 * @return
+	 * @throws IOException
+	 */
+	public static Map<String[], HistogramStat> createHistograms(InputStream inStr, int keyLen) 
+			throws IOException {
+		return createHistograms(inStr, keyLen, false); 
+	}
+	
+	/**
+	 * @param inStr
+	 * @param keyLen
+	 * @param normalized
+	 * @return
+	 * @throws IOException
 	 */
 	public static Map<String[], HistogramStat> createHistograms(InputStream inStr, int keyLen, boolean normalized) 
 			throws IOException {
@@ -140,20 +155,43 @@ public class HistogramStat implements Serializable {
 		//one histogram per line of data
 		List<String> lines = BasicUtils.getFileLines(inStr);
 		for (String line : lines) {
-			HistogramStat stat = new HistogramStat();
 			String[] items = line.split(fieldDelim);
 			String[] key = Arrays.copyOfRange(items, 0, keyLen);
-			
-			if (normalized) {
-				stat.initialize(items, keyLen, normalized);
-			} else {
-				stat.initializeBins(items, keyLen);
-				stat.getDistribution();
-			}
+			HistogramStat stat = createHistogram(line, keyLen, normalized);
 			histStats.put(key, stat);
 		}
 		
 		return histStats;
+	}
+
+	/**
+	 * @param line
+	 * @param keyLen
+	 * @return
+	 */
+	public static  HistogramStat createHistogram(String line, int keyLen) {
+		return createHistogram(line, keyLen, false);
+	}	
+	
+	/**
+	 * @param line
+	 * @param keyLen
+	 * @param normalized
+	 * @return
+	 */
+	public static  HistogramStat createHistogram(String line, int keyLen, boolean normalized) {
+		HistogramStat stat = new HistogramStat();
+		String[] items = line.split(fieldDelim);
+		
+		//initialize everything
+		if (normalized) {
+			stat.initialize(items, keyLen, normalized);
+		} else {
+			stat.initializeBins(items, keyLen);
+			stat.getDistribution();
+			stat.getCumDistribution();
+		}
+		return stat;
 	}
 	
 	/**
@@ -563,7 +601,6 @@ public class HistogramStat implements Serializable {
 			int firstBinIndex = (Integer)keys[0];
 			int lasttBinIndex = (Integer)keys[keys.length - 1];
 			double sum = 0;
-			Map<Integer, Double> cumCount = new TreeMap<Integer, Double>();
 			for (int indx = firstBinIndex; indx <= lasttBinIndex; ++indx) {
 				Bin bin = binMap.get(indx);
 				if (null != bin) {
@@ -590,7 +627,64 @@ public class HistogramStat implements Serializable {
 					"cumulative distribution normalization failed");
 			cumHistogram.put(lastIndx, 1.0);
 		}
-		return histogram;
+		return cumHistogram;
+	}
+	
+	/**
+	 * Max diff in cumulative distribution
+	 * @param that
+	 * @return
+	 */
+	public double getKolmogorovSmirnovStatistic(HistogramStat that) {
+		getCumDistribution();
+		that.getCumDistribution();
+		
+		//begin and end indexes
+		Object[] thisKeys = cumCount.keySet().toArray();
+		int thisBegIndex = (Integer)thisKeys[0];
+		int thisEndIndex = (Integer)thisKeys[thisKeys.length - 1];
+		
+		Object[] thatKeys = that.cumCount.keySet().toArray();
+		int thatBegIndex = (Integer)thatKeys[0];
+		int thatEndIndex = (Integer)thatKeys[thatKeys.length - 1];
+		
+		//overlapped beg and end index
+		int begIndex = BasicUtils.min(thisBegIndex, thatBegIndex);
+		int endIndex = BasicUtils.max(thisEndIndex, thatEndIndex);
+		
+		//scan all indexes
+		double maxDiff = 0;
+		for (int i = begIndex; i <= endIndex; ++i) {
+			Double thisCount = cumCount.get(i);
+			if (null == thisCount) {
+				if (i < thisBegIndex) {
+					thisCount = 0.0;
+				} else if (i > thisEndIndex) {
+					thisCount = 1.0;
+				} else {
+					BasicUtils.assertFail("cum distribution not contiguous");
+				}
+			} else {
+				thisCount /= count;
+			}
+			Double thatCount = that.cumCount.get(i);
+			if (null == thatCount) {
+				if (i < thatBegIndex) {
+					thatCount = 0.0;
+				} else if (i > thatEndIndex) {
+					thatCount = 1.0;
+				} else {
+					BasicUtils.assertFail("cum distribution not contiguous");
+				} 
+			} else {
+				thatCount /= that.count;
+			}
+			double diff = Math.abs(thisCount - thatCount);
+			if (diff > maxDiff) {
+				maxDiff = diff;
+			}
+		}
+		return maxDiff;
 	}
 	
 	/**
