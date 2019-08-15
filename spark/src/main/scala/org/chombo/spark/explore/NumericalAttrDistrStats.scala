@@ -111,13 +111,9 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	     }
 	   }
 	  
-	   var confIntervalFactor = -1.0
-	   var chiSqureFailOnRangeCheck = false
-	   if (distrFitnessAlgo.equals("chiSquare")) {
-	     confIntervalFactor = getMandatoryDoubleParam(appConfig, "conf.intervalFactor", 
-	         "missinginterval factor confidence ")
-	     chiSqureFailOnRangeCheck = getBooleanParamOrElse(appConfig, "chiSqure.failOnRangeCheck", false)
-	   }
+	   val confIntervalFactor = getConditionalMandatoryDoubleParam(distrFitnessAlgo.equals("chiSquare"), 
+	       appConfig, "conf.intervalFactor","missing confidence interval factor")
+	   val chiSqureFailOnRangeCheck = getBooleanParamOrElse(appConfig, "chiSqure.failOnRangeCheck", false)
 	   
 	   
 	   //either sample distribution or sample mean and std deviation
@@ -140,26 +136,9 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	     buildTypedKey(k, fieldDelimIn, seasonalAnalysis)
 	   }))
 	   
-	   
-	   
 	   //seasonal data
 	   val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
-	   val seasonalAnalyzers = if (seasonalAnalysis) {
-		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
-	        "missing seasonal cycle type").asScala.toArray
-	        val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
-	        val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
-	        "missing time stamp field ordinal")
-	        val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
-	        
-	        val analyzers = seasonalCycleTypes.map(sType => {
-	    	val seasonalAnalyzer = createSeasonalAnalyzer(this, appConfig, sType, timeZoneShiftHours, timeStampInMili)
-	        seasonalAnalyzer
-	    })
-	    Some((analyzers, timeStampFieldOrdinal))
-	   } else {
-		   None
-	   }
+	   val seasonalAnalyzers = creatOptionalSeasonalAnalyzerArray(this, appConfig, seasonalAnalysis)
 	   keyLen += (if (seasonalAnalysis) 2 else 0)
 	   
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
@@ -173,30 +152,10 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   val attrValCount = numAttrOrdinals.map(ord => {
 		     //key
-			 val attrKeyRec = keyFieldOrdinals match {
-			     //with partition key and field ordinal
-			     case Some(fields:Array[Int]) => {
-			       val rec = Record(keyLen) 
-			       populateFields(items, fields, rec) 
-			       
-			       //seasonality cycle
-		           seasonalAnalyzers match {
-		             case Some(seAnalyzers : (Array[SeasonalAnalyzer], Int)) => {
-		            	 val timeStamp = items(seAnalyzers._2).toLong
-		            	 val cIndex = SeasonalAnalyzer.getCycleIndex(seAnalyzers._1, timeStamp)
-		            	 rec.addString(cIndex.getLeft())
-		            	 rec.addInt(cIndex.getRight())
-		             }
-		             case None => 
-			       }	  
-			       
-			       //quant field ordinal
-			       rec.addInt(ord.toInt)
-			       rec
-			     }
-			     //field ordinal only
-			     case None => Record(1, ord.toInt)
-			 }
+		     val attrKeyRec = Record(keyLen)
+		     addPrimarykeys(items, keyFieldOrdinals, attrKeyRec)
+		     addSeasonalKeys(seasonalAnalyzers, items, attrKeyRec)
+		     attrKeyRec.addInt(ord.toInt)
 		     
 			 //value is histogram
 			 val binWidthKey = if (keyBasedBinWidth) attrKeyRec else Record(1, ord.toInt)

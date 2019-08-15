@@ -141,7 +141,33 @@ trait SeasonalUtility {
 	   }
 	   seasonalAnalyzers
 	}
-	
+
+	/**
+	 * @param jobConfig
+	 * @param appConfig
+	 * @param seasonalAnalysis
+	 * @return
+	 */
+	def creatOptionalSeasonalAnalyzerArray(jobConfig : JobConfiguration, appConfig: com.typesafe.config.Config, 
+	    seasonalAnalysis:Boolean) : Option[(Array[org.chombo.util.SeasonalAnalyzer], Int)] = {
+	   if (seasonalAnalysis) {
+		   val seasonalCycleTypes = jobConfig.getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	        "missing seasonal cycle type").asScala.toArray
+	        val timeZoneShiftHours = jobConfig.getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
+	        val timeStampFieldOrdinal = jobConfig.getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
+	        "missing time stamp field ordinal")
+	        val timeStampInMili = jobConfig.getBooleanParamOrElse(appConfig, "time.inMili", true)
+	        
+	        val analyzers = seasonalCycleTypes.map(sType => {
+	    	val seasonalAnalyzer = createSeasonalAnalyzer(jobConfig, appConfig, sType, timeZoneShiftHours, timeStampInMili)
+	        seasonalAnalyzer
+	    })
+	    Some((analyzers, timeStampFieldOrdinal))
+	   } else {
+		   None
+	   }
+	}
+
 	/**
 	 * @param keyedRecs
 	 * @param seasonalAnalysis

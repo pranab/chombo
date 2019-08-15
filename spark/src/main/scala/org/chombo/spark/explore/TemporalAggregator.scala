@@ -27,6 +27,7 @@ import com.typesafe.config.Config
 import org.chombo.spark.common.Record
 
 /**
+ * Time window based aggregation 
  * @author pranab
  *
  */
