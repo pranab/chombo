@@ -205,6 +205,19 @@ object Record {
    }
 
   /**
+  * @param fields
+  * @param fieldIndexes
+  * @param default
+  * @return
+  */
+  def createFromArrayWithDefault(fields: Array[String], fieldIndexes: Option[Array[Int]], default:String) : Record = {
+     fieldIndexes match {
+     	case Some(fi) => Record(fields, fi)
+     	case None => Record(default)
+     }
+  }
+  
+  /**
   * @param floatPrecision
   */
   def setPrecision(floatPrecision : Int) {
