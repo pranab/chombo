@@ -52,6 +52,7 @@ object TimeIntervalGenerator extends JobConfiguration with GeneralUtility {
 	   val keyFields = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
 	   val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
 	       "missing time stamp field ordinal")
+	   val keepTimeStamp = getBooleanParamOrElse(appConfig, "time.keepField", false)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
@@ -69,9 +70,17 @@ object TimeIntervalGenerator extends JobConfiguration with GeneralUtility {
 	       for (i <- 1 to (soValues.length - 1)) {
 	         val diff = soValues(i)(timeStampFieldOrdinal).toLong - soValues(i-1)(timeStampFieldOrdinal).toLong
 	         val size = soValues(i).length
-	         val newRec = new Array[String](size)
-	         Array.copy(soValues(i), 0, newRec, 0, size)
-	         newRec(timeStampFieldOrdinal) = diff.toString()
+	         val newRecSise = if (keepTimeStamp)  (size + 1) else size
+	         val newRec = new Array[String](newRecSise)
+	         if (keepTimeStamp) {
+	           Array.copy(soValues(i), 0, newRec, 0, timeStampFieldOrdinal + 1)
+	           newRec(timeStampFieldOrdinal + 1) = diff.toString()
+	           Array.copy(soValues(i), timeStampFieldOrdinal + 1, newRec, timeStampFieldOrdinal + 2, 
+	               size - timeStampFieldOrdinal - 1)
+	         } else {
+	           Array.copy(soValues(i), 0, newRec, 0, size)
+	           newRec(timeStampFieldOrdinal) = diff.toString()
+	         }
 	         upValues += newRec
 	       }
 	       val lines = upValues.map(r => r.mkString(fieldDelimOut)).toArray

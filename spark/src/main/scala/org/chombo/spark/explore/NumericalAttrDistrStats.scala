@@ -137,7 +137,6 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   }))
 	   
 	   //seasonal data
-	   val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
 	   val seasonalAnalyzers = creatOptionalSeasonalAnalyzerArray(this, appConfig, seasonalAnalysis)
 	   keyLen += (if (seasonalAnalysis) 2 else 0)
 	   

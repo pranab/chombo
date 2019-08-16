@@ -44,6 +44,8 @@ public class SeasonalAnalyzer implements Serializable {
     private Map<Long, Integer> anyDays;
     private List<Long> dateBegins;
     private SimpleDateFormat dateFormat;
+    private int dayStartHour;
+    private int dayEndHour;
     
     public static final String  QUARTER_HOUR_OF_DAY = "quarterHourOfDay";
     public static final String  QUARTER_HOUR_OF_WEEK_DAY = "quarterHourOfWeekDay";
@@ -69,6 +71,8 @@ public class SeasonalAnalyzer implements Serializable {
     public static final String  WEEK_DAY_HOLIDAY_OR_WEEK_END_OF_WEEK  = "weekDayHolidayOrWeekendOfWeek";
     public static final String  HOUR_RANGE_OF_WEEK_DAY  = "hourRangeOfWeekDay";
     public static final String  HOUR_RANGE_OF_WEEK_END_DAY  = "hourRangeOfWeekEndDay";
+    public static final String  HOUR_RANGE_OF_DAY  = "hourRangeOfDay";
+    public static final String  NIGHT_DAY_HOUR_OF_DAY  = "nightDayHourOfDay";
     public static final String  DAY_RANGE_OF_WEEK  = "dayRangeOfWeek";
     public static final String  MONTH_RANGE_OF_YEAR  = "monthRangeOfYear";
     public static final String  WEEK_OF_YEAR = "weekOfYear";
@@ -208,6 +212,10 @@ public class SeasonalAnalyzer implements Serializable {
     		hourRangeOfWeekDayCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_WEEK_END_DAY)) {
     		hourRangeOfWeekEndDayCycleIndex(timeStamp);
+    	} else  if (seasonalCycleType.equals(HOUR_RANGE_OF_DAY)) {
+    		hourRangeOfDayCycleIndex(timeStamp);
+    	} else  if (seasonalCycleType.equals(NIGHT_DAY_HOUR_OF_DAY)) {
+    		nightDayHourCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(MONTH_OF_YEAR)) {
     		monthOfYearCycleIndex(timeStamp);
     	} else  if (seasonalCycleType.equals(WEEK_OF_YEAR)) {
@@ -378,6 +386,26 @@ public class SeasonalAnalyzer implements Serializable {
 		return this;
 	}
 
+
+	/**
+	 * @param dayStartHour
+	 * @return
+	 */
+	public SeasonalAnalyzer withDayStartHour(int dayStartHour) {
+		this.dayStartHour = dayStartHour;
+		return this;
+	}
+
+
+	/**
+	 * @param dayEndHour
+	 * @return
+	 */
+	public SeasonalAnalyzer withDayEndHour(int dayEndHour) {
+		this.dayEndHour = dayEndHour;
+		return this;
+	}
+
 	/**
 	 * @return
 	 */
@@ -500,6 +528,28 @@ public class SeasonalAnalyzer implements Serializable {
 		} 
 	}
 
+	/**
+	 * @param timeStamp
+	 */
+	private void hourRangeOfDayCycleIndex(long timeStamp){
+		cycleIndex = -1;
+		parentCycleIndex = timeStamp / secInDay;
+		int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
+    	BasicUtils.assertNotNull(hourRanges, "hour ranges are not defined");
+		Integer hourGroup = hourRanges.get(hourCycleIndex);
+		cycleIndex = hourGroup != null ? hourGroup : -1;
+	}
+	
+	/**
+	 * @param timeStamp
+	 */
+	private void nightDayHourCycleIndex(long timeStamp){
+		cycleIndex = -1;
+		parentCycleIndex = timeStamp / secInDay;
+		int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
+		cycleIndex = (hourCycleIndex >= dayStartHour && hourCycleIndex < dayEndHour) ? 0 : 1;
+	}
+	
 	/**
 	 * @param timeStamp
 	 */
@@ -646,6 +696,10 @@ public class SeasonalAnalyzer implements Serializable {
 		return seasonalCycleType.equals(MONTH_RANGE_OF_YEAR);
 	}
 
+	public boolean isNightDayHourOfTheDay() {
+		return seasonalCycleType.equals(NIGHT_DAY_HOUR_OF_DAY);
+	}
+	
 	/**
 	 * @param analyzers
 	 * @param timeStamp

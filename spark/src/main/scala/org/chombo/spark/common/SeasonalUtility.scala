@@ -77,6 +77,9 @@ trait SeasonalUtility {
     		val monthRanges = BasicUtils.integerIntegerMapFromString(monthRangeStr, BasicUtils.DEF_FIELD_DELIM, 
     				BasicUtils.DEF_SUB_FIELD_DELIM, true)
     		seasonalAnalyzer.setMonthOfYearRanges(monthRanges)
+		} else if (seasonalAnalyzer.isNightDayHourOfTheDay()) {
+		  seasonalAnalyzer.withDayStartHour(jobConfig.getMandatoryIntParam(appConfig, "day.startHour", "missing  day start hour"))
+		  seasonalAnalyzer.withDayEndHour(jobConfig.getMandatoryIntParam(appConfig, "day.endHour", "missing  day end hour"))
 		}
     	
     	if (timeZoneShiftHours > 0) {
