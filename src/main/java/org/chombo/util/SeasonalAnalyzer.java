@@ -547,7 +547,7 @@ public class SeasonalAnalyzer implements Serializable {
 		cycleIndex = -1;
 		parentCycleIndex = timeStamp / secInDay;
 		int hourCycleIndex = (int)((timeStamp % secInDay) / secInHour);
-		cycleIndex = (hourCycleIndex >= dayStartHour && hourCycleIndex < dayEndHour) ? 0 : 1;
+		cycleIndex = (hourCycleIndex >= dayStartHour && hourCycleIndex < dayEndHour) ? 1 : 0;
 	}
 	
 	/**

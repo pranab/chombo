@@ -140,6 +140,7 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   val seasonalAnalyzers = creatOptionalSeasonalAnalyzerArray(this, appConfig, seasonalAnalysis)
 	   keyLen += (if (seasonalAnalysis) 2 else 0)
 	   
+	   val outputBin = getBooleanParamOrElse(appConfig, "output.bin", true)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 	   
@@ -224,8 +225,8 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 		         val key = v._1
 		         val refDistr = stats.get(key).get
 		         val thisDistr = v._2
-		         val fitnessScore = HistogramUtility.distrFittnessReferenceWithChiSquare(refDistr, thisDistr, confIntervalFactor, 
-		             chiSqureFailOnRangeCheck)
+		         val fitnessScore = HistogramUtility.distrFittnessReferenceWithChiSquare(refDistr, thisDistr, 
+		             confIntervalFactor, chiSqureFailOnRangeCheck)
 		         val fitness = Record(3)
 				 val fitted = fitnessScore.getLeft() < fitnessScore.getRight();
 				 fitness.add(fitnessScore.getLeft(), fitnessScore.getRight(), fitted)
@@ -262,8 +263,8 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 				       val thisDistr = v._2
 				         
 				       val stat = statsMap.get(key).get
-				       val fitnessScore = HistogramUtility.distrFittnessNormalWithChiSquare(thisDistr, stat.getLeft(), stat.getRight(), 
-				             confIntervalFactor, chiSqureFailOnRangeCheck)
+				       val fitnessScore = HistogramUtility.distrFittnessNormalWithChiSquare(thisDistr, stat.getLeft(), 
+				           stat.getRight(), confIntervalFactor, chiSqureFailOnRangeCheck)
 				       val fitness = Record(3)
 				       val fitted = fitnessScore.getLeft() < fitnessScore.getRight();
 				       fitness.add(fitnessScore.getLeft(), fitnessScore.getRight(), fitted)
@@ -296,7 +297,8 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   
 	   if (saveOutput) {
 	     val stats = sparkCntxt.parallelize(modStats).map(v => {
-	       val baseOutput = v._1.toString() + fieldDelimOut + v._2.withSerializeBins(true).withOutputPrecision(outputPrecision).toString() 
+	       val baseOutput = v._1.toString() + fieldDelimOut + v._2.withSerializeBins(outputBin).
+	         withOutputPrecision(outputPrecision).toString() 
 	       val fitness = v._3
 	       if(!withFitness) {
 	         baseOutput
