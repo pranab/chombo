@@ -623,8 +623,9 @@ public class HistogramStat implements Serializable {
 			}
 			
 			//check normalization
-			BasicUtils.assertCondition(Math.abs(1.0 - cumHistogram.get(lastIndx)) > .01, 
-					"cumulative distribution normalization failed");
+			double diff = Math.abs(1.0 - cumHistogram.get(lastIndx));
+			BasicUtils.assertCondition(diff < .01, "cumulative distribution normalization failed diff " + 
+					BasicUtils.formatDouble(diff, 3));
 			cumHistogram.put(lastIndx, 1.0);
 		}
 		return cumHistogram;
