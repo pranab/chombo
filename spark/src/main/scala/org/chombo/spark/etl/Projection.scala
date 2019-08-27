@@ -72,12 +72,28 @@ object Projection extends JobConfiguration with GeneralUtility {
          case None => None
        }
 	   val projectionFields = getMandatoryIntListParam(appConfig, "project.fields", "missing projection fields")
-	   val selectionFilter = getOptionalStringParam(appConfig, "selection.filter")
+	   val selectionFilter = getMandatoryStringParam(appConfig, "selection.filter", "")
+	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
+	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
+	   
 	   val rowColFilter = new RowColumnFilter()
-	   val attrFilter = selectionFilter match {
-	     case Some(filter) => Some(buildSelectFilter(appConfig, filter, rowColFilter))
-	     case None => None
-	   }
+	   val attrFilter = buildSelectFilter(appConfig, selectionFilter, rowColFilter)
+	   
+	   val data = sparkCntxt.textFile(inputPath).cache
+	   val transformedData = data.filter(line => {
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+		   attrFilter.evaluate(items)
+	   })	
+	   
+	   if (debugOn) {
+         val records = transformedData.collect
+         records.slice(0, 200).foreach(r => println(r))
+       }
+	   
+	   if(saveOutput) {	   
+	     transformedData.saveAsTextFile(outputPath) 
+	   }	 
+	   
    }
    
    /**
@@ -104,7 +120,7 @@ object Projection extends JobConfiguration with GeneralUtility {
            }
            case None => {
              val udfContext = getUdfConfiguration(appConfig)
-             if (null == udfContext) {
+             if (udfContext.isEmpty()) {
                attrFilter = new AttributeFilter(selectionFilter)
              } else {
                attrFilter =new AttributeFilter(selectionFilter, udfContext)
