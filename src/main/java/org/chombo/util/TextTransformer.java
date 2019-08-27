@@ -65,7 +65,7 @@ public class TextTransformer {
 	public TextTransformer withDoAnalyze(boolean doAnalyze, String lang) {
 		this.doAnalyze = doAnalyze;
     	if (lang.equals("en")) {
-    		analyzer = new EnglishAnalyzer(Version.LUCENE_44);
+    		analyzer = new EnglishAnalyzer();
     	}  else {
 			throw new IllegalArgumentException("unsupported language:" + lang);
 		} 
