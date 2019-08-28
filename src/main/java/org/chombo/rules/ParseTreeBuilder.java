@@ -27,6 +27,10 @@ public class ParseTreeBuilder {
 	private Expression root;
 	private Expression current;
 	
+	public Expression getRoot() {
+		return root;
+	}
+
 	/**
 	 * @param exprStr
 	 * @return
@@ -37,9 +41,25 @@ public class ParseTreeBuilder {
 		
 		//iterate through each token and build parse tree
 		String[] tokens = exprStr.split(TOKEN_SEP);
-		for (String token : tokens) {
+		for (int i = 0; i <  tokens.length;) {
+			String token = tokens[i];
 			Expression thisExpr = create(null, token);
-			addNode(thisExpr);
+			
+			if (thisExpr instanceof ParenthesisOperator) {
+				StringBuilder stBld = new StringBuilder();
+				int j = i + 1;
+				for ( ; !tokens[j].equals(")"); ++j) {
+					stBld.append(tokens[j]).append(" ");
+				}
+				ParseTreeBuilder builder = new ParseTreeBuilder();
+				Expression root = builder.buildParseTree(stBld.toString());
+				thisExpr.addChild(root);
+				addNode(thisExpr);
+				i = j + 1;
+			} else {
+				addNode(thisExpr);
+				++i;
+			}
 		}
 		
 		return root;
@@ -51,11 +71,11 @@ public class ParseTreeBuilder {
 	private void addNode(Expression expr) {
 		int prec = expr.getPrecedence();
 		if (prec > current.getPrecedence()) {
-			//insert below
+			//higher precedence, insert below
 			expr.setParent(current);
 			current.addChild(expr);
 		} else {
-			//walk upwards until a node is found with lower precedence and insert below
+			//lower precedence,walk upwards until a node is found with lower precedence and insert below
 			Expression next = current;
 			Expression prev = null;
 			for ( ; next != root && prec <= next.getPrecedence(); prev = next, next = next.getParent()) {}

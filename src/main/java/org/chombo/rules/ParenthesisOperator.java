@@ -17,6 +17,8 @@
 
 package org.chombo.rules;
 
+import org.chombo.util.BasicUtils;
+
 /**
  * @author pranab
  *
@@ -34,13 +36,13 @@ public class ParenthesisOperator extends Operator{
 	
 	@Override
 	public Object evaluate() {
-		// TODO Auto-generated method stub
-		return null;
+		BasicUtils.assertCondition(children.size() == 1, "unary operator has invalid number of operands " + children.size());
+		return children.get(0).evaluate();
 	}
 
 	@Override
 	public int getPrecedence() {
-		return AND_PREC;
+		return TERM_PREC;
 	}
 	
 }
