@@ -18,6 +18,7 @@
 package org.chombo.rules;
 
 import org.chombo.util.BaseAttribute;
+import org.chombo.util.BasicUtils;
 
 public class AdditiveOperator extends Operator {
 
@@ -32,54 +33,69 @@ public class AdditiveOperator extends Operator {
 		
 	@Override
 	public Object evaluate() {
-		if (children.size() != 2) {
-			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
+		BasicUtils.assertCondition(children.size() >= 2, "need at least 2 operands");
+		boolean first = true;
+		if (anyDouble()) {
+			double dValue = 0;
+			for (Expression child : children) {
+				double childVal = (Double)child.evaluate();
+				if (token.equals(PLUS_OP)) {
+					dValue += childVal;
+				} else if (token.equals(MINUS_OP)) {
+					if (first) {
+						dValue += childVal;
+						first = false;
+					} else {
+						dValue -= childVal;
+					}
+				}
+			}	
+			value = dValue;
+		} else {
+			int iValue = 0;
+			for (Expression child : children) {
+				int childVal = (Integer)child.evaluate();
+				if (token.equals(PLUS_OP)) {
+					iValue += childVal;
+				} else if (token.equals(MINUS_OP)) {
+					if (first) {
+						iValue += childVal;
+						first = false;
+					} else {
+						iValue -= childVal;
+					}
+				}
+			}			
+			value = iValue;
 		}
 		
-		Expression left = children.get(0);
-		Expression right = children.get(1);
-		Object leftVal = left.evaluate();
-		Object rightVal = right.evaluate();
-		
-		value = null;
-		if (left.type.equals(BaseAttribute.DATA_TYPE_INT) && right.type.equals(BaseAttribute.DATA_TYPE_INT)) {
-			if (token.equals(PLUS_OP)) {
-				value = (Integer)leftVal + (Integer)rightVal;
-			} else if (token.equals(MINUS_OP)) {
-				value = (Integer)leftVal - (Integer)rightVal;
-			}
-			type = promotedType = BaseAttribute.DATA_TYPE_INT;
-		} else if (left.type.equals(BaseAttribute.DATA_TYPE_DOUBLE) && right.type.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
-			if (token.equals(PLUS_OP)) {
-				value = (Double)leftVal + (Double)rightVal;
-			} else if (token.equals(MINUS_OP)) {
-				value = (Double)leftVal - (Double)rightVal;
-			}
-			type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
-		} else if (left.type.equals(BaseAttribute.DATA_TYPE_INT) && right.type.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
-			if (token.equals(PLUS_OP)) {
-				value = (Integer)leftVal + (Double)rightVal;
-			} else if (token.equals(MINUS_OP)) {
-				value = (Integer)leftVal - (Double)rightVal;
-			}
-			type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
-		} else if (left.type.equals(BaseAttribute.DATA_TYPE_DOUBLE) && right.type.equals(BaseAttribute.DATA_TYPE_INT)) {
-			if (token.equals(PLUS_OP)) {
-				value = (Double)leftVal + (Integer)rightVal;
-			} else if (token.equals(MINUS_OP)) {
-				value = (Double)leftVal - (Integer)rightVal;
-			}
-			type = promotedType = BaseAttribute.DATA_TYPE_DOUBLE;
-		}
-		if (null == value) {
-			throw new IllegalStateException("failed evaluation for additive operator");
-		}
 		return value;
 	}
 
+	/**
+	 * @return
+	 */
+	private boolean anyDouble() {
+		boolean isDouble = false;
+		for (Expression child : children) {
+			if (child.type.equals(BaseAttribute.DATA_TYPE_DOUBLE)) {
+				isDouble = true;
+				break;
+			}
+		}
+		return isDouble;
+	}
+	
 	@Override
 	public int getPrecedence() {
 		return ADDITIVE_PREC;
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean isMultiOperand() {
+		return true;
 	}
 
 }

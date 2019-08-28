@@ -59,15 +59,25 @@ public class ParseTreeBuilder {
 			Expression next = current;
 			Expression prev = null;
 			for ( ; next != root && prec <= next.getPrecedence(); prev = next, next = next.getParent()) {}
-			expr.setParent(next);
-			next.addChild(expr);
 			if (null != prev) {
+				if (prev.getPrecedence() > prec) {
+					//insert between next and prev
+					expr.setParent(next);
+					next.addChild(expr);
+					current = expr;
+				} else {
+					//same precedence as prev
+					current = prev;
+				}
 				next.removeChild(prev);
 				prev.setParent(expr);
 				expr.addChild(prev);
+			} else {
+				expr.setParent(next);
+				next.addChild(expr);
+				current = expr;
 			}
 		}
-		current = expr;
 	}
 	
 	/**
@@ -96,7 +106,7 @@ public class ParseTreeBuilder {
 			expr = new MultiplicativeOperator(root, parent, token);
 		} else if (token.equals(Operator.PARENTHESIS_OP)) {
 			expr = new ParenthesisOperator(root, parent, token);
-		} else if (token.length() > 1 && token.endsWith("(")) {
+		} else if (token.length() > 1 && token.endsWith(")")) {
 			expr = new FunctionOperator(root, parent, token.substring(0, token.length()-1));
 		} else if (token.startsWith("$")) {
 			expr = new VariableTerm(root, parent, token.substring(1));

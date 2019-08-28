@@ -17,16 +17,18 @@
 
 package org.chombo.rules;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.chombo.util.BaseAttribute;
+import org.chombo.util.BasicUtils;
 
 /**
  * @author pranab
  *
  */
-public  class Expression {
+public  class Expression implements Serializable {
 	protected List<Expression>  children = new ArrayList<Expression>();
 	protected Expression root;
 	protected Expression parent;
@@ -37,6 +39,7 @@ public  class Expression {
 	protected String type;
 	protected String promotedType;
 	
+	public final int ROOT_PREC = 0;
 	public final int RULE_PREC = 1;
 	public final int IF_THEN_PREC = 2;
 	public final int OR_PREC = 3;
@@ -130,6 +133,9 @@ public  class Expression {
 	 */
 	public void addChild(Expression child) {
 		children.add(child);
+		if(!isMultiOperand() && children.size() > 2) {
+			BasicUtils.assertFail("too many operandss");
+		}
 	}
 	
 	/**
@@ -161,11 +167,20 @@ public  class Expression {
 	 * @return
 	 */
 	public  Object evaluate() {
-		return null;
+		return children.get(0).evaluate();
 	}
 	
+	/**
+	 * @return
+	 */
 	public  int getPrecedence() {
-		return 0;
+		return ROOT_PREC;
 	}
 
+	/**
+	 * @return
+	 */
+	public boolean isMultiOperand() {
+		return false;
+	}
 }

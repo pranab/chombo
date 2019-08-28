@@ -18,6 +18,7 @@
 package org.chombo.rules;
 
 import org.chombo.util.BaseAttribute;
+import org.chombo.util.BasicUtils;
 
 /**
  * @author pranab
@@ -36,9 +37,7 @@ public class RelationalOperator extends Operator {
 	
 	@Override
 	public Object evaluate() {
-		if (children.size() != 2) {
-			throw new IllegalStateException("binary operator has invalid number of operands " + children.size());
-		}
+		BasicUtils.assertCondition(children.size() == 2, "binary operator has invalid number of operands " + children.size());
 		
 		Expression left = children.get(0);
 		Expression right = children.get(1);

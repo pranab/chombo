@@ -86,4 +86,11 @@ public class MultiplicativeOperator extends Operator {
 		return MULTIPLICATIVE_PREC;
 	}
 
+	/**
+	 * @return
+	 */
+	public boolean isMultiOperand() {
+		return true;
+	}
+
 }
