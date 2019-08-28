@@ -18,6 +18,7 @@
 package org.chombo.rules;
 
 import org.chombo.util.BaseAttribute;
+import org.chombo.util.BasicUtils;
 
 /**
  * @author pranab
@@ -37,11 +38,8 @@ public class VariableTerm extends Term {
 	@Override
 	public Object evaluate() {
 		BaseAttribute attr = root.getAttribute(token);
+		BasicUtils.assertNotNull(attr, "undefined variable " + token);
 		
-		if (null == attr) {
-			throw new IllegalStateException("undefined variable " + token);
-		}
-
 		//string value
 		int fieldOrd = attr.getOrdinal();
 		String stVal = root.input[fieldOrd];

@@ -20,6 +20,7 @@ package org.chombo.rules;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.chombo.util.BaseAttribute;
 import org.chombo.util.BasicUtils;
@@ -35,6 +36,10 @@ public  class Expression implements Serializable {
 	protected String token;
 	protected List<? extends BaseAttribute> attributes;
 	protected String[] input;
+	protected String inputKey;
+	protected Map<String, Object> context;
+	protected Map<String, Double> keyedMeanValues;
+	protected Map<String, Double> keyedStdDevValues;
 	protected Object value;
 	protected String type;
 	protected String promotedType;
@@ -128,6 +133,42 @@ public  class Expression implements Serializable {
 		return this;
 	}
 	
+	/**
+	 * @param input
+	 * @return
+	 */
+	public Expression withInputKey(String inputKey) {
+		this.inputKey = inputKey;
+		return this;
+	}
+
+	/**
+	 * @param conext
+	 * @return
+	 */
+	public Expression withContext(Map<String, Object> context) {
+		this.context = context;
+		return this;
+	}
+
+	/**
+	 * @param keyedMeanValues
+	 * @return
+	 */
+	public Expression withKeyedMeanValues(Map<String, Double> keyedMeanValues) {
+		this.keyedMeanValues = keyedMeanValues;
+		return this;
+	}
+
+	/**
+	 * @param keyedStdDevValues
+	 * @return
+	 */
+	public Expression withKeyedStdDevValues(Map<String, Double> keyedStdDevValues) {
+		this.keyedStdDevValues = keyedStdDevValues;
+		return this;
+	}
+
 	/**
 	 * @param child
 	 */

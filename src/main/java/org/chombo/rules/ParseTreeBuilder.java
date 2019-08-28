@@ -17,6 +17,9 @@
 
 package org.chombo.rules;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * @author pranab
@@ -54,6 +57,18 @@ public class ParseTreeBuilder {
 				ParseTreeBuilder builder = new ParseTreeBuilder();
 				Expression root = builder.buildParseTree(stBld.toString());
 				thisExpr.addChild(root);
+				addNode(thisExpr);
+				i = j + 1;
+			} else if (thisExpr instanceof FunctionOperator) {
+				List<String> args = new ArrayList<String>();
+				int j = i + 1;
+				for ( ; !tokens[j].equals(")"); ++j) {
+					//strip coma
+					String tok = tokens[j].substring(0, tokens[j].length()-1);
+					args.add(tok);
+				}
+				String name = token.substring(0, token.length()-1);
+				((FunctionOperator)thisExpr).withName(name).withArgs(args);
 				addNode(thisExpr);
 				i = j + 1;
 			} else {
@@ -126,7 +141,7 @@ public class ParseTreeBuilder {
 			expr = new MultiplicativeOperator(root, parent, token);
 		} else if (token.equals(Operator.PARENTHESIS_OP)) {
 			expr = new ParenthesisOperator(root, parent, token);
-		} else if (token.length() > 1 && token.endsWith(")")) {
+		} else if (token.length() > 1 && token.endsWith("(")) {
 			expr = new FunctionOperator(root, parent, token.substring(0, token.length()-1));
 		} else if (token.startsWith("$")) {
 			expr = new VariableTerm(root, parent, token.substring(1));

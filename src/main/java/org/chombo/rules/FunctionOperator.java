@@ -17,11 +17,19 @@
 
 package org.chombo.rules;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.chombo.util.BaseAttribute;
+import org.chombo.util.BasicUtils;
+
 /**
  * @author pranab
  *
  */
 public class FunctionOperator extends Operator {
+	private String name;
+	private List<String> args;
 
 	/**
 	 * @param root
@@ -32,16 +40,55 @@ public class FunctionOperator extends Operator {
 		super(root,  parent,  token);
 	}
 
+	public FunctionOperator withName(String name) {
+		this.name = name;
+		return this;
+	}
+
+	public FunctionOperator withArgs(List<String> args) {
+		this.args = args;
+		return this;
+	}
+
 	@Override
 	public Object evaluate() {
-		// TODO Auto-generated method stub
-		return null;
+		if (name.equals("mean")) {
+			double mean = getMean();
+			value = mean;
+		} else if (name.equals("stdDev")) {
+			double mean = getStdDev();
+			value = mean;
+		} else {
+			BasicUtils.assertFail("unsupported function");
+		}
+
+		return value;
 	}
 	
 	@Override
 	public int getPrecedence() {
-		return PARENTHESIS_FUNCTION_PREC;
+		return TERM_PREC;
 	}
 	
+	/**
+	 * @return
+	 */
+	private double getMean() {
+		BaseAttribute attr = root.getAttribute(args.get(0));
+		BasicUtils.assertNotNull(attr, "undefined variable " + token);
+		int fieldOrd = attr.getOrdinal();
+		String key = root.inputKey + "," + fieldOrd;
+		return root.keyedMeanValues.get(key);
+	}
 
+	/**
+	 * @return
+	 */
+	private double getStdDev() {
+		BaseAttribute attr = root.getAttribute(args.get(0));
+		BasicUtils.assertNotNull(attr, "undefined variable " + token);
+		int fieldOrd = attr.getOrdinal();
+		String key = root.inputKey + "," + fieldOrd;
+		return root.keyedStdDevValues.get(key);
+	}
 }
