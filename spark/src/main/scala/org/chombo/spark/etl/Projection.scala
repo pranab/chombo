@@ -30,6 +30,11 @@ import org.chombo.util.RowColumnFilter
 import org.chombo.util.AttributeFilter
 import org.chombo.util.BaseAttributeFilter
 
+/**
+ * selection and projection
+ * @author pranab
+ *
+ */
 object Projection extends JobConfiguration with GeneralUtility {
 
    /**

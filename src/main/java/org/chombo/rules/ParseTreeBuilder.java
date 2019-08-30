@@ -17,6 +17,7 @@
 
 package org.chombo.rules;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +26,7 @@ import java.util.List;
  * @author pranab
  *
  */
-public class ParseTreeBuilder {
+public class ParseTreeBuilder implements Serializable {
 	private static final String TOKEN_SEP = "\\s+";
 	private Expression root;
 	private Expression current;
