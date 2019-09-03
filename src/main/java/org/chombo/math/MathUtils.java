@@ -18,6 +18,7 @@
 
 package org.chombo.math;
 
+import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
 
 import Jama.Matrix;
@@ -196,6 +197,14 @@ public class MathUtils {
      * @param data
      * @return
      */
+    public static Matrix createMatrix(double[][] data) {
+    	return new Matrix(data);
+    }
+    
+    /**
+     * @param data
+     * @return
+     */
     public static  double[][] invertMatrix(double[][] data) {
     	Matrix source = new Matrix(data);
     	double[][] inverted = source.inverse().getArray();
@@ -207,7 +216,7 @@ public class MathUtils {
      * @param numRows
      * @return
      */
-    public static Matrix createColVector(double[] data, int numRows) {
+    public static Matrix createColMatrix(double[] data, int numRows) {
     	Matrix m = null;
     	if (data.length == numRows) {
     		m = new Matrix(data, numRows);
@@ -219,10 +228,19 @@ public class MathUtils {
     
     /**
      * @param data
+     * @return
+     */
+    public static Matrix createColMatrix(double[] data) {
+    	int numRows = data.length;
+        return new Matrix(data, numRows);
+    }
+
+    /**
+     * @param data
      * @param numCols
      * @return
      */
-    public static Matrix createRowVector(double[] data, int numCols) {
+    public static Matrix createRowMatrix(double[] data, int numCols) {
     	Matrix m = null;
     	if (data.length == numCols) {
     		m = new Matrix(data, 1);
@@ -232,6 +250,15 @@ public class MathUtils {
     	return m;
     }
     
+    /**
+     * @param data
+     * @param numCols
+     * @return
+     */
+    public static Matrix createRowmatrix(double[] data) {
+    	return  new Matrix(data, 1);
+    }
+
     /**
      * @param a
      * @param b
@@ -251,6 +278,32 @@ public class MathUtils {
     	Matrix bm = new Matrix(b);
     	Matrix c = am.times(bm);
     	return c.getArray();
+    }
+    
+    /**
+     * @param m
+     * @return
+     */
+    public static double[] arrayFromColumnMatrix(Matrix m) {
+    	double[][] data = m.getArray();
+    	BasicUtils.assertCondition(data[0].length == 1, "not a column matrix");
+    	int nCols = data.length;
+    	double[] ar = new double[nCols];
+    	for (int i = 0; i < nCols; ++i) {
+    		ar[i] = data[i][0];
+    	}
+    	return ar;
+    }
+
+    public static double[] arrayFromRowMatrix(Matrix m) {
+    	double[][] data = m.getArray();
+    	BasicUtils.assertCondition(data.length == 1, "not a row matrix");
+    	int nRows = data[0].length;
+    	double[] ar = new double[nRows];
+    	for (int j = 0; j < nRows; ++j) {
+    		ar[j] = data[0][j];
+    	}
+    	return ar;
     }
 
     /**

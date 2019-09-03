@@ -493,6 +493,44 @@ public class BasicUtils {
    
     /**
      * @param items
+     * @return
+     */
+    public static int[]  toIntArray(String[] items) {
+    	int[] fieldValues = new int[items.length];
+    	for (int i = 0; i < items.length; ++i) {
+    		fieldValues[i] = Integer.parseInt(items[i]);
+    	}
+    	return fieldValues;
+    }
+
+    /**
+     * @param items
+     * @param fields
+     * @return
+     */
+    public static double[]  extractFieldsAsDoubleArray(String[] items , int[] fields) {
+    	double[] fieldValues = new double[fields.length];
+    	for (int i = 0; i < fields.length; ++i) {
+    		fieldValues[i] = Double.parseDouble((items[fields[i]]));
+    	}
+    	return fieldValues;
+    
+    }
+    
+    /**
+     * @param items
+     * @return
+     */
+    public static double[]  toDoubleArray(String[] items) {
+    	double[] fieldValues = new double[items.length];
+    	for (int i = 0; i < items.length; ++i) {
+    		fieldValues[i] = Double.parseDouble(items[i]);
+    	}
+    	return fieldValues;
+    }
+    
+    /**
+     * @param items
      * @param fields
      * @param delim
      * @return

@@ -70,7 +70,13 @@ trait GeneralUtility {
 	     case None => None  
 	}
   }
-  
+
+    /**
+  * @param list
+  * @return
+  */
+  def toStringArray(list:java.util.List[String]) : Array[String] = list.asScala.toArray
+
   /**
   * @param list
   * @return
