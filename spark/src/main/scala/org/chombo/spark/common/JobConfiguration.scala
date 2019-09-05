@@ -441,7 +441,33 @@ trait JobConfiguration {
 	def getStringListParamOrElse(config:Config, paramName:String, defValue:java.util.List[String]) : java.util.List[String] = {
 	  getStringListParam(config, paramName, Some(defValue), None)
 	}
+
+	/**
+	 * @param condition
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @param defNull
+	 * @return
+	 */
+    def getConditionalMandatoryStringListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String, defNull:Boolean) : 
+      java.util.List[java.lang.String] = {
+      val defVal = if (defNull) null else  new java.util.ArrayList[java.lang.String]()
+	  if (condition) getMandatoryStringListParam(config, paramName, errorMsg) else defVal
+	}
 	
+	/**
+	 * @param condition
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+    def getConditionalMandatoryStringListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : 
+      java.util.List[String] = {
+	  getConditionalMandatoryStringListParam(condition, config, paramName, errorMsg, true)
+	}
+
 	/**
 	 * @param config
 	 * @param paramName
@@ -495,7 +521,33 @@ trait JobConfiguration {
 	def getIntListParamOrElse(config:Config, paramName:String, defValue:java.util.List[Integer]) : java.util.List[Integer] = {
 	  getIntListParam(config, paramName, Some(defValue), None)
 	}
-	
+
+	/**
+	 * @param condition
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @param defNull
+	 * @return
+	 */
+    def getConditionalMandatoryIntListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String, defNull:Boolean) : 
+      java.util.List[java.lang.Integer] = {
+      val defVal = if (defNull) null else  new java.util.ArrayList[java.lang.Integer]()
+	  if (condition) getMandatoryIntListParam(config, paramName, errorMsg) else defVal
+	}
+
+		/**
+	 * @param condition
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+    def getConditionalMandatoryIntListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : 
+      java.util.List[Integer] = {
+      getConditionalMandatoryIntListParam(condition, config, paramName, errorMsg, true)
+	}
+
 	/**
 	 * @param config
 	 * @param paramName
@@ -551,6 +603,31 @@ trait JobConfiguration {
 	  getDoubleListParam(config, paramName, Some(defValue), None)
 	}
 
+	 /**
+	 * @param condition
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @param defNull
+	 * @return
+	 */
+    def getConditionalMandatoryDoubleListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String, defNull:Boolean) : 
+      java.util.List[java.lang.Double] = {
+      val defVal = if (defNull) null else  new java.util.ArrayList[java.lang.Double]()
+	  if (condition) getMandatoryDoubleListParam(config, paramName, errorMsg) else defVal
+	}
+
+	/**
+	 * @param condition
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+    def getConditionalMandatoryDoubleListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : 
+      java.util.List[java.lang.Double] = {
+      getConditionalMandatoryDoubleListParam(condition, config, paramName, errorMsg, true)
+	}
 	
 	/**
 	 * @param config

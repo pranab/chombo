@@ -129,6 +129,11 @@ trait GeneralUtility {
 	     case None => None  
 	}
   }
+  /**
+  * @param list
+  * @return
+  */
+  def toDoubleArray(list:java.util.List[java.lang.Double]) : Array[Double] = list.asScala.toArray.map(d => d.doubleValue())
   
   /**
   * @param keyFieldOrdinals
@@ -164,7 +169,7 @@ trait GeneralUtility {
 	    case None => defLen
 	  }
   }
-
+  
   /**
   * @param array
   * @param seasonality
