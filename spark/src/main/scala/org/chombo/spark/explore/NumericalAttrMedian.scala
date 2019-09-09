@@ -49,6 +49,7 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility with Ge
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
+	   val quotedFields = getBooleanParamOrElse(appConfig, "field.under.quote", false);
 	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
 	   val keyFieldOrdinals = toOptionalIntArray(keyFields)
 	   
@@ -118,7 +119,7 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility with Ge
 
 	  val data = sparkCntxt.textFile(inputPath)
 	  var keyedRecs = data.flatMap(line => {
-		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn, quotedFields)
 		   val fieldStats = numAttrOrdinals.map(attrOrd => {
 		     //val attrOrd = attr
 		     val key = Record(keyLen)
@@ -150,7 +151,16 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility with Ge
 		     //value
 		     val quantVal = if (operation.equals("med")) {
 		       //value itself
-		       items(attrOrd).toDouble
+		       var value = 0.0
+		       try {
+		    	 value = items(attrOrd).toDouble
+		       } catch  {
+		         case ex: NumberFormatException => 
+		           items.foreach(it => print(it + "@@"))
+		           println("")
+		           BasicUtils.assertFail("field not numeric attr ordinal " + attrOrd + " value  " +  items(attrOrd))
+		       }
+		       value
 		     } else {
 		       //deviation from median
 		       val med = if (keyLen == 1) {

@@ -1103,6 +1103,56 @@ public class BasicUtils {
     }	
 	
     /**
+     * @param record
+     * @param delimRegex
+     * @param quoted
+     * @return
+     */
+    public static String[] getTrimmedFields(String record, String delimRegex, boolean quoted) {
+    	String[] fields = record.split(delimRegex, -1);
+    	for (int i = 0; i < fields.length; ++i) {
+    		fields[i] = fields[i].trim();
+    	}
+    	
+    	//consolidate under quote to one field
+    	if (quoted) {
+        	List<String> consolidated = new ArrayList<String>();
+        	List<String> quoteEnclosed = new ArrayList<String>();
+        	boolean insideQuote = false;
+        	for (String item : fields) {
+        		int pos = item.indexOf("\"");
+        		if (pos == -1) {
+        			//no quote
+        			if (insideQuote) {
+        				//continue inside quote
+        				quoteEnclosed.add(item);
+        			} else {
+        				//normal
+        				consolidated.add(item);
+        			}
+        		} else {
+        			//quote
+        			if (insideQuote) {
+        				//close off quote
+        				quoteEnclosed.add(item);
+        				String joined = BasicUtils.join(quoteEnclosed, delimRegex);
+        				consolidated.add(joined);
+        				quoteEnclosed.clear();
+        				insideQuote = false;
+        			} else {
+        				//start quote
+        				quoteEnclosed.add(item);
+        				insideQuote = true;
+        			}
+        		}
+        	}
+        	fields = BasicUtils.fromListToStringArray(consolidated);
+    	}
+    	
+    	return fields;
+    }	
+
+    /**
      * @param fields
      * @return
      */
