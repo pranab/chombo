@@ -172,6 +172,29 @@ trait SeasonalUtility {
 	}
 
 	/**
+	 * @param jobConfig
+	 * @param appConfig
+	 * @param seasonalAnalyzers
+	 * @return
+	 */
+	def getSeasonalMap(jobConfig : JobConfiguration, appConfig: com.typesafe.config.Config, 
+	    seasonalAnalyzers: Option[(Array[org.chombo.util.SeasonalAnalyzer], Int)]) :
+	    scala.collection.mutable.Map[String, (SeasonalAnalyzer, Int)] = {
+	   val analyzerMap = scala.collection.mutable.Map[String, (SeasonalAnalyzer, Int)]()
+	   seasonalAnalyzers match {
+	     case Some(seAnalyzers : (Array[SeasonalAnalyzer], Int)) => {
+	       val seasonalCycleTypes = jobConfig.getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
+	        "missing seasonal cycle type").asScala.toArray
+	        seasonalCycleTypes.zip(seAnalyzers._1).foreach(r => {
+	          analyzerMap += (r._1 -> (r._2, seAnalyzers._2))
+	        })
+		 }
+	     case None => 
+	   }
+	   analyzerMap
+	}
+	
+	/**
 	 * @param keyedRecs
 	 * @param seasonalAnalysis
 	 * @param idLen
