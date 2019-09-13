@@ -2371,6 +2371,48 @@ public class BasicUtils {
 	}
 	
 	/**
+	 * @param size
+	 * @param min
+	 * @param max
+	 * @return
+	 */
+	public static double[] createDoubleArrayWithRandomValues(int size, double min, double max) {
+		double[] ar = new double[size];
+		for (int i = 0; i < size; ++i) {
+			ar[i] = sampleUniform(min, max);
+		}
+		return ar;
+	}
+	
+	/**
+	 * @param size
+	 * @param pos
+	 * @return
+	 */
+	public static double[] createOneHotDoubleArray(int size, int pos) {
+		double[] ar = new double[size];
+		for (int i = 0; i < size; ++i) {
+			ar[i] = 0;
+		}
+		ar[pos] = 1;
+		return ar;
+	}
+	
+	/**
+	 * @param size
+	 * @param pos
+	 * @return
+	 */
+	public static int[] createOneHotIntArray(int size, int pos) {
+		int[] ar = new int[size];
+		for (int i = 0; i < size; ++i) {
+			ar[i] = 0;
+		}
+		ar[pos] = 1;
+		return ar;
+	}
+
+	/**
 	 * @param src
 	 * @param srcBeg
 	 * @param srcEnd
