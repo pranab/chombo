@@ -206,6 +206,39 @@ object Record {
 
   /**
   * @param fields
+  * @param fieldOrdinals
+  * @param rec
+  */
+  def populateFields(fields:Array[String], fieldOrdinals:Array[Int], rec:Record)  {
+	  for (kf <- fieldOrdinals) {
+	    rec.addString(fields(kf))
+	  }
+  }
+
+  /**
+  * @param fields
+  * @param fieldOrdinals
+  * @param rec
+  */
+  def populateDoubleFields(fields:Array[String], fieldOrdinals:Array[Int], rec:Record)  {
+	  for (kf <- fieldOrdinals) {
+	    rec.addDouble(fields(kf).toDouble)
+	  }
+  }
+  
+  /**
+  * @param fields
+  * @param fieldOrdinals
+  * @param rec
+  */
+  def populateIntFields(fields:Array[String], fieldOrdinals:Array[Int], rec:Record)  {
+	  for (kf <- fieldOrdinals) {
+	    rec.addInt(fields(kf).toInt)
+	  }
+  }
+  
+  /**
+  * @param fields
   * @param fieldIndexes
   * @param default
   * @return
@@ -807,7 +840,49 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	  cursor += 1
 	  dblVal
 	}
+
+	/**
+	 * @param beg
+	 * @param end
+	 * @return
+	 */
+	def getAnyArray(beg:Int, end:Int) : Array[Any] =  {
+	  val newSize = end - beg
+	  val anyArray = Array[Any](newSize)
+	  Array.copy(array, beg, anyArray, 0, newSize)
+	  anyArray
+	}
 	
+	/**
+	 * @param beg
+	 * @param end
+	 * @return
+	 */
+	def getStringArray(beg:Int, end:Int) : Array[String] =  {
+	  val anyArray = getAnyArray(beg, end)
+	  anyArray.map(a => a.asInstanceOf[String])
+	}
+	
+	/**
+	 * @param beg
+	 * @param end
+	 * @return
+	 */
+	def getIntArray(beg:Int, end:Int) : Array[Int] =  {
+	  val anyArray = getAnyArray(beg, end)
+	  anyArray.map(a => a.asInstanceOf[Int])
+	}
+
+	/**
+	 * @param beg
+	 * @param end
+	 * @return
+	 */
+	def getDoubleArray(beg:Int, end:Int) : Array[Double] =  {
+	  val anyArray = getAnyArray(beg, end)
+	  anyArray.map(a => a.asInstanceOf[Double])
+	}
+
 	/**
 	 * 
 	 */
