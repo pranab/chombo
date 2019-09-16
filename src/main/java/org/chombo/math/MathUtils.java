@@ -18,6 +18,8 @@
 
 package org.chombo.math;
 
+import org.apache.commons.math3.linear.ArrayRealVector;
+import org.apache.commons.math3.linear.RealVector;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
 
@@ -376,5 +378,14 @@ public class MathUtils {
     		shifted <<= 1;
     	}
     	return shifted;
+    }
+    
+    /**
+     * @param vec
+     * @return
+     */
+    public static double getNorm(double[] vec) {
+    	RealVector rv = new ArrayRealVector(vec);
+    	return rv.getNorm();
     }
 }

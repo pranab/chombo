@@ -175,7 +175,13 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     	<artifactId>jama</artifactId>
     	<version>1.0.3</version>
 	</dependency>   
-	    
+	
+	<dependency>
+    	<groupId>org.apache.commons</groupId>
+    	<artifactId>commons-math3</artifactId>
+    	<version>3.6</version>
+		</dependency>	
+		    
     </dependencies>
 
     <repositories>

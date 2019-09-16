@@ -760,6 +760,21 @@ public class BasicUtils {
     /**
      * @param arr
      * @param delim
+     * @param delim
+     * @return
+     */
+    public static  String join(double[] arr, String delim, int precision) {
+    	StringBuilder stBld = new StringBuilder();
+    	for (double val : arr) {
+    		stBld.append(formatDouble(val, precision)).append(delim);
+    	}
+    	
+    	return stBld.substring(0, stBld.length() -1);
+    }
+    
+    /**
+     * @param arr
+     * @param delim
      * @return
      */
     public static  String join(int[] arr, String delim) {
@@ -2409,6 +2424,30 @@ public class BasicUtils {
 			ar[i] = 0;
 		}
 		ar[pos] = 1;
+		return ar;
+	}
+	
+	/**
+	 * @param size
+	 * @return
+	 */
+	public static double[] createZeroFilledDoubleArray(int size) {
+		double[] ar = new double[size];
+		for (int i = 0; i < size; ++i) {
+			ar[i] = 0;
+		}
+		return ar;
+	}
+
+	/**
+	 * @param size
+	 * @return
+	 */
+	public static int[] createZeroFilledIntArray(int size) {
+		int[] ar = new int[size];
+		for (int i = 0; i < size; ++i) {
+			ar[i] = 0;
+		}
 		return ar;
 	}
 
