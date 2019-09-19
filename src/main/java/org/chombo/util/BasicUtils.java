@@ -2450,6 +2450,28 @@ public class BasicUtils {
 		}
 		return ar;
 	}
+	
+	/**
+	 * @param arr
+	 * @param extension
+	 * @return
+	 */
+	public static double[] extendDoubleArray(double[] arr, int extension) {
+		double[] newArr = new double[arr.length + extension];
+		System.arraycopy(arr, 0, newArr, 0, arr.length);
+		return newArr;
+	}
+
+	/**
+	 * @param arr
+	 * @param extension
+	 * @return
+	 */
+	public static int[] extendIntArray(double[] arr, int extension) {
+		int[] newArr = new int[arr.length + extension];
+		System.arraycopy(arr, 0, newArr, 0, arr.length);
+		return newArr;
+	}
 
 	/**
 	 * @param src
