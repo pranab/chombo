@@ -20,6 +20,7 @@ package org.chombo.math;
 
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.chombo.util.BasicUtils;
 import org.chombo.util.Pair;
 
@@ -40,7 +41,19 @@ public class MathUtils {
 		{0.990, 2.326},
 		{0.995, 2.576}
 	};
-	
+
+	/**
+	 * @param data
+	 * @return
+	 */
+	public static double sum(double[] data) {
+		double sum = 0;
+		for (double d : data){
+			sum += d;
+		}
+		return sum;
+	}
+
 	/**
 	 * @param data
 	 * @return
@@ -166,33 +179,94 @@ public class MathUtils {
     }
     
     /**
+     * @param data
+     * @return
+     */
+    public static Pair<Double, Double> linearRegression(double[] data) {
+    	//index data
+    	double[][] table = indexArray(data);
+    	return linearRegression(table);
+    }
+    
+    /**
+     * @param data
+     * @return
+     */
+    public static double[][] indexArray(double[] data) {
+    	//index data
+    	int size = data.length;
+    	double[][] table = new double[size][2];
+    	for (int i = 0; i < size; ++i) {
+    		table[i][0] = i;
+    		table[i][1] = data[i];
+    	}
+    	return table;
+    }
+    
+    
+    /**
      * @param table
      * @return
      */
     public static Pair<Double, Double> linearRegression(double[][] table) {
+    	SimpleRegression regressor = new SimpleRegression(true);
+    	regressor.addData(table);
+    	Pair<Double, Double> coeff = new Pair<Double, Double>(regressor.getSlope(), regressor.getIntercept());
+    	return coeff;
+    }
+    
+
+    /**
+     * @param data
+     * @param weights
+     * @return
+     */
+    public static Pair<Double, Double> weightedLinearRegression(double[] data, double[] weights) {
+    	//index data
+    	double[][] table = indexArray(data);
+    	return weightedLinearRegression(table, weights);
+    }
+
+    /**
+     * @param table
+     * @param weights
+     * @return
+     */
+    public static Pair<Double, Double> weightedLinearRegression(double[][] table, double[] weights) {
     	int count = table.length;
+    	double wtSum = sum(weights);
     	
     	double avX = 0;
     	double avY = 0;
     	for (int i = 0; i < count; ++i) {
-    		avX += table[i][0];
-    		avY += table[i][1];
+    		avX += weights[i] * table[i][0];
+    		avY += weights[i] * table[i][1];
     	}
-    	avX /= count;
-    	avY /= count;
+    	avX /= wtSum;
+    	avY /= wtSum;
     	
     	double s1 = 0;
     	double s2 = 0;
     	for (int i = 0; i < count; ++i) {
     		double diffX = table[i][0] - avX;
     		double diffY = table[i][1] - avY;
-    		s1 += (diffX * diffY);
-    		s2 += (diffX * diffX);
+    		s1 += weights[i] * (diffX * diffY);
+    		s2 += weights[i] * (diffX * diffX);
     	}
     	double b1 = s1 / s2;
     	double b0 = avY - b1 * avX;
     	Pair<Double, Double> coeff = new Pair<Double, Double>(b1, b0);
     	return coeff;
+    }
+    
+    /**
+     * @param coeffs
+     * @param x
+     * @return
+     */
+    public static double linearRegressionPrediction(Pair<Double, Double> coeffs, double x) {
+    	double y = coeffs.getLeft() * x + coeffs.getRight();
+    	return y;
     }
     
     /**
@@ -387,5 +461,48 @@ public class MathUtils {
     public static double getNorm(double[] vec) {
     	RealVector rv = new ArrayRealVector(vec);
     	return rv.getNorm();
+    }
+    
+    /**
+     * @param data
+     * @param ref
+     */
+    public static double[]  loessWeight(double[] data, double ref) {
+    	int size = data.length;
+    	double[] weights = new double[size];
+    	BasicUtils.assertCondition(ref >= data[0] && ref <= data[size-1], "refrence point outside range");
+    	double max = BasicUtils.max(ref - data[0], data[size-1] - ref);
+    	for (int i = 0; i < size; ++i) {
+    		double diff = Math.abs(ref - data[i]) / max;
+    		double wt = (1.0 - Math.pow(diff, 3));
+    		wt = Math.pow(wt, 3);
+    		weights[i] = wt;
+    	}
+    	return weights;
+    }
+    
+    /**
+     * @param data
+     * @param ref
+     * @param neighbor
+     * @return
+     */
+    public static int findNeighbors(double[] data, int ref, double[] neighbor) {
+    	int size = data.length;
+    	int nSize  = neighbor.length;
+    	int beg = 0;
+    	int refWithin = 0;
+    	if (ref < nSize/2) {
+    		beg = 0;
+    		refWithin = ref;
+    	} else if (ref > size -1 - nSize/2) {
+    		beg = size - nSize;
+    		refWithin = ref - beg;
+    	} else {
+    		beg = ref - nSize/2;
+    		refWithin = nSize/2;
+    	}
+    	System.arraycopy(data, beg, neighbor, 0, nSize);
+    	return refWithin;
     }
 }
