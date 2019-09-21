@@ -464,6 +464,18 @@ public class MathUtils {
     }
     
     /**
+     * @param a
+     * @param b
+     * @return
+     */
+    public static double[] subtractVector(double[] a, double[] b) {
+    	RealVector va = new ArrayRealVector(a);
+    	RealVector vb = new ArrayRealVector(b);
+    	RealVector vc = va.subtract(vb);
+    	return vc.toArray();
+    }
+    
+    /**
      * @param data
      * @param ref
      */
@@ -504,5 +516,32 @@ public class MathUtils {
     	}
     	System.arraycopy(data, beg, neighbor, 0, nSize);
     	return refWithin;
+    }
+    
+    /**
+     * @param data
+     * @param neighborSize
+     */
+    public static void loessSmooth(double[] data, int neighborSize) {
+       double[] neighbor = new double[neighborSize];
+       double[] index = createIndex(neighborSize);
+       for (int i = 0; i < data.length; ++i) {
+         int localRef = findNeighbors(data, i, neighbor);
+         double[] weights = loessWeight(index, localRef);
+         Pair<Double, Double> coeffs = weightedLinearRegression(neighbor, weights);
+         data[i] =   linearRegressionPrediction(coeffs, localRef);
+       }
+    }
+    
+    /**
+     * @param size
+     * @return
+     */
+    public static double[] createIndex(int size) {
+    	double[] index = new double[size];
+    	for (int i = 0; i < size; ++i) {
+    		index[i] = i;
+    	}
+    	return index;
     }
 }
