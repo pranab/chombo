@@ -18,6 +18,8 @@
 
 package org.chombo.math;
 
+import java.util.Arrays;
+
 import org.apache.commons.math3.linear.ArrayRealVector;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
@@ -476,6 +478,76 @@ public class MathUtils {
     }
     
     /**
+     * @param vec
+     * @return
+     */
+    public static double getSum(double[] vec) {
+    	double sum = 0;
+    	for (double va : vec) {
+    		sum += va;
+    	}
+    	return sum;
+    }
+    
+    /**
+     * @param vec
+     * @return
+     */
+    public static double getAverage(double[] vec) {
+    	return getSum(vec) / vec.length;
+    }
+    
+    /**
+     * @param vec
+     * @param absVec
+     * @return
+     */
+    public static void getAbsolute(double[] vec, double[] absVec) {
+    	for (int i = 0; i < vec.length; ++i) {
+    		absVec[i] = Math.abs(vec[i]);
+    	}
+    }
+ 
+    /**
+     * @param vec
+     */
+    public static void getAbsolute(double[] vec) {
+    	for (int i = 0; i < vec.length; ++i) {
+    		vec[i] = Math.abs(vec[i]);
+    	}
+    }
+    
+    /**
+     * @param size
+     * @param value
+     * @return
+     */
+    public static double[] getFilledArray(int size, double value) {
+    	double[] ar = new double[size];
+    	for (int i = 0; i < size; ++i) {
+    		ar[i] = value;
+    	}
+    	return ar;
+    }
+
+    /**
+     * @param vec
+     * @return
+     */
+    public static double getMedian(double[] vec) {
+    	double med = 0;
+    	Arrays.sort(vec);
+    	int size = vec.length;
+    	int half = size / 2;
+    	if (size % 2 == 1) {
+    		med = vec[half];
+    	} else {
+    		med = (vec[half - 1] + vec[half]) / 2;
+    	}
+    	return med;
+    }
+    
+    /**
      * @param data
      * @param ref
      */
@@ -543,5 +615,29 @@ public class MathUtils {
     		index[i] = i;
     	}
     	return index;
+    }
+    
+    /**
+     * @param x
+     * @return
+     */
+    public static double biSquare(double x) {
+    	double bs = 0;
+    	if (x < 1.0) {
+    		bs = Math.pow((1 - x * x), 2);
+    	} 
+    	return bs;
+    }
+    
+    /**
+     * @param x
+     * @return
+     */
+    public static double triCube(double x) {
+    	double tc = 0;
+    	if (x < 1.0) {
+    		tc = Math.pow((1 - x * x * x), 3);
+    	} 
+    	return tc;
     }
 }
