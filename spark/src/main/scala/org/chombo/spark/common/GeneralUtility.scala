@@ -447,6 +447,20 @@ trait GeneralUtility {
   def createInstance[T:ClassTag](name: String): T = {
     val obj = Class.forName(name).newInstance()
 	obj.asInstanceOf[T]
-  }  
+  }
+  
+  /**
+  * @param data
+  * @param seqFieldOrd
+  * @return
+  */
+  def groupByKeySortBySeq(data:RDD[(Record, Array[String])], seqFieldOrd:Int, delim:String): RDD[String] = {
+    data.groupByKey.flatMap(r => {
+      val values = r._2.toArray.sortWith((v1, v2) => {
+        v1(seqFieldOrd).toLong < v2(seqFieldOrd).toLong
+      })
+      values.map(r => r.mkString(delim))
+    })
+  }
   
 }

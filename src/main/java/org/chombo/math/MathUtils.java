@@ -478,6 +478,18 @@ public class MathUtils {
     }
     
     /**
+     * @param a
+     * @param b
+     * @return
+     */
+    public static double vectorDiffNorm(double[] a, double[] b) {
+    	RealVector va = new ArrayRealVector(a);
+    	RealVector vb = new ArrayRealVector(b);
+    	RealVector vc = va.subtract(vb);
+    	return vc.getNorm();
+    }
+
+    /**
      * @param vec
      * @return
      */
@@ -571,7 +583,7 @@ public class MathUtils {
      * @param neighbor
      * @return
      */
-    public static int findNeighbors(double[] data, int ref, double[] neighbor) {
+    public static int[] findNeighbors(double[] data, int ref, double[] neighbor) {
     	int size = data.length;
     	int nSize  = neighbor.length;
     	int beg = 0;
@@ -587,7 +599,10 @@ public class MathUtils {
     		refWithin = nSize/2;
     	}
     	System.arraycopy(data, beg, neighbor, 0, nSize);
-    	return refWithin;
+    	int[] result = new int[2];
+    	result[0] = beg;
+    	result[1] = refWithin;
+    	return result;
     }
     
     /**
@@ -598,13 +613,34 @@ public class MathUtils {
        double[] neighbor = new double[neighborSize];
        double[] index = createIndex(neighborSize);
        for (int i = 0; i < data.length; ++i) {
-         int localRef = findNeighbors(data, i, neighbor);
+         int localRef = findNeighbors(data, i, neighbor)[1];
          double[] weights = loessWeight(index, localRef);
          Pair<Double, Double> coeffs = weightedLinearRegression(neighbor, weights);
          data[i] =   linearRegressionPrediction(coeffs, localRef);
        }
     }
     
+    /**
+     * @param data
+     * @param neighborSize
+     * @param dWeights
+     */
+    public static void loessSmooth(double[] data, int neighborSize, double[] dWeights) {
+        double[] neighbor = new double[neighborSize];
+        double[] index = createIndex(neighborSize);
+        for (int i = 0; i < data.length; ++i) {
+          int[] result = findNeighbors(data, i, neighbor);
+          int beg = result[0];
+          int localRef = result[1];
+          double[] weights = loessWeight(index, localRef);
+          for (int j = 0; j < neighborSize; ++j) {
+        	  weights[j] *=  dWeights[beg+j];
+          }
+          Pair<Double, Double> coeffs = weightedLinearRegression(neighbor, weights);
+          data[i] =   linearRegressionPrediction(coeffs, localRef);
+        }
+     }
+
     /**
      * @param size
      * @return
