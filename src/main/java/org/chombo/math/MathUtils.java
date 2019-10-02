@@ -676,4 +676,38 @@ public class MathUtils {
     	} 
     	return tc;
     }
+    
+    /**
+     * @param values
+     * @return
+     */
+    public static Pair<Integer, Double> getMaxDiff(double[] values) {
+    	double maxDiff = 0;
+    	int loc = 0;
+    	for (int i = 1; i < values.length; ++i) {
+    		double diff = values[i] - values[i];
+    		if (Math.abs(diff) > Math.abs(maxDiff)) {
+    			maxDiff = diff;
+    			loc = i;
+    		}
+    	}
+    	return new Pair<Integer, Double>(loc, maxDiff);
+    }
+    
+    /**
+     * @param values
+     * @return
+     */
+    public static Pair<Integer, Double> getMaxSecondDiff(double[] values) {
+    	double maxSecDiff = 0;
+    	int loc = 0;
+    	for (int i = 1; i < values.length - 1; ++i) {
+    		double secDiff = values[i+1] - 2 * values[i] + values[i-1];
+    		if (Math.abs(secDiff) > Math.abs(maxSecDiff)) {
+    			maxSecDiff = secDiff;
+    			loc = i;
+    		}
+    	}
+    	return new Pair<Integer, Double>(loc, maxSecDiff);
+    }
 }

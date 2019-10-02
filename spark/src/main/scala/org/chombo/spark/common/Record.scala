@@ -134,6 +134,14 @@ object Record {
 
   /**
    * @param size
+   * @param fields
+   * @param offset
+   * @return
+  */
+  def apply(size: Int, fields: Array[String], offset:Int) : Record = new Record(size, fields, offset)
+
+  /**
+   * @param size
    * @param intVal
    * @return
   */
@@ -213,6 +221,14 @@ object Record {
 	  for (kf <- fieldOrdinals) {
 	    rec.addString(fields(kf))
 	  }
+  }
+
+  /**
+  * @param fields
+  * @param rec
+  */
+  def populateFields(fields:Array[String], rec:Record) {
+    fields.foreach(v => rec.addString(v))
   }
 
   /**
@@ -375,6 +391,20 @@ class Record(val size:Int) extends Serializable with Ordered[Record]{
 	def this(size : Int, data:Array[String], beg:Int, end:Int) {
 	  this(size)
 	  for(i <- beg to (end - 1)){
+	     addString(data(i))
+	  }
+	} 
+
+		/**
+ 	* @param data
+ 	* @param beg
+ 	* @param end
+ 	*/	
+	def this(size:Int, data:Array[String], offset:Int) {
+	  this(size)
+	  require(size == offset +  data.length, "size should be equal to sum of array lenght and offset ")
+	  cursor = offset
+	  for(i <- 0 to data.length - 1){
 	     addString(data(i))
 	  }
 	} 

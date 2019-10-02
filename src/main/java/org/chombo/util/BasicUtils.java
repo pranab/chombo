@@ -47,6 +47,7 @@ import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.ml.clustering.DoublePoint;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -516,6 +517,21 @@ public class BasicUtils {
     	return fieldValues;
     
     }
+    
+    /**
+     * @param recItems
+     * @param fields
+     * @return
+     */
+    public static List<DoublePoint>  extractFieldsAsDoubleArrayList(String[][] recItems, int[] fields) {
+    	List<DoublePoint> records = new ArrayList<DoublePoint>();
+    	for (String[] items : recItems) {
+    		DoublePoint pt = new DoublePoint(extractFieldsAsDoubleArray(items , fields));
+    		records.add(pt);
+    	}
+    	return records;
+    }
+   
     
     /**
      * @param items
