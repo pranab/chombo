@@ -158,7 +158,7 @@ object Record {
    * @param fieldOrdinals
    * @return
   */
-  def extractFields(fields: Array[String], fieldOrdinals: Array[Integer]) : Record = {
+  def createFromFields(fields: Array[String], fieldOrdinals: Array[Integer]) : Record = {
 	  val keyRec = new Record(fieldOrdinals.length)
 	  fieldOrdinals.foreach(ord => {
 	      keyRec.addString(fields(ord))
@@ -172,7 +172,7 @@ object Record {
  * @param end
  * @return
  */
-  def extractFields(fields: Array[String], beg:Int, end:Int) : Record = {
+  def createFromFields(fields: Array[String], beg:Int, end:Int) : Record = {
 	  val rec = new Record(end-beg)
 	  for(i <- beg to (end - 1)){
 	     rec.addString(fields(i))
@@ -264,6 +264,19 @@ object Record {
      	case Some(fi) => Record(fields, fi)
      	case None => Record(default)
      }
+  }
+  
+  /**
+  * @param red
+  * @param beg
+  * @param end
+  * @return
+  */
+  def extractFields(rec:Record, beg:Int, end:Int) : Array[String] =  {
+    val size = end - beg
+    val values = new Array[String](size)
+    Array.copy(rec.array, beg, values, 0, size)
+    values
   }
   
   /**

@@ -88,7 +88,7 @@ object StreamUtil {
 	  			val st = strContxt.textFileStream(path)
 	  			st.map(r => {
 	  			  val fields = r.split(fieldDelimIn)
-	  			  val id = Record.extractFields(fields, keyFieldOrdinals)
+	  			  val id = Record.createFromFields(fields, keyFieldOrdinals)
 	  			  (id, r)
 	  			})
 	  			
@@ -104,7 +104,7 @@ object StreamUtil {
 	  			}
 	  			st.map(r => {
 	  			  val fields = r.split(fieldDelimIn)
-	  			  val id = Record.extractFields(fields, keyFieldOrdinals)
+	  			  val id = Record.createFromFields(fields, keyFieldOrdinals)
 	  			  (id, r)
 	  			})
 	  		}
@@ -125,12 +125,12 @@ object StreamUtil {
 	  			  extractKey match {
 	  			    case true => {
 	  			    	val fields = r._2.split(fieldDelimIn)
-	  			    	val id = Record.extractFields(fields, keyFieldOrdinals)
+	  			    	val id = Record.createFromFields(fields, keyFieldOrdinals)
 	  			    	(id, r._2)
 	  			    }
 	  			    case false => {
 	  			    	val fields = r._1.split(fieldDelimIn)
-	  			    	val id = Record.extractFields(fields, keyFieldOrdinals)
+	  			    	val id = Record.createFromFields(fields, keyFieldOrdinals)
 	  			    	(id, r._2)
 	  			    }
 	  			  }

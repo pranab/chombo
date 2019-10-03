@@ -1045,6 +1045,36 @@ public class BasicUtils {
 	}
 
 	/**
+	 * @param arr
+	 * @param size
+	 * @param sampled
+	 */
+	public static <T> void selectRandomList(T[] arr, T[] sampled) {
+		int size = sampled.length;
+		for (int i = 0; i < size; ++i) {
+			boolean exists = true;
+			while(exists) {
+				int index = (int)(Math.random() * arr.length);
+				index = index < arr.length ? index : arr.length -1 ;
+				T instance = arr[index];
+				if ( i == 0) {
+					exists = false;
+				} else {
+					for (int j = 0; j < i; ++j) {
+						exists = instance.equals(sampled[j]);
+						if (exists) {
+							break;
+						}
+					}
+				}
+				if (!exists) {
+					sampled[i] = instance;
+				}
+			}
+		}
+	}
+
+	/**
 	 * @param record
 	 * @param numFields
 	 * @param throwEx
