@@ -334,7 +334,6 @@ trait GeneralUtility {
     data.reduceByKey((v1, v2) => {
 	  val min = if (v1._1 < v2._1) v1._1 else v2._1
 	  val max = if (v1._2 > v2._2) v1._2 else v2._2
-	  (min, max)
       (min, max)
 	})
   }

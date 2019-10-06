@@ -146,7 +146,17 @@ public class Record {
 		items[offset++] = BasicUtils.formatDouble(value, precision);
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	public String toString() {
 		return BasicUtils.join(items, delim);
+	}
+	
+	/**
+	 * @return
+	 */
+	public boolean hasNext() {
+		return offset < items.length;
 	}
 }
