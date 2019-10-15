@@ -462,4 +462,23 @@ trait GeneralUtility {
     })
   }
   
+  /**
+  * @param values
+  * @param index
+  * @return
+  */
+  def getColumnAverage(values:Array[Array[String]], index:Int) : Double = {
+	val sum = values.map(v => v(index).toDouble).reduce((v1, v2) => v1 + v2)
+	sum / values.length
+  }
+
+  /**
+  * @param values
+  * @param index
+  * @return
+  */
+  def getColumnMax(values:Array[Array[String]], index:Int) : Double = {
+	values.map(v => v(index).toDouble).reduce((v1, v2) => if (v1 > v2) v1 else v2)
+  }
+
 }
