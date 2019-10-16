@@ -56,7 +56,11 @@ public class IntAttributePredicate  extends AttributePredicate {
 			status = operand < value;
 		} else if (operator.equals(EQUAL_TO)) {
 			status = operand == value;
-		}  else {
+		} else if (operator.equals(GREATER_THAN_OREQUAL_TO)) {
+			status = operand >= value;
+		} else if (operator.equals(LESS_THAN_OREQUAL_TO)) {
+			status = operand <= value;
+		} else {
 			throw new IllegalArgumentException("invalid operator");
 		}
 		return status;

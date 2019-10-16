@@ -28,6 +28,8 @@ public abstract class AttributePredicate extends BasePredicate{
 	public static final String GREATER_THAN = "gt";
 	public static final String LESS_THAN = "lt";
 	public static final String EQUAL_TO = "eq";
+	public static final String GREATER_THAN_OREQUAL_TO = "ge";
+	public static final String LESS_THAN_OREQUAL_TO = "le";
 	public static final String IN = "in";
 	public static final String NOT_IN = "ni";
 	public static final String PREDICATE_SEP = "\\s+";
