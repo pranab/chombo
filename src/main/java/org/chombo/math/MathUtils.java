@@ -112,6 +112,26 @@ public class MathUtils {
 	}
 
 	/**
+	 * @param data
+	 * @param divider
+	 */
+	public static void divide(double[] data, double divider) {
+		for (int i = 0; i < data.length; ++i) {
+			data[i] /= divider;
+		}
+	}
+	
+	/**
+	 * @param data
+	 * @param divider
+	 */
+	public static void mutiply(double[] data, double multiplier) {
+		for (int i = 0; i < data.length; ++i) {
+			data[i] *= multiplier;
+		}
+	}
+
+	/**
      * @param cons
      * @param val
      * @return

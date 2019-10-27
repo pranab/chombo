@@ -480,5 +480,21 @@ trait GeneralUtility {
   def getColumnMax(values:Array[Array[String]], index:Int) : Double = {
 	values.map(v => v(index).toDouble).reduce((v1, v2) => if (v1 > v2) v1 else v2)
   }
+  
+  /**
+  * @param items
+  * @param keyFieldOrdinals
+  * @param seqFieldOrd
+  * @param quantFldOrd
+  * @return
+  */
+  def getTimeSeriesKeyValue(items:Array[String], keyFieldOrdinals:Array[Int], seqFieldOrd:Int, quantFldOrd:Int) :
+    (Record, Record) = {
+    val keyRec = Record(items, keyFieldOrdinals)
+    val valRec = Record(2)
+    valRec.addLong(items(seqFieldOrd).toLong)
+	valRec.addDouble(items(quantFldOrd).toDouble)
+    (keyRec, valRec)
+  }
 
 }
