@@ -60,7 +60,9 @@ object MissingValueCounter extends JobConfiguration {
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
-	   val data = sparkCntxt.textFile(inputPath)
+	   val data = sparkCntxt.textFile(inputPath).cache
+	   val totCount = data.count
+	   
 	   var missingCounted = data.flatMap(line => {
 		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   if (operation.equals("row")) {
@@ -71,21 +73,25 @@ object MissingValueCounter extends JobConfiguration {
 		     }
 		     
              val count = BasicUtils.missingFieldCount(items, beg);
-             val recs = ArrayBuffer[(Record, Int)]()
+             val recs = ArrayBuffer[(Record, Record)]()
 		     if (count > 0) {
-		       val rec = (key, count)
+		       val valrec = new Record(1)
+		       valrec.addInt(count)
+		       val rec = (key, valrec)
 		       recs += rec
 		     }
 		     recs
 		   } else {
 		     //column wise
-		     val recs = ArrayBuffer[(Record, Int)]()
+		     val recs = ArrayBuffer[(Record, Record)]()
 		     items.zipWithIndex.foreach(f => {
 		       if (f._2 >= beg && f._1.isEmpty()) {
 		         val key = Record(1)
 		         key.addInt(f._2)
 		         val count = 1
-		         val rec = (key, count)
+		         val valrec = new Record(1)
+		         valrec.addInt(count)
+		         val rec = (key, valrec)
 		         recs += rec
 		       }
 		     })
@@ -95,12 +101,22 @@ object MissingValueCounter extends JobConfiguration {
 	   
 	   //reduce for column counters
 	   missingCounted = 
-	     if (operation.equals("col")) missingCounted.reduceByKey((v1, v2) => v1 + v2) 
+	     if (operation.equals("col")) missingCounted.reduceByKey((v1, v2) =>{ 
+	       val valrec = new Record(1)
+		   valrec.addInt(v1.getInt(0) + v2.getInt(0))
+		   valrec
+	      }).mapValues(v => {
+	        val count = v.getInt(0)
+	        val valrec = new Record(2)
+	        valrec.addInt(count)
+	        valrec.addDouble(count/totCount)
+	        valrec
+	      }) 
 	     else missingCounted
 	   
 	   
 	   //serialize for output
-	   val serMissingCounted = missingCounted.map(r => r._1.toString + fieldDelimOut + r._2)
+	   val serMissingCounted = missingCounted.map(r => r._1.toString + fieldDelimOut + r._2.toString)
 	   
        if (debugOn) {
          var records = serMissingCounted.collect

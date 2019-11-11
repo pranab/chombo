@@ -1,5 +1,5 @@
-import sbtassembly.{Plugin},Plugin.AssemblyKeys._
-import sbtassembly.Plugin._
+
+
 
 name := "chombo-spark"
 
@@ -23,6 +23,3 @@ libraryDependencies ++=Seq(
   "mawazo" %% "chombo" % "1.0"
 )
 
-net.virtualvoid.sbt.graph.Plugin.graphSettings
-
-assemblySettings

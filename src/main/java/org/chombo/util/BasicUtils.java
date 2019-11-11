@@ -2627,6 +2627,40 @@ public class BasicUtils {
 	}
 	
 	/**
+	 * @param items
+	 * @param beg
+	 * @param nullTag
+	 * @return
+	 */
+	public static int nullFieldCount(String[] items, int beg, String nullTag) {
+    	int count = 0;
+    	for (int i = beg ; i < items.length; ++i) {
+    		if (isNull(items[i], nullTag)) {
+    			++count;
+    		}
+    	} 
+		return count;
+	}
+	
+	/**
+	 * @param items
+	 * @param nullTag
+	 * @return
+	 */
+	public static int nullFieldCount(String[] items, String nullTag) {
+		return nullFieldCount(items, 0, nullTag);
+	}
+	
+	/**
+	 * @param value
+	 * @param nullTag
+	 * @return
+	 */
+	public static boolean isNull(String value, String nullTag) {
+		return value.isEmpty() || value.equals(nullTag);
+	}
+	
+	/**
 	 * @param value
 	 * @param strength
 	 * @return
