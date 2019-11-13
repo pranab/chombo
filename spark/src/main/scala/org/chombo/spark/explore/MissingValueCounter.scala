@@ -46,6 +46,7 @@ object MissingValueCounter extends JobConfiguration {
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val operation = getStringParamOrElse(appConfig, "operation.dimension", "row")
+	   val missingValueTag = this.getOptionalStringParam(appConfig, "missing.tag")
 	   
 	   var beg = 0
 	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
@@ -72,8 +73,11 @@ object MissingValueCounter extends JobConfiguration {
 		       case None => Record(line)
 		     }
 		     
-             val count = BasicUtils.missingFieldCount(items, beg);
-             val recs = ArrayBuffer[(Record, Record)]()
+         val count = missingValueTag match {
+           case Some(tag) => BasicUtils.nullFieldCount(items, beg, tag)
+           case None => BasicUtils.missingFieldCount(items, beg)
+         }
+         val recs = ArrayBuffer[(Record, Record)]()
 		     if (count > 0) {
 		       val valrec = new Record(1)
 		       valrec.addInt(count)
@@ -85,7 +89,11 @@ object MissingValueCounter extends JobConfiguration {
 		     //column wise
 		     val recs = ArrayBuffer[(Record, Record)]()
 		     items.zipWithIndex.foreach(f => {
-		       if (f._2 >= beg && f._1.isEmpty()) {
+		       val isMissing = missingValueTag match {
+		         case Some(tag) => BasicUtils.isNull(f._1, tag)
+		         case None => f._1.isEmpty()
+		       }
+		       if (f._2 >= beg && isMissing) {
 		         val key = Record(1)
 		         key.addInt(f._2)
 		         val count = 1

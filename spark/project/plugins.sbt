@@ -9,7 +9,7 @@ addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "5.2.4")
 
 resolvers ++= Seq(
   "Cloudera Repository" at "https://repository.cloudera.com/artifactory/cloudera-repos/",
-  "Akka Repository" at "http://repo.akka.io/releases/",
+  "Akka Repository" at "https://repo.akka.io/releases/",
   "scala-tools" at "https://oss.sonatype.org/content/groups/scala-tools",
   "Github Maven Repository" at "https://github.com/pranab/hoidla/tree/master/target"
 )
