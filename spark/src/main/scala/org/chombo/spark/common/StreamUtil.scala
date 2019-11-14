@@ -22,8 +22,8 @@ import org.apache.spark.streaming.dstream.DStream
 import com.typesafe.config.Config
 import org.apache.spark.streaming.StreamingContext
 import org.apache.spark.storage.StorageLevel
-import kafka.serializer.StringDecoder
-import org.apache.spark.streaming.kafka.KafkaUtils
+//import kafka.serializer.StringDecoder
+//import org.apache.spark.streaming.kafka.KafkaUtils
 import scala.collection.mutable.Buffer
 import scala.collection.JavaConverters._
 
@@ -50,6 +50,7 @@ object StreamUtil {
 	  			strContxt.socketTextStream(host, port, StorageLevel.MEMORY_AND_DISK_SER_2)
 	  		}
 	  		
+	  		/*
 	  		case "kafka" => {
 	  			//kafka as stream source 
 	  			val brokerList = config.getString("source.metadata.broker.list")
@@ -63,7 +64,7 @@ object StreamUtil {
 	  				strContxt, kafkaParams, topics)
 	  			st.map(r => r._2)
 	 	  	}
-
+				*/
 	  	}
 	  	strm
 	}
@@ -100,7 +101,7 @@ object StreamUtil {
 	  			val port = config.getInt("source.socket.receiver.port")
 	  			val st = strContxt.socketTextStream(host, port, StorageLevel.MEMORY_AND_DISK_SER_2)
 	  			if (debugOn) {
-	  			  st.foreach(rdd => {println("*** num of records in RDD: " + rdd.count)})
+	  			  st.foreachRDD(rdd => {println("*** num of records in RDD: " + rdd.count)})
 	  			}
 	  			st.map(r => {
 	  			  val fields = r.split(fieldDelimIn)
@@ -109,6 +110,7 @@ object StreamUtil {
 	  			})
 	  		}
 	  		
+	  		/*
 	  		case "kafka" => {
 	  			//kafka as stream source 
 	  			val brokerList = config.getString("source.metadata.broker.list")
@@ -136,7 +138,8 @@ object StreamUtil {
 	  			  }
 	  			})
 	 	  	}
-
+				*/
+	  		
 	  	}
 	  	strm
 	}

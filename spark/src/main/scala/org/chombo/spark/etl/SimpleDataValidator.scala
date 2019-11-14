@@ -20,6 +20,7 @@ package org.chombo.spark.etl
 
 import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
+import org.apache.spark.util.LongAccumulator
 import scala.collection.JavaConverters._
 import org.chombo.util.BaseAttribute
 import org.chombo.util.BasicUtils
@@ -67,7 +68,7 @@ object SimpleDataValidator extends JobConfiguration {
 	   val saveOutput = appConfig.getBoolean("save.output")
 	   
 	   //accumulators
-	   val invalidRecCount = sparkCntxt.accumulator[Long](0, "invalidRecCount")
+	   val invalidRecCount = new LongAccumulator()
 
 	   
 	   //sample if necessary
@@ -152,7 +153,7 @@ object SimpleDataValidator extends JobConfiguration {
 	     val status = outputValidRecs match {
 	       case true => {
 	         val valid = !r.contains(invalidRecordMarker) && !r.contains(invalidFieldMarker)
-	         if (!valid) invalidRecCount += 1
+	         if (!valid) invalidRecCount.add(1)
 	         valid
 	       }
 	       case false => r.contains(invalidRecordMarker) || r.contains(invalidFieldMarker)

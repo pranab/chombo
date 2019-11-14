@@ -21,6 +21,7 @@ import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
 import org.apache.spark.rdd.RDD
+import org.apache.spark.util.LongAccumulator
 import org.chombo.util.BasicUtils
 import org.chombo.spark.common.Record
 import scala.collection.mutable.ArrayBuffer
@@ -74,9 +75,9 @@ object RecordSetBulkMutator extends JobConfiguration {
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
-	   val updateCounter = sparkCntxt.accumulator(0)
-	   val insertCounter = sparkCntxt.accumulator(0)
-	   val deleteCounter = sparkCntxt.accumulator(0)
+	   val updateCounter = new LongAccumulator()
+	   val insertCounter = new LongAccumulator()
+	   val deleteCounter = new LongAccumulator()
 	   
 	   //base and incremental data
 	   val baseData = sparkCntxt.textFile(inputPath)
@@ -113,9 +114,9 @@ object RecordSetBulkMutator extends JobConfiguration {
 	               -fields(seqFieldOrd).toLong
 	             })
 	             if (recs.size == 1) {
-	               insertCounter += 1
+	               insertCounter.add(1)
 	             } else {
-	               updateCounter += 1
+	               updateCounter.add(1)
 	             }
 	             val r = recs(0)
 	             values += r
@@ -128,7 +129,7 @@ object RecordSetBulkMutator extends JobConfiguration {
 	           })
 	         } else {
 	           //delete
-	           deleteCounter += 1
+	           deleteCounter.add(1)
 	           keyedRecs.filter(v => v._2.toSeq.length == 1).map(v => v._2.toSeq(0))
 	         }
 		     recs
@@ -145,7 +146,7 @@ object RecordSetBulkMutator extends JobConfiguration {
 	               val fields = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 	               -fields(seqFieldOrd).toLong
 	             })
-	             updateCounter += 1
+	             updateCounter.add(1)
 	             
 	             //recent
 	             val v = recs(0).substring(prefixLen)
@@ -175,14 +176,14 @@ object RecordSetBulkMutator extends JobConfiguration {
 	                 values
 	               } else {
 	                 //delete
-	            	 deleteCounter += 1	                 
+	            	 deleteCounter.add(1)                
 	            	 val r = delRecPrefix + rec
 	                 values += r
 	                 values
 	               }
 	             } else {
 	               //insert
-	               insertCounter += 1
+	               insertCounter.add(1)
 	               values += rec
 	               values
 	             }

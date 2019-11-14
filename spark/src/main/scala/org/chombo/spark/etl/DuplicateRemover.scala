@@ -19,6 +19,7 @@ package org.chombo.spark.etl
 
 import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
+import org.apache.spark.util.LongAccumulator
 import scala.collection.JavaConverters._
 import org.chombo.stats.CompleteStat
 import org.chombo.util.BasicUtils
@@ -52,9 +53,8 @@ object DuplicateRemover extends JobConfiguration {
 	   val saveOutput = appConfig.getBoolean("save.output")
 	   
 	   //accumulators
-	   val dupRecCount = sparkCntxt.accumulator[Long](0, "dupRecCount")
-
-	   
+	   //val dupRecCount = sparkCntxt.accumulator[Long](0, "dupRecCount")
+	   val dupRecCount = new LongAccumulator()
 	   val data = sparkCntxt.textFile(inputPath)
 	   val keyedData = data.keyBy(r => {
 	     val key = KeyAttributeArray match {
@@ -73,7 +73,7 @@ object DuplicateRemover extends JobConfiguration {
 	     val va = vi.toArray
 	     var rec = va.head
 	     val size = va.length
-	     dupRecCount += (size - 1)
+	     dupRecCount.add(size - 1)
 	     rec = outpputMode match {
 	       case "all" => rec
 	       case "duplicate" => if (size > 1) rec else "X"
