@@ -23,13 +23,14 @@ import scala.collection.JavaConverters._
 import org.chombo.spark.common.Record
 import org.chombo.util.BasicUtils
 import scala.collection.mutable.ArrayBuffer
+import org.chombo.spark.common.GeneralUtility
 
 /**
  * Missing value counter row or column wise
  * @param args
  * @return
  */
-object MissingValueCounter extends JobConfiguration {
+object MissingValueCounter extends JobConfiguration with GeneralUtility {
    /**
     * @param args
     * @return
@@ -46,18 +47,15 @@ object MissingValueCounter extends JobConfiguration {
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val operation = getStringParamOrElse(appConfig, "operation.dimension", "row")
-	   val missingValueTag = this.getOptionalStringParam(appConfig, "missing.tag")
-	   
-	   var beg = 0
-	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
-	   val keyFieldOrdinals = keyFields match {
-	     case Some(fields:java.util.List[Integer]) => {
-	       beg = fields.size()
-	       Some(fields.asScala.toArray)
-	     }
-	     case None => None  
+	   val fieldWeights = getMandatoryIntDoubleMapParam(appConfig, "field.weights", "missing field weight list").asScala
+	   val numFields = fieldWeights.size
+	   var sumWeight = 0.0
+	   for ((k,v) <- fieldWeights) {
+	     sumWeight += v
 	   }
+	   val missingValueTag = getOptionalStringParam(appConfig, "missing.tag")
 	   
+	   val keyFields = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
@@ -68,39 +66,57 @@ object MissingValueCounter extends JobConfiguration {
 		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   if (operation.equals("row")) {
 		     //row wise
-		     val key =  keyFieldOrdinals match {
-		       case Some(fldOrdinals: Array[Integer]) => Record(items, fldOrdinals)
-		       case None => Record(line)
+		     val key =  keyFields match {
+		       case Some(fldOrdinals: Array[Int]) => Record(items, fldOrdinals)
+		       case None => Record("all")
 		     }
 		     
          val count = missingValueTag match {
-           case Some(tag) => BasicUtils.nullFieldCount(items, beg, tag)
-           case None => BasicUtils.missingFieldCount(items, beg)
+           case Some(tag) => {
+             var nullCount = 0
+             var sum = 0.0
+             for ((k,v) <- fieldWeights) {
+               val isNull = BasicUtils.isNull(items(k), tag)
+               nullCount += (if (isNull) 1 else 0)
+               sum += (if (isNull) 0 else v)
+             }
+             sum /= sumWeight
+             (nullCount, sum)}
+           case None => {
+             var missCount = 0
+             var sum = 0.0
+             for ((k,v) <- fieldWeights) {
+               val isMissing = items(k).isEmpty()
+               missCount += (if (isMissing) 1 else 0)
+               sum += (if (isMissing) 0 else v)
+             }
+             sum /= sumWeight
+             (missCount, sum)}
          }
          val recs = ArrayBuffer[(Record, Record)]()
-		     if (count > 0) {
-		       val valrec = new Record(1)
-		       valrec.addInt(count)
-		       val rec = (key, valrec)
-		       recs += rec
-		     }
+		     val valrec = new Record(2)
+		     valrec.addInt(count._1)
+		     valrec.addDouble(count._2)
+		     val rec = (key, valrec)
+		     recs += rec
 		     recs
 		   } else {
 		     //column wise
 		     val recs = ArrayBuffer[(Record, Record)]()
-		     items.zipWithIndex.foreach(f => {
+		     fieldWeights.foreach(r => {
+		       val fld = r._1
+		       val wt = r._2
 		       val isMissing = missingValueTag match {
-		         case Some(tag) => BasicUtils.isNull(f._1, tag)
-		         case None => f._1.isEmpty()
+		         case Some(tag) => BasicUtils.isNull(items(fld), tag)
+		         case None => items(fld).isEmpty()
 		       }
-		       if (f._2 >= beg && isMissing) {
-		         val key = Record(1)
-		         key.addInt(f._2)
-		         val count = 1
-		         val valrec = new Record(1)
-		         valrec.addInt(count)
-		         val rec = (key, valrec)
-		         recs += rec
+		       if (isMissing) {
+  		       val key = Record(1)
+  		       key.addInt(fld)
+  		       val valrec = new Record(1)
+  		       valrec.addInt(1)
+  		       val rec = (key, valrec)
+  		       recs += rec
 		       }
 		     })
 		     recs
@@ -111,8 +127,8 @@ object MissingValueCounter extends JobConfiguration {
 	   missingCounted = 
 	     if (operation.equals("col")) missingCounted.reduceByKey((v1, v2) =>{ 
 	       val valrec = new Record(1)
-		   valrec.addInt(v1.getInt(0) + v2.getInt(0))
-		   valrec
+		     valrec.addInt(v1.getInt(0) + v2.getInt(0))
+		     valrec
 	      }).mapValues(v => {
 	        val count = v.getInt(0)
 	        val valrec = new Record(2)
@@ -126,13 +142,13 @@ object MissingValueCounter extends JobConfiguration {
 	   //serialize for output
 	   val serMissingCounted = missingCounted.map(r => r._1.toString + fieldDelimOut + r._2.toString)
 	   
-       if (debugOn) {
-         var records = serMissingCounted.collect
-         records = 
-           if (operation.equals("row")) records.slice(0,20) 
-           else records
-         records.foreach(r => println(r))
-       }
+     if (debugOn) {
+       var records = serMissingCounted.collect
+       records = 
+         if (operation.equals("row")) records.slice(0,20) 
+         else records
+       records.foreach(r => println(r))
+     }
 	   
 	   if(saveOutput) {	   
 	     serMissingCounted.saveAsTextFile(outputPath) 
