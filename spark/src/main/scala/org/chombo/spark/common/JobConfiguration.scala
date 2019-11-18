@@ -807,6 +807,22 @@ trait JobConfiguration {
 	}
 	
 	/**
+	 * @param config
+	 * @param paramName
+	 * @param errorMsg
+	 * @return
+	 */
+	def getMandatoryIntIntMapParam(config:Config, paramName:String, errorMsg:String) : java.util.Map[Int, Int] = {
+	  val paramMap = new java.util.HashMap[Int, Int]
+	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg)
+	  for (param <- paramList) {
+	    val items = param.split(BasicUtils.DEF_SUB_FIELD_DELIM)
+	    paramMap.put(items(0).toInt, items(1).toInt)
+	  }
+	  paramMap
+	}
+
+	/**
 	 * @param value
 	 * @param members
 	 * @param errMsg

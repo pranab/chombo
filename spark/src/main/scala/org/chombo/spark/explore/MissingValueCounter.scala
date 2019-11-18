@@ -110,7 +110,7 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 		         case Some(tag) => BasicUtils.isNull(items(fld), tag)
 		         case None => items(fld).isEmpty()
 		       }
-		       if (isMissing) {
+		       if (!isMissing) {
   		       val key = Record(1)
   		       key.addInt(fld)
   		       val valrec = new Record(1)
@@ -133,7 +133,7 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 	        val count = v.getInt(0)
 	        val valrec = new Record(2)
 	        valrec.addInt(count)
-	        valrec.addDouble(count/totCount)
+	        valrec.addDouble(count.toDouble/totCount)
 	        valrec
 	      }) 
 	     else missingCounted

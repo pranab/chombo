@@ -46,8 +46,17 @@ object UniqueValueCounter extends JobConfiguration {
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
 	   val catFieldOrdinals = getMandatoryIntListParam(appConfig, "cat.fieldOrdinals").asScala.toArray
 	   val uniqueValCount = getBooleanParamOrElse(appConfig, "count.values", false)
-	   val compUniqueValCount = getConditionalMandatoryBooleanParam(uniqueValCount, appConfig, "count.compValues", "")
+	   val compUniqueValCount = getConditionalMandatoryBooleanParam(uniqueValCount, appConfig, "count.compValues", 
+	       "missing copisite unique value count flag")
 	   val caseInsensitive = getBooleanParamOrElse(appConfig, "case.insensitive", false)
+	   val completenessfactor = getConditionalMandatoryBooleanParam(uniqueValCount, appConfig, "completeness.factor", 
+	       "missing completeness flag")
+	   val cardinality = if (completenessfactor) {
+	     getMandatoryIntIntMapParam(appConfig, "field.cardinality", "missing field cardinality parameter").asScala
+	   } else {
+	     (new java.util.HashMap[Int, Int]).asScala
+	   }
+	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
@@ -55,6 +64,7 @@ object UniqueValueCounter extends JobConfiguration {
 	   val data = sparkCntxt.textFile(inputPath)
 	   
 	   val serUniqueData = if (uniqueValCount) {
+	     //unique value count
 		   var colValues = data.flatMap(line => {
 			   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 			   if (compUniqueValCount) {
@@ -72,14 +82,33 @@ object UniqueValueCounter extends JobConfiguration {
 		   }).reduceByKey((v1, v2) => v1 + v2)	
 		   
 		   if (!compUniqueValCount) {
-		       //from per unique value count to all value value count
-			   colValues = colValues.map(r => {
+		     //from per unique value count to all value value count
+			   var colValCount = colValues.map(r => {
 			     val key = r._1
-	             val newKey = Record(key.size - 1, key)
-	             (newKey, 1)
-		       }).reduceByKey((v1, v2) => v1 + v2)		     
+	         val newKey = Record(key.size - 1, key)
+	         (newKey, 1)
+		     }).reduceByKey((v1, v2) => v1 + v2).mapValues(v => {
+		       val valRec = Record(1)
+		       valRec.addInt(v)
+		       valRec
+		     })	
+		     if (completenessfactor) {
+		       //distribution completeness factor
+		       colValCount = colValCount.map(r => {
+		         val keyRec = r._1
+		         val count = r._2.getInt(0)
+		         val card = cardinality.get(keyRec.getInt(0)).get
+		         val compFac = count.toDouble / card
+		         val valRec = Record(2)
+		         valRec.addInt(count)
+		         valRec.addDouble(compFac)
+		         (keyRec, valRec)
+		       })
+		     }
+			   colValCount.map(r => r._1.toString + fieldDelimOut + r._2.withFloatPrecision(precision).toString)
+		   } else {
+		     colValues.map(r => r._1.toString + fieldDelimOut + r._2)
 		   }
-		   colValues.map(r => r._1.toString + fieldDelimOut + r._2)
 	   } else {
 	      //unique values
 	      val colValues = data.flatMap(line => {
@@ -90,14 +119,15 @@ object UniqueValueCounter extends JobConfiguration {
 		      colValue = if (caseInsensitive) colValue.toLowerCase() else colValue
 		      val colValSet = Set[String](colValue)
 		      (colIndex, colValSet)
-		   })
+		     })
 	     }).reduceByKey((v1, v2) => v1 ++ v2)
 	     colValues.map(r => "" + r._1 + fieldDelimOut + r._2.mkString(fieldDelimOut))
 	   }
 	   
+	   
 	   if (debugOn) {
 	     val uniqueValues = serUniqueData.collect
-		 uniqueValues.foreach(line => println(line))
+		   uniqueValues.foreach(line => println(line))
 	   }
 		   
 	   if (saveOutput) {
