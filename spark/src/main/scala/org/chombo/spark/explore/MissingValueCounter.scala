@@ -54,8 +54,9 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 	     sumWeight += v
 	   }
 	   val missingValueTag = getOptionalStringParam(appConfig, "missing.tag")
-	   
 	   val keyFields = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
+	   val outIncludeRec = getBooleanParamOrElse(appConfig, "output.includeRec", false)
+	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
@@ -71,32 +72,33 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 		       case None => Record("all")
 		     }
 		     
+         var complCount = 0
+         var sum = 0.0
          val count = missingValueTag match {
            case Some(tag) => {
-             var nullCount = 0
-             var sum = 0.0
              for ((k,v) <- fieldWeights) {
                val isNull = BasicUtils.isNull(items(k), tag)
-               nullCount += (if (isNull) 1 else 0)
+               complCount += (if (!isNull) 1 else 0)
                sum += (if (isNull) 0 else v)
              }
              sum /= sumWeight
-             (nullCount, sum)}
+             (complCount, sum)}
            case None => {
-             var missCount = 0
-             var sum = 0.0
              for ((k,v) <- fieldWeights) {
                val isMissing = items(k).isEmpty()
-               missCount += (if (isMissing) 1 else 0)
+               complCount += (if (!isMissing) 1 else 0)
                sum += (if (isMissing) 0 else v)
              }
              sum /= sumWeight
-             (missCount, sum)}
+             (complCount, sum)}
          }
          val recs = ArrayBuffer[(Record, Record)]()
-		     val valrec = new Record(2)
+		     val valrec = if (outIncludeRec) new Record(3) else new Record(2)
 		     valrec.addInt(count._1)
 		     valrec.addDouble(count._2)
+		     if (outIncludeRec) {
+		       valrec.addString(line)
+		     }
 		     val rec = (key, valrec)
 		     recs += rec
 		     recs
@@ -140,7 +142,8 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 	   
 	   
 	   //serialize for output
-	   val serMissingCounted = missingCounted.map(r => r._1.toString + fieldDelimOut + r._2.toString)
+	   val serMissingCounted = missingCounted.map(
+	       r => r._1.toString + fieldDelimOut + r._2.withFloatPrecision(precision).toString)
 	   
      if (debugOn) {
        var records = serMissingCounted.collect
