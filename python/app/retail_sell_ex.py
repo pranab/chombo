@@ -91,7 +91,15 @@ def genData():
 			print ("{},{},{},{},{},{},{},{}".format(xid,custId,storeId,zip,timeString,prod,quantity,monetaryAmt))
 
 def insMissing():
-	filePath = sys.argv[2]
+	fileName = sys.argv[2]
+	fldMissDistr = NonParamRejectSampler(0, 1, 30, 20, 10, 40, 10, 10, 20, 5)
+	for rec in fileRecGen(fileName, ","):
+		if isEventSampled(10):
+			mfCnt = randint(1, 4)
+			for i in range(mfCnt):
+				fld = fldMissDistr.sample()
+				rec[fld] = ""
+		print(",".join(rec))
 	
 if __name__ == "__main__":
 	op = sys.argv[1]
