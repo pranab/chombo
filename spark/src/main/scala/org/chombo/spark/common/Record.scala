@@ -223,6 +223,7 @@ object Record {
 	  }
   }
 
+
   /**
   * @param fields
   * @param rec
@@ -230,6 +231,7 @@ object Record {
   def populateFields(fields:Array[String], rec:Record) {
     fields.foreach(v => rec.addString(v))
   }
+
 
   /**
   * @param fields
@@ -264,6 +266,30 @@ object Record {
      	case Some(fi) => Record(fields, fi)
      	case None => Record(default)
      }
+  }
+
+  /**
+  * @param fields
+  * @param fieldOrdinals
+  * @param rec
+  */
+  def populateFields(fields:Array[String], fieldOrdinalsAndTypes:Array[(Int, String)], rec:Record)   {
+	  for (ft <- fieldOrdinalsAndTypes) {
+	    rec.addStringAsTyped(fields(ft._1), ft._2)
+	  }
+  }
+  
+  /**
+  * @param fields
+  * @param fieldOrdinals
+  * @param rec
+  */
+  def create(fields:Array[String], fieldOrdinalsAndTypes:Array[(Int, String)]) : Record =  {
+    val rec = Record(fieldOrdinalsAndTypes.length)
+	  for (ft <- fieldOrdinalsAndTypes) {
+	    rec.addStringAsTyped(fields(ft._1), ft._2)
+	  }
+    rec
   }
   
   /**
