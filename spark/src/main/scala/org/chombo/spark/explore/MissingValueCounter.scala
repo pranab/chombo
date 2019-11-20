@@ -54,8 +54,6 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 	     sumWeight += v
 	   }
 	   val missingValueTag = getOptionalStringParam(appConfig, "missing.tag")
-	   val keyFields = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
-	   val outIncludeRec = getBooleanParamOrElse(appConfig, "output.includeRec", false)
 	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
@@ -67,10 +65,7 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   if (operation.equals("row")) {
 		     //row wise
-		     val key =  keyFields match {
-		       case Some(fldOrdinals: Array[Int]) => Record(items, fldOrdinals)
-		       case None => Record("all")
-		     }
+		     val key =  Record("all")
 		     
          var complCount = 0
          var sum = 0.0
@@ -78,27 +73,29 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
            case Some(tag) => {
              for ((k,v) <- fieldWeights) {
                val isNull = BasicUtils.isNull(items(k), tag)
-               complCount += (if (!isNull) 1 else 0)
-               sum += (if (isNull) 0 else v)
+               if (!isNull)  {
+                 complCount += 1
+                 sum += v
+               }
              }
              sum /= sumWeight
              (complCount, sum)}
            case None => {
              for ((k,v) <- fieldWeights) {
                val isMissing = items(k).isEmpty()
-               complCount += (if (!isMissing) 1 else 0)
-               sum += (if (isMissing) 0 else v)
+               if (!isMissing) {
+                 complCount += 1
+                 sum += v
+               }
              }
              sum /= sumWeight
              (complCount, sum)}
          }
          val recs = ArrayBuffer[(Record, Record)]()
-		     val valrec = if (outIncludeRec) new Record(3) else new Record(2)
+		     val valrec = Record(3)
+		     valrec.addString(line)
 		     valrec.addInt(count._1)
 		     valrec.addDouble(count._2)
-		     if (outIncludeRec) {
-		       valrec.addString(line)
-		     }
 		     val rec = (key, valrec)
 		     recs += rec
 		     recs
@@ -127,7 +124,8 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 	   
 	   //reduce for column counters
 	   missingCounted = 
-	     if (operation.equals("col")) missingCounted.reduceByKey((v1, v2) =>{ 
+	     if (operation.equals("col")){ 
+	       missingCounted.reduceByKey((v1, v2) =>{ 
 	       val valrec = new Record(1)
 		     valrec.addInt(v1.getInt(0) + v2.getInt(0))
 		     valrec
@@ -137,13 +135,18 @@ object MissingValueCounter extends JobConfiguration with GeneralUtility {
 	        valrec.addInt(count)
 	        valrec.addDouble(count.toDouble/totCount)
 	        valrec
-	      }) 
-	     else missingCounted
+	      })} else {
+	       missingCounted
+	     }
 	   
 	   
 	   //serialize for output
-	   val serMissingCounted = missingCounted.map(
-	       r => r._1.toString + fieldDelimOut + r._2.withFloatPrecision(precision).toString)
+	   val serMissingCounted = missingCounted.map(r => {
+	     if (operation.equals("col"))
+	       r._1.toString + fieldDelimOut + r._2.withFloatPrecision(precision).toString
+	     else 
+	       r._2.withFloatPrecision(precision).toString
+	   })
 	   
      if (debugOn) {
        var records = serMissingCounted.collect
