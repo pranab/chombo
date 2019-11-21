@@ -30,13 +30,13 @@ import org.chombo.spark.common.GeneralUtility
  * @param args
  * @return
  */
-object MissingValueCounter extends JobConfiguration with GeneralUtility {
+object MissingValueMetric extends JobConfiguration with GeneralUtility {
    /**
     * @param args
     * @return
     */
    def main(args: Array[String])  {
-	   val appName = "missingValueCounter"
+	   val appName = "missingValueMetric"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)

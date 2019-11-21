@@ -445,7 +445,7 @@ trait GeneralUtility {
   */
   def createInstance[T:ClassTag](name: String): T = {
     val obj = Class.forName(name).newInstance()
-	obj.asInstanceOf[T]
+	  obj.asInstanceOf[T]
   }
   
   /**
@@ -468,8 +468,22 @@ trait GeneralUtility {
   * @return
   */
   def getColumnAverage(values:Array[Array[String]], index:Int) : Double = {
-	val sum = values.map(v => v(index).toDouble).reduce((v1, v2) => v1 + v2)
-	sum / values.length
+	  val sum = values.map(v => v(index).toDouble).reduce((v1, v2) => v1 + v2)
+	  sum / values.length
+  }
+
+  /**
+  * @param values
+  * @param index
+  * @return
+  */
+  def getColumnStat(values:Array[Array[String]], index:Int) : (Double, Double) = {
+    val col = values.map(v => v(index).toDouble)
+	  val sum = col.reduce((v1, v2) => v1 + v2)
+	  val sumSq = col.reduce((v1, v2) => v1 * v1 + v2 * v2)
+	  val mean = sum / values.length
+	  val sd = Math.sqrt(sumSq / (values.length - 1) - mean * mean)
+	  (mean, sd)
   }
 
   /**
@@ -478,7 +492,7 @@ trait GeneralUtility {
   * @return
   */
   def getColumnMax(values:Array[Array[String]], index:Int) : Double = {
-	values.map(v => v(index).toDouble).reduce((v1, v2) => if (v1 > v2) v1 else v2)
+	  values.map(v => v(index).toDouble).reduce((v1, v2) => if (v1 > v2) v1 else v2)
   }
   
   /**
@@ -493,7 +507,7 @@ trait GeneralUtility {
     val keyRec = Record(items, keyFieldOrdinals)
     val valRec = Record(2)
     valRec.addLong(items(seqFieldOrd).toLong)
-	valRec.addDouble(items(quantFldOrd).toDouble)
+	  valRec.addDouble(items(quantFldOrd).toDouble)
     (keyRec, valRec)
   }
 

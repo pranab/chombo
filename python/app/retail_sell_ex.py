@@ -98,7 +98,7 @@ def insMissing():
 			mfCnt = randint(1, 4)
 			for i in range(mfCnt):
 				fld = fldMissDistr.sample()
-				rec[fld] = ""
+				rec[fld] = "null"
 		print(",".join(rec))
 	
 if __name__ == "__main__":
