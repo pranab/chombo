@@ -36,6 +36,17 @@ case "$1" in
 	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT exp.conf
 ;;
 
+"missMetric")
+	echo "running MissingValueMetric"
+	CLASS_NAME=org.chombo.spark.explore.MissingValueMetric
+	INPUT=file:///Users/pranab/Projects/bin/chombo/input/mvm/*
+	OUTPUT=file:///Users/pranab/Projects/bin/chombo/output/mvm
+	rm -rf ./output/mvm
+	$SPARK_HOME/bin/spark-submit --class $CLASS_NAME   \
+	--conf spark.ui.killEnabled=true --master $MASTER $JAR_NAME  $INPUT $OUTPUT exp.conf
+	ls -l ./output/mvm
+;;
+
 *) 
 	echo "unknown operation $1"
 	;;

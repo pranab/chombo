@@ -47,6 +47,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_DATE = "date";
 	public static final String DATA_TYPE_EPOCH_TIME = "epochTime";
 	public static final String DATA_TYPE_SSN = "SSN";
+	public static final String DATA_TYPE_NAME = "name";
 	public static final String DATA_TYPE_PHONE_NUM = "phoneNumber";
 	public static final String DATA_TYPE_AGE = "age";
 	public static final String DATA_TYPE_STREET_ADDRESS = "streetAddress";
@@ -63,6 +64,7 @@ public class BaseAttribute  implements Serializable {
 	public static final String DATA_TYPE_ANY = "any";
 	public static final String DATA_TYPE_GEO_LOCATION = "geoLocation";
 	
+	public static final String PATTERN_STR_NAME = "^([A-Z]{1}[a-z]{1,20}(\\s{1,4}[A-Z]{1}[a-z]{0,20}){1,4})$";
 	public static final String PATTERN_STR_SSN = "^(\\d{3}( |-)?\\d{2}( |-)?\\d{4}|\\w{3}( |-)?\\w{2}( |-)?(\\w){4})$";
 	public static final String PATTERN_STR_PHONE_NUM = "^(\\(?\\d{3}\\)?[ \\.-]?\\d{3}[ \\.-]?\\d{4})$";
 	public static final String PATTERN_STR_STREET_ADDRESS = "^(\\d{1,8}(\\s{1,4}\\S{1,20})+)$";
@@ -75,6 +77,7 @@ public class BaseAttribute  implements Serializable {
  	
  	public static Map<String, String> patternStrings = new HashMap<String, String>();
  	static {
+ 		patternStrings.put(DATA_TYPE_NAME, PATTERN_STR_NAME);
  		patternStrings.put(DATA_TYPE_SSN, PATTERN_STR_SSN);
  		patternStrings.put(DATA_TYPE_PHONE_NUM, PATTERN_STR_PHONE_NUM);
  		patternStrings.put(DATA_TYPE_STREET_ADDRESS, PATTERN_STR_STREET_ADDRESS);
