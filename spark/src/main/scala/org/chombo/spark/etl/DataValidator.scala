@@ -29,6 +29,7 @@ import org.chombo.stats.MedianStatsManager
 import scala.collection.JavaConverters._
 import scala.collection.mutable.HashMap
 import org.chombo.util.BasicUtils
+import org.apache.spark.rdd.RDD
 
 /**
  * @author pranab
@@ -61,7 +62,7 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
  * @return
  */
    def main(args: Array[String]) {
-       val appName = "dataValidator"
+     val appName = "dataValidator"
 	   val Array(inputPath: String, outputPath: String, configFile: String) = getCommandLineArgs(args, 3)
 	   val config = createConfig(configFile)
 	   val sparkConf = createSparkConf(appName, config, false)
@@ -73,11 +74,8 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	   val valTagSeparator = getStringParamOrElse(appConfig, "val.tag.separator", ";")
 	   val filterInvalidRecords = getBooleanParamOrElse(appConfig, "filter.invalid.records", true)
 	   val outputInvalidRecords = getBooleanParamOrElse(appConfig, "output.invalid.records", true)
-	   val invalidRecordsOutputFile = if (outputInvalidRecords) {
-	     getMandatoryStringParam(appConfig, "invalid.records.output.file", "missing invalid output file path")
-	   } else {
-	     ""
-	   }
+	   val invalidRecordsOutputFile =  getConditionalMandatoryStringParam(outputInvalidRecords, appConfig, 
+	       "invalid.records.output.file", "missing invalid output file path")
 	   val tagWithFailedValidator = getBooleanParamOrElse(appConfig, "tag.with.failed.validator", true)
 	   val invalidFieldMask = getStringParamOrElse(config, "invalid.field.mask", "??????")
 	   
@@ -89,6 +87,24 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	       appConfig.getString("custom.valid.factory.class")
 	     else
 	       null
+	     
+	   //validation metric
+	   val doMetric = getBooleanParamOrElse(appConfig, "calculate.metric", false)
+	   val (fieldWeights:Map[Int, Double], numValCheckFields:Int, sumFieldWeight:Double, tagMetric:Boolean) = 
+	   if (doMetric) {
+	     val fieldWeights = getMandatoryIntDoubleMapParam(appConfig, "field.weights", "missing field weight list").asScala
+	     val numFields = fieldWeights.size
+	     var sumWeight = 0.0
+	     for ((k,v) <- fieldWeights) {
+	       sumWeight += v
+	     }
+	     val tagMetric = getBooleanParamOrElse(appConfig, "tag.metric", false)
+	     (fieldWeights, numFields, sumWeight, tagMetric) 
+	   } else {
+	     val fieldWeights = new java.util.HashMap[Int, Double]().asScala
+	     (fieldWeights, 0, 0.0, false) 
+	   }
+	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
 	   val debugOn = appConfig.getBoolean("debug.on")
 	   val saveOutput = appConfig.getBoolean("save.output")
 
@@ -107,7 +123,7 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	     case None => None
 	   }
        
-       //initialize median stats manager
+     //initialize median stats manager
 	   val medStatsFilePath = this.getOptionalStringParam(appConfig, "med.stats.file.path")
 	   val medStatsManager = medStatsFilePath match {
 	     case Some(path:String) => {
@@ -122,20 +138,20 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	     case None => None
 	   }
 	   
-	  //create field validators
-      validationSchema.getAttributes().asScala.foreach( attr  => {
+	   //create field validators
+     validationSchema.getAttributes().asScala.foreach( attr  => {
     	  	if (null != attr.getValidators()) {
     	  		val validatorTags =  attr.getValidators().asScala.toArray
     	  		createValidators(appConfig, validatorTags, attr.getOrdinal(), validationSchema, 
     	  		    mutValidators, statsManager, medStatsManager)
     	  	}
-      })
+     })
       
-      //create row validators
-      val rowValidatorTags = validationSchema.getRowValidators().asScala.toArray
-      val rowValidators = createRowValidators(appConfig, rowValidatorTags, fieldDelimIn)
+     //create row validators
+     val rowValidatorTags = validationSchema.getRowValidators().asScala.toArray
+     val rowValidators = createRowValidators(appConfig, rowValidatorTags, fieldDelimIn)
 	   
-	  if (debugOn) {
+	   if (debugOn) {
 	     validators.foreach(kv => {
 	       println("field: " + kv._1 + " num validators:" + kv._2.length )
 	     })
@@ -177,15 +193,14 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	    		   !s._2
 	    		  })
 	    		  val field = 
-	    	       	if (failedValidators.isEmpty)
+	    	       if (failedValidators.isEmpty)
 	    	    	   z._1
 	    	    	 else {
 	    	    	   if (tagWithFailedValidator) {
 	    	    		   val fvals = failedValidators.map(vs => vs._1)
 	    	    		   if (debugOn) {
 	    	    			   println("failed validators " + fvals.mkString(","))
-	    		           }
-	    	    		   
+	    		         }
 	    	    		   z._1 + valTagSeparator + fvals.mkString(valTagSeparator)
 	    	    	   } else {
 	    	    	     invalidFieldMask
@@ -221,24 +236,30 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	    taggedRec
 	  })
 	  
-	  //failed validator annotated record
-	  taggedData.cache
+	   //failed validator annotated record
+	   taggedData.cache
 
-	 //filter valid data
-	 if (filterInvalidRecords) {
+	   //filter valid data
+	   if (filterInvalidRecords) {
 	     //only valid records
-		 val validData = taggedData.filter(line => !line.contains(valTagSeparator) && !line.contains(invalidFieldMask))
-		 validData.saveAsTextFile(outputPath)
-	 } else {
-	   //all records
-	   taggedData.saveAsTextFile(outputPath)
-	 }
+		   val validData = taggedData.filter(line => !line.contains(valTagSeparator) && !line.contains(invalidFieldMask))
+		   validData.saveAsTextFile(outputPath)
+	   } else {
+	     //all records
+	     val finalData = if (doMetric) {
+	       createValidationMetric(taggedData, fieldDelimIn, fieldDelimOut, valTagSeparator, fieldWeights, 
+	           sumFieldWeight, tagMetric, precision)
+	     } else {
+	       taggedData
+	     }
+	     finalData.saveAsTextFile(outputPath)
+	   }
 	  
-	 //output invalid data
-	 if (outputInvalidRecords){
-		val invalidData = taggedData.filter(line => line.contains(valTagSeparator) || line.contains(invalidFieldMask))
-		invalidData.saveAsTextFile(invalidRecordsOutputFile)
-	 }
+	   //output invalid data
+	   if (outputInvalidRecords){
+		  val invalidData = taggedData.filter(line => line.contains(valTagSeparator) || line.contains(invalidFieldMask))
+		  invalidData.saveAsTextFile(invalidRecordsOutputFile)
+	   }
    }
    
    /**
@@ -316,6 +337,45 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
     def registerValidators(fieldOrd : Int, validators : Validator*) {
       val valArr = validators.toArray
       mutValidators += fieldOrd -> valArr
+    }
+    
+    /**
+     * @param taggedData
+     * @param fieldDelimIn
+     * @param fieldDelimOut
+     * @param valTagSeparator
+     * @param fieldWeights
+     * @param tagMetric
+     * @param precision
+     * @return
+     */
+    private def createValidationMetric(taggedData:RDD[String], fieldDelimIn:String, fieldDelimOut:String, 
+        valTagSeparator:String, fieldWeights:Map[Int, Double], sumFieldWeight:Double, tagMetric:Boolean,
+        precision:Int) : RDD[String] =  {
+      val metricData = taggedData.map(line => {
+	     val items = line.split(fieldDelimIn, -1)
+	     val itemsZipped = items.zipWithIndex
+	     
+	     var validCount = 0
+	     var sum = 0.0
+	     val fields = itemsZipped.map(v => {
+	       val parts = v._1.split(valTagSeparator, -1)
+	       if (parts.length == 1 && fieldWeights.contains(v._2)) {
+	         validCount += 1
+	         sum += fieldWeights.get(v._2).get
+	       }
+	       //strip tags
+	       parts(0)
+	     })
+	     sum /= sumFieldWeight
+	     var newLine = fields.mkString(fieldDelimOut)
+	     if (tagMetric) {
+	       newLine += fieldDelimOut + "val"
+	     }
+	     newLine =  newLine + fieldDelimOut + validCount + fieldDelimOut + BasicUtils.formatDouble(sum, precision)
+	     newLine
+      })
+      metricData
     }
   
 }

@@ -450,11 +450,11 @@ trait JobConfiguration {
 	 * @param defNull
 	 * @return
 	 */
-    def getConditionalMandatoryStringListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String, defNull:Boolean) : 
+   def getConditionalMandatoryStringListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String, defNull:Boolean) : 
       java.util.List[java.lang.String] = {
       val defVal = if (defNull) null else  new java.util.ArrayList[java.lang.String]()
-	  if (condition) getMandatoryStringListParam(config, paramName, errorMsg) else defVal
-	}
+	    if (condition) getMandatoryStringListParam(config, paramName, errorMsg) else defVal
+	  }
 	
 	/**
 	 * @param condition
@@ -463,10 +463,10 @@ trait JobConfiguration {
 	 * @param errorMsg
 	 * @return
 	 */
-    def getConditionalMandatoryStringListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : 
+   def getConditionalMandatoryStringListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String) : 
       java.util.List[String] = {
-	  getConditionalMandatoryStringListParam(condition, config, paramName, errorMsg, true)
-	}
+	    getConditionalMandatoryStringListParam(condition, config, paramName, errorMsg, true)
+	 }
 
 	/**
 	 * @param config
