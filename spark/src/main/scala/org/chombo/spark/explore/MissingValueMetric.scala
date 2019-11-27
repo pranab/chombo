@@ -53,6 +53,7 @@ object MissingValueMetric extends JobConfiguration with GeneralUtility {
 	   for ((k,v) <- fieldWeights) {
 	     sumWeight += v
 	   }
+	   val tagMetric = getBooleanParamOrElse(appConfig, "tag.metric", false)
 	   val missingValueTag = getOptionalStringParam(appConfig, "missing.tag")
 	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
@@ -92,8 +93,11 @@ object MissingValueMetric extends JobConfiguration with GeneralUtility {
              (complCount, sum)}
          }
          val recs = ArrayBuffer[(Record, Record)]()
-		     val valrec = Record(3)
+		     val valrec = if (tagMetric) Record(4) else  Record(3)
 		     valrec.addString(line)
+		     if (tagMetric) {
+		       valrec.addString("cmp")
+		     }
 		     valrec.addInt(count._1)
 		     valrec.addDouble(count._2)
 		     val rec = (key, valrec)

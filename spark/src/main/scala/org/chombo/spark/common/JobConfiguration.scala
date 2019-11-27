@@ -108,7 +108,7 @@ trait JobConfiguration {
 		
 		//all spark properties
 		if (config.hasPath("sparkParam")) {
-			val sparkList = config.getConfigList("sparkParam").toList
+			val sparkList = config.getConfigList("sparkParam").asScala
 			sparkList.map ( cfg => {
 				val name = cfg.getString("name")
 				val value = cfg.getString("value")
@@ -118,7 +118,7 @@ trait JobConfiguration {
 	  
 		//all app properties
 		if (includeAppConfig && config.hasPath(appName)) {
-			val appList = config.getConfigList(appName).toList
+			val appList = config.getConfigList(appName).asScala
 			appList.map ( cfg => {
 				  val name = "app." + cfg.getString("name")
 				  val value = cfg.getString("value")
@@ -148,7 +148,7 @@ trait JobConfiguration {
 	 */
 	def addJars(sparkCntxt : SparkContext, config : Config, fromList : Boolean, paramName : String) {
 	  if (config.hasPath(paramName)) {
-	  	val jarPaths = config.getStringList(paramName).toList
+	  	val jarPaths = config.getStringList(paramName).asScala
 	  	jarPaths.foreach(jar => {  
 	  		sparkCntxt.addJar(jar)
 	  	})
@@ -644,7 +644,7 @@ trait JobConfiguration {
 	    defValue match {
 	      case Some(va:java.util.List[Double]) => {
 	        val dList = new java.util.ArrayList[java.lang.Double]()
-	        va.foreach(v => dList.add(v))
+	        va.asScala.foreach(v => dList.add(v))
 	        dList
 	      }
 	      case None => {
@@ -766,7 +766,7 @@ trait JobConfiguration {
 	 */
 	def getMandatoryStringDoubleMapParam(config:Config, paramName:String, errorMsg:String) : java.util.Map[String, Double] = {
 	  val paramMap = new java.util.HashMap[String, Double]
-	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg)
+	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg).asScala
 	  for (param <- paramList) {
 	    val items = param.split(BasicUtils.DEF_SUB_FIELD_DELIM)
 	    paramMap.put(items(0), items(1).toDouble)
@@ -782,7 +782,7 @@ trait JobConfiguration {
 	 */
 	def getMandatoryStringIntMapParam(config:Config, paramName:String, errorMsg:String) : java.util.Map[String, Int] = {
 	  val paramMap = new java.util.HashMap[String, Int]
-	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg)
+	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg).asScala
 	  for (param <- paramList) {
 	    val items = param.split(BasicUtils.DEF_SUB_FIELD_DELIM)
 	    paramMap.put(items(0), items(1).toInt)
@@ -798,7 +798,7 @@ trait JobConfiguration {
 	 */
 	def getMandatoryIntDoubleMapParam(config:Config, paramName:String, errorMsg:String) : java.util.Map[Int, Double] = {
 	  val paramMap = new java.util.HashMap[Int, Double]
-	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg)
+	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg).asScala
 	  for (param <- paramList) {
 	    val items = param.split(BasicUtils.DEF_SUB_FIELD_DELIM)
 	    paramMap.put(items(0).toInt, items(1).toDouble)
@@ -814,7 +814,7 @@ trait JobConfiguration {
 	 */
 	def getMandatoryIntIntMapParam(config:Config, paramName:String, errorMsg:String) : java.util.Map[Int, Int] = {
 	  val paramMap = new java.util.HashMap[Int, Int]
-	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg)
+	  val paramList = getMandatoryStringListParam(config, paramName, errorMsg).asScala
 	  for (param <- paramList) {
 	    val items = param.split(BasicUtils.DEF_SUB_FIELD_DELIM)
 	    paramMap.put(items(0).toInt, items(1).toInt)

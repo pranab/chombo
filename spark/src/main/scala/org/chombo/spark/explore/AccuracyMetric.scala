@@ -57,6 +57,7 @@ object AccuracyMetric extends JobConfiguration with GeneralUtility {
 	       "missing field weight list"))
 	   val weightSum = fieldWeights.sum
 	   val targetFilePath = getMandatoryStringParam(appConfig, "target.filePath", "missing file path")
+	   val tagMetric = getBooleanParamOrElse(appConfig, "tag.metric", false)
 	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
 	   val missingMasterCounter = new LongAccumulator()
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
@@ -107,7 +108,13 @@ object AccuracyMetric extends JobConfiguration with GeneralUtility {
 	       sum = -0.001
 	       values(0).getString(numFields)
 	     }
-	     rec + fieldDelimOut + complCount + fieldDelimOut + BasicUtils.formatDouble(sum, precision)
+	     val strBld = new StringBuilder(rec)
+	     if (tagMetric) {
+	       strBld.append(fieldDelimOut).append("acc")
+	     }
+	     strBld.append(fieldDelimOut).append(complCount).append(fieldDelimOut).
+	       append(BasicUtils.formatDouble(sum, precision))
+	     strBld.toString()
 	   })
 	   
      if (debugOn) {

@@ -368,12 +368,12 @@ object DataValidator extends JobConfiguration  with ValidatorRegistration {
 	       parts(0)
 	     })
 	     sum /= sumFieldWeight
-	     var newLine = fields.mkString(fieldDelimOut)
+	     val strBld = new StringBuilder(fields.mkString(fieldDelimOut))
 	     if (tagMetric) {
-	       newLine += fieldDelimOut + "val"
+	       strBld.append(fieldDelimOut).append("val")
 	     }
-	     newLine =  newLine + fieldDelimOut + validCount + fieldDelimOut + BasicUtils.formatDouble(sum, precision)
-	     newLine
+	     strBld.append(fieldDelimOut).append(validCount).append(fieldDelimOut).append(BasicUtils.formatDouble(sum, precision))
+	     strBld.toString()
       })
       metricData
     }

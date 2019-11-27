@@ -9,6 +9,8 @@ scalaVersion := "2.12.0"
 
 isSnapshot := true
 
+scalacOptions := Seq("-unchecked", "-deprecation")
+
 libraryDependencies ++=Seq(
   "org.apache.spark" %% "spark-core" % "3.0.0-preview" % "provided",
   "org.apache.spark" %% "spark-streaming" % "3.0.0-preview" % "provided",
