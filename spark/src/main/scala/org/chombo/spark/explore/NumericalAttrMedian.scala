@@ -92,7 +92,7 @@ object NumericalAttrMedian extends JobConfiguration with SeasonalUtility with Ge
 	    configParams.put("seasonal.analysis", seasonalAnalysis);
 	       
 	    val isHdfsFile = getBooleanParamOrElse(appConfig, "hdfs.file", false)
-	    configParams.put("hdfs.file", new java.lang.Boolean(isHdfsFile))
+	    configParams.put("hdfs.file", java.lang.Boolean.valueOf(isHdfsFile))
 	   	    
 	    val medFilePath = getMandatoryStringParam(appConfig, "med.file.path", "missing median file path")
 	    configParams.put("med.filePath", medFilePath)

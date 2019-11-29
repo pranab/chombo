@@ -115,8 +115,7 @@ object DataTransformer extends JobConfiguration with TransformerRegistration  wi
        if (!foundinConfig && !foundinSchema) {
          val bulderClassName = getMandatoryStringParam(appConfig, "transformerBuilderClass", 
              "missing transformer builder class name")
-         val obj = Class.forName(bulderClassName).newInstance()
-         val builder = obj.asInstanceOf[TransformerBuilder]
+         val builder = createInstance[TransformerBuilder](bulderClassName)
          builder.createTransformers(appConfig, this)
        }
        

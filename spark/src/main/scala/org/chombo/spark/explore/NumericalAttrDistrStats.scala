@@ -83,9 +83,9 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	     }
 	     
 	     case None  => {
-		   //based on field ordinal
+		     //based on field ordinal
 	       val binWidths = Map[Record, Double]()
-		   numAttrOrdinals.foreach(ord => {
+		     numAttrOrdinals.foreach(ord => {
 		     //attribute bin width tuple
 		     val keyStr = "attrBinWidth." + ord
 		     val binWidthKey = Record(1)
@@ -157,13 +157,13 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 		     addSeasonalKeys(seasonalAnalyzers, items, attrKeyRec)
 		     attrKeyRec.addInt(ord.toInt)
 		     
-			 //value is histogram
-			 val binWidthKey = if (keyBasedBinWidth) attrKeyRec else Record(1, ord.toInt)
-			 //println("binWidths size " + binWidths.size)
-			 //binWidths.foreach(v => println(v))
-			 val binWidth = getMapValue(binWidths, binWidthKey, "missing bin width for key " + binWidthKey.toString)
+			   //value is histogram
+			   val binWidthKey = if (keyBasedBinWidth) attrKeyRec else Record(1, ord.toInt)
+			   //println("binWidths size " + binWidths.size)
+			   //binWidths.foreach(v => println(v))
+			   val binWidth = getMapValue(binWidths, binWidthKey, "missing bin width for key " + binWidthKey.toString)
 		     //val binWidth = binWidths.get(binWidthKey).get
-			 val attrValRec = new HistogramStat(binWidth)
+			   val attrValRec = new HistogramStat(binWidth)
 		     attrValRec.
 		     	withExtendedOutput(extendedOutput).
 		     	withOutputPrecision(outputPrecision)
@@ -209,8 +209,8 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	   val modStats = refDistrFilePath match {
          case Some(filePath) => {
            //distr file path
-	       val refStats = HistogramUtility.createHiostograms(new FileInputStream(filePath), keyLen, true)
-	       val stats = refStats.asScala.map(kv => {
+	         val refStats = HistogramUtility.createHiostograms(new FileInputStream(filePath), keyLen, true)
+	         val stats = refStats.asScala.map(kv => {
 	         //last element of key is field ordinal
 	         val rec = Record(kv._1)
 	         rec.addInt(keyLen-1, kv._1(keyLen-1).toInt)
@@ -221,29 +221,29 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
 	       val modStats = distrFitnessAlgo match {
 	         case "chiSquare" =>  {
 	           withFitness = true
-			   colStats.map(v => {
-		         val key = v._1
-		         val refDistr = stats.get(key).get
-		         val thisDistr = v._2
-		         val fitnessScore = HistogramUtility.distrFittnessReferenceWithChiSquare(refDistr, thisDistr, 
+			       colStats.map(v => {
+		           val key = v._1
+		           val refDistr = stats.get(key).get
+		           val thisDistr = v._2
+		           val fitnessScore = HistogramUtility.distrFittnessReferenceWithChiSquare(refDistr, thisDistr, 
 		             confIntervalFactor, chiSqureFailOnRangeCheck)
-		         val fitness = Record(3)
-				 val fitted = fitnessScore.getLeft() < fitnessScore.getRight();
-				 fitness.add(fitnessScore.getLeft(), fitnessScore.getRight(), fitted)
-		         (v._1, v._2, fitness)
-			   })	       
+		           val fitness = Record(3)
+				       val fitted = fitnessScore.getLeft() < fitnessScore.getRight();
+				       fitness.add(fitnessScore.getLeft(), fitnessScore.getRight(), fitted)
+		           (v._1, v._2, fitness)
+			       })	       
 	         }
 	         case "klDiverge" =>  {
 	           withFitness = true
-			   colStats.map(v => {
-		         val key = v._1
-		         val refDistr = stats.get(key).get
-		         val thisDistr = v._2
-		         val diverge = HistogramUtility.findKullbackLeiblerDivergence(refDistr, thisDistr)
-		         val fitness = Record(2)
-		         fitness.add(diverge.getLeft().toDouble, diverge.getRight().toInt)
-		         (v._1, v._2, fitness)
-			   })
+			       colStats.map(v => {
+		           val key = v._1
+		           val refDistr = stats.get(key).get
+		           val thisDistr = v._2
+		           val diverge = HistogramUtility.findKullbackLeiblerDivergence(refDistr, thisDistr)
+		           val fitness = Record(2)
+		           fitness.add(diverge.getLeft().toDouble, diverge.getRight().toInt)
+		           (v._1, v._2, fitness)
+			       })
 	         }
 	         case "none" => {
 	           outputWithoutFitness(colStats)
@@ -255,20 +255,20 @@ object NumericalAttrDistrStats extends JobConfiguration with SeasonalUtility wit
          case None => {  
              if (!statsValueMap.isEmpty) {
             	 //ref stats specified
-	        	 val modStats = distrFitnessAlgo match {
-	        	   case "chiSquare" =>  {
-	        		 withFitness = true
-	        		 colStats.map(v => {
-				       val key = v._1
-				       val thisDistr = v._2
+	        	   val modStats = distrFitnessAlgo match {
+	        	     case "chiSquare" =>  {
+	        		     withFitness = true
+	        		     colStats.map(v => {
+				           val key = v._1
+				           val thisDistr = v._2
 				         
-				       val stat = statsMap.get(key).get
-				       val fitnessScore = HistogramUtility.distrFittnessNormalWithChiSquare(thisDistr, stat.getLeft(), 
+				           val stat = statsMap.get(key).get
+				           val fitnessScore = HistogramUtility.distrFittnessNormalWithChiSquare(thisDistr, stat.getLeft(), 
 				           stat.getRight(), confIntervalFactor, chiSqureFailOnRangeCheck)
-				       val fitness = Record(3)
-				       val fitted = fitnessScore.getLeft() < fitnessScore.getRight();
-				       fitness.add(fitnessScore.getLeft(), fitnessScore.getRight(), fitted)
-				       (v._1, v._2, fitness)
+				           val fitness = Record(3)
+				           val fitted = fitnessScore.getLeft() < fitnessScore.getRight();
+				           fitness.add(fitnessScore.getLeft(), fitnessScore.getRight(), fitted)
+				           (v._1, v._2, fitness)
 	        	     })
 	        	   }
 	        	   case "klDiverge" =>  {

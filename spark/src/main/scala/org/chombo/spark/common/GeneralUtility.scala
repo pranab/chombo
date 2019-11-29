@@ -22,6 +22,7 @@ import scala.collection.JavaConverters._
 import scala.collection.mutable.HashSet
 import scala.reflect.ClassTag
 import org.chombo.util.BasicUtils
+import org.chombo.stats.HistogramStat
 
 trait GeneralUtility {
 
@@ -298,7 +299,7 @@ trait GeneralUtility {
       val count = v1._1 + v2._1
       val sum = v1._2 + v2._2
       (count, sum)
-	}).mapValues(v => v._2 / v._1)
+	  }).mapValues(v => v._2 / v._1)
   }
   
   /**
@@ -310,7 +311,7 @@ trait GeneralUtility {
       val count = v1._1 + v2._1
       val sum = v1._2 + v2._2
       (count, sum)
-	}).mapValues(v => v._2 / v._1)
+	  }).mapValues(v => v._2 / v._1)
   }
 
   /**
@@ -321,9 +322,8 @@ trait GeneralUtility {
     data.reduceByKey((v1, v2) => {
 	  val min = if (v1._1 < v2._1) v1._1 else v2._1
 	  val max = if (v1._2 > v2._2) v1._2 else v2._2
-	  (min, max)
-      (min, max)
-	})
+    (min, max)
+	  })
   }
   
   /**
@@ -332,10 +332,10 @@ trait GeneralUtility {
   */
   def findMinMaxInt(data:RDD[(Record,(Int,Int))]) : RDD[(Record, (Int,Int))] = {
     data.reduceByKey((v1, v2) => {
-	  val min = if (v1._1 < v2._1) v1._1 else v2._1
-	  val max = if (v1._2 > v2._2) v1._2 else v2._2
+	    val min = if (v1._1 < v2._1) v1._1 else v2._1
+	    val max = if (v1._2 > v2._2) v1._2 else v2._2
       (min, max)
-	})
+	  })
   }
   
   /**
@@ -444,7 +444,9 @@ trait GeneralUtility {
   * @return
   */
   def createInstance[T:ClassTag](name: String): T = {
-    val obj = Class.forName(name).newInstance()
+    val cls =  Class.forName(name)
+    val co = cls.getConstructors()(0)
+    val obj = co.newInstance()
 	  obj.asInstanceOf[T]
   }
   
@@ -477,6 +479,17 @@ trait GeneralUtility {
   * @param index
   * @return
   */
+  def getColumnAverage(values:RDD[Record], index:Int) : Double = {
+    values.cache
+	  val sum = values.map(v => v.getDouble(index)).reduce((v1, v2) => v1 + v2)
+	  sum / values.count
+  }
+
+  /**
+  * @param values
+  * @param index
+  * @return
+  */
   def getColumnStat(values:Array[Array[String]], index:Int) : (Double, Double) = {
     val col = values.map(v => v(index).toDouble)
 	  val sum = col.reduce((v1, v2) => v1 + v2)
@@ -491,10 +504,42 @@ trait GeneralUtility {
   * @param index
   * @return
   */
+  def getColumnStat(values:RDD[Record], index:Int) : (Double, Double) = {
+    values.cache
+    val count = values.count
+    val col = values.map(v => v.getDouble(index))
+    col.cache
+	  val sum = col.reduce((v1, v2) => v1 + v2)
+	  val sumSq = col.reduce((v1, v2) => v1 * v1 + v2 * v2)
+	  val mean = sum / count
+	  val sd = Math.sqrt(sumSq / (count - 1) - mean * mean)
+	  (mean, sd)
+  }
+
+  /**
+  * @param values
+  * @param index
+  * @return
+  */
   def getColumnMax(values:Array[Array[String]], index:Int) : Double = {
 	  values.map(v => v(index).toDouble).reduce((v1, v2) => if (v1 > v2) v1 else v2)
   }
   
+   /**
+  * @param values
+  * @param index
+  * @return
+  */
+  def getColumnDistrStat(values:RDD[Record], index:Int, binWidth:Double) : HistogramStat = {
+    val col = values.map(v => v.getDouble(index))
+	  val distr = col.map(v => {
+	    val hist = new HistogramStat(binWidth)
+	    hist.add(v)
+	    hist
+	  }).reduce((h1, h2) => h1.merge(h2))
+	  distr
+  }
+ 
   /**
   * @param items
   * @param keyFieldOrdinals
