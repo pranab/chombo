@@ -66,7 +66,8 @@ object CommonUtil {
   * @return
   */
   def createInstance[T:ClassTag](name: String): T = {
-    val obj = Class.forName(name).newInstance()
-	obj.asInstanceOf[T]
+    val consts = Class.forName(name).getConstructors
+    val obj = consts(0).newInstance()
+	  obj.asInstanceOf[T]
   }  
 }

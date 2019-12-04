@@ -485,7 +485,35 @@ trait GeneralUtility {
 	  sum / values.count
   }
 
-  /**
+ /**
+ * @param records
+ * @param wtIndex
+ * @param valIndex
+ * @return
+ */
+ def getColumnWeightedAverage(records:Array[Record], wtIndex:Int, valIndex:Int) : Double = {
+    val weights = records.map(v => v.getDouble(wtIndex))
+	  val values = records.map(v => v.getDouble(valIndex))
+	  var sum = 0.0
+	  values.zip(weights).foreach(v => {sum +=  v._1 * v._2})
+    sum / weights.sum
+  }
+
+ /**
+ * @param records
+ * @param wtIndex
+ * @param valIndex
+ * @return
+ */
+ def getColumnWeightedAverage(records:Array[Array[String]], wtIndex:Int, valIndex:Int) : Double = {
+    val weights = records.map(v => v(wtIndex).toDouble)
+	  val values = records.map(v => v(valIndex).toDouble)
+	  var sum = 0.0
+	  values.zip(weights).foreach(v => {sum +=  v._1 * v._2})
+    sum / weights.sum
+  }
+
+ /**
   * @param values
   * @param index
   * @return
