@@ -56,6 +56,8 @@ object MissingValueMetric extends JobConfiguration with GeneralUtility {
 	   val tagMetric = getBooleanParamOrElse(appConfig, "tag.metric", false)
 	   val missingValueTag = getOptionalStringParam(appConfig, "missing.tag")
 	   val precision = getIntParamOrElse(appConfig, "output.precision", 3)
+	   val dataSetDistrFilePath = getOptionalStringParam(appConfig, "distr.FilePath")
+	   val distrBinWidth = getDoubleParamOrElse(appConfig, "distr.binWidth", 0.05)
 	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
 	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 
@@ -143,6 +145,17 @@ object MissingValueMetric extends JobConfiguration with GeneralUtility {
 	       missingCounted
 	     }
 	   
+	   //data set completeness metric distribution
+	   dataSetDistrFilePath match {
+	     case Some(path) => {
+	       missingCounted.cache
+	       val metrics = missingCounted.map(r => r._2)
+	       val index = if (tagMetric) 3 else 2
+	       val hist = getColumnDistrStat(metrics, index, distrBinWidth)
+	       reflect.io.File(path).writeAll(hist.withExtendedOutput(true).toString())
+	     }
+	     case None =>
+	   }
 	   
 	   //serialize for output
 	   val serMissingCounted = missingCounted.map(r => {

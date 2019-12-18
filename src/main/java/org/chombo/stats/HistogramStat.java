@@ -811,7 +811,7 @@ public class HistogramStat implements Serializable {
 			String formHalfPer = BasicUtils.formatDouble(getQuantile(0.50), formatter);
 			String formThreeQuartPer = BasicUtils.formatDouble(getQuantile(0.75), formatter);
 			
-			stBld.append(formMean).append(fieldDelim).append(formMedian).append(fieldDelim).
+			stBld.append(fieldDelim).append(formMean).append(fieldDelim).append(formMedian).append(fieldDelim).
 				append(formStdDev).append(fieldDelim).append(formMode).append(fieldDelim).
 				append(formQuartPer).append(fieldDelim).append(formHalfPer).append(fieldDelim).
 				append(formThreeQuartPer).append(fieldDelim);

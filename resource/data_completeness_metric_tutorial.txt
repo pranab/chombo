@@ -1,0 +1,36 @@
+This tutorial is for computation of data completeness metric
+
+Dependent script
+================
+Checkout the project avenir. Copy the lib directory under python and copy it at the same level
+as your working directory
+
+Build and Deployment
+====================
+Please refer to spark_dependency.txt and building_spark_uber_jar.txt in the resource directory 
+
+Script and configuration
+========================
+Feel free to make changes in script exp_spark.sh and the configuration file exp.conf as per you
+environment
+
+Generate input data
+===================
+python retail_sell_ex.py gen <num_stores> <num_products> <num_transactions> <num_customers> <num_days> > sales.txt
+
+where
+num_stores = num of stores e.g 10
+num_products = num of products  e.g 1000
+num_transactions = num of transactions e.g. 1000
+num_customers = num of customers
+num_days = num of days
+
+Make some fields missing
+python retail_sell_ex.py insMiss  sales.txt > sales_miss.txt
+
+Copy sales_miss.txt to the input directory as per exp_spark.sh
+
+Run completeness Spark job
+==========================
+./ext_spark.sh missMetric
+
