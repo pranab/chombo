@@ -311,6 +311,14 @@ public class MathUtils {
     
     /**
      * @param data
+     * @return
+     */
+    public static  Matrix invertMatrix(Matrix data) {
+    	return data.inverse();
+    }
+
+    /**
+     * @param data
      * @param numRows
      * @return
      */
@@ -434,6 +442,24 @@ public class MathUtils {
     	Matrix am = new Matrix(a);
     	Matrix c = am.transpose();
     	return c.getArray();
+    }
+    
+    /**
+     * @param a
+     * @param b
+     * @return
+     */
+    public static Matrix addMatrix(Matrix a, Matrix b) {
+    	return a.plus(b);
+    }
+    
+    /**
+     * @param a
+     * @param b
+     * @return
+     */
+    public static Matrix subtractMatrix(Matrix a, Matrix b) {
+    	return a.minus(b);
     }
     
     /**
