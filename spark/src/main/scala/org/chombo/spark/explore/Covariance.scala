@@ -20,13 +20,20 @@ package org.chombo.spark.explore
 import org.chombo.spark.common.JobConfiguration
 import org.apache.spark.SparkContext
 import scala.collection.JavaConverters._
+import scala.collection.mutable.ArrayBuffer
 import org.chombo.spark.common.Record
 import org.chombo.util.SeasonalAnalyzer
 import org.chombo.spark.common.SeasonalUtility
 import org.chombo.util.BasicUtils
 import org.chombo.stats.NumericalAttrStatsManager
+import org.chombo.spark.common.GeneralUtility
 
-object Covariance extends JobConfiguration with SeasonalUtility {
+/**
+ * Mean value vector and co variance matrix
+ * @param args
+ * @return
+ */
+object Covariance extends JobConfiguration with SeasonalUtility with GeneralUtility{
   
    /**
     * @param args
@@ -43,81 +50,43 @@ object Covariance extends JobConfiguration with SeasonalUtility {
 	   //configurations
 	   val fieldDelimIn = getStringParamOrElse(appConfig, "field.delim.in", ",")
 	   val fieldDelimOut = getStringParamOrElse(appConfig, "field.delim.out", ",")
-	   val keyFields = getOptionalIntListParam(appConfig, "id.fieldOrdinals")
-	   val keyFieldOrdinals = keyFields match {
-	     case Some(fields:java.util.List[Integer]) => Some(fields.asScala.toArray)
-	     case None => None  
-	   }
-	  val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", 
+	   val keyFieldOrdinals = toOptionalIntArray(getOptionalIntListParam(appConfig, "id.fieldOrdinals"))
+	   val numAttrOrdinals = getMandatoryIntListParam(appConfig, "attr.ordinals", 
 	      "missing quant attribute ordinals").asScala.toArray
-	  val numAttrOrdinalsIndx = numAttrOrdinals.zipWithIndex
+	   val numAttrOrdinalsIndx = numAttrOrdinals.zipWithIndex
+	   val dimension = numAttrOrdinals.size
 	   
 	   
 	   //seasonal data
 	   val seasonalAnalysis = getBooleanParamOrElse(appConfig, "seasonal.analysis", false)
-	   val partBySeasonCycle = getBooleanParamOrElse(appConfig, "part.bySeasonCycle", true)
-	   val seasonalAnalyzers = if (seasonalAnalysis) {
-		   val seasonalCycleTypes = getMandatoryStringListParam(appConfig, "seasonal.cycleType", 
-	        "missing seasonal cycle type").asScala.toArray
-	        val timeZoneShiftHours = getIntParamOrElse(appConfig, "time.zoneShiftHours", 0)
-	        val timeStampFieldOrdinal = getMandatoryIntParam(appConfig, "time.fieldOrdinal", 
-	        "missing time stamp field ordinal")
-	        val timeStampInMili = getBooleanParamOrElse(appConfig, "time.inMili", true)
-	        
-	        val analyzers = seasonalCycleTypes.map(sType => {
-	    	val seasonalAnalyzer = createSeasonalAnalyzer(this, appConfig, sType, timeZoneShiftHours, timeStampInMili)
-	        seasonalAnalyzer
-	    })
-	    Some((analyzers, timeStampFieldOrdinal))
-	   } else {
-		   None
-	   }
+	   val seasonalAnalyzers =  creatOptionalSeasonalAnalyzerArray(this, appConfig, seasonalAnalysis)
+	   val keyLen = getOptinalArrayLength(keyFieldOrdinals, seasonalAnalysis, 1)
 	   
-	  val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
-	  val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
-	  val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
-	  
-	  var keyLen = keyFieldOrdinals match {
-		     case Some(fields:Array[Integer]) => fields.length + 1
-		     case None =>1
-	  }
-	  keyLen += (if (seasonalAnalysis) 2 else 0)
+	   val outputPrecision = getIntParamOrElse(appConfig, "output.precision", 3);
+	   val debugOn = getBooleanParamOrElse(appConfig, "debug.on", false)
+	   val saveOutput = getBooleanParamOrElse(appConfig, "save.output", true)
 	   
-	  val data = sparkCntxt.textFile(inputPath)
-	  val keyedRecs = data.flatMap(line => {
-		   val items = line.split(fieldDelimIn, -1)
+	   
+	   val data = sparkCntxt.textFile(inputPath)
+	   val keyedRecs = data.flatMap(line => {
+		   val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
 		   val fieldStats = numAttrOrdinalsIndx.map(attr => {
 		     val attrOrd = attr._1
 		     val indx = attr._2
 		     val key = Record(keyLen)
 		     
 		     //partioning fields
-		     keyFieldOrdinals match {
-	           case Some(fields : Array[Integer]) => {
-	             for (kf <- fields) {
-	               key.addString(items(kf))
-	             }
-	           }
-	           case None =>
-	         }
+		     populateFields(items, keyFieldOrdinals, key)
 		     
-		     //seasonality cycle
-		     seasonalAnalyzers match {
-		       case Some(seAnalyzers : (Array[SeasonalAnalyzer], Int)) => {
-		         val timeStamp = items(seAnalyzers._2).toLong
-		         val cIndex = SeasonalAnalyzer.getCycleIndex(seAnalyzers._1, timeStamp)
-		         key.addString(cIndex.getLeft())
-		         key.addInt(cIndex.getRight())
-		       }
-		       case None => 
-		     }	  
+		     //seasonality cycle related fields
+		     addSeasonalKeys(seasonalAnalyzers, items, key)
 		     
 		     //attr ordinal
 		     key.addInt(attrOrd)
 		     
 		     //value
 		     val quantVal = items(attrOrd).toDouble
-		     val remaining = numAttrOrdinals.length -1 - indx
+		     val remaining = numAttrOrdinals.length - 1 - indx
 		     val value = Record(3 + remaining)
 		     value.addInt(1)
 		     value.addDouble(quantVal)
@@ -125,7 +94,8 @@ object Covariance extends JobConfiguration with SeasonalUtility {
 		     
 		     //cross terms
 		     for (i <- (indx+1) to (numAttrOrdinals.length -1)) {
-		       val nextQuantVal = items(i).toDouble
+		       val attrIndx = numAttrOrdinals(i)
+		       val nextQuantVal = items(attrIndx).toDouble
 		       value.addDouble(quantVal * nextQuantVal)
 		     }
 		     
@@ -136,7 +106,8 @@ object Covariance extends JobConfiguration with SeasonalUtility {
 	  
 	  //aggregate
 	  var aggrRecs = keyedRecs.reduceByKey((v1, v2) => {
-	    val aggr = Record(v1.size)
+	    val sz = v1.size
+	    val aggr = Record(sz)
 	    
 	    //count
 	    var i = 0
@@ -152,7 +123,7 @@ object Covariance extends JobConfiguration with SeasonalUtility {
 	    i += 1
 	    
 	    //cross terms
-	    for (j <- i to (v1.size - 1)) {
+	    for (j <- i to (sz - 1)) {
 	      aggr.addDouble(v1.getDouble(j) + v2.getDouble(j))
 	    }
 	    aggr
@@ -176,7 +147,74 @@ object Covariance extends JobConfiguration with SeasonalUtility {
 	    (newKey, newValue)
 	  })
 	  
+	  //mean vector and covariance matrix
+	  val keyedStats = aggrRecs.groupByKey().map(r => {
+	    val key = r._1
+	    val values = r._2.toArray.sortBy(v => v.getInt(0)).zipWithIndex
+	    val meanVec = Array[Double](dimension)
+	    val coVarMat = Array.ofDim[Double](dimension,dimension) 
+	    
+	    //mean and variance
+	    values.foreach(v => {
+	      val aggr = v._1
+	      val indx = v._2
+	      
+	      var i = 1
+	      val count = aggr.getInt(i)
+	      i += 1
+	      val sum = aggr.getDouble(i)
+	      i += 1
+	      val sumSq = aggr.getDouble(i)
+	      i += 1
+	      
+	      val mean = sum / count
+	      meanVec(indx) = mean
+	      val vari = sumSq / (count -1) - mean * mean
+	      coVarMat(indx)(indx) = vari
+	    })
+	    
+	    //covariance
+	    values.foreach(v => {
+	      val aggr = v._1
+	      val i = v._2
+	      val count = aggr.getInt(1)
+	      var k = i + 1
+	      for (j <- 4 to (dimension - 1)) {
+	        val coVar = aggr.getDouble(j) / count - meanVec(i) * meanVec(j)
+	        coVarMat(i)(k) =  coVar
+	        coVarMat(k)(i) = coVar
+	        k += 1
+	      }
+	    })	    
+	    
+	    val stat = (meanVec, coVarMat)
+	    (key, stat)
+	    
+	  })
 	  
-   }
+	  //serialize,
+	  val serKeyedStats =  keyedStats.flatMap(r => {
+	    val key = r._1
+	    val meanVec = r._2._1
+	    val coVarMat = r._2._2
+	    val serArr = ArrayBuffer[String]()
+	    serArr += key.toString()
+	    serArr += BasicUtils.join(meanVec, fieldDelimOut, outputPrecision)
+	    coVarMat.foreach(r => {
+	      serArr += BasicUtils.join(r, fieldDelimOut, outputPrecision)
+	    })
+	    serArr
+	  })
+	  
+    if (debugOn) {
+       val records = serKeyedStats.collect.slice(0,20) 
+       records.foreach(r => println(r))
+    }
+	   
+	   if(saveOutput) {	   
+	     serKeyedStats.saveAsTextFile(outputPath) 
+	   }
+	  
+  }
 
 }

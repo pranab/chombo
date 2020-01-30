@@ -128,7 +128,7 @@ trait GeneralUtility {
     arr match {
 	     case Some(a:Array[Integer]) => Some(a.map(i => i.toInt))
 	     case None => None  
-	}
+	  }
   }
   /**
   * @param list
