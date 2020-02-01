@@ -130,4 +130,12 @@ public class MultiVariateStatsManager implements Serializable {
 		}
 		return invCoVarMatrix;
 	}
+	
+	/**
+	 * @param key
+	 * @return
+	 */
+	public boolean statsExists(String key) {
+		return null != keyedCoVarMatrix.get(key);
+	}
 }
