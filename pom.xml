@@ -187,7 +187,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <repositories>
         <repository>
             <id>central</id>
-            <url>http://repo1.maven.org/maven2</url>
+            <url>https://repo1.maven.org/maven2</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -204,11 +204,11 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
         </repository>
 		<repository>
 			<id>github-releases</id>
-			<url>http://oss.sonatype.org/content/repositories/github-releases/</url>
+			<url>https://oss.sonatype.org/content/repositories/github-releases/</url>
 		</repository>
 		<repository>
 			<id>clojars.org</id>
-			<url>http://clojars.org/repo</url>
+			<url>https://clojars.org/repo</url>
 		</repository>
          
     </repositories>
