@@ -137,9 +137,38 @@ public class MathUtils {
      * @return
      */
     public static double expScale(double cons, double val) {
+    	BasicUtils.assertCondition(cons > 0, "wrong parameter values for piecewise exponential scaling");
     	double e = Math.exp(cons * val);
     	return (e - 1) / e;
     }
+    
+    
+    /**
+     * @param xCutoff
+     * @param yCutoff
+     * @param consOne
+     * @param consTwo
+     * @param xVal
+     * @return
+     */
+    public static double pieceWiseExpScale(double xCutoff, double yCutoff, double consOne, 
+    	double consTwo, double xVal) {
+    	BasicUtils.assertCondition(yCutoff < 1.0 && consOne > 0 && consTwo > 0, 
+    			"wrong parameter values for piecewise exponential scaling");
+    	double yVal = 0;
+    	if (xVal < xCutoff) {
+    		double e = Math.exp(consOne * xVal);
+    		yVal =  (e - 1) / e;
+    		yVal *= yCutoff;
+    	} else {
+    		double xValOffset = xVal - xCutoff;
+    		double e = Math.exp(consTwo * xValOffset);
+    		yVal =  (e - 1) / e;
+    		yVal = yCutoff + yVal * (1.0 - yCutoff);
+    	}
+    	return yVal;
+    }
+    
     
     /**
      * @param cons
@@ -150,6 +179,7 @@ public class MathUtils {
     	double e = Math.exp(-cons * val);
     	return 1 / (1 + e);
     }
+
 
     /**
      * @param table
@@ -577,6 +607,22 @@ public class MathUtils {
     
     /**
      * @param size
+     * @return
+     */
+    public static double[] getZeroFilledArray(int size) {
+    	return getFilledArray(size, 0.0);
+    }
+    
+    /**
+     * @param size
+     * @return
+     */
+    public static double[] getOneFilledArray(int size) {
+    	return getFilledArray(size, 1.0);
+    }
+
+    /**
+     * @param size
      * @param value
      * @return
      */
@@ -755,5 +801,54 @@ public class MathUtils {
     		}
     	}
     	return new Pair<Integer, Double>(loc, maxSecDiff);
+    }
+
+    /**
+     * @param data
+     * @param winLen
+     * @return
+     */
+    public static double[] movingAverage(double[] data, int winLen, boolean includeAnchor) {
+    	double weights[] = getOneFilledArray(winLen);
+    	return movingAverage(data, weights, includeAnchor);
+    }
+   
+    /**
+     * @param data
+     * @param weights
+     * @return
+     */
+    public static double[] movingAverage(double[] data, double[] weights, boolean includeAnchor) {
+    	double[] averaged = null;
+    	int dataLen = data.length;
+    	int winLen = weights.length;
+    	BasicUtils.assertCondition(winLen % 2 == 1, "winsow size should be odd");
+    	int halfLength = weights.length  / 2;
+    	for (int i = 0; i < dataLen; ++i) {
+    		int offset = 0;
+    		int winOffset = 0;
+    		if (i >= halfLength) {
+    			//normal and right boundary
+    			offset = i - halfLength;
+    			winOffset = 0;
+    		} else {
+    			//left boundary
+    			offset = 0;
+    			winOffset = halfLength - i;
+    		}
+    		
+    		//convolution
+    		double sum = 0;
+    		double sumWt = 0;
+    		for (int j = offset, k = winOffset; j < dataLen && k < winLen; ++j, ++k) {
+    			if (includeAnchor || i != j) {
+    				sum += data[j] * weights[k];
+    				sumWt += weights[k];
+    			}
+    		}
+    		averaged[i] = sum / sumWt;
+    	}
+    	
+    	return averaged;
     }
 }
