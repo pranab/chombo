@@ -518,6 +518,23 @@ public class HistogramStat implements Serializable {
 	}
 	
 	/**
+	 * @param numPercentiles
+	 * @return
+	 */
+	public double[] getAllPercentiles(int numPercentiles) {
+		double percentile = 1.0 / numPercentiles;
+		double[] percentiles = new double[numPercentiles];
+		double thisPercentile = percentile;
+		for (int i = 0; i < numPercentiles -1; ++i) {
+			percentiles[i] = getQuantile(thisPercentile);
+			thisPercentile += percentile;
+		}
+		percentiles[numPercentiles -1] = binMap.size() * binWidth;
+		
+		return percentiles;
+	}
+	
+	/**
 	 * @return
 	 */
 	public double getMode() {

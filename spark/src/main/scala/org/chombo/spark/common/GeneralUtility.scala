@@ -186,6 +186,22 @@ trait GeneralUtility {
 	    keyLen += 2
 	  keyLen
   }
+  
+  /**
+  * @param value
+  */
+  def createStringFieldRec(value:String) : Record =  {
+    val rec = Record(1)
+    rec.addString(value)
+  }
+
+  /**
+  * @param value
+  */
+  def createIntFieldRec(value:Int) : Record =  {
+    val rec = Record(1)
+    rec.addInt(value)
+  }
 
   /**
   * @param fields

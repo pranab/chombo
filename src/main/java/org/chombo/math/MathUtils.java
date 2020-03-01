@@ -137,7 +137,7 @@ public class MathUtils {
      * @return
      */
     public static double expScale(double cons, double val) {
-    	BasicUtils.assertCondition(cons > 0, "wrong parameter values for piecewise exponential scaling");
+    	BasicUtils.assertCondition(cons > 0, "wrong parameter values for exponential scaling");
     	double e = Math.exp(cons * val);
     	return (e - 1) / e;
     }
