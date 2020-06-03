@@ -78,6 +78,7 @@ trait GeneralUtility {
   */
   def toStringArray(list:java.util.List[String]) : Array[String] = list.asScala.toArray
 
+  
   /**
   * @param list
   * @return

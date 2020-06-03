@@ -614,7 +614,7 @@ trait JobConfiguration {
     def getConditionalMandatoryDoubleListParam(condition:Boolean, config:Config, paramName:String, errorMsg:String, defNull:Boolean) : 
       java.util.List[java.lang.Double] = {
       val defVal = if (defNull) null else  new java.util.ArrayList[java.lang.Double]()
-	  if (condition) getMandatoryDoubleListParam(config, paramName, errorMsg) else defVal
+	    if (condition) getMandatoryDoubleListParam(config, paramName, errorMsg) else defVal
 	}
 
 	/**
