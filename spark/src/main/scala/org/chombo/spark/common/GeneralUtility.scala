@@ -635,5 +635,37 @@ trait GeneralUtility {
 	   })	 
 	  
 	}
-  
+
+	/**
+	 * @param data
+	 * @param fieldDelimIn
+	 * @param keyLen
+	 * @param keyFieldOrdinals
+	 * @param seqFieldOrd
+	 * @param gen
+	 * @return
+	 */
+	def getKeyedValue(data: RDD[String], fieldDelimIn:String, keyLen:Int, 
+	    keyFieldOrdinals: Option[Array[Int]]) : RDD[(Record, Record)] =  {
+	   data.map(line => {
+	     val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+	     val key = Record(keyLen)
+	     //gen.populateFields(items, keyFieldOrdinals, key, "all")
+	     
+	     keyFieldOrdinals match {
+	       case Some(fieldOrds : Array[Int]) => {
+	    	   for (kf <- fieldOrds) {
+	    		   key.addString(items(kf))
+			     }
+	       }
+	       case None => key.add("all")
+	     }
+
+	     val value = Record(1)
+	     value.addString(line)
+	     (key, value)
+	   })	 
+	  
+	}
+	
 }

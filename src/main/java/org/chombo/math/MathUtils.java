@@ -777,7 +777,7 @@ public class MathUtils {
     	double maxDiff = 0;
     	int loc = 0;
     	for (int i = 1; i < values.length; ++i) {
-    		double diff = values[i] - values[i];
+    		double diff = values[i+1] - values[i];
     		if (Math.abs(diff) > Math.abs(maxDiff)) {
     			maxDiff = diff;
     			loc = i;
@@ -851,4 +851,38 @@ public class MathUtils {
     	
     	return averaged;
     }
+    
+	/**
+	 * @param fRec
+	 * @param sRec
+	 * @return
+	 */
+	public static double euclideanDist(double[] fRec, double[] sRec) {
+	   	BasicUtils.assertCondition(fRec.length == sRec.length, "two arays need to be of same length");	    
+		double dist = 0;
+		double sum = 0;
+		for (int i = 0; i < fRec.length; ++i) {
+			double attrDist = fRec[i] - sRec[i];
+			sum += attrDist * attrDist;
+		}
+		dist = Math.sqrt(sum) / fRec.length;
+		return dist;
+	}
+    
+	/**
+	 * @param fRec
+	 * @param sRec
+	 * @return
+	 */
+	public static double manhattanDist(double[] fRec, double[] sRec) {
+	   	BasicUtils.assertCondition(fRec.length == sRec.length, "two arays need to be of same length");	    
+		double dist = 0;
+		double sum = 0;
+		for (int i = 0; i < fRec.length; ++i) {
+			double attrDist = fRec[i] - sRec[i];
+			sum += Math.abs(attrDist);
+		}
+		dist = sum / fRec.length;
+		return dist;
+	}
 }
