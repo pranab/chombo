@@ -205,6 +205,14 @@ trait GeneralUtility {
   }
 
   /**
+  * @param value
+  */
+  def createDoubleFieldRec(value:Double) : Record =  {
+    val rec = Record(1)
+    rec.addDouble(value)
+  }
+
+  /**
   * @param fields
   * @param keyFieldOrdinals
   * @param rec
@@ -228,6 +236,28 @@ trait GeneralUtility {
   def populateFields(fields:Array[String], fieldOrdinals:Array[Int], rec:Record)  {
 	  for (kf <- fieldOrdinals) {
 		  rec.addString(fields(kf))
+	  }
+   }
+
+ /**
+  * @param fields
+  * @param numFields
+  * @param rec
+  */
+  def populateFields(fields:Array[String], numFields:Int, rec:Record)  {
+	  for (kf <- 0 to numFields - 1) {
+		  rec.addString(fields(kf))
+	  }
+   }
+
+ /**
+  * @param fields
+  * @param numFields
+  * @param rec
+  */
+  def populateFields(fields:Array[String], fieldOffset:Int, numFields:Int, rec:Record)  {
+	  for (kf <- 0 to numFields - 1) {
+		  rec.addString(fields(fieldOffset + kf))
 	  }
    }
 
