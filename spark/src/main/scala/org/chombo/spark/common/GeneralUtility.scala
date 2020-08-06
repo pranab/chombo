@@ -207,6 +207,14 @@ trait GeneralUtility {
   /**
   * @param value
   */
+  def createLongFieldRec(value:Long) : Record =  {
+    val rec = Record(1)
+    rec.addLong(value)
+  }
+
+  /**
+  * @param value
+  */
   def createDoubleFieldRec(value:Double) : Record =  {
     val rec = Record(1)
     rec.addDouble(value)
