@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.chombo.util.BasicUtils;
+import org.chombo.util.Utility;
 import org.chombo.util.IntRange;
 import org.chombo.util.Pair;
 
@@ -61,6 +62,59 @@ public class HistogramUtility {
 		}
 		
 		return histStats;
+	}
+	
+	/**
+	 * @param distrFilePath
+	 * @param isHdfsFile
+	 * @param keyLen
+	 * @param numBins
+	 * @return
+	 * @throws IOException
+	 */
+	public static Map<String[], double[]> createEqProbHist(String distrFilePath, boolean isHdfsFile, int keyLen, 
+		int numBins) throws IOException {
+		InputStream fs = null;
+		if(isHdfsFile) {
+			fs = Utility.getFileStream(distrFilePath);
+		} else {
+			fs = BasicUtils.getFileStream(distrFilePath);
+		}
+		if (null == fs) {
+				BasicUtils.assertFail("distribution file could not be opened at path " + distrFilePath);
+		}
+		Map<String[], HistogramStat> keyedHist = HistogramStat.createHistograms(fs,  keyLen, false);
+		Map<String[], double[]> keyedPercentiles = new HashMap<String[], double[]>();
+		for (String[] key : keyedHist.keySet()) {
+			HistogramStat hist = keyedHist.get(key);
+			double[] percentiles = hist.getAllPercentiles(numBins);
+			keyedPercentiles.put(key, percentiles);
+		}
+			
+		return keyedPercentiles;
+	}
+	
+	/**
+	 * @param percentiles
+	 * @param value
+	 * @return
+	 */
+	public static int getPercentileIndex(double[] percentiles, double value) {
+		int index = 0;
+		int size = percentiles.length;
+		if (value > percentiles[size - 1]) {
+			index = size + 1;
+		} else  if (value > percentiles[0]) {
+	        for (int i = 0; i < size; ++i) {
+	            if (value < percentiles[i]) {
+	              index = i;
+	              break;
+	            }
+	          }
+			
+		}
+		
+		return index;
 	}
 	
 	/**
