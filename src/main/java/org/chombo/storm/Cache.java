@@ -26,7 +26,7 @@ import org.chombo.util.ConfigUtility;
  * @author pranab
  *
  */
-public abstract class Cache {
+public abstract class Cache  implements java.io.Serializable {
 	protected String cacheName;
 	
 	public abstract void set(String key, String value);

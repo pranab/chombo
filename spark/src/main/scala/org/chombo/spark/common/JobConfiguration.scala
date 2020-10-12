@@ -31,7 +31,7 @@ import org.chombo.util.BasicUtils
  * @author pranab
  *
  */
-trait JobConfiguration {
+trait JobConfiguration  extends java.io.Serializable {
 
   /**
    * @param args

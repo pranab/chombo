@@ -26,7 +26,7 @@ import org.chombo.util.ConfigUtility;
  * @author pranab
  *
  */
-public abstract class MessageQueue {
+public abstract class  MessageQueue implements java.io.Serializable {
 	protected String queueName;
 	
 	/**
