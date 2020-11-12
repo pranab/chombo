@@ -1043,6 +1043,21 @@ public class BasicUtils {
    		int index = (int)(Math.random() * arr.length);
 		return arr[index];
 	}
+	
+	/**
+	 * @param arr
+	 * @param size
+	 * @param sampled
+	 */
+	public static <T> void selectRandomListWithReplacement(T[] arr, T[] sampled) {
+		int size = sampled.length;
+		for (int i = 0; i < size; ++i) {
+			int index = (int)(Math.random() * arr.length);
+			index = index < arr.length ? index : arr.length -1 ;
+			sampled[i] = arr[index];
+		}
+	}
+	
 
 	/**
 	 * @param arr
@@ -1819,8 +1834,34 @@ public class BasicUtils {
     	}
     	return lines;
     }
- 
- 
+
+    /**
+     * @param filePath
+     * @param keyLen
+     * @param quantFldOrd
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, Integer> getKeyedIntValues(String filePath, int keyLen, int quantFldOrd) throws IOException {
+    	return getKeyedIntValues(filePath, keyLen, quantFldOrd, DEF_FIELD_DELIM);
+    }  
+
+    /**
+     * @param filePath
+     * @param keyLen
+     * @param quantFldOrd
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, Integer> getKeyedIntValues(String filePath, int keyLen, int quantFldOrd, String fieldDelim) throws IOException {
+    	Map<String, Double> values =  getKeyedValues(filePath, keyLen, quantFldOrd, fieldDelim);
+    	Map<String, Integer> keyedValues = new HashMap<String, Integer>();
+    	for (String key : values.keySet()) {
+    		keyedValues.put(key, values.get(key).intValue());
+    	}
+    	return keyedValues;
+    }  
+
     /**
      * @param filePath
      * @param keyLen

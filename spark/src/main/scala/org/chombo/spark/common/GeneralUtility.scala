@@ -622,7 +622,16 @@ trait GeneralUtility {
 	  }).reduce((h1, h2) => h1.merge(h2))
 	  distr
   }
- 
+  
+  /**
+  * @param s
+  * @return
+  */
+  def getDoubleSeqAverage(s: Seq[Double]): Double =  { 
+    val sc = s.foldLeft((0.0, 0)) ((acc, v) => (acc._1 + v, acc._2 + 1)); 
+    sc._1 / sc._2 
+  }
+  
   /**
   * @param items
   * @param keyFieldOrdinals
