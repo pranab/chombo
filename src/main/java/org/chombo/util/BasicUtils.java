@@ -463,7 +463,21 @@ public class BasicUtils {
     	}
     	return fieldValues;
     }
-    
+  
+    /**
+     * @param items
+     * @param fields
+     * @param delim
+     * @return
+     */
+    public static String  extractFieldsAsString(String[] items , int[] fields, String delim) {
+    	String[] fieldValues = new String[fields.length];
+    	for (int i = 0; i < fields.length; ++i) {
+    		fieldValues[i] = items[fields[i]];
+    	}
+    	return join(fieldValues, delim);
+    }
+ 
     /**
      * @param items
      * @param fields
@@ -1854,10 +1868,11 @@ public class BasicUtils {
      * @throws IOException
      */
     public static Map<String, Integer> getKeyedIntValues(String filePath, int keyLen, int quantFldOrd, String fieldDelim) throws IOException {
-    	Map<String, Double> values =  getKeyedValues(filePath, keyLen, quantFldOrd, fieldDelim);
+    	Map<String, String> values =  getKeyedStringValues(filePath, keyLen, quantFldOrd, fieldDelim);
     	Map<String, Integer> keyedValues = new HashMap<String, Integer>();
     	for (String key : values.keySet()) {
-    		keyedValues.put(key, values.get(key).intValue());
+    		keyedValues.put(key, Integer.parseInt(values.get(key))
+    				);
     	}
     	return keyedValues;
     }  
@@ -1881,10 +1896,10 @@ public class BasicUtils {
      * @throws IOException
      */
     public static Map<String, Long> getKeyedLongValues(String filePath, int keyLen, int quantFldOrd, String fieldDelim) throws IOException {
-    	Map<String, Double> values =  getKeyedValues(filePath, keyLen, quantFldOrd, fieldDelim);
+    	Map<String, String> values =  getKeyedStringValues(filePath, keyLen, quantFldOrd, fieldDelim);
     	Map<String, Long> keyedValues = new HashMap<String, Long>();
     	for (String key : values.keySet()) {
-    		keyedValues.put(key, values.get(key).longValue());
+    		keyedValues.put(key, Long.parseLong(values.get(key)));
     	}
     	return keyedValues;
     }  
@@ -1917,6 +1932,41 @@ public class BasicUtils {
     		int pos = findOccurencePosition(line, DEF_FIELD_DELIM, keyLen, true);
     		String key = line.substring(0, pos);
     		Double value = Double.parseDouble(items[quantFldOrd]);
+    		keyedValues.put(key, value);
+    		//System.out.println("key: " + key + "value: " + value);
+    	}
+    	return keyedValues;
+    }
+    
+    /**
+     * @param filePath
+     * @param keyLen
+     * @param quantFldOrd
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, String> getKeyedStringValues(String filePath, int keyLen, int quantFldOrd) throws IOException {
+    	return getKeyedStringValues(filePath, keyLen, quantFldOrd, DEF_FIELD_DELIM);
+    }  
+ 
+    
+    /**
+     * @param filePath
+     * @param keyLen
+     * @param quantFldOrd
+     * @param fieldDelim
+     * @return
+     * @throws IOException
+     */
+    public static Map<String, String> getKeyedStringValues(String filePath, int keyLen, int quantFldOrd, String fieldDelim) 
+    	throws IOException {
+    	Map<String, String> keyedValues = new HashMap<String, String>();
+    	List<String> lines = getFileLines(filePath);
+    	for (String line : lines) {
+    		String[] items = getTrimmedFields(line, fieldDelim);
+    		int pos = findOccurencePosition(line, DEF_FIELD_DELIM, keyLen, true);
+    		String key = line.substring(0, pos);
+    		String value = items[quantFldOrd];
     		keyedValues.put(key, value);
     		//System.out.println("key: " + key + "value: " + value);
     	}
@@ -2209,6 +2259,18 @@ public class BasicUtils {
 		return items;
 	}
 
+	/**
+	 * @param value
+	 * @param fieldDelim
+	 * @param delimPos
+	 * @param failOnDelimNotFound
+	 * @return
+	 */
+	public static String splitStringOnDelimPosition(String value, String fieldDelim, int delimPos, boolean failOnDelimNotFound) {
+		int pos = findOccurencePosition(value, fieldDelim, delimPos, true);
+		return  value.substring(0, pos);
+	}
+	
 	/**
 	 * @param value
 	 * @param delim
