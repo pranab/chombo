@@ -715,4 +715,25 @@ trait GeneralUtility {
 	  
 	}
 	
+
+/**
+	 * @param data
+	 * @param fieldDelimIn
+	 * @param keyLen
+	 * @return
+	 */
+	def getMandatoryKeyedValue(data: RDD[String], fieldDelimIn:String, keyLen: Int) : 
+	RDD[(Record, String)] =  {
+	   data.map(line => {
+	     val items = BasicUtils.getTrimmedFields(line, fieldDelimIn)
+	     val key = Record(keyLen)
+	     
+	     for (i <- 0 to keyLen - 1) {
+	       key.addString(items(i))
+			 }
+	     (key, line)
+	   })	 
+	  
+	}
+
 }
